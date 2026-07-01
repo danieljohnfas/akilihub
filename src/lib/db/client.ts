@@ -20,8 +20,11 @@ const schema = {
 // Prevent multiple instances during development HMR
 const globalForDb = globalThis as unknown as { conn: postgres.Sql };
 
-const conn = globalForDb.conn ?? postgres(process.env.DATABASE_URL!, {
-  ssl: 'require',
+// Provide a dummy fallback so Vercel builds don't crash instantly during static evaluation if the env var is missing
+const connectionString = process.env.DATABASE_URL || 'postgres://dummy:dummy@localhost:5432/dummy';
+
+const conn = globalForDb.conn ?? postgres(connectionString, {
+  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
   max: 10,
   idle_timeout: 20,
   connect_timeout: 10,
