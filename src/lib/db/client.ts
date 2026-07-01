@@ -20,8 +20,17 @@ const schema = {
 // Prevent multiple instances during development HMR
 const globalForDb = globalThis as unknown as { conn: postgres.Sql };
 
-// Provide a dummy fallback so Vercel builds don't crash instantly during static evaluation if the env var is missing
-const connectionString = process.env.DATABASE_URL || 'postgres://dummy:dummy@localhost:5432/dummy';
+// Provide a robust dummy fallback
+let connectionString = process.env.DATABASE_URL || 'postgres://dummy:dummy@localhost:5432/dummy';
+
+// Validate the URL. If the user accidentally left placeholders like [YOUR-PASSWORD] in the Vercel dashboard,
+// new URL() will throw ERR_INVALID_URL. We catch it and use the dummy string so the build can proceed.
+try {
+  new URL(connectionString);
+} catch (e) {
+  console.warn('Invalid DATABASE_URL provided. Falling back to dummy for build phase.');
+  connectionString = 'postgres://dummy:dummy@localhost:5432/dummy';
+}
 
 const conn = globalForDb.conn ?? postgres(connectionString, {
   ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
