@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     }
 
     // Check not already set up
-    const [existing] = await safeQuery(db.select({ isSetup: adminConfig.isSetup }).from(adminConfig).limit(1));
+    const [existing] = await safeQuery(db.select({ id: adminConfig.id, isSetup: adminConfig.isSetup }).from(adminConfig).limit(1));
     if (existing?.isSetup) {
       return NextResponse.json({ error: 'Setup already completed.' }, { status: 403 });
     }
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         passwordHash,
         isSetup: true,
         updatedAt: new Date(),
-      }).where(eq(adminConfig.id, existing.id as never));
+      }).where(eq(adminConfig.id, existing.id));
     } else {
       await db.insert(adminConfig).values({
         totpSecret: secret,
