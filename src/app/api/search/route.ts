@@ -16,8 +16,14 @@ export interface SearchResult {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q');
+  let query = '';
+  try {
+    const url = new URL(request.url || 'http://localhost/api/search');
+    query = url.searchParams.get('q') || '';
+  } catch (e) {
+    // Vercel build phase might pass an invalid URL, safely ignore
+    return NextResponse.json({ results: [] });
+  }
 
   if (!query || query.trim().length < 2) {
     return NextResponse.json({ results: [] });
