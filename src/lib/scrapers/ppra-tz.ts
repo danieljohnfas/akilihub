@@ -41,7 +41,7 @@ export async function scrapePPRATZ(): Promise<number> {
 
     // Map scraper results to DB schema
     // Assuming result array contains objects matching the required insert shape
-    const formattedTenders = result.map((t: unknown) => ({
+    const formattedTenders = result.map((t: any) => ({
       title: t.title,
       referenceNo: t.referenceNo,
       description: t.description || null,

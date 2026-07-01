@@ -36,7 +36,7 @@ export async function scrapeBrelaTZ(searchQuery: string = ''): Promise<number> {
       return 0;
     }
 
-    const formattedBusinesses = result.map((b: unknown) => ({
+    const formattedBusinesses = result.map((b: any) => ({
       name: b.name,
       registrationNumber: b.registrationNumber,
       countryId: tz.id,
