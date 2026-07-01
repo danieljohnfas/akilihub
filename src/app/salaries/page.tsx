@@ -24,7 +24,7 @@ export default async function SalariesPage({
   
   const conditions = [
     q ? ilike(salarySubmissions.jobTitle, `%${q}%`) : undefined,
-    level && level !== 'all' ? eq(salarySubmissions.experienceLevel, level as any) : undefined,
+    level && level !== 'all' ? eq(salarySubmissions.experienceLevel, level as never) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -93,7 +93,7 @@ export default async function SalariesPage({
           </div>
           <h3 className="text-xl font-semibold mb-2">No salaries found</h3>
           <p className="text-muted-foreground max-w-md">
-            We couldn't find any salary data matching your current search criteria.
+            We couldn&apos;t find any salary data matching your current search criteria.
           </p>
           {(q || (level && level !== 'all')) && (
             <Link href="/salaries" className={buttonVariants({ variant: "outline", className: "mt-6" })}>

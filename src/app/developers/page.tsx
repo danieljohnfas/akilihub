@@ -18,7 +18,7 @@ export default function DevelopersPage() {
         <div>
           <h1 className="text-4xl font-bold tracking-tight mb-3">AkiliBrain API</h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Integrate East Africa's most comprehensive professional intelligence data directly into your own applications.
+            Integrate East Africa&apos;s most comprehensive professional intelligence data directly into your own applications.
           </p>
         </div>
         

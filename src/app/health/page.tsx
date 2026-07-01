@@ -93,7 +93,7 @@ export default async function HealthPage({
           </div>
           <h3 className="text-xl font-semibold mb-2">No health data found</h3>
           <p className="text-muted-foreground max-w-md">
-            We couldn't find any health indicators matching your search criteria.
+            We couldn&apos;t find any health indicators matching your search criteria.
           </p>
           {(q || (category && category !== 'all')) && (
             <Link href="/health" className={buttonVariants({ variant: "outline", className: "mt-6" })}>

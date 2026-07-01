@@ -93,7 +93,7 @@ export default async function CompliancePage({
           </div>
           <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
           <p className="text-muted-foreground max-w-md">
-            We couldn't find any registered companies matching your search criteria in our database.
+            We couldn&apos;t find any registered companies matching your search criteria in our database.
           </p>
           {(q || (status && status !== 'all')) && (
             <Link href="/compliance" className={buttonVariants({ variant: "outline", className: "mt-6" })}>

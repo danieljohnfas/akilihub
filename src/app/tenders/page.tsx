@@ -27,7 +27,7 @@ export default async function TendersPage({
   // For now, doing simple ilike on title
   const conditions = [
     q ? ilike(tenders.title, `%${q}%`) : undefined,
-    status ? eq(tenders.status, status as any) : undefined,
+    status ? eq(tenders.status, status as never) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -96,7 +96,7 @@ export default async function TendersPage({
           </div>
           <h3 className="text-xl font-semibold mb-2">No tenders found</h3>
           <p className="text-muted-foreground max-w-md">
-            We couldn't find any tenders matching your current search criteria. Try adjusting your filters or search term.
+            We couldn&apos;t find any tenders matching your current search criteria. Try adjusting your filters or search term.
           </p>
           {(q || status !== 'open') && (
             <Link href="/tenders" className={buttonVariants({ variant: "outline", className: "mt-6" })}>

@@ -59,7 +59,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 text-center space-y-6 max-w-4xl">
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-          East Africa's Professional <span className="text-primary">Intelligence Platform</span>
+          East Africa&apos;s Professional <span className="text-primary">Intelligence Platform</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Access curated government tenders, compliance requirements, crowdsourced salaries, 

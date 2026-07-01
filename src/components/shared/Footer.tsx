@@ -7,7 +7,7 @@ export function Footer() {
         <div className="space-y-4 max-w-sm">
           <h3 className="text-xl font-bold">AkiliBrain</h3>
           <p className="text-sm text-muted-foreground">
-            East Africa's unified professional intelligence platform. 
+            East Africa&apos;s unified professional intelligence platform. 
             Providing critical data for professionals across the region.
           </p>
         </div>
