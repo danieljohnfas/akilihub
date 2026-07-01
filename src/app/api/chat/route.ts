@@ -5,6 +5,7 @@ import {
   LangflowStrategy, 
   VercelAiSdkStrategy,
   GroqStrategy,
+  OpenRouterStrategy,
   UnavailableStrategy, 
   AiInput 
 } from '@/lib/strategies/ai-strategies';
@@ -14,6 +15,7 @@ const engine = new StrategyEngine<AiInput, { response: string; confidence: numbe
   new LangflowStrategy(),
   new VercelAiSdkStrategy(),
   new GroqStrategy(),
+  new OpenRouterStrategy(),
   new UnavailableStrategy(),
 ]);
 

@@ -158,7 +158,46 @@ export class GroqStrategy implements Strategy<AiInput, AiResult> {
   }
 }
 
-// 5. Final fallback: clear "unavailable" error — no fake responses
+// 5. Fallback: OpenRouter (Unified API, Free Tier Models)
+export class OpenRouterStrategy implements Strategy<AiInput, AiResult> {
+  name = 'OpenRouter (Gemma 2 Fallback)';
+  
+  async execute(input: AiInput): Promise<AiResult> {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error('OPENROUTER_API_KEY is not set.');
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://akilihub.vercel.app',
+        'X-Title': 'AkiliHub',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        // Using a high-quality free model on OpenRouter
+        model: 'google/gemma-2-9b-it:free',
+        messages: [
+          { role: 'system', content: 'You are AkiliHub\'s AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.' },
+          { role: 'user', content: input.query }
+        ]
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`OpenRouter API failed with status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      response: data.choices[0]?.message?.content ?? 'Processed by OpenRouter',
+      confidence: 0.85,
+      sources: []
+    };
+  }
+}
+
+// 6. Final fallback: clear "unavailable" error — no fake responses
 export class UnavailableStrategy implements Strategy<AiInput, AiResult> {
   name = 'Unavailable';
   
