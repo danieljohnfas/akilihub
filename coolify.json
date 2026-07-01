@@ -1,0 +1,11 @@
+{
+  "name": "akilihub",
+  "buildpack": "nixpacks",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "startCommand": "npm start",
+  "ports": [3000],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # 1. Next.js Web App
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - db
+      - redis
+
+  # 2. Database (Supabase replacement for local/VPS if needed, though we use managed Supabase)
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # 3. Maxun (Visual Scraper)
+  maxun:
+    image: maxunhq/maxun:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/maxun
+      - REDIS_URL=redis://redis:6379
+
+  # 4. Crawl4AI (LLM Scraper API Wrapper)
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    ports:
+      - "8000:8000"
+
+  # 5. Stirling PDF
+  stirling-pdf:
+    image: frooodle/s-pdf:latest
+    ports:
+      - "8081:8080"
+    environment:
+      - DOCKER_ENABLE_SECURITY=false
+    volumes:
+      - ./trainingData:/customFiles/trainingData
+
+  # 6. Langflow
+  langflow:
+    image: langflowai/langflow:latest
+    ports:
+      - "7860:7860"
+    environment:
+      - LANGFLOW_DATABASE_URL=postgresql://postgres:password@db:5432/langflow
+
+  # 7. Dify (Simplified API & Web representation)
+  # Note: A full Dify deployment requires Weaviate, Sandbox, and Celery workers.
+  # For production via Coolify, it is recommended to use the official Dify Docker Compose.
+  dify-api:
+    image: langgenius/dify-api:latest
+    ports:
+      - "5001:5001"
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=dify
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  dify-web:
+    image: langgenius/dify-web:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - CONSOLE_API_URL=http://dify-api:5001
+      - APP_API_URL=http://dify-api:5001
+
+volumes:
+  db_data:
+  redis_data:
