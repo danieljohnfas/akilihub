@@ -15,7 +15,7 @@ const ratelimit = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_RED
     })
   : null;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 1. Supabase Auth Logic (previously proxy.ts)
   let supabaseResponse = NextResponse.next({ request });
 

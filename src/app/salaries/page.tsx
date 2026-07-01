@@ -9,7 +9,7 @@ import { Search, SlidersHorizontal, Banknote } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Salary Database | AkiliHub',
+  title: 'Salary Database | AkiliBrain',
   description: 'Explore verified government and private sector salaries across Africa.',
 };
 

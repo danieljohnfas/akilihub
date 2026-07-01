@@ -9,7 +9,7 @@ import { Search, SlidersHorizontal, Activity } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Public Health Data | AkiliHub',
+  title: 'Public Health Data | AkiliBrain',
   description: 'Track and analyze public health indicators across Africa.',
 };
 

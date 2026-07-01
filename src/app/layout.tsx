@@ -8,7 +8,7 @@ import { AIChatPanel } from "@/components/ai/AIChatPanel";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AkiliHub | East Africa's Professional Intelligence Platform",
+  title: "AkiliBrain | East Africa's Professional Intelligence Platform",
   description: "Unified professional intelligence platform for East Africa. Explore tenders, compliance data, health indicators, salaries, and developer tools.",
 };
 

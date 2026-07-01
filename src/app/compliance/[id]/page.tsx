@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!data.length) return { title: 'Business Not Found' };
   
   return {
-    title: `${data[0].name} | AkiliHub Compliance`,
+    title: `${data[0].name} | AkiliBrain Compliance`,
   };
 }
 

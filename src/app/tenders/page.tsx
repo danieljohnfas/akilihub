@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-  title: 'Government Tenders | AkiliHub',
+  title: 'Government Tenders | AkiliBrain',
   description: 'Browse the latest government tenders, procurement opportunities, and contracts across Africa.',
 };
 

@@ -4,13 +4,13 @@ export async function GET() {
   const openApiSpec = {
     openapi: "3.0.0",
     info: {
-      title: "AkiliHub API",
+      title: "AkiliBrain API",
       description: "API for East Africa's Professional Intelligence Platform",
       version: "1.0.0",
     },
     servers: [
       {
-        url: "https://akilihub.vercel.app",
+        url: "https://akilibrain.vercel.app",
         description: "Production server"
       }
     ],
@@ -18,7 +18,7 @@ export async function GET() {
       "/api/chat": {
         post: {
           summary: "AI Intelligence Chat",
-          description: "Send a natural language query to the AkiliHub AI engine.",
+          description: "Send a natural language query to the AkiliBrain AI engine.",
           requestBody: {
             required: true,
             content: {

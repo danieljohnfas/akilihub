@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!data.length) return { title: 'Tender Not Found' };
   
   return {
-    title: `${data[0].title} | AkiliHub Procurement`,
+    title: `${data[0].title} | AkiliBrain Procurement`,
   };
 }
 

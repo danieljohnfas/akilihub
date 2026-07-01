@@ -23,7 +23,7 @@ export function Navbar() {
         <div className="flex items-center gap-6 md:gap-8">
           <Link href="/" className="flex items-center space-x-2">
             <Brain className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl inline-block">AkiliHub</span>
+            <span className="font-bold text-xl inline-block">AkiliBrain</span>
           </Link>
           <nav className="hidden md:flex gap-6">
             {navLinks.map((link) => (

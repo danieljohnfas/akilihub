@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="border-t bg-muted/20 mt-16">
       <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between gap-8">
         <div className="space-y-4 max-w-sm">
-          <h3 className="text-xl font-bold">AkiliHub</h3>
+          <h3 className="text-xl font-bold">AkiliBrain</h3>
           <p className="text-sm text-muted-foreground">
             East Africa's unified professional intelligence platform. 
             Providing critical data for professionals across the region.
@@ -34,7 +34,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t py-6 text-center text-sm text-muted-foreground">
-        © 2026 AkiliHub. All rights reserved.
+        © 2026 AkiliBrain. All rights reserved.
       </div>
     </footer>
   );

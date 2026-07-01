@@ -21,7 +21,7 @@ export function AIChatPanel() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: "Hi! I'm AkiliHub's AI assistant. Ask me about tenders, business registrations, health data, or salaries across East Africa.",
+      content: "Hi! I'm AkiliBrain's AI assistant. Ask me about tenders, business registrations, health data, or salaries across East Africa.",
       timestamp: new Date(),
     },
   ]);
@@ -126,7 +126,7 @@ export function AIChatPanel() {
             <Bot className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">AkiliHub AI</p>
+            <p className="font-semibold text-sm">AkiliBrain AI</p>
             <p className="text-xs text-muted-foreground">East Africa Intelligence</p>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="shrink-0">

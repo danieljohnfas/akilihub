@@ -33,7 +33,7 @@ export class DifyStrategy implements Strategy<AiInput, AiResult> {
       body: JSON.stringify({
         inputs: { [inputVar]: input.query, ...input.contextParams },
         response_mode: 'blocking',
-        user: 'akilihub-system'
+        user: 'akilibrain-system'
       })
     });
     
@@ -111,7 +111,7 @@ export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
     // Note: The google provider from @ai-sdk/google automatically uses GOOGLE_GENERATIVE_AI_API_KEY
     const { text } = await generateText({
       model: google('models/gemini-1.5-flash'),
-      prompt: `You are AkiliHub's AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.\n\nUser: ${input.query}`,
+      prompt: `You are AkiliBrain's AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.\n\nUser: ${input.query}`,
     });
 
     return {
@@ -139,7 +139,7 @@ export class GroqStrategy implements Strategy<AiInput, AiResult> {
       body: JSON.stringify({
         model: 'llama3-8b-8192',
         messages: [
-          { role: 'system', content: 'You are AkiliHub\'s AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.' },
+          { role: 'system', content: 'You are AkiliBrain\'s AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.' },
           { role: 'user', content: input.query }
         ]
       })
@@ -170,15 +170,15 @@ export class OpenRouterStrategy implements Strategy<AiInput, AiResult> {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://akilihub.vercel.app',
-        'X-Title': 'AkiliHub',
+        'HTTP-Referer': 'https://akilibrain.vercel.app',
+        'X-Title': 'AkiliBrain',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         // Using a high-quality free model on OpenRouter
         model: 'google/gemma-2-9b-it:free',
         messages: [
-          { role: 'system', content: 'You are AkiliHub\'s AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.' },
+          { role: 'system', content: 'You are AkiliBrain\'s AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.' },
           { role: 'user', content: input.query }
         ]
       })

@@ -9,7 +9,7 @@ import { Search, SlidersHorizontal, Inbox } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Business Registry | AkiliHub Compliance',
+  title: 'Business Registry | AkiliBrain Compliance',
   description: 'Search and verify registered businesses across Africa.',
 };
 

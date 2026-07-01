@@ -7,8 +7,8 @@ import { Shield, Zap, TerminalSquare } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Developer API | AkiliHub",
-  description: "Documentation and guides for the AkiliHub Developer API.",
+  title: "Developer API | AkiliBrain",
+  description: "Documentation and guides for the AkiliBrain Developer API.",
 };
 
 export default function DevelopersPage() {
@@ -16,7 +16,7 @@ export default function DevelopersPage() {
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="flex flex-col space-y-6 mb-12">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-3">AkiliHub API</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-3">AkiliBrain API</h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
             Integrate East Africa's most comprehensive professional intelligence data directly into your own applications.
           </p>
@@ -66,7 +66,7 @@ export default function DevelopersPage() {
           
           <CodeSnippet 
             language="bash" 
-            code={`curl -X POST https://akilihub.vercel.app/api/chat \\
+            code={`curl -X POST https://akilibrain.vercel.app/api/chat \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer YOUR_API_KEY"`}
           />
@@ -100,7 +100,7 @@ export default function DevelopersPage() {
                 <CardTitle className="font-mono text-lg">/api/chat</CardTitle>
               </div>
               <CardDescription className="mt-2">
-                Send a natural language query to the AkiliHub AI engine and receive a structured intelligence report.
+                Send a natural language query to the AkiliBrain AI engine and receive a structured intelligence report.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -114,7 +114,7 @@ export default function DevelopersPage() {
                 <TabsContent value="curl">
                   <CodeSnippet 
                     language="bash" 
-                    code={`curl -X POST https://akilihub.vercel.app/api/chat \\
+                    code={`curl -X POST https://akilibrain.vercel.app/api/chat \\
   -H "Content-Type: application/json" \\
   -d '{
     "query": "Show me the latest healthcare tenders in Kenya",
@@ -128,7 +128,7 @@ export default function DevelopersPage() {
                 <TabsContent value="node">
                   <CodeSnippet 
                     language="javascript" 
-                    code={`const response = await fetch('https://akilihub.vercel.app/api/chat', {
+                    code={`const response = await fetch('https://akilibrain.vercel.app/api/chat', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ console.log(data.response);`}
                     language="python" 
                     code={`import requests
 
-url = "https://akilihub.vercel.app/api/chat"
+url = "https://akilibrain.vercel.app/api/chat"
 payload = {
     "query": "Show me the latest healthcare tenders in Kenya"
 }
