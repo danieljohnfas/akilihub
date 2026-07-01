@@ -2,7 +2,8 @@ import { Strategy } from './engine';
 
 export interface ScraperInput {
   url: string;
-  portalType: 'ppra_tz' | 'ppoa_ke' | 'ppda_ug';
+  portalType: 'ppra_tz' | 'ppoa_ke' | 'ppda_ug' | 'brela_tz';
+  searchQuery?: string;
 }
 
 export interface TenderResult {
