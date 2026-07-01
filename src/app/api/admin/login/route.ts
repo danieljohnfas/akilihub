@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, safeQuery } from '@/lib/db/client';
 import { adminConfig } from '@/lib/db/schema/admin';
 import { signAdminSession, SESSION_COOKIE } from '@/lib/admin/session';
-import { authenticator } from 'otplib';
+import * as OTPAuth from 'otpauth';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
@@ -26,8 +26,18 @@ export async function POST(req: Request) {
     }
 
     // Step 2: Verify TOTP code
-    const totpValid = authenticator.verify({ token: code, secret: config.totpSecret });
-    if (!totpValid) {
+    const totp = new OTPAuth.TOTP({
+      issuer: 'AkiliHub',
+      label: 'Admin',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: config.totpSecret
+    });
+
+    const isValidCode = totp.validate({ token: code, window: 1 }) !== null;
+
+    if (!isValidCode) {
       return NextResponse.json({ error: 'Invalid authenticator code' }, { status: 401 });
     }
 

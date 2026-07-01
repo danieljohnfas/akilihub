@@ -9,7 +9,12 @@ import { verifyAdminSession, SESSION_COOKIE } from '@/lib/admin/session';
 // Will only initialize if the Upstash Redis URL/Token are provided
 let ratelimit: Ratelimit | null = null;
 try {
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  if (
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_URL.startsWith('https://') &&
+    process.env.UPSTASH_REDIS_REST_TOKEN &&
+    process.env.UPSTASH_REDIS_REST_TOKEN !== 'your_upstash_token'
+  ) {
     ratelimit = new Ratelimit({
       redis: Redis.fromEnv(),
       limiter: Ratelimit.slidingWindow(10, '10 s'),

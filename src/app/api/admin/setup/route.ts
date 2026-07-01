@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, safeQuery } from '@/lib/db/client';
 import { adminConfig } from '@/lib/db/schema/admin';
-import { authenticator } from 'otplib';
+import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
@@ -14,9 +14,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Setup already completed. Contact DB admin to reset.' }, { status: 403 });
     }
 
-    // Generate a fresh TOTP secret
-    const secret = authenticator.generateSecret();
-    const otpAuthUrl = authenticator.keyuri('admin', 'AkiliBrain Admin', secret);
+    // Generate new secret for setup
+    const totp = new OTPAuth.TOTP({
+      issuer: 'AkiliHub',
+      label: 'Admin',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: new OTPAuth.Secret({ size: 20 })
+    });
+    
+    const secret = totp.secret.base32;
+    const otpAuthUrl = totp.toString();
+
+    // Generate QR Code data URL
     const qrDataUrl = await QRCode.toDataURL(otpAuthUrl);
 
     return NextResponse.json({ secret, qrDataUrl, otpAuthUrl });
@@ -44,10 +55,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Setup already completed.' }, { status: 403 });
     }
 
-    // Verify the TOTP code to confirm the authenticator app is working
-    const isValid = authenticator.verify({ token: code, secret });
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid authenticator code — please try again' }, { status: 400 });
+    // 2. Verify TOTP code
+    const totp = new OTPAuth.TOTP({
+      issuer: 'AkiliHub',
+      label: 'Admin',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: secret
+    });
+
+    const isValidCode = totp.validate({ token: code, window: 1 }) !== null;
+
+    if (!isValidCode) {
+      return NextResponse.json({ error: 'Invalid authenticator code' }, { status: 400 });
     }
 
     // Hash password
