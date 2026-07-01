@@ -5,6 +5,8 @@ import { complianceRequirements } from '@/lib/db/schema/compliance';
 import { salarySubmissions } from '@/lib/db/schema/salaries';
 import { sql } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export interface SearchResult {
   id: string;
   title: string;
