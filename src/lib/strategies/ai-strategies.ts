@@ -97,7 +97,68 @@ export class LangflowStrategy implements Strategy<AiInput, AiResult> {
   }
 }
 
-// 3. Final fallback: clear "unavailable" error — no fake responses
+// 3. Fallback: Vercel AI SDK (Direct Gemini connection)
+import { generateText } from 'ai';
+import { google } from '@ai-sdk/google';
+
+export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
+  name = 'Vercel AI SDK (Gemini Fallback)';
+  
+  async execute(input: AiInput): Promise<AiResult> {
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not set.');
+
+    // Note: The google provider from @ai-sdk/google automatically uses GOOGLE_GENERATIVE_AI_API_KEY
+    const { text } = await generateText({
+      model: google('models/gemini-1.5-flash'),
+      prompt: `You are AkiliHub's AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.\n\nUser: ${input.query}`,
+    });
+
+    return {
+      response: text,
+      confidence: 0.90,
+      sources: []
+    };
+  }
+}
+
+// 4. Fallback: Groq (Ultra-fast open source models)
+export class GroqStrategy implements Strategy<AiInput, AiResult> {
+  name = 'Groq (Llama 3 Fallback)';
+  
+  async execute(input: AiInput): Promise<AiResult> {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) throw new Error('GROQ_API_KEY is not set.');
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama3-8b-8192',
+        messages: [
+          { role: 'system', content: 'You are AkiliHub\'s AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.' },
+          { role: 'user', content: input.query }
+        ]
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Groq API failed with status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      response: data.choices[0]?.message?.content ?? 'Processed by Groq',
+      confidence: 0.85,
+      sources: []
+    };
+  }
+}
+
+// 5. Final fallback: clear "unavailable" error — no fake responses
 export class UnavailableStrategy implements Strategy<AiInput, AiResult> {
   name = 'Unavailable';
   

@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: "Unified professional intelligence platform for East Africa. Explore tenders, compliance data, health indicators, salaries, and developer tools.",
 };
 
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,12 +29,14 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <Navbar />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <Footer />
-        <AIChatPanel />
+        <PostHogProvider>
+          <Navbar />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
+          <AIChatPanel />
+        </PostHogProvider>
       </body>
     </html>
   );
