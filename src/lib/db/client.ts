@@ -7,6 +7,7 @@ import * as complianceSchema from './schema/compliance';
 import * as healthSchema from './schema/health';
 import * as salariesSchema from './schema/salaries';
 import * as usersSchema from './schema/users';
+import * as adminSchema from './schema/admin';
 
 const schema = {
   ...sharedSchema,
@@ -15,6 +16,7 @@ const schema = {
   ...healthSchema,
   ...salariesSchema,
   ...usersSchema,
+  ...adminSchema,
 };
 
 // Prevent multiple instances during development HMR

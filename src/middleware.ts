@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { verifyAdminSession, SESSION_COOKIE } from '@/lib/admin/session';
 
 // Create a new ratelimiter, that allows 10 requests per 10 seconds
 // Will only initialize if the Upstash Redis URL/Token are provided
@@ -21,13 +22,47 @@ try {
 }
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // ── Admin Route Protection ──────────────────────────────────────────────
+  // All /admin/* routes require a valid admin session cookie,
+  // except the login and setup pages themselves.
+  if (pathname.startsWith('/admin')) {
+    const isPublicAdminRoute =
+      pathname.startsWith('/admin/login') ||
+      pathname.startsWith('/admin/setup');
+
+    if (!isPublicAdminRoute) {
+      const token = request.cookies.get(SESSION_COOKIE)?.value;
+      const valid = token ? await verifyAdminSession(token) : false;
+      if (!valid) {
+        const loginUrl = new URL('/admin/login', request.url);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+  }
+  // ── End Admin Protection ────────────────────────────────────────────────
+
   try {
-    // 1. Supabase Auth Logic (previously proxy.ts)
+    // 1. Supabase Auth Logic
     let supabaseResponse = NextResponse.next({ request });
 
+    // Validate the Supabase URL before use — an empty string passes the JS ||
+    // fallback but still fails Supabase's internal URL validator.
+    const rawSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+    let supabaseUrl = 'https://dummy.supabase.co';
+    try {
+      if (rawSupabaseUrl) {
+        new URL(rawSupabaseUrl); // throws if invalid
+        supabaseUrl = rawSupabaseUrl;
+      }
+    } catch {
+      console.warn('⚠️ NEXT_PUBLIC_SUPABASE_URL is invalid, Supabase auth disabled.');
+    }
+
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy',
+      supabaseUrl,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-anon-key',
       {
         cookies: {
           getAll() {
@@ -47,7 +82,11 @@ export async function middleware(request: NextRequest) {
     );
 
     // Refresh the session — important for Server Components to read auth state
-    await supabase.auth.getUser();
+    // If Supabase is misconfigured, this will fail silently (supabaseUrl is dummy)
+    if (supabaseUrl !== 'https://dummy.supabase.co') {
+      await supabase.auth.getUser();
+    }
+
 
     // 2. Upstash Rate Limiting Logic (only for /api/chat)
     if (request.nextUrl.pathname.startsWith('/api/chat') && ratelimit) {
