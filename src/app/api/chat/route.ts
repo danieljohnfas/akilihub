@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StrategyEngine } from '@/lib/strategies/engine';
-import { DifyStrategy, LangflowStrategy, MockAiStrategy, AiInput } from '@/lib/strategies/ai-strategies';
+import { DifyStrategy, LangflowStrategy, UnavailableStrategy, AiInput } from '@/lib/strategies/ai-strategies';
 
 const engine = new StrategyEngine<AiInput, { response: string; confidence: number; sources: string[] }>([
   new DifyStrategy(),
   new LangflowStrategy(),
-  new MockAiStrategy(),
+  new UnavailableStrategy(),
 ]);
 
 export async function POST(req: NextRequest) {

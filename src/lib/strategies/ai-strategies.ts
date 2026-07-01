@@ -83,25 +83,12 @@ export class LangflowStrategy implements Strategy<AiInput, AiResult> {
   }
 }
 
-// 3. Final fallback: Contextual mock for offline/dev mode
-export class MockAiStrategy implements Strategy<AiInput, AiResult> {
-  name = 'Mock AI (Development Fallback)';
+// 3. Final fallback: clear "unavailable" error — no fake responses
+export class UnavailableStrategy implements Strategy<AiInput, AiResult> {
+  name = 'Unavailable';
   
-  async execute(input: AiInput): Promise<AiResult> {
-    const q = input.query.toLowerCase();
-    
-    let response = "I'm AkiliHub's AI assistant. I can help you explore tenders, business registrations, health data, and salaries across East Africa. Try asking about specific tenders or registered companies!";
-
-    if (q.includes('tender') || q.includes('procurement') || q.includes('bid')) {
-      response = "I can help with East African procurement intelligence. Our database tracks active tenders from PPRA Tanzania, PPOA Kenya, and PPDA Uganda. Try searching the **Tenders** directory for specific categories like IT, Construction, or Consultancy.";
-    } else if (q.includes('business') || q.includes('compan') || q.includes('registr') || q.includes('brela')) {
-      response = "Our Business Registry indexes companies registered with BRELA in Tanzania and equivalent bodies. You can search by company name or registration number in the **Compliance** section.";
-    } else if (q.includes('health') || q.includes('indicator') || q.includes('disease') || q.includes('dhis')) {
-      response = "We track key public health indicators across East Africa sourced from DHIS2 and WHO datasets. Explore the **Health** section to filter by category (maternal, infectious, child health) and country.";
-    } else if (q.includes('salary') || q.includes('pay') || q.includes('wage') || q.includes('earn')) {
-      response = "Our Salary Database covers public and private sector pay across the region. You can filter by experience level (Entry, Mid, Senior, Executive) and job title in the **Salaries** section.";
-    }
-    
-    return { response, confidence: 0.7, sources: [] };
+  async execute(_input: AiInput): Promise<AiResult> {
+    throw new Error('AI service is currently unavailable. Please try again later.');
   }
 }
+

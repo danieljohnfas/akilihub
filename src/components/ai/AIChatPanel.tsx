@@ -21,7 +21,7 @@ export function AIChatPanel() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: "Hi! I'm AkiliHub's AI. Ask me about tenders, business registrations, health data, or salaries across East Africa.",
+      content: "Hi! I'm AkiliHub's AI assistant. Ask me about tenders, business registrations, health data, or salaries across East Africa.",
       timestamp: new Date(),
     },
   ]);
