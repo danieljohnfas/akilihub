@@ -1,0 +1,128 @@
+import { db } from '@/lib/db/client';
+import { tenders, tenderSectors } from '@/lib/db/schema/tenders';
+import { countries } from '@/lib/db/schema/shared';
+import { eq, desc, ilike, and, sql } from 'drizzle-orm';
+import { TenderCard } from '@/components/tenders/TenderCard';
+import { Input } from '@/components/ui/input';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Search, SlidersHorizontal, Inbox } from 'lucide-react';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+
+export const metadata = {
+  title: 'Government Tenders | AkiliHub',
+  description: 'Browse the latest government tenders, procurement opportunities, and contracts across Africa.',
+};
+
+export default async function TendersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; sector?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const q = params.q || '';
+  const status = params.status || 'open';
+  
+  // Basic query logic - we'll expand this later with full-text search
+  // For now, doing simple ilike on title
+  const conditions = [
+    q ? ilike(tenders.title, `%${q}%`) : undefined,
+    status ? eq(tenders.status, status as any) : undefined,
+  ].filter(Boolean);
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const data = await db
+    .select({
+      tender: tenders,
+      country: countries.name,
+      sector: tenderSectors.name,
+    })
+    .from(tenders)
+    .leftJoin(countries, eq(tenders.countryId, countries.id))
+    .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
+    .where(whereClause)
+    .orderBy(desc(tenders.publishedAt))
+    .limit(20);
+
+  return (
+    <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      {/* Header & Search */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Procurement Directory</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl">
+            Discover and track government tenders and contracts from across the continent.
+          </p>
+        </div>
+        
+        <form className="w-full md:w-auto flex items-center gap-2" action="/tenders" method="GET">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              name="q"
+              placeholder="Search tenders..." 
+              className="pl-9 bg-white/5 border-white/10 focus-visible:ring-primary/50"
+              defaultValue={q}
+            />
+            {status && <input type="hidden" name="status" value={status} />}
+          </div>
+          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10">
+            <SlidersHorizontal className="h-4 w-4" />
+          </Button>
+        </form>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {['all', 'open', 'closed', 'awarded', 'cancelled'].map((s) => (
+          <Link key={s} href={`/tenders?${new URLSearchParams({ ...(q ? { q } : {}), ...(s !== 'all' ? { status: s } : {}) }).toString()}`}>
+            <Button
+              variant={status === s || (s === 'all' && !status) ? 'default' : 'secondary'}
+              size="sm"
+              className="rounded-full"
+            >
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </Button>
+          </Link>
+        ))}
+      </div>
+
+      {/* Grid */}
+      {data.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <Inbox className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">No tenders found</h3>
+          <p className="text-muted-foreground max-w-md">
+            We couldn't find any tenders matching your current search criteria. Try adjusting your filters or search term.
+          </p>
+          {(q || status !== 'open') && (
+            <Link href="/tenders" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
+              Clear all filters
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data.map(({ tender, country, sector }) => (
+            <TenderCard
+              key={tender.id}
+              id={tender.id}
+              title={tender.title}
+              referenceNo={tender.referenceNo}
+              contractingAuthority={tender.contractingAuthority}
+              country={country || 'Unknown'}
+              sector={sector || undefined}
+              status={tender.status}
+              deadline={tender.deadline}
+              budget={tender.budget}
+              currency={tender.currency}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
