@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Brain, Menu } from 'lucide-react';
+import { GlobalSearch } from '@/components/shared/GlobalSearch';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -39,7 +40,7 @@ export function Navbar() {
         
         <div className="flex items-center gap-4">
           <div className="hidden md:block">
-            {/* Command palette placeholder */}
+            <GlobalSearch />
           </div>
           <Button variant="outline" className="hidden md:inline-flex">Sign In</Button>
           
