@@ -43,3 +43,18 @@ if (process.env.NODE_ENV !== 'production') globalForDb.conn = conn;
 
 export const db = drizzle(conn, { schema });
 export type DB = typeof db;
+
+/**
+ * safeQuery - wraps a db query promise in a try/catch.
+ * Returns the result on success, or [] on failure.
+ * This prevents a DB misconfiguration from crashing the entire page with a 500.
+ */
+export async function safeQuery<T extends unknown[]>(query: Promise<T>): Promise<T> {
+  try {
+    return await query;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[DB Error] safeQuery caught:', message);
+    return [] as unknown as T;
+  }
+}

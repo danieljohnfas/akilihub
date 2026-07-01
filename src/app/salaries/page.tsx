@@ -1,4 +1,4 @@
-import { db } from '@/lib/db/client';
+import { db, safeQuery } from '@/lib/db/client';
 import { salarySubmissions, employers } from '@/lib/db/schema/salaries';
 import { countries } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and } from 'drizzle-orm';
@@ -29,7 +29,7 @@ export default async function SalariesPage({
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const data = await db
+  const data = await safeQuery(db
     .select({
       salary: salarySubmissions,
       employer: employers,
@@ -40,7 +40,7 @@ export default async function SalariesPage({
     .innerJoin(countries, eq(salarySubmissions.countryId, countries.id))
     .where(whereClause)
     .orderBy(desc(salarySubmissions.submittedAt))
-    .limit(20);
+    .limit(20));
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">

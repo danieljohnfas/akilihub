@@ -1,4 +1,4 @@
-import { db } from '@/lib/db/client';
+import { db, safeQuery } from '@/lib/db/client';
 import { tenders, tenderSectors } from '@/lib/db/schema/tenders';
 import { countries } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const data = await db.select({ title: tenders.title }).from(tenders).where(eq(tenders.id, resolvedParams.id)).limit(1);
+  const data = await safeQuery(db.select({ title: tenders.title }).from(tenders).where(eq(tenders.id, resolvedParams.id)).limit(1));
   if (!data.length) return { title: 'Tender Not Found' };
   
   return {
@@ -26,7 +26,7 @@ export default async function TenderDetailPage({
 }) {
   const resolvedParams = await params;
   
-  const data = await db
+  const data = await safeQuery(db
     .select({
       tender: tenders,
       country: countries.name,
@@ -36,7 +36,7 @@ export default async function TenderDetailPage({
     .leftJoin(countries, eq(tenders.countryId, countries.id))
     .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
     .where(eq(tenders.id, resolvedParams.id))
-    .limit(1);
+    .limit(1));
 
   if (!data.length) {
     notFound();
