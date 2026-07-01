@@ -11,9 +11,9 @@ import {
 const navLinks = [
   { href: '/tenders', label: 'Tenders' },
   { href: '/compliance', label: 'Compliance' },
-  { href: '/health-data', label: 'Health Data' },
+  { href: '/health', label: 'Health Data' },
   { href: '/salaries', label: 'Salaries' },
-  { href: '/tools', label: 'Tools' },
+  { href: '/developers', label: 'Dev Tools' },
 ];
 
 export function Navbar() {

@@ -8,11 +8,8 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(nextConfig, {
   org: "akilihub",
   project: "akilihub-web",
+  // Only print source-map upload logs in CI
   silent: !process.env.CI,
-  reactComponentAnnotation: {
-    enabled: true,
-  },
+  // Route browser requests through Next.js to avoid ad-blockers
   tunnelRoute: "/monitoring",
-  disableLogger: true,
-  automaticVercelMonitors: true,
 });

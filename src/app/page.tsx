@@ -28,7 +28,7 @@ const features = [
     title: "Health Data Explorer",
     description: "Interactive dashboards and trends from DHIS2 and WHO data.",
     icon: Activity,
-    href: "/health-data",
+    href: "/health",
     cpm: "$8-22 CPM",
     color: "text-teal-500",
     bg: "bg-teal-500/10"
@@ -46,7 +46,7 @@ const features = [
     title: "Developer Toolbox",
     description: "Free DHIS2, FHIR, HL7, and ICD-11 tools for health IT pros.",
     icon: Code,
-    href: "/tools",
+    href: "/developers",
     cpm: "$10-25 CPM",
     color: "text-orange-500",
     bg: "bg-orange-500/10"

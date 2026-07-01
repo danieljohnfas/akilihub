@@ -17,9 +17,9 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/tenders" className="hover:text-primary transition-colors">Procurement</Link></li>
               <li><Link href="/compliance" className="hover:text-primary transition-colors">Compliance</Link></li>
-              <li><Link href="/health-data" className="hover:text-primary transition-colors">Health Data</Link></li>
+              <li><Link href="/health" className="hover:text-primary transition-colors">Health Data</Link></li>
               <li><Link href="/salaries" className="hover:text-primary transition-colors">Salaries</Link></li>
-              <li><Link href="/tools" className="hover:text-primary transition-colors">Dev Tools</Link></li>
+              <li><Link href="/developers" className="hover:text-primary transition-colors">Dev Tools</Link></li>
             </ul>
           </div>
           <div className="space-y-4">
@@ -34,7 +34,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t py-6 text-center text-sm text-muted-foreground">
-        © 2025 AkiliHub. All rights reserved.
+        © 2026 AkiliHub. All rights reserved.
       </div>
     </footer>
   );
