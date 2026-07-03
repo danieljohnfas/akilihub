@@ -5,6 +5,10 @@ export const complianceCategoryEnum = pgEnum('compliance_category', [
   'tax', 'business_registration', 'employment', 'environment', 'health_safety', 'sector_specific'
 ]);
 
+export const complianceResourceTypeEnum = pgEnum('compliance_resource_type', [
+  'form', 'calculator', 'guideline', 'notice'
+]);
+
 export const businessTypes = pgTable('business_types', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull().unique(),
@@ -39,6 +43,7 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   estimatedCost: text('estimated_cost'),
   requiredDocuments: text('required_documents').array(),
   sourceUrl: text('source_url'),
+  resourceType: complianceResourceTypeEnum('resource_type').notNull().default('guideline'),
   isActive: boolean('is_active').notNull().default(true),
   lastVerifiedAt: timestamp('last_verified_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),

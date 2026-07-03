@@ -46,7 +46,7 @@ export async function scrapeRPPARwanda(): Promise<number> {
       const fc = new FirecrawlStrategy();
       try {
         console.log(`[RPPA Rwanda] Trying Firecrawl on ${fallbackUrl}...`);
-        const { result } = await fc.execute({ url: fallbackUrl, portalType: 'rppa_rw' });
+        const result = await fc.execute({ url: fallbackUrl, portalType: 'rppa_rw' });
         rawTenders = result ?? [];
         console.log(`[RPPA Rwanda] Firecrawl returned ${rawTenders.length} tenders.`);
       } catch (err) {

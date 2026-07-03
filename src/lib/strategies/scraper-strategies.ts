@@ -1,9 +1,21 @@
 import { Strategy } from './engine';
 import * as cheerio from 'cheerio';
 
+export type PortalType =
+  | 'ppra_tz'
+  | 'ppoa_ke'
+  | 'ppda_ug'
+  | 'brela_tz'
+  | 'rppa_rw'
+  | 'pppa_et'
+  | 'armp_cd'
+  | 'tra_tz_resources'
+  | 'kra_ke_resources'
+  | 'brela_tz_resources';
+
 export interface ScraperInput {
   url: string;
-  portalType: 'ppra_tz' | 'ppoa_ke' | 'ppda_ug' | 'brela_tz' | 'rppa_rw' | 'pppa_et' | 'armp_cd';
+  portalType: PortalType;
   searchQuery?: string;
 }
 

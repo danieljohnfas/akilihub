@@ -5,8 +5,11 @@ import { eq, desc, ilike, and } from 'drizzle-orm';
 import { BusinessCard } from '@/components/compliance/BusinessCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, Inbox } from 'lucide-react';
+import { Search, SlidersHorizontal, Inbox, Building2, BookOpen } from 'lucide-react';
 import Link from 'next/link';
+import { complianceRequirements } from '@/lib/db/schema/compliance';
+import { ResourceCard } from '@/components/compliance/ResourceCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const metadata = {
   title: 'Business Registry | AkiliBrain Compliance',
@@ -42,6 +45,16 @@ export default async function CompliancePage({
     .orderBy(desc(businesses.createdAt))
     .limit(20));
 
+  const resources = await safeQuery(db
+    .select({
+      resource: complianceRequirements,
+      country: countries.name,
+    })
+    .from(complianceRequirements)
+    .leftJoin(countries, eq(complianceRequirements.countryId, countries.id))
+    .orderBy(desc(complianceRequirements.createdAt))
+    .limit(50));
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
       {/* Header & Search */}
@@ -70,54 +83,106 @@ export default async function CompliancePage({
         </form>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {['all', 'active', 'inactive', 'deregistered'].map((s) => (
-          <Link key={s} href={`/compliance?${new URLSearchParams({ ...(q ? { q } : {}), ...(s !== 'all' ? { status: s } : {}) }).toString()}`}>
-            <Button
-              variant={status === s || (s === 'all' && !status) ? 'default' : 'secondary'}
-              size="sm"
-              className="rounded-full"
-            >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </Button>
-          </Link>
-        ))}
-      </div>
+      <Tabs defaultValue="resources" className="w-full">
+        <TabsList className="mb-6 bg-white/5 border border-white/10">
+          <TabsTrigger value="resources" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <BookOpen className="w-4 h-4" />
+            Compliance Resources
+          </TabsTrigger>
+          <TabsTrigger value="businesses" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Building2 className="w-4 h-4" />
+            Business Search
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Grid */}
-      {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
-          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-            <Inbox className="w-8 h-8 text-muted-foreground" />
+        <TabsContent value="resources" className="space-y-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {['all', 'form', 'calculator', 'guideline', 'notice'].map((t) => (
+              <Button key={t} variant="secondary" size="sm" className="rounded-full capitalize">
+                {t}
+              </Button>
+            ))}
           </div>
-          <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
-          <p className="text-muted-foreground max-w-md">
-            We couldn&apos;t find any registered companies matching your search criteria in our database.
-          </p>
-          {(q || (status && status !== 'all')) && (
-            <Link href="/compliance" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
-              Clear all filters
-            </Link>
+
+          {resources.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                <BookOpen className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No resources available</h3>
+              <p className="text-muted-foreground max-w-md">
+                We are currently indexing compliance resources from authorities.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {resources.map(({ resource, country }) => (
+                <ResourceCard
+                  key={resource.id}
+                  title={resource.title}
+                  description={resource.description}
+                  resourceType={resource.resourceType as any}
+                  issuingAuthority={resource.issuingAuthority}
+                  sourceUrl={resource.sourceUrl}
+                  country={country || 'Unknown'}
+                  lastVerifiedAt={resource.lastVerifiedAt}
+                />
+              ))}
+            </div>
           )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map(({ business, country, type }) => (
-            <BusinessCard
-              key={business.id}
-              id={business.id}
-              name={business.name}
-              registrationNumber={business.registrationNumber}
-              country={country || 'Unknown'}
-              type={type || undefined}
-              status={business.status}
-              registrationDate={business.registrationDate}
-              directorsCount={business.directors?.length || 0}
-            />
-          ))}
-        </div>
-      )}
+        </TabsContent>
+
+        <TabsContent value="businesses" className="space-y-6">
+          {/* Filters */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {['all', 'active', 'inactive', 'deregistered'].map((s) => (
+              <Link key={s} href={`/compliance?${new URLSearchParams({ ...(q ? { q } : {}), ...(s !== 'all' ? { status: s } : {}) }).toString()}`}>
+                <Button
+                  variant={status === s || (s === 'all' && !status) ? 'default' : 'secondary'}
+                  size="sm"
+                  className="rounded-full"
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </Button>
+              </Link>
+            ))}
+          </div>
+
+          {/* Grid */}
+          {data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                <Inbox className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
+              <p className="text-muted-foreground max-w-md">
+                We couldn&apos;t find any registered companies matching your search criteria in our database.
+              </p>
+              {(q || (status && status !== 'all')) && (
+                <Link href="/compliance" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
+                  Clear all filters
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {data.map(({ business, country, type }) => (
+                <BusinessCard
+                  key={business.id}
+                  id={business.id}
+                  name={business.name}
+                  registrationNumber={business.registrationNumber}
+                  country={country || 'Unknown'}
+                  type={type || undefined}
+                  status={business.status}
+                  registrationDate={business.registrationDate}
+                  directorsCount={business.directors?.length || 0}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

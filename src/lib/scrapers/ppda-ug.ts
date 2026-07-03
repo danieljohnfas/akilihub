@@ -46,7 +46,7 @@ export async function scrapePPDAUganda(): Promise<number> {
       const fc = new FirecrawlStrategy();
       try {
         console.log(`[PPDA Uganda] Trying Firecrawl on ${fallbackUrl}...`);
-        const { result } = await fc.execute({ url: fallbackUrl, portalType: 'ppda_ug' });
+        const result = await fc.execute({ url: fallbackUrl, portalType: 'ppda_ug' });
         rawTenders = result ?? [];
         console.log(`[PPDA Uganda] Firecrawl returned ${rawTenders.length} tenders.`);
       } catch (err) {

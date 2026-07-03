@@ -11,6 +11,11 @@ import {
 import { sendTenderAlertsJob } from "@/inngest/send-alerts";
 import { fetchHealthDataJob } from "@/inngest/fetch-health";
 import { enforceDataFreshnessJob } from "@/inngest/enforce-freshness";
+import {
+  scrapeTRAResourcesJob,
+  scrapeKRAResourcesJob,
+  scrapeBRELAResourcesJob,
+} from "@/inngest/scrape-compliance";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -25,6 +30,10 @@ export const { GET, POST, PUT } = serve({
     // Alert job
     sendTenderAlertsJob,
     fetchHealthDataJob,
+    // Compliance resource jobs
+    scrapeTRAResourcesJob,
+    scrapeKRAResourcesJob,
+    scrapeBRELAResourcesJob,
     // Data freshness enforcement (runs twice daily)
     enforceDataFreshnessJob,
   ],

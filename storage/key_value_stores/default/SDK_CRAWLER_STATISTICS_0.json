@@ -1,29 +1,41 @@
 {
   "requestsFinished": 1,
   "requestsFailed": 0,
-  "requestsRetries": 0,
+  "requestsRetries": 1,
   "requestsFailedPerMinute": 0,
-  "requestsFinishedPerMinute": 6,
-  "requestMinDurationMillis": 7767,
-  "requestMaxDurationMillis": 7767,
+  "requestsFinishedPerMinute": 1,
+  "requestMinDurationMillis": 15890,
+  "requestMaxDurationMillis": 15890,
   "requestTotalFailedDurationMillis": 0,
-  "requestTotalFinishedDurationMillis": 7767,
-  "crawlerStartedAt": "2026-07-02T13:26:52.143Z",
-  "crawlerFinishedAt": "2026-07-02T13:27:02.466Z",
-  "statsPersistedAt": "2026-07-02T13:27:02.466Z",
-  "crawlerRuntimeMillis": 10399,
-  "crawlerLastStartTimestamp": 1782998812067,
+  "requestTotalFinishedDurationMillis": 15890,
+  "crawlerStartedAt": "2026-07-03T08:32:01.715Z",
+  "crawlerFinishedAt": "2026-07-03T08:33:20.271Z",
+  "statsPersistedAt": "2026-07-03T08:33:20.271Z",
+  "crawlerRuntimeMillis": 78629,
+  "crawlerLastStartTimestamp": 1783067521642,
   "requestRetryHistogram": [
+    null,
+    null,
     1
   ],
   "statsId": 0,
   "requestAvgFailedDurationMillis": null,
-  "requestAvgFinishedDurationMillis": 7767,
-  "requestTotalDurationMillis": 7767,
+  "requestAvgFinishedDurationMillis": 15890,
+  "requestTotalDurationMillis": 15890,
   "requestsTotal": 1,
   "requestsWithStatusCode": {
     "404": 1
   },
   "errors": {},
-  "retryErrors": {}
+  "retryErrors": {
+    "C:\\Users\\nnm\\Documents\\projects\\akilihub\\node_modules\\@apify\\src\\index.ts:89:74": {
+      "missing error code": {
+        "Error": {
+          "request timed out after 30 seconds.": {
+            "count": 2
+          }
+        }
+      }
+    }
+  }
 }

@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema/users"; // we need a subscribers table or just users
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "re_123");
 
 export async function POST(req: NextRequest) {
   try {
