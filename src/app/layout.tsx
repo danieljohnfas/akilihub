@@ -14,6 +14,8 @@ export const metadata: Metadata = {
 
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 
+import Script from 'next/script';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,10 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
+        <Script
           async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_PUB_ID}`}
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2501499631331261"
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
       </head>
       <body className={inter.className}>

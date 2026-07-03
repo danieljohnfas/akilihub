@@ -97,9 +97,13 @@ export class LangflowStrategy implements Strategy<AiInput, AiResult> {
   }
 }
 
-// 3. Fallback: Vercel AI SDK (Direct Gemini connection)
-import { generateText } from 'ai';
+import { generateText, tool } from 'ai';
 import { google } from '@ai-sdk/google';
+import { z } from 'zod';
+import { db } from '../db/client';
+import { tenders } from '../db/schema/tenders';
+import { businesses } from '../db/schema/compliance';
+import { ilike, desc } from 'drizzle-orm';
 
 export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
   name = 'Vercel AI SDK (Gemini Fallback)';
@@ -108,16 +112,46 @@ export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not set.');
 
-    // Note: The google provider from @ai-sdk/google automatically uses GOOGLE_GENERATIVE_AI_API_KEY
-    const { text } = await generateText({
+    const { text, toolCalls } = await generateText({
       model: google('models/gemini-1.5-flash'),
       prompt: `You are AkiliBrain's AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.\n\nUser: ${input.query}`,
+      tools: {
+        searchTenders: {
+          description: 'Search for active government tenders in East Africa.',
+          parameters: z.object({
+            keyword: z.string().describe('The search term, e.g., IT, construction, health.'),
+          }),
+          execute: async (args: any) => {
+            const keyword = args.keyword as string;
+            const results = await db.select()
+              .from(tenders)
+              .where(ilike(tenders.title, `%${keyword}%`))
+              .orderBy(desc(tenders.publishedAt))
+              .limit(5);
+            return JSON.stringify(results);
+          },
+          } as any,
+        searchBusinesses: {
+          description: 'Check business registration and compliance status.',
+          parameters: z.object({
+            companyName: z.string().describe('The name of the company to search.'),
+          }),
+          execute: async (args: any) => {
+            const companyName = args.companyName as string;
+            const results = await db.select()
+              .from(businesses)
+              .where(ilike(businesses.name, `%${companyName}%`))
+              .limit(3);
+            return JSON.stringify(results);
+          },
+          } as any,
+      },
     });
 
     return {
       response: text,
       confidence: 0.90,
-      sources: []
+      sources: toolCalls && toolCalls.length > 0 ? ['Database (Vercel AI SDK)'] : []
     };
   }
 }

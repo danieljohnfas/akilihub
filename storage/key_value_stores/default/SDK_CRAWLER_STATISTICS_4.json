@@ -1,0 +1,67 @@
+{
+  "requestsFinished": 0,
+  "requestsFailed": 1,
+  "requestsRetries": 1,
+  "requestsFailedPerMinute": 14,
+  "requestsFinishedPerMinute": 0,
+  "requestMinDurationMillis": null,
+  "requestMaxDurationMillis": 0,
+  "requestTotalFailedDurationMillis": 10,
+  "requestTotalFinishedDurationMillis": 0,
+  "crawlerStartedAt": "2026-07-02T13:27:24.306Z",
+  "crawlerFinishedAt": "2026-07-02T13:27:28.152Z",
+  "statsPersistedAt": "2026-07-02T13:27:28.153Z",
+  "crawlerRuntimeMillis": 4195,
+  "crawlerLastStartTimestamp": 1782998843958,
+  "requestRetryHistogram": [
+    null,
+    null,
+    1
+  ],
+  "statsId": 4,
+  "requestAvgFailedDurationMillis": 10,
+  "requestAvgFinishedDurationMillis": null,
+  "requestTotalDurationMillis": 10,
+  "requestsTotal": 1,
+  "requestsWithStatusCode": {},
+  "errors": {
+    "file:///C:/Users/nnm/Documents/projects/akilihub/node_modules/got/dist/source/core/index.js:198:21": {
+      "ENOTFOUND": {
+        "RequestError": {
+          "getaddrinfo ENOTFOUND www.pppa.gov.et": {
+            "count": 1
+          }
+        }
+      }
+    },
+    "node:dns:121:26": {
+      "ENOTFOUND": {
+        "Error": {
+          "getaddrinfo ENOTFOUND www.pppa.gov.et": {
+            "count": 1
+          }
+        }
+      }
+    }
+  },
+  "retryErrors": {
+    "file:///C:/Users/nnm/Documents/projects/akilihub/node_modules/got/dist/source/core/index.js:198:21": {
+      "ENOTFOUND": {
+        "RequestError": {
+          "getaddrinfo ENOTFOUND www.pppa.gov.et": {
+            "count": 2
+          }
+        }
+      }
+    },
+    "node:dns:121:26": {
+      "ENOTFOUND": {
+        "Error": {
+          "getaddrinfo ENOTFOUND www.pppa.gov.et": {
+            "count": 2
+          }
+        }
+      }
+    }
+  }
+}

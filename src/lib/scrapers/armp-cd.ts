@@ -11,11 +11,11 @@ import { countries } from '../db/schema/shared';
 import { eq } from 'drizzle-orm';
 
 /**
- * Uganda Public Procurement and Disposal of Public Assets Authority (PPDA)
- * Portal: https://www.ppda.go.ug/
+ * Congo DRC — Autorité de Régulation des Marchés Publics (ARMP)
+ * Portal: https://www.armp.cd/
  */
-export async function scrapePPDAUganda(): Promise<number> {
-  const targetUrl = 'https://www.ppda.go.ug/public-notices/';
+export async function scrapeARMPCongoDRC(): Promise<number> {
+  const targetUrl = 'https://www.armp.cd/index.php/appels-d-offres';
 
   const scraperEngine = new StrategyEngine([
     new FirecrawlStrategy(),
@@ -25,33 +25,33 @@ export async function scrapePPDAUganda(): Promise<number> {
   ]);
 
   try {
-    console.log(`Starting PPDA Uganda scrape for ${targetUrl}...`);
+    console.log(`Starting ARMP Congo DRC scrape for ${targetUrl}...`);
 
     const { result, strategyUsed } = await scraperEngine.executeWithFallback({
       url: targetUrl,
-      portalType: 'ppda_ug',
+      portalType: 'armp_cd',
     });
 
     console.log(`Scraped ${result.length} tenders via ${strategyUsed}.`);
     if (result.length === 0) return 0;
 
-    const [ug] = await db
+    const [cd] = await db
       .select({ id: countries.id })
       .from(countries)
-      .where(eq(countries.code, 'UG'))
+      .where(eq(countries.code, 'CD'))
       .limit(1);
 
-    if (!ug) {
-      console.warn('Uganda country record not found. Cannot insert tenders.');
+    if (!cd) {
+      console.warn('Congo DRC country record not found. Cannot insert tenders.');
       return 0;
     }
 
     const formattedTenders = result.map((t: any) => ({
       title: t.title,
-      referenceNo: t.referenceNo || `UG-TND-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      referenceNo: t.referenceNo || `CD-TND-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       description: t.description || null,
-      contractingAuthority: t.contractingAuthority || 'PPDA Uganda',
-      countryId: ug.id,
+      contractingAuthority: t.contractingAuthority || 'ARMP Congo DRC',
+      countryId: cd.id,
       publishedAt: new Date(t.publishedDate || Date.now()),
       deadline: new Date(t.deadline || Date.now() + 86400000 * 30),
       sourceUrl: t.sourceUrl || targetUrl,
@@ -64,10 +64,10 @@ export async function scrapePPDAUganda(): Promise<number> {
       .onConflictDoNothing({ target: tenders.referenceNo })
       .returning({ id: tenders.id });
 
-    console.log(`Inserted ${inserted.length} new Uganda tenders.`);
+    console.log(`Inserted ${inserted.length} new Congo DRC tenders.`);
     return inserted.length;
   } catch (error) {
-    console.error('All scraper strategies failed for PPDA Uganda:', error);
+    console.error('All scraper strategies failed for ARMP Congo DRC:', error);
     return 0;
   }
 }

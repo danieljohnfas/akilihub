@@ -21,6 +21,7 @@ async function seed() {
     { name: 'Uganda', code: 'UG' },
     { name: 'Rwanda', code: 'RW' },
     { name: 'Ethiopia', code: 'ET' },
+    { name: 'Congo DRC', code: 'CD' },
   ]).onConflictDoNothing().returning();
   console.log(`     Seeded ${insertedCountries.length} countries`);
 
@@ -59,17 +60,56 @@ async function seed() {
   // 4. Business Types (for compliance)
   const ke = insertedCountries.find(c => c.code === 'KE');
   const tz = insertedCountries.find(c => c.code === 'TZ');
+  const ug = insertedCountries.find(c => c.code === 'UG');
+  const rw = insertedCountries.find(c => c.code === 'RW');
+  const et = insertedCountries.find(c => c.code === 'ET');
+  const cd = insertedCountries.find(c => c.code === 'CD');
 
-  if (ke && tz) {
-    console.log('  → Seeding business types...');
-    await db.insert(businessTypes).values([
-      { name: 'Sole Proprietorship', description: 'A business owned and operated by one person', countryId: ke.id },
+  const businessTypeSeed = [];
+
+  if (ke) {
+    businessTypeSeed.push(
+      { name: 'Sole Proprietorship', description: 'A business owned by one person', countryId: ke.id },
       { name: 'Limited Company (Ltd)', description: 'A company limited by shares', countryId: ke.id },
       { name: 'Partnership', description: 'A business run by two or more partners', countryId: ke.id },
       { name: 'NGO / Non-Profit', description: 'A non-governmental organization', countryId: ke.id },
+    );
+  }
+  if (tz) {
+    businessTypeSeed.push(
       { name: 'Sole Proprietorship', description: 'Biashara inayomilikiwa na mtu mmoja', countryId: tz.id },
       { name: 'Limited Company (Ltd)', description: 'Kampuni yenye wanahisa', countryId: tz.id },
-    ]).onConflictDoNothing();
+    );
+  }
+  if (ug) {
+    businessTypeSeed.push(
+      { name: 'Sole Proprietorship', description: 'Business owned by one person', countryId: ug.id },
+      { name: 'Limited Company (Ltd)', description: 'Company limited by shares', countryId: ug.id },
+    );
+  }
+  if (rw) {
+    businessTypeSeed.push(
+      { name: 'Sole Proprietorship', description: 'Entreprise individuelle', countryId: rw.id },
+      { name: 'Limited Company (SARL)', description: 'Société à responsabilité limitée', countryId: rw.id },
+    );
+  }
+  if (et) {
+    businessTypeSeed.push(
+      { name: 'Sole Proprietorship', description: 'Individual-owned business', countryId: et.id },
+      { name: 'Private Limited Company (PLC)', description: 'Company limited by shares', countryId: et.id },
+    );
+  }
+  if (cd) {
+    businessTypeSeed.push(
+      { name: 'Entreprise Individuelle', description: 'Entreprise appartenant à une seule personne', countryId: cd.id },
+      { name: 'SARL', description: 'Société à responsabilité limitée', countryId: cd.id },
+      { name: 'SA', description: 'Société Anonyme', countryId: cd.id },
+    );
+  }
+
+  if (businessTypeSeed.length > 0) {
+    console.log('  → Seeding business types...');
+    await db.insert(businessTypes).values(businessTypeSeed).onConflictDoNothing();
     console.log(`     Seeded business types`);
   }
 

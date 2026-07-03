@@ -5,6 +5,8 @@ import { salarySubmissions } from '@/lib/db/schema/salaries';
 import { healthDataPoints } from '@/lib/db/schema/health';
 import { count } from 'drizzle-orm';
 import { FileText, ShieldCheck, Banknote, Activity, TrendingUp, Database } from 'lucide-react';
+import { TendersChart } from '@/components/dashboard/TendersChart';
+import { sql } from 'drizzle-orm';
 
 async function getStats() {
   const [t, b, s, h] = await Promise.all([
@@ -21,8 +23,25 @@ async function getStats() {
   };
 }
 
+async function getChartData() {
+  const data = await safeQuery(
+    db.select({
+      status: tenders.status,
+      count: count(),
+    })
+    .from(tenders)
+    .groupBy(tenders.status)
+  );
+  
+  return data.map(d => ({
+    status: String(d.status),
+    count: Number(d.count)
+  }));
+}
+
 export default async function AdminDashboardPage() {
   const stats = await getStats();
+  const chartData = await getChartData();
 
   const cards = [
     { label: 'Tenders', value: stats.tenders, icon: FileText, color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/20' },
@@ -50,6 +69,11 @@ export default async function AdminDashboardPage() {
             <p className="text-white/40 text-sm mt-1">{label}</p>
           </div>
         ))}
+      </div>
+      
+      {/* Chart Section */}
+      <div>
+        <TendersChart data={chartData} />
       </div>
 
       {/* Info cards */}

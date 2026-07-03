@@ -1,7 +1,8 @@
 import { StrategyEngine } from '../strategies/engine';
-import { 
-  MaxunStrategy, 
-  Crawl4AiStrategy, 
+import {
+  FirecrawlStrategy,
+  MaxunStrategy,
+  Crawl4AiStrategy,
   CrawleeStrategy
 } from '../strategies/scraper-strategies';
 import { db } from '../db/client';
@@ -14,9 +15,10 @@ export async function scrapePPRATZ(): Promise<number> {
   
   // Initialize our fallback strategy chain: Maxun -> Crawl4AI -> Crawlee
   const scraperEngine = new StrategyEngine([
+    new FirecrawlStrategy(),
     new MaxunStrategy(),
     new Crawl4AiStrategy(),
-    new CrawleeStrategy()
+    new CrawleeStrategy(),
   ]);
 
   try {

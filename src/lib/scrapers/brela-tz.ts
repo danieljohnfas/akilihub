@@ -1,8 +1,9 @@
 import { StrategyEngine } from '../strategies/engine';
-import { 
-  MaxunStrategy, 
-  Crawl4AiStrategy, 
-  CrawleeStrategy
+import {
+  FirecrawlStrategy,
+  MaxunStrategy,
+  Crawl4AiStrategy,
+  CrawleeStrategy,
 } from '../strategies/scraper-strategies';
 import { db } from '../db/client';
 import { businesses } from '../db/schema/compliance';
@@ -13,9 +14,10 @@ export async function scrapeBrelaTZ(searchQuery: string = ''): Promise<number> {
   const targetUrl = `https://ors.brela.go.tz/orssims/searchinformation?query=${encodeURIComponent(searchQuery)}`;
   
   const scraperEngine = new StrategyEngine([
+    new FirecrawlStrategy(),
     new MaxunStrategy(),
     new Crawl4AiStrategy(),
-    new CrawleeStrategy()
+    new CrawleeStrategy(),
   ]);
 
   try {
