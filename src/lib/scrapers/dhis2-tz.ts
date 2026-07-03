@@ -61,7 +61,7 @@ async function fetchWorldBankIndicator(key: string): Promise<number> {
   try {
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(45000), // WB multi-country queries can be slow
     });
     if (!res.ok) throw new Error(`World Bank API returned ${res.status}`);
     const [, data] = await res.json() as [unknown, typeof rows];
@@ -94,7 +94,7 @@ async function fetchWHOFallbackIndicator(key: string): Promise<number> {
   try {
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(45000),
     });
     if (!res.ok) throw new Error(`WHO GHO API returned ${res.status}`);
     const json = await res.json();
