@@ -10,6 +10,7 @@ import {
 } from "@/inngest/scrape-tenders";
 import { sendTenderAlertsJob } from "@/inngest/send-alerts";
 import { fetchHealthDataJob } from "@/inngest/fetch-health";
+import { enforceDataFreshnessJob } from "@/inngest/enforce-freshness";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -24,5 +25,7 @@ export const { GET, POST, PUT } = serve({
     // Alert job
     sendTenderAlertsJob,
     fetchHealthDataJob,
+    // Data freshness enforcement (runs twice daily)
+    enforceDataFreshnessJob,
   ],
 });

@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (!process.env.RESEND_API_KEY) {
-       console.error("RESEND_API_KEY is missing. Mocking success.");
-       return NextResponse.json({ success: true, message: "Subscribed successfully (Mock mode)" });
+      console.error("RESEND_API_KEY is not configured.");
+      return NextResponse.json({ error: "Email service is not configured." }, { status: 503 });
     }
 
     // Send a welcome email
