@@ -4,16 +4,16 @@ import { countries } from '../db/schema/shared';
 import { eq } from 'drizzle-orm';
 
 /**
- * Tanzania PPRA — Public Procurement Regulatory Authority
- * Uses the official PPRA Tanzania tender RSS/XML feed and JSON API endpoint.
- * Falls back to a direct API approach if RSS is unavailable.
- * Portal: https://www.ppra.go.tz
+ * Tanzania PPRA — via NeST (National e-Procurement System of Tanzania)
+ * Official OCDS open data portal launched June 2025.
+ * Portal: https://data.nest.go.tz/ocds
  */
 export async function scrapePPRATZ(): Promise<number> {
-  // PPRA TZ publishes tender data through a structured JSON endpoint
+  // NeST OCDS open data endpoints
   const apiUrls = [
-    'https://www.ppra.go.tz/api/tenders?format=json&status=open',
-    'https://www.ppra.go.tz/tenders.json',
+    'https://data.nest.go.tz/api/ocds/tenders/?format=json&status=active&page_size=50',
+    'https://data.nest.go.tz/ocds/releases/?format=json&limit=50',
+    'https://nest.go.tz/api/tenders?format=json&status=open',
   ];
 
   try {

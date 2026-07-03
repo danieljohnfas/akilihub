@@ -4,15 +4,15 @@ import { countries } from '../db/schema/shared';
 import { eq } from 'drizzle-orm';
 
 /**
- * Uganda — Public Procurement and Disposal of Public Assets Authority (PPDA)
- * Uses the PPDA Uganda OCDS/API endpoint.
- * Portal: https://www.ppda.go.ug
- * The GPPB UMRA system exposes a JSON feed at /api/tenders
+ * Uganda — PPDA via the Government Procurement Portal (GPP)
+ * Official OCDS portal: https://gpp.ppda.go.ug
+ * Publishes JSON datasets of active tenders.
  */
 export async function scrapePPDAUganda(): Promise<number> {
   const apiUrls = [
+    'https://gpp.ppda.go.ug/api/v1/tenders?status=active&format=json&limit=50',
+    'https://gpp.ppda.go.ug/tenders.json?limit=50',
     'https://www.ppda.go.ug/api/tenders?status=active&format=json',
-    'https://www.gpp.go.ug/api/v1/tenders?format=json',
   ];
   const fallbackUrl = 'https://www.ppda.go.ug/public-notices/';
 

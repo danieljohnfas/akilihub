@@ -5,13 +5,14 @@ import { eq } from 'drizzle-orm';
 
 /**
  * Rwanda — Rwanda Public Procurement Authority (RPPA)
- * Portal: https://www.rppa.gov.rw
- * Rwanda's e-GP system (Umucyo) exposes a structured API.
+ * Official OCDS portal: https://ocds.umucyo.gov.rw/OpenData
+ * Rwanda's Umucyo system provides machine-readable data via API.
  */
 export async function scrapeRPPARwanda(): Promise<number> {
   const apiUrls = [
+    'https://ocds.umucyo.gov.rw/OpenData/api/v1/releases/?format=json&status=active&limit=50',
+    'https://ocds.umucyo.gov.rw/OpenData/releases.json?limit=50',
     'https://umucyo.gov.rw/api/v1/tenders?status=open&format=json',
-    'https://www.rppa.gov.rw/api/tenders?format=json',
   ];
   const fallbackUrl = 'https://www.rppa.gov.rw/index.php?id=tender';
 
