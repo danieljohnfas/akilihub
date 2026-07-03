@@ -26,7 +26,7 @@ try {
   console.error('⚠️ Upstash Redis failed to initialize:', e);
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ── Admin Route Protection ──────────────────────────────────────────────
