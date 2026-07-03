@@ -36,10 +36,14 @@ try {
 }
 
 const conn = globalForDb.conn ?? postgres(connectionString, {
-  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
-  max: 10,
+  // Supabase pooler requires SSL. Always enforce it regardless of NODE_ENV
+  // to match Vercel's serverless environment.
+  ssl: 'require',
+  // Serverless functions must use max: 1 to avoid overwhelming PgBouncer
+  max: 1,
   idle_timeout: 20,
-  connect_timeout: 10,
+  connect_timeout: 30,
+  prepare: false, // pgBouncer does not support prepared statements
 });
 
 if (process.env.NODE_ENV !== 'production') globalForDb.conn = conn;
