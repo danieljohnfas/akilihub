@@ -9,6 +9,8 @@ import { Search, SlidersHorizontal, Inbox } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Government Tenders | AkiliBrain',
   description: 'Browse the latest government tenders, procurement opportunities, and contracts across Africa.',

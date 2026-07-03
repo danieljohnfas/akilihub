@@ -8,6 +8,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Search, SlidersHorizontal, Activity } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Public Health Data | AkiliBrain',
   description: 'Track and analyze public health indicators across Africa.',
