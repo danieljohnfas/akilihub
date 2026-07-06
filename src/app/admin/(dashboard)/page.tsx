@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { safeQuery, db } from '@/lib/db/client';
 import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';

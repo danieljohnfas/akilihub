@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Brain, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { Logo } from '@/components/shared/Logo';
 import { GlobalSearch } from '@/components/shared/GlobalSearch';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +23,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-8">
           <Link href="/" className="flex items-center space-x-2">
-            <Brain className="h-6 w-6 text-primary" />
+            <Logo className="h-6 w-6" />
             <span className="font-bold text-xl inline-block">AkiliBrain</span>
           </Link>
           <nav className="hidden md:flex gap-6">

@@ -1,0 +1,45 @@
+import { SVGProps } from "react";
+
+export function Logo({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 100 100" 
+      fill="none"
+      className={className}
+      {...props}
+    >
+      <defs>
+        <linearGradient id="akilibrain-gradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#4F46E5"/>
+          <stop offset="100%" stopColor="#7C3AED"/>
+        </linearGradient>
+      </defs>
+      {/* Brain outline filled */}
+      <path d="M50 8C34 8 22 20 22 35c0 6 2 11 6 15-3 3-5 7-5 12 0 9 7 16 16 16 2 0 4 0 6-1v6c0 2 2 4 5 4s5-2 5-4v-6c2 1 4 1 6 1 9 0 16-7 16-16 0-5-2-9-5-12 4-4 6-9 6-15 0-15-12-27-28-27z" fill="url(#akilibrain-gradient)" opacity="0.15"/>
+      {/* Neural network nodes and edges */}
+      {/* Edges */}
+      <line x1="50" y1="22" x2="35" y2="38" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="50" y1="22" x2="65" y2="38" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="35" y1="38" x2="50" y2="52" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="65" y1="38" x2="50" y2="52" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="35" y1="38" x2="27" y2="55" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="65" y1="38" x2="73" y2="55" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="50" y1="52" x2="27" y2="55" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="50" y1="52" x2="73" y2="55" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="27" y1="55" x2="38" y2="72" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="73" y1="55" x2="62" y2="72" stroke="url(#akilibrain-gradient)" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="38" y1="72" x2="50" y2="52" stroke="url(#akilibrain-gradient)" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+      <line x1="62" y1="72" x2="50" y2="52" stroke="url(#akilibrain-gradient)" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+      {/* Nodes */}
+      <circle cx="50" cy="22" r="4.5" fill="#4F46E5"/>
+      <circle cx="35" cy="38" r="4" fill="#5B50EA"/>
+      <circle cx="65" cy="38" r="4" fill="#6B4FED"/>
+      <circle cx="50" cy="52" r="5" fill="#5F3FEA"/>
+      <circle cx="27" cy="55" r="3.5" fill="#4F46E5"/>
+      <circle cx="73" cy="55" r="3.5" fill="#7C3AED"/>
+      <circle cx="38" cy="72" r="3.5" fill="#6144EC"/>
+      <circle cx="62" cy="72" r="3.5" fill="#7C3AED"/>
+    </svg>
+  );
+}

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Brain, LayoutDashboard, FileText, ShieldCheck, Activity, Banknote, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, ShieldCheck, Activity, Banknote, Settings, LogOut } from 'lucide-react';
+import { Logo } from '@/components/shared/Logo';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,8 +18,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-60 flex-shrink-0 flex flex-col border-r border-white/[0.06] bg-[#0d0d14]">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/[0.06]">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <Brain className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+            <Logo className="w-5 h-5 text-white drop-shadow" />
           </div>
           <div>
             <p className="font-semibold text-sm">AkiliBrain</p>

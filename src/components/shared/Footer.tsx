@@ -1,11 +1,15 @@
 import Link from 'next/link';
+import { Logo } from '@/components/shared/Logo';
 
 export function Footer() {
   return (
     <footer className="border-t bg-muted/20 mt-16">
       <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between gap-8">
         <div className="space-y-4 max-w-sm">
-          <h3 className="text-xl font-bold">AkiliBrain</h3>
+          <div className="flex items-center space-x-2">
+            <Logo className="h-6 w-6" />
+            <h3 className="text-xl font-bold">AkiliBrain</h3>
+          </div>
           <p className="text-sm text-muted-foreground">
             East Africa&apos;s unified professional intelligence platform. 
             Providing critical data for professionals across the region.
