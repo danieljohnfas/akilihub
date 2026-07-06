@@ -53,10 +53,12 @@ export function BusinessCard({
       </CardHeader>
       
       <CardContent className="pb-4 flex-1 space-y-3 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 shrink-0" />
-          <span className="truncate">{type || 'Standard Business'}</span>
-        </div>
+        {type && (
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 shrink-0" />
+            <span className="truncate">{type}</span>
+          </div>
+        )}
         
         <div className="flex items-center gap-2">
           <MapPin className="w-4 h-4 shrink-0" />

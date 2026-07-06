@@ -94,7 +94,6 @@ export default async function TenderDetailPage({
             </div>
           </section>
 
-          {/* Extracted Fields / Meta data could go here */}
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
               <p className="text-sm text-muted-foreground mb-1">Published Date</p>

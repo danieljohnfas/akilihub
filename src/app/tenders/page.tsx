@@ -25,8 +25,6 @@ export default async function TendersPage({
   const q = params.q || '';
   const status = params.status || 'open';
   
-  // Basic query logic - we'll expand this later with full-text search
-  // For now, doing simple ilike on title
   const conditions = [
     q ? ilike(tenders.title, `%${q}%`) : undefined,
     status ? eq(tenders.status, status as never) : undefined,

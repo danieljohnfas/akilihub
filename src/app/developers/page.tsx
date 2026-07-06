@@ -60,7 +60,7 @@ export default function DevelopersPage() {
           <div className="mb-6">
             <h2 className="text-2xl font-semibold mb-2">Authentication</h2>
             <p className="text-muted-foreground">
-              Currently, our public API routes are open for testing. In production, you will need to pass an API key in the Authorization header.
+              All API requests require a valid API key passed in the Authorization header.
             </p>
           </div>
           
@@ -172,8 +172,7 @@ print(response.json()["response"])`}
   "sources": [
     "Ministry of Health KE",
     "KEMSA Procurement"
-  ],
-  "strategyUsed": "Dify (Primary AI Workflow)"
+  ]
 }`}
                 />
               </div>
