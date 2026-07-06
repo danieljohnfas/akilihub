@@ -1,3 +1,5 @@
+export const maxDuration = 300; // Allow up to 5 mins for headless scraping
+
 import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
 import {
