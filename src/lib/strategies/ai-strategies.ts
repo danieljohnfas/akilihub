@@ -115,6 +115,7 @@ export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
 
     const { text, toolCalls } = await generateText({
       model: google('gemini-2.5-flash'),
+      maxSteps: 5,
       system: `You are AkiliBrain's intelligent AI assistant for East Africa (Kenya, Tanzania, Uganda, Rwanda, Ethiopia, Congo DRC).
 
 You help users with:
