@@ -132,7 +132,6 @@ When a user shares CV content or asks for job matching:
 
 Always be concise, helpful, and specific to East Africa context.`,
       prompt: input.query,
-      maxSteps: 3,
       tools: {
         searchTenders: tool({
           description: 'Search for active government tenders in East Africa.',
