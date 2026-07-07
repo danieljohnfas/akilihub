@@ -174,8 +174,8 @@ export function AIChatPanel() {
       {/* Slide-out Panel */}
       <aside
         className={cn(
-          'fixed bottom-0 right-0 z-50 h-[90dvh] w-full max-w-sm',
-          'flex flex-col bg-background border-l border-t border-white/10 shadow-2xl',
+          'fixed bottom-0 right-0 z-[51] h-[90dvh] w-full max-w-sm',
+          'flex flex-col bg-background border-l border-t border-white/10 shadow-2xl overflow-hidden',
           'rounded-tl-2xl transition-transform duration-300 ease-in-out',
           isOpen ? 'translate-y-0 translate-x-0' : 'translate-y-full'
         )}
