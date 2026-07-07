@@ -1,11 +1,11 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and } from 'drizzle-orm';
+import { eq, desc, ilike, and, or, isNull, gt } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, Inbox, Briefcase } from 'lucide-react';
+import { Search, Inbox, Briefcase, Building2, MapPin, Filter } from 'lucide-react';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -18,16 +18,22 @@ export const metadata = {
 export default async function JobsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; company?: string; location?: string }>;
 }) {
   const params = await searchParams;
   const q = params.q || '';
   const type = params.type || '';
+  const company = params.company || '';
+  const location = params.location || '';
 
   const conditions = [
     eq(jobs.isActive, true),
+    // Ensure the job hasn't expired
+    or(isNull(jobs.deadline), gt(jobs.deadline, new Date())),
     q ? ilike(jobs.title, `%${q}%`) : undefined,
     type ? eq(jobs.jobType, type as never) : undefined,
+    company ? ilike(jobs.companyName, `%${company}%`) : undefined,
+    location ? ilike(jobs.location, `%${location}%`) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -54,9 +60,11 @@ export default async function JobsPage({
     { value: 'remote', label: 'Remote' },
   ];
 
+  const hasFilters = q || type || company || location;
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
-      {/* Header & Search */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -66,7 +74,7 @@ export default async function JobsPage({
             <h1 className="text-3xl font-bold tracking-tight">Jobs & Careers</h1>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Discover job opportunities across East Africa, automatically sourced from across the web.
+            Discover active job opportunities across East Africa, automatically sourced from across the web.
           </p>
           {data.length > 0 && (
             <p className="text-sm text-white/40">
@@ -74,43 +82,84 @@ export default async function JobsPage({
             </p>
           )}
         </div>
-
-        <form className="w-full md:w-auto flex items-center gap-2" action="/jobs" method="GET">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              name="q"
-              placeholder="Search jobs..."
-              className="pl-9 bg-white/5 border-white/10 focus-visible:ring-primary/50"
-              defaultValue={q}
-            />
-            {type && <input type="hidden" name="type" value={type} />}
-          </div>
-          <Button variant="outline" size="icon" type="submit" className="shrink-0 bg-white/5 border-white/10">
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </form>
       </div>
 
-      {/* Job Type Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {jobTypes.map(({ value, label }) => (
-          <Link
-            key={value}
-            href={`/jobs?${new URLSearchParams({
-              ...(q ? { q } : {}),
-              ...(value ? { type: value } : {}),
-            }).toString()}`}
-          >
-            <Button
-              variant={type === value || (!type && value === '') ? 'default' : 'secondary'}
-              size="sm"
-              className="rounded-full whitespace-nowrap"
+      {/* Filter Panel */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-white/5 mb-4">
+          <Filter className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Filter & Search</h2>
+        </div>
+        
+        <form className="flex flex-col md:flex-row gap-4 items-end" action="/jobs" method="GET">
+          {type && <input type="hidden" name="type" value={type} />}
+          
+          <div className="space-y-1.5 flex-1 w-full">
+            <label className="text-xs text-muted-foreground font-medium pl-1">Job Title / Keyword</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                name="q"
+                placeholder="Software engineer..."
+                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
+                defaultValue={q}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5 flex-1 w-full">
+            <label className="text-xs text-muted-foreground font-medium pl-1">Who is recruiting?</label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                name="company"
+                placeholder="Company name..."
+                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
+                defaultValue={company}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5 flex-1 w-full">
+            <label className="text-xs text-muted-foreground font-medium pl-1">Location</label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                name="location"
+                placeholder="Nairobi, Remote, etc..."
+                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
+                defaultValue={location}
+              />
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full md:w-auto h-10 px-8">
+            Filter Results
+          </Button>
+        </form>
+
+        {/* Job Type Pills inside the filter panel for cohesion */}
+        <div className="pt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {jobTypes.map(({ value, label }) => (
+            <Link
+              key={value}
+              href={`/jobs?${new URLSearchParams({
+                ...(q ? { q } : {}),
+                ...(company ? { company } : {}),
+                ...(location ? { location } : {}),
+                ...(value ? { type: value } : {}),
+              }).toString()}`}
             >
-              {label}
-            </Button>
-          </Link>
-        ))}
+              <Button
+                variant={type === value || (!type && value === '') ? 'default' : 'secondary'}
+                size="sm"
+                className="rounded-full whitespace-nowrap h-8 text-xs bg-black/20"
+              >
+                {label}
+              </Button>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Grid */}
@@ -119,11 +168,11 @@ export default async function JobsPage({
           <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
             <Inbox className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
+          <h3 className="text-xl font-semibold mb-2">No active jobs found</h3>
           <p className="text-muted-foreground max-w-md">
-            We couldn&apos;t find any jobs matching your search. Try adjusting your filters or check back later as new positions are added daily.
+            We couldn&apos;t find any active job postings matching your criteria. Try adjusting your filters or check back later.
           </p>
-          {(q || type) && (
+          {hasFilters && (
             <Link
               href="/jobs"
               className={buttonVariants({ variant: 'outline', className: 'mt-6' })}
