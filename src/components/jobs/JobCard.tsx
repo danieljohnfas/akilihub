@@ -95,10 +95,8 @@ export function JobCard({
             <span>Posted recently</span>
           )}
         </div>
-        <a
-          href={sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={`/jobs/${id}`}
           className={buttonVariants({
             size: 'sm',
             variant: 'secondary',
@@ -106,8 +104,8 @@ export function JobCard({
           })}
         >
           <ExternalLink className="w-4 h-4 mr-2" />
-          Apply
-        </a>
+          View Details
+        </Link>
       </CardFooter>
     </Card>
   );
