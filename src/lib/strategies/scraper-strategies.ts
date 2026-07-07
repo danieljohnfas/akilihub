@@ -157,10 +157,12 @@ export class FirecrawlStrategy implements Strategy<ScraperInput, TenderResult[]>
   async execute(input: ScraperInput): Promise<TenderResult[]> {
     const apiKey = process.env.FIRECRAWL_API_KEY;
     if (!apiKey) throw new Error('FIRECRAWL_API_KEY is not set.');
+    
+    const apiUrl = process.env.FIRECRAWL_API_URL || 'http://localhost:3002';
 
-    console.log(`[FirecrawlStrategy] Scraping ${input.url}...`);
+    console.log(`[FirecrawlStrategy] Scraping ${input.url} via ${apiUrl}...`);
 
-    const app = new FirecrawlApp({ apiKey });
+    const app = new FirecrawlApp({ apiKey, apiUrl });
 
     const result = await app.scrapeUrl(input.url, {
       formats: ['html'],

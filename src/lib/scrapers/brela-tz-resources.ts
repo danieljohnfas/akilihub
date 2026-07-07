@@ -1,67 +1,35 @@
-import { StrategyEngine } from '../strategies/engine';
-import {
-  FirecrawlStrategy,
-  MaxunStrategy,
-  Crawl4AiStrategy,
-  CrawleeStrategy,
-} from '../strategies/scraper-strategies';
 import { db } from '../db/client';
-import { complianceRequirements, complianceResourceTypeEnum } from '../db/schema/compliance';
+import { complianceRequirements } from '../db/schema/compliance';
 import { countries } from '../db/schema/shared';
 import { eq } from 'drizzle-orm';
-import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
-import { z } from 'zod';
+import { fetchHtml, htmlToText, extractResourcesWithAI } from './compliance-base';
 
-const BRELA_RESOURCES_URL = 'https://www.brela.go.tz/index.php/companies/forms'; 
+const BRELA_URL = 'https://www.brela.go.tz/index.php/companies/forms';
 
 export async function scrapeBRELAResources(): Promise<number> {
-  const scraperEngine = new StrategyEngine([
-    new FirecrawlStrategy(),
-    new Crawl4AiStrategy(),
-    new CrawleeStrategy(),
-    new MaxunStrategy(),
-  ]);
-
+  console.log(`Starting BRELA Tanzania resources scrape...`);
   try {
-    console.log(`Starting BRELA Tanzania resources scrape...`);
-    
-    const { result, strategyUsed } = await scraperEngine.executeWithFallback({
-      url: BRELA_RESOURCES_URL,
-      portalType: 'brela_tz_resources'
-    });
-    
-    console.log(`Successfully scraped BRELA using ${strategyUsed}.`);
-    
-    if (!result) return 0;
+    const html = await fetchHtml(BRELA_URL);
+    if (!html) {
+      console.log('[BRELA] Could not fetch HTML. Skipping.');
+      return 0;
+    }
 
-    const extractPrompt = `
-      Extract a list of compliance resources (calculators, forms, guidelines, notices) from the following markdown scraped from the Business Registrations and Licensing Agency (BRELA) website.
-      Only extract official resources (e.g. Form 14a, Form 14b, Beneficial Ownership Forms, Fee schedules).
+    const text = htmlToText(html, BRELA_URL);
+    const resources = await extractResourcesWithAI(
+      text,
+      'Business Registrations and Licensing Agency (BRELA)',
+      BRELA_URL,
+      `Extract all downloadable forms and compliance documents from the BRELA (Business Registrations and Licensing Agency) website.
+Examples: Form 14a (Memorandum & Articles), Form 14b, Beneficial Ownership Declaration forms, fee schedules, company registration forms, etc.`,
+    );
 
-      Markdown:
-      ${typeof result === 'string' ? result : JSON.stringify(result).substring(0, 10000)}
-    `;
-
-    const { object } = await generateObject({
-      model: google('gemini-2.5-flash'),
-      schema: z.object({
-        resources: z.array(z.object({
-          title: z.string(),
-          description: z.string(),
-          resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
-          sourceUrl: z.string(),
-        }))
-      }),
-      prompt: extractPrompt,
-    });
-
-    if (object.resources.length === 0) return 0;
+    if (resources.length === 0) return 0;
 
     const [tz] = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, 'TZ')).limit(1);
-    if (!tz) return 0;
+    if (!tz) { console.warn('[BRELA] Tanzania country not found.'); return 0; }
 
-    const formattedResources = object.resources.map(r => ({
+    const rows = resources.map(r => ({
       title: r.title,
       description: r.description,
       countryId: tz.id,
@@ -74,13 +42,14 @@ export async function scrapeBRELAResources(): Promise<number> {
     }));
 
     const inserted = await db.insert(complianceRequirements)
-      .values(formattedResources)
+      .values(rows)
+      .onConflictDoNothing()
       .returning({ id: complianceRequirements.id });
 
-    console.log(`Successfully inserted ${inserted.length} BRELA resources.`);
+    console.log(`[BRELA] Inserted ${inserted.length} resources.`);
     return inserted.length;
   } catch (error) {
-    console.error('Failed to scrape BRELA resources:', error);
+    console.error('[BRELA] Fatal error:', error);
     return 0;
   }
 }

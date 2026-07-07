@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, index, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
 import { countries } from './shared';
 
 export const complianceCategoryEnum = pgEnum('compliance_category', [
@@ -51,4 +51,5 @@ export const complianceRequirements = pgTable('compliance_requirements', {
 }, (table) => [
   index('compliance_country_idx').on(table.countryId),
   index('compliance_category_idx').on(table.category),
+  uniqueIndex('compliance_title_country_udx').on(table.title, table.countryId),
 ]);

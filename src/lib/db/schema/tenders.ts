@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric, integer, index, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, numeric, integer, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
 import { countries } from './shared';
 import { sql } from 'drizzle-orm';
 
@@ -13,7 +13,7 @@ export const tenderSectors = pgTable('tender_sectors', {
 
 export const tenders = pgTable('tenders', {
   id: uuid('id').primaryKey().defaultRandom(),
-  referenceNo: text('reference_no').notNull(),
+  referenceNo: text('reference_no').notNull().unique(),
   title: text('title').notNull(),
   description: text('description'),
   contractingAuthority: text('contracting_authority').notNull(),
