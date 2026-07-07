@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const PDFParser = require('pdf2json');
 
 export const runtime = 'nodejs';
 
@@ -28,9 +30,6 @@ export async function POST(req: NextRequest) {
       // PDF extraction using pure JS parser (pdf2json)
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const PDFParser = require('pdf2json');
 
       extractedText = await new Promise<string>((resolve, reject) => {
         // The '1' flag tells pdf2json to extract raw text
