@@ -35,6 +35,7 @@ const jobTypeColors: Record<JobCardProps['jobType'], string> = {
 };
 
 export function JobCard({
+  id,
   title,
   companyName,
   description,
