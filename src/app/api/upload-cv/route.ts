@@ -25,36 +25,41 @@ export async function POST(req: NextRequest) {
     if (file.type === 'text/plain') {
       extractedText = await file.text();
     } else {
-      // PDF extraction
+      // PDF extraction using pure JS parser (pdf2json)
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      // Polyfill DOM globals required by pdf-parse (pdf.js) in Node.js environments
-      if (typeof global.DOMMatrix === 'undefined') {
-        (global as any).DOMMatrix = class DOMMatrix {};
-      }
-      if (typeof global.ImageData === 'undefined') {
-        (global as any).ImageData = class ImageData {};
-      }
-      if (typeof global.Path2D === 'undefined') {
-        (global as any).Path2D = class Path2D {};
-      }
-
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const pdfParse = require('pdf-parse');
-      const parsed = await pdfParse(buffer);
-      extractedText = parsed.text;
+      const PDFParser = require('pdf2json');
+
+      extractedText = await new Promise<string>((resolve, reject) => {
+        // The '1' flag tells pdf2json to extract raw text
+        const pdfParser = new PDFParser(null, 1);
+        
+        pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
+        pdfParser.on("pdfParser_dataReady", () => {
+          resolve(pdfParser.getRawTextContent());
+        });
+        
+        pdfParser.parseBuffer(buffer);
+      });
     }
 
-    if (!extractedText || extractedText.trim().length < 50) {
+    // Clean up excessive whitespace from PDF parsing
+    const cleanText = extractedText
+      .replace(/\r?\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleanText || cleanText.length < 50) {
       return NextResponse.json({ error: 'Could not extract enough text from the file. Please try pasting your CV as text.' }, { status: 422 });
     }
 
     return NextResponse.json({
       success: true,
-      text: extractedText.trim(),
+      text: cleanText,
       filename: file.name,
-      characters: extractedText.trim().length,
+      characters: cleanText.length,
     });
 
   } catch (error) {
