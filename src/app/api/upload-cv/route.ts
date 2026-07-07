@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-// @ts-expect-error - pdf2json lacks typescript definitions
-import PDFParser from 'pdf2json';
 
 export const runtime = 'nodejs';
 
@@ -27,19 +25,25 @@ export async function POST(req: NextRequest) {
     if (file.type === 'text/plain') {
       extractedText = await file.text();
     } else {
-      // PDF extraction using pure JS parser (pdf2json)
+      // Use a computed import string so Turbopack skips static analysis of this module.
+      // At runtime, serverExternalPackages ensures Node.js resolves pdf2json natively.
+      const pkg = 'pdf2json';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { default: PDFParser } = await import(/* webpackIgnore: true */ pkg) as any;
+
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
       extractedText = await new Promise<string>((resolve, reject) => {
-        // The '1' flag tells pdf2json to extract raw text
+        // The '1' flag tells pdf2json to extract raw text content
         const pdfParser = new PDFParser(null, 1);
-        
-        pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
-        pdfParser.on("pdfParser_dataReady", () => {
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pdfParser.on('pdfParser_dataError', (errData: any) => reject(errData.parserError));
+        pdfParser.on('pdfParser_dataReady', () => {
           resolve(pdfParser.getRawTextContent());
         });
-        
+
         pdfParser.parseBuffer(buffer);
       });
     }
@@ -51,7 +55,10 @@ export async function POST(req: NextRequest) {
       .trim();
 
     if (!cleanText || cleanText.length < 50) {
-      return NextResponse.json({ error: 'Could not extract enough text from the file. Please try pasting your CV as text.' }, { status: 422 });
+      return NextResponse.json(
+        { error: 'Could not extract enough text from the file. Please try pasting your CV as text.' },
+        { status: 422 }
+      );
     }
 
     return NextResponse.json({
@@ -63,6 +70,9 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('[/api/upload-cv] Error:', error);
-    return NextResponse.json({ error: 'Failed to process CV. Please try pasting your CV as text instead.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to process CV. Please try pasting your CV as text instead.' },
+      { status: 500 }
+    );
   }
 }
