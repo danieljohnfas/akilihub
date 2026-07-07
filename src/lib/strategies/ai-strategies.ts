@@ -218,20 +218,14 @@ Always be concise, helpful, and specific to East Africa context.`;
 
     if (toolCalls && toolCalls.length > 0 && toolResults) {
       sources = ['AkiliBrain Database'];
-      // Perform a second call to synthesize the tool results
+      // Perform a second call to synthesize the tool results by injecting them directly into the prompt
+      // This bypasses strict ToolMessage array schema validation which differs across AI SDK versions
+      const toolResultsText = JSON.stringify(toolResults, null, 2);
+      
       const followup = await generateText({
         model: google('gemini-2.5-flash'),
         system: systemPrompt,
-        messages: [
-          { role: 'user', content: input.query },
-          { role: 'assistant', content: text || '', toolCalls },
-          { role: 'tool', content: toolResults.map((tr: any) => ({
-            type: 'tool-result',
-            toolCallId: tr.toolCallId,
-            toolName: tr.toolName,
-            result: tr.result,
-          })) as any }
-        ] as any,
+        prompt: `${input.query}\n\n[System Note: A database search was performed to answer the user's query. Here are the search results from the database:\n${toolResultsText}\n\nPlease synthesize these results into a clear, helpful response.]`,
       });
       finalResponse = followup.text;
     } else {
