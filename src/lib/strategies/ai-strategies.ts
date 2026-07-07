@@ -113,10 +113,7 @@ export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not set.');
 
-    const { text, toolCalls } = await generateText({
-      model: google('gemini-2.5-flash'),
-      maxSteps: 5,
-      system: `You are AkiliBrain's intelligent AI assistant for East Africa (Kenya, Tanzania, Uganda, Rwanda, Ethiopia, Congo DRC).
+    const systemPrompt = `You are AkiliBrain's intelligent AI assistant for East Africa (Kenya, Tanzania, Uganda, Rwanda, Ethiopia, Congo DRC).
 
 You help users with:
 - Finding government tenders and procurement opportunities
@@ -131,9 +128,9 @@ When a user shares CV content or asks for job matching:
 3. Present the top matches clearly with: Job Title, Company (Recruiting), Location, and a link to /jobs/[id].
 4. If no matches are found, say so clearly and suggest they check back as new jobs are added daily.
 
-Always be concise, helpful, and specific to East Africa context.`,
-      prompt: input.query,
-      tools: {
+Always be concise, helpful, and specific to East Africa context.`;
+
+    const toolsConfig = {
         searchTenders: {
           description: 'Search for active government tenders in East Africa.',
           parameters: z.object({
@@ -207,13 +204,44 @@ Always be concise, helpful, and specific to East Africa context.`,
             })));
           },
         } as any,
-      },
+    };
+
+    let finalResponse = '';
+    let sources: string[] = [];
+
+    const { text, toolCalls, toolResults } = await generateText({
+      model: google('gemini-2.5-flash'),
+      system: systemPrompt,
+      prompt: input.query,
+      tools: toolsConfig,
     });
 
+    if (toolCalls && toolCalls.length > 0 && toolResults) {
+      sources = ['AkiliBrain Database'];
+      // Perform a second call to synthesize the tool results
+      const followup = await generateText({
+        model: google('gemini-2.5-flash'),
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: input.query },
+          { role: 'assistant', content: text || '', toolCalls },
+          { role: 'tool', content: toolResults.map(tr => ({
+            type: 'tool-result',
+            toolCallId: tr.toolCallId,
+            toolName: tr.toolName,
+            result: tr.result,
+          })) as any }
+        ] as any,
+      });
+      finalResponse = followup.text;
+    } else {
+      finalResponse = text;
+    }
+
     return {
-      response: text,
+      response: finalResponse,
       confidence: 0.90,
-      sources: toolCalls && toolCalls.length > 0 ? ['AkiliBrain Database'] : [],
+      sources,
     };
   }
 }
