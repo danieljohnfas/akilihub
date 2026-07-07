@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, ShieldCheck, Activity, Banknote, Code, ArrowRight } from "lucide-react";
+import { FileText, ShieldCheck, Activity, Banknote, Code, ArrowRight, Briefcase } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -11,6 +11,14 @@ const features = [
     href: "/tenders",
     color: "text-blue-500",
     bg: "bg-blue-500/10"
+  },
+  {
+    title: "Jobs & Careers",
+    description: "Browse thousands of job openings sourced daily from across the web.",
+    icon: Briefcase,
+    href: "/jobs",
+    color: "text-amber-500",
+    bg: "bg-amber-500/10"
   },
   {
     title: "Business Compliance",
@@ -45,6 +53,7 @@ const features = [
     bg: "bg-orange-500/10"
   }
 ];
+
 
 export default function Home() {
   return (

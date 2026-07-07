@@ -5,44 +5,57 @@ import postgres from 'postgres';
 const sql = postgres(process.env.DATABASE_URL! + "?sslmode=require");
 
 async function main() {
-  console.log('Running raw SQL migration...');
+  console.log('Running jobs schema migration...');
   
   try {
-    await sql`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'compliance_resource_type') THEN
-          CREATE TYPE "public"."compliance_resource_type" AS ENUM('form', 'calculator', 'guideline', 'notice');
-        END IF;
-      END$$;
-    `;
-    console.log('✅ Created enum type (or already exists)');
-    
+    // Create Enum
     try {
-      await sql`ALTER TABLE "compliance_requirements" ADD COLUMN "resource_type" "compliance_resource_type" DEFAULT 'guideline' NOT NULL;`;
-      console.log('✅ Added resource_type column');
+      await sql`CREATE TYPE "public"."job_type" AS ENUM('full_time', 'part_time', 'contract', 'internship', 'remote');`;
+      console.log('✅ Created job_type enum');
     } catch (e: any) {
       if (!e.message.includes('already exists')) throw e;
-      console.log('✅ resource_type column already exists');
+      console.log('✅ job_type enum already exists');
     }
 
+    // Create Table
     try {
-      await sql`CREATE UNIQUE INDEX "compliance_title_country_udx" ON "compliance_requirements" USING btree ("title","country_id");`;
-      console.log('✅ Created unique index on compliance_requirements');
+      await sql`
+        CREATE TABLE "jobs" (
+          "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+          "title" text NOT NULL,
+          "company_name" text NOT NULL,
+          "description" text NOT NULL,
+          "requirements" text,
+          "location" text,
+          "country_id" uuid NOT NULL,
+          "job_type" "job_type" DEFAULT 'full_time',
+          "source_url" text NOT NULL,
+          "posted_date" timestamp,
+          "deadline" timestamp,
+          "is_active" boolean DEFAULT true NOT NULL,
+          "created_at" timestamp DEFAULT now() NOT NULL,
+          "updated_at" timestamp DEFAULT now() NOT NULL,
+          CONSTRAINT "jobs_source_url_unique" UNIQUE("source_url")
+        );
+      `;
+      console.log('✅ Created jobs table');
+      
+      // Foreign key
+      await sql`ALTER TABLE "jobs" ADD CONSTRAINT "jobs_country_id_countries_id_fk" FOREIGN KEY ("country_id") REFERENCES "public"."countries"("id") ON DELETE no action ON UPDATE no action;`;
+      console.log('✅ Added foreign key for country_id');
+      
+      // Indexes
+      await sql`CREATE INDEX "jobs_country_idx" ON "jobs" USING btree ("country_id");`;
+      await sql`CREATE INDEX "jobs_deadline_idx" ON "jobs" USING btree ("deadline");`;
+      await sql`CREATE INDEX "jobs_active_idx" ON "jobs" USING btree ("is_active");`;
+      console.log('✅ Created indexes');
+      
     } catch (e: any) {
       if (!e.message.includes('already exists')) throw e;
-      console.log('✅ Unique index already exists');
+      console.log('✅ jobs table already exists');
     }
 
-    try {
-      await sql`ALTER TABLE "tenders" ADD CONSTRAINT "tenders_reference_no_unique" UNIQUE("reference_no");`;
-      console.log('✅ Added unique constraint on tenders.reference_no');
-    } catch (e: any) {
-      if (!e.message.includes('already exists')) throw e;
-      console.log('✅ Unique constraint already exists');
-    }
-
-    console.log('🎉 Migration successful!');
+    console.log('🎉 Jobs Migration successful!');
   } catch (error) {
     console.error('Migration failed:', error);
   } finally {

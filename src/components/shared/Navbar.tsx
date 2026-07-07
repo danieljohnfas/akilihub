@@ -11,6 +11,7 @@ import {
 
 const navLinks = [
   { href: '/tenders', label: 'Tenders' },
+  { href: '/jobs', label: 'Jobs' },
   { href: '/compliance', label: 'Compliance' },
   { href: '/health', label: 'Health Data' },
   { href: '/salaries', label: 'Salaries' },

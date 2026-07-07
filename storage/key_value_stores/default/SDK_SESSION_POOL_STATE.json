@@ -1,69 +1,9 @@
 {
-  "usableSessionsCount": 12,
+  "usableSessionsCount": 3,
   "retiredSessionsCount": 0,
   "sessions": [
     {
-      "id": "session_qkIROPe1Qw",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:22:04.297Z",
-      "createdAt": "2026-07-03T08:32:04.297Z",
-      "usageCount": 2,
-      "maxUsageCount": 50,
-      "errorScore": 2
-    },
-    {
-      "id": "session_WAQ5hacSS4",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:22:34.335Z",
-      "createdAt": "2026-07-03T08:32:34.335Z",
-      "usageCount": 2,
-      "maxUsageCount": 50,
-      "errorScore": 2
-    },
-    {
-      "id": "session_V3LlHNUyFC",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:23:04.344Z",
-      "createdAt": "2026-07-03T08:33:04.344Z",
-      "usageCount": 1,
-      "maxUsageCount": 50,
-      "errorScore": 0
-    },
-    {
-      "id": "session_u6iLuTtiE2",
+      "id": "session_QNo9ebEQvC",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -73,123 +13,41 @@
         "prefixSecurity": "silent",
         "cookies": [
           {
-            "key": "XSRF-TOKEN",
-            "value": "eyJpdiI6IlFsUzI3bGozQjBOK0ViaEhKbWtLUHc9PSIsInZhbHVlIjoiQm96UjlPQzRDdncyQlhHR2xKOE5NUzFyb0ZiM0ZHb3hWWUJkMVpBSFczVjJERFVXcWZIQjVoRUhsd3dnV2E3SWdYME1jRmFGTS9IZHQzZGNXQ3RwK2tza2UvV0JlWHd2UHFodXhDTXhLMkZ1Ynd5M25HNkxqem5mOHZJTlhIaWMiLCJtYWMiOiI4MWNjOWY4OTAyMTgyYzgzM2NlZjgzYjc5YjAxZjM2Yjc0ZTMyMGUzMDFkOGNkNTFiNDg2ZjdmOTJiZmQ3NGI1IiwidGFnIjoiIn0%3D",
-            "expires": "2026-07-03T10:39:24.000Z",
-            "maxAge": 7200,
-            "domain": "tenders.go.ke",
+            "key": "exp_tracker",
+            "value": "%7B%220%22%3A%22calculators%22%2C%22token%22%3A%22818496b85382cb5a71be1c917c6979e8f3935c792ea87a65d0448aa708dd9a17980d9a87a1ca5d34a9710754dbb3844d%22%7D",
+            "domain": "www.tra.go.tz",
             "path": "/",
-            "secure": true,
-            "hostOnly": false,
-            "creation": "2026-07-03T08:33:42.417Z",
-            "lastAccessed": "2026-07-03T08:33:42.417Z",
-            "sameSite": "lax"
-          },
-          {
-            "key": "ppip_session",
-            "value": "eyJpdiI6ImVMK3JETU9xV3JudkV1a2FzTWlEZXc9PSIsInZhbHVlIjoiU1RtSUlzQnMvc3MvcU9lMGI5S3l1emZBQzZ2NjdGL1o4OGVCcDZKRlU0OVczcWZFdVQ4NjBOcUlVZ0N0Uk1GQmQxTlBvOWM3dmw3UEIxcW9mMHEwRDFmSitZcFljdUp2MTNLL0NJckxjUzJvSUtHRkFqb3NmK0FZcEtsR0JGbkIiLCJtYWMiOiI5ZWViM2VkM2QzMjI3ZmVjNTA4MDBiMDhiNzlkZTJmMDkwMjQzZjI2MzRmNWIxYTJjNjVlOWI0YTQ5YTVhOTE5IiwidGFnIjoiIn0%3D",
-            "expires": "2026-07-03T10:39:24.000Z",
-            "maxAge": 7200,
-            "domain": "tenders.go.ke",
-            "path": "/",
-            "httpOnly": true,
-            "hostOnly": false,
-            "creation": "2026-07-03T08:33:42.418Z",
-            "lastAccessed": "2026-07-03T08:33:42.418Z",
-            "sameSite": "lax"
-          },
-          {
-            "key": "ErjCBoSOAm78QfetmapDkHtaEOz5vj581cg03RW0",
-            "value": "eyJpdiI6IjlrZTAyQnFSdk10Ymk5ZTNyOStjL2c9PSIsInZhbHVlIjoieTM1Rm5SMnBJTXYyRGVXa2dVUjdwVUdnemRjUzgyUkl3UHVNN2JrdDFOcG4yWTM3dGI4SFJHZ3BpTE5iVTlrTW11aU1CNTVnekdoVkxnZnN2dXFQRzgzQkhaNXJsb3B5WVNyOGUzeUJuUHowRWVoSlMxZ0pVTlJHVk5vc21SSEdCemhUTEVzZlBENkg3bGlHMFBRU0RGckhHR3VLVXViSFJCM2tmNmtxYzZLTCt6VlJvNjVCU0p4R3VQQTFLczI5NjFBZlNjZkNMT0pyVGQ5bWt0R3dHaCtoMXBROGFSQlZ4b29Ienp4MC9SbW9lRHpxSExtYzErcE1xM1FwSXNjdEV3cml3WENQWkEwcERySG1iQytHbjZVcXp5WldlWE15bE0yaVJlZDZrRUYzaVY0TEZzMFd6Szh3MUxqdm9wc3YzbkFjclFhUlJPWndVTmRvbzNHMURhQjlVbUJVWFpGdG8wYXB5WlZsM1AwZm91bnBNTXY2R2lybzh3OWJtekYzSGFXek9ScTh2K05ld3BybG54ZVVLdz09IiwibWFjIjoiMDc4NTE0MDQ3ZjZjZGNlZGVjZWIyYTc4NjRmZGY5OTQ0NTM4Yjk0YWIxNzQzM2IyYmIwNjFmYmQ3ZmFhNDk2MCIsInRhZyI6IiJ9",
-            "expires": "2026-07-03T10:39:24.000Z",
-            "maxAge": 7200,
-            "domain": "tenders.go.ke",
-            "path": "/",
-            "secure": true,
-            "httpOnly": true,
-            "hostOnly": false,
-            "creation": "2026-07-03T08:33:42.418Z",
-            "lastAccessed": "2026-07-03T08:33:42.418Z",
-            "sameSite": "lax"
-          }
-        ]
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:23:39.850Z",
-      "createdAt": "2026-07-03T08:33:39.850Z",
-      "usageCount": 1,
-      "maxUsageCount": 50,
-      "errorScore": 0
-    },
-    {
-      "id": "session_vCS8BwhF95",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:23:56.441Z",
-      "createdAt": "2026-07-03T08:33:56.441Z",
-      "usageCount": 1,
-      "maxUsageCount": 50,
-      "errorScore": 0
-    },
-    {
-      "id": "session_mUHlMFWBQ5",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": [
-          {
-            "key": "SERVERID",
-            "value": "web1",
-            "domain": "www.rppa.gov.rw",
-            "path": "/",
-            "secure": true,
             "httpOnly": true,
             "hostOnly": true,
-            "creation": "2026-07-03T08:34:15.403Z",
-            "lastAccessed": "2026-07-03T08:34:15.403Z"
+            "creation": "2026-07-07T07:48:53.253Z",
+            "lastAccessed": "2026-07-07T07:48:53.253Z",
+            "sameSite": "lax"
           },
           {
-            "key": "__cf_bm",
-            "value": "LHxN3_3bqbzfc0QyXlvFgAx4z1LCCKALsi_VFGcnLaA-1783067653.0113285-1.0.1.1-DEGvUnpKBA2gdX35_nZBBoFakdwMAn3E3btnjGectU9teMuXisvHvthvjBc_AxXYDyudtXgd4NmwmsHY0mrLFIYS1ncEQfvaWdSjkVG69rP7tnibXo69M7vyd7XTFsBM",
-            "expires": "2026-07-03T09:04:15.000Z",
-            "domain": "rppa.gov.rw",
-            "path": "/",
-            "secure": true,
+            "key": "Path",
+            "value": "/",
+            "domain": "tra.go.tz",
+            "path": "/index.php",
             "httpOnly": true,
             "hostOnly": false,
-            "creation": "2026-07-03T08:34:15.404Z",
-            "lastAccessed": "2026-07-03T08:34:15.404Z",
-            "sameSite": "none"
+            "pathIsDefault": true,
+            "creation": "2026-07-07T07:48:53.255Z",
+            "lastAccessed": "2026-07-07T07:48:53.255Z",
+            "sameSite": "lax"
           }
         ]
       },
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:24:12.127Z",
-      "createdAt": "2026-07-03T08:34:12.127Z",
+      "expiresAt": "2026-07-07T08:38:40.009Z",
+      "createdAt": "2026-07-07T07:48:40.009Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 0
     },
     {
-      "id": "session_MI7PynFU8s",
+      "id": "session_QojMeU7wb8",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -197,19 +55,39 @@
         "enableLooseMode": false,
         "allowSpecialUseDomain": true,
         "prefixSecurity": "silent",
-        "cookies": []
+        "cookies": [
+          {
+            "key": "4d211ae8de53848b7e1cac6936ed82bc",
+            "value": "ik7506m0oue24dcgbhveaqb0ug",
+            "domain": "www.kra.go.ke",
+            "path": "/",
+            "httpOnly": true,
+            "hostOnly": true,
+            "creation": "2026-07-07T07:49:38.097Z",
+            "lastAccessed": "2026-07-07T07:49:38.097Z"
+          },
+          {
+            "key": "TS01499985",
+            "value": "01463256c1092115e577da0262c6fe3c50c0090e41d65d027c8c3ae1c15e16a685f4a984db04b4a7868c26003c0d5a7312dd9cdf5a02b9b73d63f690b24ea637dfb44434e0",
+            "domain": "www.kra.go.ke",
+            "path": "/",
+            "hostOnly": false,
+            "creation": "2026-07-07T07:49:38.097Z",
+            "lastAccessed": "2026-07-07T07:49:38.097Z"
+          }
+        ]
       },
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:24:19.324Z",
-      "createdAt": "2026-07-03T08:34:19.324Z",
+      "expiresAt": "2026-07-07T08:39:36.970Z",
+      "createdAt": "2026-07-07T07:49:36.970Z",
       "usageCount": 1,
       "maxUsageCount": 50,
-      "errorScore": 1
+      "errorScore": 0
     },
     {
-      "id": "session_MuJLd8XmfH",
+      "id": "session_WBPBv2pdBS",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -222,91 +100,11 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:24:19.344Z",
-      "createdAt": "2026-07-03T08:34:19.344Z",
+      "expiresAt": "2026-07-07T08:40:09.038Z",
+      "createdAt": "2026-07-07T07:50:09.038Z",
       "usageCount": 1,
       "maxUsageCount": 50,
-      "errorScore": 1
-    },
-    {
-      "id": "session_KPaHmwciKv",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:24:19.348Z",
-      "createdAt": "2026-07-03T08:34:19.348Z",
-      "usageCount": 1,
-      "maxUsageCount": 50,
-      "errorScore": 1
-    },
-    {
-      "id": "session_lhcw3D1edB",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:24:22.363Z",
-      "createdAt": "2026-07-03T08:34:22.363Z",
-      "usageCount": 1,
-      "maxUsageCount": 50,
-      "errorScore": 1
-    },
-    {
-      "id": "session_ngwYp0Rp2k",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:24:22.385Z",
-      "createdAt": "2026-07-03T08:34:22.385Z",
-      "usageCount": 1,
-      "maxUsageCount": 50,
-      "errorScore": 1
-    },
-    {
-      "id": "session_SJkmcUwA4Y",
-      "cookieJar": {
-        "version": "tough-cookie@6.0.1",
-        "storeType": "MemoryCookieStore",
-        "rejectPublicSuffixes": true,
-        "enableLooseMode": false,
-        "allowSpecialUseDomain": true,
-        "prefixSecurity": "silent",
-        "cookies": []
-      },
-      "userData": {},
-      "maxErrorScore": 3,
-      "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-03T09:24:22.394Z",
-      "createdAt": "2026-07-03T08:34:22.394Z",
-      "usageCount": 1,
-      "maxUsageCount": 50,
-      "errorScore": 1
+      "errorScore": 0
     }
   ]
 }
