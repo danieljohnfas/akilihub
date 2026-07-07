@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { inflateSync, inflateRawSync } from 'zlib';
 
 export const runtime = 'nodejs';
 
-/**
- * Decodes escaped characters inside a PDF string literal.
- */
+/** Decode escaped characters inside a PDF string literal. */
 function decodePDFString(raw: string): string {
   return raw
     .replace(/\\n/g, ' ')
@@ -16,32 +15,85 @@ function decodePDFString(raw: string): string {
     .replace(/\\(\d{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)));
 }
 
-/**
- * Extracts readable text from a PDF buffer without any external libraries.
- * Covers Tj (single string) and TJ (array of strings/kerning) text operators.
- */
-function extractTextFromPDFBuffer(buffer: Buffer): string {
-  const str = buffer.toString('latin1');
-  const texts: string[] = [];
-
-  // Match single-string text operator:  (Hello World) Tj
+/** Apply Tj / TJ text operators to a (decompressed) content stream string. */
+function gatherText(content: string, out: string[]): void {
+  // (Hello World) Tj
   const tjRe = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g;
   let m: RegExpExecArray | null;
-  while ((m = tjRe.exec(str)) !== null) {
-    const decoded = decodePDFString(m[1]).trim();
-    if (decoded) texts.push(decoded);
+  while ((m = tjRe.exec(content)) !== null) {
+    const t = decodePDFString(m[1]).trim();
+    if (t) out.push(t);
   }
 
-  // Match TJ array operator:  [(Hello) 20 (World)] TJ
+  // [(Hello) 20 (World)] TJ
   const tjArrRe = /\[([^\]]*)\]\s*TJ/g;
-  while ((m = tjArrRe.exec(str)) !== null) {
+  while ((m = tjArrRe.exec(content)) !== null) {
     const inner = m[1];
-    const innerStrRe = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g;
+    const strRe = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g;
     let im: RegExpExecArray | null;
-    while ((im = innerStrRe.exec(inner)) !== null) {
-      const decoded = decodePDFString(im[1]).trim();
-      if (decoded) texts.push(decoded);
+    while ((im = strRe.exec(inner)) !== null) {
+      const t = decodePDFString(im[1]).trim();
+      if (t) out.push(t);
     }
+  }
+}
+
+/**
+ * Zero-dependency PDF text extractor.
+ * Handles both uncompressed streams and FlateDecode (zlib) compressed streams,
+ * covering virtually all CVs produced by Word, Google Docs, LibreOffice, etc.
+ */
+function extractTextFromPDFBuffer(buffer: Buffer): string {
+  const latin = buffer.toString('latin1');
+  const texts: string[] = [];
+
+  // Locate every stream ... endstream block together with its preceding dictionary.
+  // The dictionary immediately before `stream` determines the filter used.
+  const dictStreamRe = /<<([\s\S]{0,800}?)>>\s*\r?\nstream\r?\n/g;
+  let dm: RegExpExecArray | null;
+
+  while ((dm = dictStreamRe.exec(latin)) !== null) {
+    const dictContent = dm[1];
+    const streamStart = dm.index + dm[0].length;
+
+    // Find the matching endstream
+    const endIdx = latin.indexOf('endstream', streamStart);
+    if (endIdx === -1) continue;
+
+    const rawStream = latin.slice(streamStart, endIdx);
+    const isFlate =
+      dictContent.includes('/FlateDecode') ||
+      dictContent.includes('/Fl\n') ||
+      dictContent.includes('/Fl ') ||
+      dictContent.includes('/Fl>') ||
+      dictContent.includes('/Fl\r');
+
+    if (isFlate) {
+      // Decompress and extract
+      const streamBuf = Buffer.from(rawStream, 'latin1');
+      let decompressed: Buffer | null = null;
+      try {
+        decompressed = inflateSync(streamBuf);
+      } catch {
+        try {
+          decompressed = inflateRawSync(streamBuf);
+        } catch {
+          // Cannot decompress – skip
+        }
+      }
+      if (decompressed) {
+        gatherText(decompressed.toString('latin1'), texts);
+      }
+    } else {
+      // Uncompressed – extract directly
+      gatherText(rawStream, texts);
+    }
+  }
+
+  // Fallback: try extracting from the raw file if nothing found yet
+  // (catches PDFs where streams aren't preceded by a << dict >>)
+  if (texts.length === 0) {
+    gatherText(latin, texts);
   }
 
   return texts.join(' ');
@@ -77,8 +129,7 @@ export async function POST(req: NextRequest) {
       extractedText = await file.text();
     } else {
       const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      extractedText = extractTextFromPDFBuffer(buffer);
+      extractedText = extractTextFromPDFBuffer(Buffer.from(arrayBuffer));
     }
 
     // Normalise whitespace
