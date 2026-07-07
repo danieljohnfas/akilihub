@@ -25,7 +25,7 @@ export const tenders = pgTable('tenders', {
   currency: text('currency').default('USD'),
   publishedAt: timestamp('published_at'),
   deadline: timestamp('deadline').notNull(),
-  sourceUrl: text('source_url').notNull(),
+  sourceUrl: text('source_url').notNull().unique(),
   documentUrl: text('document_url'),
   extractedText: text('extracted_text'), // OCR text from Stirling PDF
   searchVector: text('search_vector'), // For FTS

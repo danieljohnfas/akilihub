@@ -42,7 +42,7 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   renewalPeriodDays: text('renewal_period_days'),
   estimatedCost: text('estimated_cost'),
   requiredDocuments: text('required_documents').array(),
-  sourceUrl: text('source_url'),
+  sourceUrl: text('source_url').unique(),
   resourceType: complianceResourceTypeEnum('resource_type').notNull().default('guideline'),
   isActive: boolean('is_active').notNull().default(true),
   lastVerifiedAt: timestamp('last_verified_at'),

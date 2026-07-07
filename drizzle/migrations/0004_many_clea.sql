@@ -1,0 +1,2 @@
+ALTER TABLE "compliance_requirements" ADD CONSTRAINT "compliance_requirements_source_url_unique" UNIQUE("source_url");--> statement-breakpoint
+ALTER TABLE "tenders" ADD CONSTRAINT "tenders_source_url_unique" UNIQUE("source_url");
