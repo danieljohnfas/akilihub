@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Bot, X, Send, Loader2, Sparkles, Paperclip, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ChatMessage, Message } from './ChatMessage';
 
@@ -209,7 +208,7 @@ export function AIChatPanel() {
         )}
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-4 py-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
           <div className="space-y-4">
             {messages.map(msg => (
               <ChatMessage key={msg.id} message={msg} />
@@ -229,7 +228,7 @@ export function AIChatPanel() {
             )}
             <div ref={bottomRef} />
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Suggested Prompts */}
         {messages.length <= 1 && !isLoading && (
