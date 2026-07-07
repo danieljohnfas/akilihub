@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const PDFParser = require('pdf2json');
+// @ts-expect-error - pdf2json lacks typescript definitions
+import PDFParser from 'pdf2json';
 
 export const runtime = 'nodejs';
 
