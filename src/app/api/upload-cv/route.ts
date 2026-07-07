@@ -1,19 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Polyfill DOM globals required by pdf-parse (pdf.js) in Node.js environments
-if (typeof global.DOMMatrix === 'undefined') {
-  (global as any).DOMMatrix = class DOMMatrix {};
-}
-if (typeof global.ImageData === 'undefined') {
-  (global as any).ImageData = class ImageData {};
-}
-if (typeof global.Path2D === 'undefined') {
-  (global as any).Path2D = class Path2D {};
-}
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>;
-
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
@@ -42,6 +28,20 @@ export async function POST(req: NextRequest) {
       // PDF extraction
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
+
+      // Polyfill DOM globals required by pdf-parse (pdf.js) in Node.js environments
+      if (typeof global.DOMMatrix === 'undefined') {
+        (global as any).DOMMatrix = class DOMMatrix {};
+      }
+      if (typeof global.ImageData === 'undefined') {
+        (global as any).ImageData = class ImageData {};
+      }
+      if (typeof global.Path2D === 'undefined') {
+        (global as any).Path2D = class Path2D {};
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require('pdf-parse');
       const parsed = await pdfParse(buffer);
       extractedText = parsed.text;
     }
