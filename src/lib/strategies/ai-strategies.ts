@@ -103,7 +103,8 @@ import { z } from 'zod';
 import { db } from '../db/client';
 import { tenders } from '../db/schema/tenders';
 import { businesses } from '../db/schema/compliance';
-import { ilike, desc } from 'drizzle-orm';
+import { jobs } from '../db/schema/jobs';
+import { ilike, desc, and, eq, or, isNull, gt } from 'drizzle-orm';
 
 export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
   name = 'Vercel AI SDK (Gemini Fallback)';
@@ -113,45 +114,102 @@ export class VercelAiSdkStrategy implements Strategy<AiInput, AiResult> {
     if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not set.');
 
     const { text, toolCalls } = await generateText({
-      model: google('models/gemini-1.5-flash'),
-      prompt: `You are AkiliBrain's AI assistant for East Africa. Help users with tenders, business compliance, health data, and salary information.\n\nUser: ${input.query}`,
+      model: google('gemini-2.5-flash'),
+      system: `You are AkiliBrain's intelligent AI assistant for East Africa (Kenya, Tanzania, Uganda, Rwanda, Ethiopia, Congo DRC).
+
+You help users with:
+- Finding government tenders and procurement opportunities
+- Business registration and compliance (TRA, KRA, BRELA)
+- Health data and indicators across East Africa
+- Salary benchmarks and career information
+- **Job matching**: If a user shares their CV or skills, use the searchJobs tool to find the best matching jobs in our database and present them clearly with company name, location, and a link.
+
+When a user shares CV content or asks for job matching:
+1. Extract their key skills, experience, and job preferences from the text.
+2. Use searchJobs with relevant keywords.
+3. Present the top matches clearly with: Job Title, Company (Recruiting), Location, and a link to /jobs/[id].
+4. If no matches are found, say so clearly and suggest they check back as new jobs are added daily.
+
+Always be concise, helpful, and specific to East Africa context.`,
+      prompt: input.query,
+      maxSteps: 3,
       tools: {
-        searchTenders: {
+        searchTenders: tool({
           description: 'Search for active government tenders in East Africa.',
           parameters: z.object({
-            keyword: z.string().describe('The search term, e.g., IT, construction, health.'),
+            keyword: z.string().describe('Search term, e.g., IT, construction, health.'),
           }),
-          execute: async (args: any) => {
-            const keyword = args.keyword as string;
-            const results = await db.select()
+          execute: async ({ keyword }) => {
+            const results = await db.select({
+              id: tenders.id,
+              title: tenders.title,
+              contractingAuthority: tenders.contractingAuthority,
+              deadline: tenders.deadline,
+              status: tenders.status,
+            })
               .from(tenders)
               .where(ilike(tenders.title, `%${keyword}%`))
               .orderBy(desc(tenders.publishedAt))
               .limit(5);
-            return JSON.stringify(results);
+            return results.length > 0 ? JSON.stringify(results) : 'No tenders found for that keyword.';
           },
-          } as any,
-        searchBusinesses: {
+        }),
+        searchBusinesses: tool({
           description: 'Check business registration and compliance status.',
           parameters: z.object({
-            companyName: z.string().describe('The name of the company to search.'),
+            companyName: z.string().describe('Company name to search.'),
           }),
-          execute: async (args: any) => {
-            const companyName = args.companyName as string;
+          execute: async ({ companyName }) => {
             const results = await db.select()
               .from(businesses)
               .where(ilike(businesses.name, `%${companyName}%`))
               .limit(3);
-            return JSON.stringify(results);
+            return results.length > 0 ? JSON.stringify(results) : 'No business records found.';
           },
-          } as any,
+        }),
+        searchJobs: tool({
+          description: 'Search for active job openings in East Africa. Use this when a user shares their CV or asks for job matching.',
+          parameters: z.object({
+            keyword: z.string().describe('Job title, skill, or keyword to search, e.g., software engineer, accountant, NGO.'),
+            location: z.string().optional().describe('Optional location filter, e.g., Nairobi, Dar es Salaam.'),
+          }),
+          execute: async ({ keyword, location }) => {
+            const activeFilter = and(
+              eq(jobs.isActive, true),
+              or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
+            );
+            const results = await db.select({
+              id: jobs.id,
+              title: jobs.title,
+              companyName: jobs.companyName,
+              location: jobs.location,
+              jobType: jobs.jobType,
+              deadline: jobs.deadline,
+            })
+              .from(jobs)
+              .where(and(
+                activeFilter,
+                ilike(jobs.title, `%${keyword}%`),
+                ...(location ? [ilike(jobs.location, `%${location}%`)] : [])
+              ))
+              .orderBy(desc(jobs.createdAt))
+              .limit(8);
+            if (results.length === 0) {
+              return `No active jobs found matching "${keyword}"${location ? ` in ${location}` : ''}. New jobs are added daily — check back tomorrow.`;
+            }
+            return JSON.stringify(results.map(j => ({
+              ...j,
+              link: `/jobs/${j.id}`,
+            })));
+          },
+        }),
       },
     });
 
     return {
       response: text,
       confidence: 0.90,
-      sources: toolCalls && toolCalls.length > 0 ? ['Database (Vercel AI SDK)'] : []
+      sources: toolCalls && toolCalls.length > 0 ? ['AkiliBrain Database'] : [],
     };
   }
 }

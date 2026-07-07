@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Bot, X, Send, Loader2, Sparkles } from 'lucide-react';
+import { Bot, X, Send, Loader2, Sparkles, Paperclip, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,7 +13,14 @@ const SUGGESTED_PROMPTS = [
   "Is ACME Ltd registered with BRELA?",
   "Maternal health stats in Kenya",
   "Senior engineer salary in Nairobi",
+  "Match jobs to my CV",
 ];
+
+type CvState =
+  | { status: 'idle' }
+  | { status: 'uploading' }
+  | { status: 'ready'; filename: string; text: string }
+  | { status: 'error'; message: string };
 
 export function AIChatPanel() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,14 +28,16 @@ export function AIChatPanel() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: "Hi! I'm AkiliBrain's AI assistant. Ask me about tenders, business registrations, health data, or salaries across East Africa.",
+      content: "Hi! I'm AkiliBrain's AI assistant. Ask me about tenders, business registrations, health data, or salaries across East Africa.\n\n📎 You can also **upload your CV** (PDF or TXT) and I'll find the best matching jobs for you!",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cvState, setCvState] = useState<CvState>({ status: 'idle' });
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,6 +90,45 @@ export function AIChatPanel() {
     }
   }, [isLoading]);
 
+  const handleCvUpload = useCallback(async (file: File) => {
+    setCvState({ status: 'uploading' });
+
+    try {
+      const formData = new FormData();
+      formData.append('cv', file);
+
+      const res = await fetch('/api/upload-cv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCvState({ status: 'error', message: data.error || 'Failed to process CV.' });
+        return;
+      }
+
+      setCvState({ status: 'ready', filename: data.filename, text: data.text });
+
+      // Auto-send the CV for job matching
+      const cvQuery = `Here is my CV — please find the best matching jobs for me from your database:\n\n${data.text.substring(0, 8000)}`;
+      await sendMessage(cvQuery);
+
+    } catch {
+      setCvState({ status: 'error', message: 'Upload failed. Please try pasting your CV as text.' });
+    }
+  }, [sendMessage]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleCvUpload(file);
+      // Reset input so the same file can be re-uploaded
+      e.target.value = '';
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
@@ -88,6 +136,16 @@ export function AIChatPanel() {
 
   return (
     <>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.txt,application/pdf,text/plain"
+        className="hidden"
+        onChange={handleFileChange}
+        aria-label="Upload CV"
+      />
+
       {/* Floating Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
@@ -134,6 +192,20 @@ export function AIChatPanel() {
           </Button>
         </div>
 
+        {/* CV Status Banner */}
+        {cvState.status !== 'idle' && (
+          <div className={cn(
+            'mx-3 mt-3 px-3 py-2 rounded-lg flex items-center gap-2 text-xs',
+            cvState.status === 'uploading' && 'bg-blue-500/10 border border-blue-500/20 text-blue-400',
+            cvState.status === 'ready' && 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400',
+            cvState.status === 'error' && 'bg-red-500/10 border border-red-500/20 text-red-400',
+          )}>
+            {cvState.status === 'uploading' && <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Reading your CV...</>}
+            {cvState.status === 'ready' && <><CheckCircle2 className="w-3.5 h-3.5" /> CV loaded: {cvState.filename}</>}
+            {cvState.status === 'error' && <><AlertCircle className="w-3.5 h-3.5" /> {cvState.message}</>}
+          </div>
+        )}
+
         {/* Messages */}
         <ScrollArea className="flex-1 px-4 py-4">
           <div className="space-y-4">
@@ -163,22 +235,45 @@ export function AIChatPanel() {
             {SUGGESTED_PROMPTS.map(prompt => (
               <button
                 key={prompt}
-                onClick={() => sendMessage(prompt)}
-                className="text-xs px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-muted-foreground hover:text-foreground transition-colors text-left"
+                onClick={() => prompt === 'Match jobs to my CV' ? fileInputRef.current?.click() : sendMessage(prompt)}
+                className={cn(
+                  "text-xs px-3 py-1.5 rounded-full border border-white/10 transition-colors text-left",
+                  prompt === 'Match jobs to my CV'
+                    ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20'
+                    : 'bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground'
+                )}
               >
-                {prompt}
+                {prompt === 'Match jobs to my CV' ? '📎 ' : ''}{prompt}
               </button>
             ))}
           </div>
         )}
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="flex gap-2 px-4 py-3 border-t border-white/10">
+        <form onSubmit={handleSubmit} className="flex gap-2 px-3 py-3 border-t border-white/10">
+          {/* CV Upload Button */}
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading || cvState.status === 'uploading'}
+            title="Upload your CV (PDF or TXT)"
+            className="shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+          >
+            {cvState.status === 'uploading'
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : cvState.status === 'ready'
+              ? <FileText className="w-4 h-4 text-emerald-400" />
+              : <Paperclip className="w-4 h-4" />
+            }
+          </Button>
+
           <Input
             ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask about tenders, health, salaries..."
+            placeholder="Ask anything, or upload your CV…"
             className="flex-1 bg-white/5 border-white/10 focus-visible:ring-primary/50 text-sm"
             disabled={isLoading}
           />
