@@ -62,8 +62,8 @@ export default async function JobsPage({
     db.selectDistinct({ name: jobs.location }).from(jobs).where(activeCondition)
   );
 
-  const uniqueCompanies = uniqueCompaniesData.map(c => c.name).filter(Boolean).sort();
-  const uniqueLocations = uniqueLocationsData.map(l => l.name).filter(Boolean).sort();
+  const uniqueCompanies = uniqueCompaniesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+  const uniqueLocations = uniqueLocationsData.map(l => l.name).filter((l): l is string => Boolean(l)).sort();
 
   const jobTypes = [
     { value: '', label: 'All Types' },
