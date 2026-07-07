@@ -87,6 +87,8 @@ export function AIChatPanel() {
       }]);
     } finally {
       setIsLoading(false);
+      // Re-focus input so user knows they can continue typing
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isLoading]);
 
@@ -273,7 +275,7 @@ export function AIChatPanel() {
             ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask anything, or upload your CV…"
+            placeholder={cvState.status === 'ready' ? 'Ask a follow-up about your results…' : 'Ask anything, or upload your CV…'}
             className="flex-1 bg-white/5 border-white/10 focus-visible:ring-primary/50 text-sm"
             disabled={isLoading}
           />
@@ -281,7 +283,12 @@ export function AIChatPanel() {
             type="submit"
             size="icon"
             disabled={!input.trim() || isLoading}
-            className="shrink-0 bg-primary hover:bg-primary/90"
+            className={cn(
+              'shrink-0 transition-all duration-200',
+              input.trim() && !isLoading
+                ? 'bg-primary hover:bg-primary/90 opacity-100'
+                : 'bg-primary/30 opacity-50 cursor-not-allowed'
+            )}
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>

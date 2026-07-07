@@ -31,10 +31,13 @@ function gatherText(content: string, out: string[]): void {
     const inner = m[1];
     const strRe = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g;
     let im: RegExpExecArray | null;
+    // Collect parts from this array, then join them as one chunk
+    const parts: string[] = [];
     while ((im = strRe.exec(inner)) !== null) {
-      const t = decodePDFString(im[1]).trim();
-      if (t) out.push(t);
+      const t = decodePDFString(im[1]);
+      if (t) parts.push(t);
     }
+    if (parts.length) out.push(parts.join(''));
   }
 }
 
@@ -133,10 +136,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Normalise whitespace
-    const cleanText = extractedText
+    let cleanText = extractedText
       .replace(/\r?\n/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+
+    // Collapse single-character tokens separated by spaces that form words.
+    // PDFs using character-level TJ kerning produce "D a n i e l" — fix to "Daniel".
+    // Strategy: if a run of >=3 consecutive space-separated single chars appears, merge them.
+    cleanText = cleanText.replace(
+      /((?:^|\s)\S(?=\s\S(?:\s|$))){1}((?:\s\S){2,})/g,
+      (match) => match.replace(/\s(?=\S(\s|$))/g, '').replace(/^\s/, ' ')
+    );
+    // Also strip non-printable characters (chars below space except tab)
+    cleanText = cleanText.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim();
 
     if (!cleanText || cleanText.length < 50) {
       return NextResponse.json(
