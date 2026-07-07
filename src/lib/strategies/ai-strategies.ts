@@ -225,7 +225,7 @@ Always be concise, helpful, and specific to East Africa context.`;
         messages: [
           { role: 'user', content: input.query },
           { role: 'assistant', content: text || '', toolCalls },
-          { role: 'tool', content: toolResults.map(tr => ({
+          { role: 'tool', content: toolResults.map((tr: any) => ({
             type: 'tool-result',
             toolCallId: tr.toolCallId,
             toolName: tr.toolName,
