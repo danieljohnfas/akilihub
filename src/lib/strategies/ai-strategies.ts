@@ -210,7 +210,7 @@ Always be concise, helpful, and specific to East Africa context.`;
     let sources: string[] = [];
 
     const { text, toolCalls, toolResults } = await generateText({
-      model: google('gemini-2.5-flash'),
+      model: google('gemini-1.5-flash'),
       system: systemPrompt,
       prompt: input.query,
       tools: toolsConfig,
@@ -223,7 +223,7 @@ Always be concise, helpful, and specific to East Africa context.`;
       const toolResultsText = JSON.stringify(toolResults, null, 2);
       
       const followup = await generateText({
-        model: google('gemini-2.5-flash'),
+        model: google('gemini-1.5-flash'),
         system: systemPrompt,
         prompt: `${input.query}\n\n[System Note: A database search was performed to answer the user's query. Here are the search results from the database:\n${toolResultsText}\n\nPlease synthesize these results into a clear, helpful response.]`,
       });
