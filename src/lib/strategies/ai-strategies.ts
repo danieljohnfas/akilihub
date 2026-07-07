@@ -133,12 +133,13 @@ When a user shares CV content or asks for job matching:
 Always be concise, helpful, and specific to East Africa context.`,
       prompt: input.query,
       tools: {
-        searchTenders: tool({
+        searchTenders: {
           description: 'Search for active government tenders in East Africa.',
           parameters: z.object({
             keyword: z.string().describe('Search term, e.g., IT, construction, health.'),
           }),
-          execute: async ({ keyword }) => {
+          execute: async (args: any) => {
+            const keyword = args.keyword as string;
             const results = await db.select({
               id: tenders.id,
               title: tenders.title,
@@ -152,27 +153,30 @@ Always be concise, helpful, and specific to East Africa context.`,
               .limit(5);
             return results.length > 0 ? JSON.stringify(results) : 'No tenders found for that keyword.';
           },
-        }),
-        searchBusinesses: tool({
+        } as any,
+        searchBusinesses: {
           description: 'Check business registration and compliance status.',
           parameters: z.object({
             companyName: z.string().describe('Company name to search.'),
           }),
-          execute: async ({ companyName }) => {
+          execute: async (args: any) => {
+            const companyName = args.companyName as string;
             const results = await db.select()
               .from(businesses)
               .where(ilike(businesses.name, `%${companyName}%`))
               .limit(3);
             return results.length > 0 ? JSON.stringify(results) : 'No business records found.';
           },
-        }),
-        searchJobs: tool({
+        } as any,
+        searchJobs: {
           description: 'Search for active job openings in East Africa. Use this when a user shares their CV or asks for job matching.',
           parameters: z.object({
             keyword: z.string().describe('Job title, skill, or keyword to search, e.g., software engineer, accountant, NGO.'),
             location: z.string().optional().describe('Optional location filter, e.g., Nairobi, Dar es Salaam.'),
           }),
-          execute: async ({ keyword, location }) => {
+          execute: async (args: any) => {
+            const keyword = args.keyword as string;
+            const location = args.location as string | undefined;
             const activeFilter = and(
               eq(jobs.isActive, true),
               or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
@@ -201,7 +205,7 @@ Always be concise, helpful, and specific to East Africa context.`,
               link: `/jobs/${j.id}`,
             })));
           },
-        }),
+        } as any,
       },
     });
 
