@@ -29,8 +29,9 @@ export async function POST(req: NextRequest) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      // Dynamically import to avoid build-time issues
-      const pdfParse = (await import('pdf-parse')).default;
+      // pdf-parse is CJS — use require to avoid ESM .default issues
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>;
       const parsed = await pdfParse(buffer);
       extractedText = parsed.text;
     }
