@@ -26,14 +26,17 @@ export default async function JobsPage({
   const company = params.company || '';
   const location = params.location || '';
 
-  const conditions = [
+  const activeCondition = and(
     eq(jobs.isActive, true),
-    // Ensure the job hasn't expired
-    or(isNull(jobs.deadline), gt(jobs.deadline, new Date())),
+    or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
+  );
+
+  const conditions = [
+    activeCondition,
     q ? ilike(jobs.title, `%${q}%`) : undefined,
     type ? eq(jobs.jobType, type as never) : undefined,
-    company ? ilike(jobs.companyName, `%${company}%`) : undefined,
-    location ? ilike(jobs.location, `%${location}%`) : undefined,
+    company ? eq(jobs.companyName, company) : undefined,
+    location ? eq(jobs.location, location) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -50,6 +53,17 @@ export default async function JobsPage({
       .orderBy(desc(jobs.createdAt))
       .limit(30)
   );
+
+  // Fetch unique companies and locations for the dropdowns
+  const uniqueCompaniesData = await safeQuery(
+    db.selectDistinct({ name: jobs.companyName }).from(jobs).where(activeCondition)
+  );
+  const uniqueLocationsData = await safeQuery(
+    db.selectDistinct({ name: jobs.location }).from(jobs).where(activeCondition)
+  );
+
+  const uniqueCompanies = uniqueCompaniesData.map(c => c.name).filter(Boolean).sort();
+  const uniqueLocations = uniqueLocationsData.map(l => l.name).filter(Boolean).sort();
 
   const jobTypes = [
     { value: '', label: 'All Types' },
@@ -110,26 +124,34 @@ export default async function JobsPage({
           <div className="space-y-1.5 flex-1 w-full">
             <label className="text-xs text-muted-foreground font-medium pl-1">Who is recruiting?</label>
             <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <select
                 name="company"
-                placeholder="Company name..."
-                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
                 defaultValue={company}
-              />
+                className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/20 pl-9 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 appearance-none text-foreground"
+              >
+                <option value="">All Companies</option>
+                {uniqueCompanies.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div className="space-y-1.5 flex-1 w-full">
             <label className="text-xs text-muted-foreground font-medium pl-1">Location</label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <select
                 name="location"
-                placeholder="Nairobi, Remote, etc..."
-                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
                 defaultValue={location}
-              />
+                className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/20 pl-9 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 appearance-none text-foreground"
+              >
+                <option value="">All Locations</option>
+                {uniqueLocations.map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
             </div>
           </div>
 
