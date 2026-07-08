@@ -41,8 +41,8 @@ async function run() {
   console.log('🚀 Triggering manual job scraper...');
   
   // Custom query for more health/tech specific roles in East Africa
-  const query = "healthcare tech IT jobs Nairobi Dar es Salaam Kampala 2026";
-  const discovered = await discoverJobs(query, 3);
+  const query = "IT health informatics jobs vacancies East Africa 2026";
+  const discovered = await discoverJobs(query, 5);
   
   const tzInserted = await saveJobs(discovered, "TZ"); // Just map to TZ for now or split
   console.log(`✅ Finished manual scrape. Inserted ${tzInserted} new jobs.`);
