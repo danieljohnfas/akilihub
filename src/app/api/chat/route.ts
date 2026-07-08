@@ -1,20 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StrategyEngine } from '@/lib/strategies/engine';
-import { 
-  DifyStrategy, 
-  LangflowStrategy, 
-  VercelAiSdkStrategy,
+import {
+  DifyStrategy,
+  LangflowStrategy,
+  GeminiFlashLiteStrategy,
+  GeminiFlashStrategy,
+  GeminiFlash8BStrategy,
+  GeminiFlash15Strategy,
+  GeminiPro15Strategy,
   GroqStrategy,
+  CerebrasStrategy,
+  MistralStrategy,
+  TogetherStrategy,
+  CohereStrategy,
+  HuggingFaceStrategy,
   OpenRouterStrategy,
-  UnavailableStrategy, 
-  AiInput 
+  UnavailableStrategy,
+  AiInput,
 } from '@/lib/strategies/ai-strategies';
 
+/**
+ * Strategy execution order:
+ *
+ * 1.  Dify              — Custom workflow (if configured)
+ * 2.  Langflow          — Custom workflow (if configured)
+ * --- Gemini tier rotation (same API key, separate quota pools per model) ---
+ * 3.  Gemini 2.0 Flash Lite  — 1,500 req/day free
+ * 4.  Gemini 2.0 Flash       — 1,500 req/day free
+ * 5.  Gemini 1.5 Flash 8B    — 1,500 req/day free
+ * 6.  Gemini 1.5 Flash       — 1,500 req/day free
+ * 7.  Gemini 1.5 Pro         —    50 req/day free (most capable)
+ * --- Other free AI providers ---
+ * 8.  Groq (Llama 3.3 70B)  — 14,400 req/day free  | signup: console.groq.com
+ * 9.  Cerebras (Llama 70B)  — fast free tier        | signup: cloud.cerebras.ai
+ * 10. Mistral (Mistral 7B)  — free credit           | signup: console.mistral.ai
+ * 11. Together AI (Llama 8B)— $1 free credit        | signup: api.together.ai
+ * 12. Cohere (Command R)    — 1,000 calls/mo free   | signup: dashboard.cohere.com
+ * 13. Hugging Face (Mistral)— serverless free        | signup: huggingface.co
+ * 14. OpenRouter            — free model tier        | signup: openrouter.ai
+ * 15. Unavailable           — final error fallback
+ */
 const engine = new StrategyEngine<AiInput, { response: string; confidence: number; sources: string[] }>([
   new DifyStrategy(),
   new LangflowStrategy(),
-  new VercelAiSdkStrategy(),
+  new GeminiFlashLiteStrategy(),
+  new GeminiFlashStrategy(),
+  new GeminiFlash8BStrategy(),
+  new GeminiFlash15Strategy(),
+  new GeminiPro15Strategy(),
   new GroqStrategy(),
+  new CerebrasStrategy(),
+  new MistralStrategy(),
+  new TogetherStrategy(),
+  new CohereStrategy(),
+  new HuggingFaceStrategy(),
   new OpenRouterStrategy(),
   new UnavailableStrategy(),
 ]);
@@ -27,7 +66,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Query is required.' }, { status: 400 });
     }
 
-    const { result, strategyUsed } = await engine.executeWithFallback({ query: query.trim(), contextParams });
+    const { result, strategyUsed } = await engine.executeWithFallback({
+      query: query.trim(),
+      contextParams,
+    });
 
     return NextResponse.json({
       response: result.response,
@@ -37,6 +79,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('[/api/chat] All strategies failed:', error);
-    return NextResponse.json({ error: 'Failed to process your query. Please try again.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'All AI services are currently at capacity. Please try again in a few minutes.' },
+      { status: 503 }
+    );
   }
 }
