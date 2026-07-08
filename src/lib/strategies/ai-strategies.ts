@@ -29,7 +29,7 @@ You help users with:
 - Salary benchmarks and career information
 - Job matching based on CVs and skills
 
-When presenting job matches, always include: Job Title, Company (Who is Recruiting), Location, and a link to /jobs/[id].
+When presenting job matches, always include: Job Title, Company (Who is Recruiting), Location, and a link using the provided URL.
 Always be concise, helpful, and specific to the East Africa context.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -90,6 +90,7 @@ async function buildDbContext(query: string): Promise<{ dbContext: string; sourc
         location: jobs.location,
         jobType: jobs.jobType,
         deadline: jobs.deadline,
+        sourceUrl: jobs.sourceUrl,
       })
         .from(jobs)
         .where(and(activeFilter, ilike(jobs.title, `%${kw}%`)))
@@ -109,7 +110,7 @@ async function buildDbContext(query: string): Promise<{ dbContext: string; sourc
     if (uniqueResults.length > 0) {
       sources.push('AkiliBrain Jobs Database');
       dbContext = `\n\n[Database Results - Active Job Openings]\n${JSON.stringify(
-        uniqueResults.map(j => ({ ...j, link: `/jobs/${j.id}` })),
+        uniqueResults.map(j => ({ ...j, link: j.sourceUrl ? `${j.sourceUrl}${j.sourceUrl.includes('?') ? '&' : '?'}utm_source=akilibrain.com` : `/jobs/${j.id}` })),
         null, 2
       )}`;
     } else {
