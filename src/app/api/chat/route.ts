@@ -20,43 +20,42 @@ import {
 } from '@/lib/strategies/ai-strategies';
 
 /**
- * Strategy execution order:
+ * Strategy execution order — optimized for speed and quota efficiency:
  *
  * 1.  Dify              — Custom workflow (if configured)
  * 2.  Langflow          — Custom workflow (if configured)
- * --- Gemini tier rotation (same API key, separate quota pools per model) ---
- * 3.  Gemini 2.0 Flash Lite  — 1,500 req/day free
- * 4.  Gemini 2.0 Flash       — 1,500 req/day free
- * 5.  Gemini 1.5 Flash 8B    — 1,500 req/day free
- * 6.  Gemini 1.5 Flash       — 1,500 req/day free
- * 7.  Gemini 1.5 Pro         —    50 req/day free (most capable)
- * --- Other free AI providers ---
- * 8.  Groq (Llama 3.3 70B)  — 14,400 req/day free  | signup: console.groq.com
- * 9.  Cerebras (Llama 70B)  — fast free tier        | signup: cloud.cerebras.ai
- * 10. Mistral (Mistral 7B)  — free credit           | signup: console.mistral.ai
- * 11. Together AI (Llama 8B)— $1 free credit        | signup: api.together.ai
- * 12. Cohere (Command R)    — 1,000 calls/mo free   | signup: dashboard.cohere.com
- * 13. Hugging Face (Mistral)— serverless free        | signup: huggingface.co
- * 14. OpenRouter            — free model tier        | signup: openrouter.ai
- * 15. Unavailable           — final error fallback
+ * 3.  Gemini 2.0 Flash       — 1,500 req/day free (fast, confirmed working)
+ * 4.  Gemini 2.0 Flash Lite  — 1,500 req/day free
+ * 5.  Groq (Llama 3.3 70B)  — 14,400 req/day free  ← moved up (fast + reliable)
+ * 6.  Cerebras (Llama 70B)  — fast free tier
+ * 7.  Mistral (Mistral Small)— free credit
+ * 8.  Gemini 1.5 Flash       — 1,500 req/day free  (versioned model name)
+ * 9.  Gemini 1.5 Flash 8B    — 1,500 req/day free  (versioned model name)
+ * 10. Gemini 1.5 Pro         —    50 req/day free
+ * 11. Together AI (Llama 8B) — $1 free credit
+ * 12. Cohere (Command R)     — 1,000 calls/mo free
+ * 13. Hugging Face (Mistral) — serverless free
+ * 14. OpenRouter             — free model tier
+ * 15. Unavailable            — final error fallback
  */
 const engine = new StrategyEngine<AiInput, { response: string; confidence: number; sources: string[] }>([
   new DifyStrategy(),
   new LangflowStrategy(),
-  new GeminiFlashLiteStrategy(),
   new GeminiFlashStrategy(),
-  new GeminiFlash8BStrategy(),
-  new GeminiFlash15Strategy(),
-  new GeminiPro15Strategy(),
+  new GeminiFlashLiteStrategy(),
   new GroqStrategy(),
   new CerebrasStrategy(),
   new MistralStrategy(),
+  new GeminiFlash15Strategy(),
+  new GeminiFlash8BStrategy(),
+  new GeminiPro15Strategy(),
   new TogetherStrategy(),
   new CohereStrategy(),
   new HuggingFaceStrategy(),
   new OpenRouterStrategy(),
   new UnavailableStrategy(),
 ]);
+
 
 export async function POST(req: NextRequest) {
   try {

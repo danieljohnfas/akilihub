@@ -241,16 +241,16 @@ function makeGeminiStrategy(modelName: string, strategyName: string, confidence 
   };
 }
 
-// 3a. Gemini 2.0 Flash Lite  — 1,500 RPD free (fastest, primary Gemini)
-export const GeminiFlashLiteStrategy = makeGeminiStrategy('gemini-2.0-flash-lite', 'Gemini 2.0 Flash Lite', 0.88);
-// 3b. Gemini 2.0 Flash       — 1,500 RPD free
+// 3a. Gemini 2.0 Flash       — 1,500 RPD free (confirmed working with this SDK)
 export const GeminiFlashStrategy = makeGeminiStrategy('gemini-2.0-flash', 'Gemini 2.0 Flash', 0.90);
-// 3c. Gemini 1.5 Flash 8B    — 1,500 RPD free (ultra-light, high quota)
-export const GeminiFlash8BStrategy = makeGeminiStrategy('gemini-1.5-flash-8b', 'Gemini 1.5 Flash 8B', 0.85);
-// 3d. Gemini 1.5 Flash       — 1,500 RPD free
-export const GeminiFlash15Strategy = makeGeminiStrategy('gemini-1.5-flash', 'Gemini 1.5 Flash', 0.87);
-// 3e. Gemini 1.5 Pro         — 50 RPD free (most capable, reserve for hard queries)
-export const GeminiPro15Strategy = makeGeminiStrategy('gemini-1.5-pro', 'Gemini 1.5 Pro', 0.93);
+// 3b. Gemini 2.0 Flash Lite  — 1,500 RPD free
+export const GeminiFlashLiteStrategy = makeGeminiStrategy('gemini-2.0-flash-lite', 'Gemini 2.0 Flash Lite', 0.88);
+// 3c. Gemini 1.5 Flash (versioned) — 1,500 RPD free
+export const GeminiFlash15Strategy = makeGeminiStrategy('gemini-1.5-flash-002', 'Gemini 1.5 Flash', 0.87);
+// 3d. Gemini 1.5 Flash 8B (versioned) — 1,500 RPD free
+export const GeminiFlash8BStrategy = makeGeminiStrategy('gemini-1.5-flash-8b-001', 'Gemini 1.5 Flash 8B', 0.85);
+// 3e. Gemini 1.5 Pro (versioned) — 50 RPD free (most capable, last resort)
+export const GeminiPro15Strategy = makeGeminiStrategy('gemini-1.5-pro-002', 'Gemini 1.5 Pro', 0.93);
 
 // Legacy export for backward compat with route.ts
 export const VercelAiSdkStrategy = GeminiFlashLiteStrategy;
