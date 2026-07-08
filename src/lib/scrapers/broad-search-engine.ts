@@ -95,10 +95,19 @@ Rules:
       prompt,
     });
 
-    return object.jobs.map(job => ({
-      ...job,
-      deadline: job.deadlineIsoString ? new Date(job.deadlineIsoString) : null
-    }));
+    return object.jobs.map(job => {
+      let parsedDate = null;
+      if (job.deadlineIsoString) {
+        const d = new Date(job.deadlineIsoString);
+        if (!isNaN(d.getTime())) {
+          parsedDate = d;
+        }
+      }
+      return {
+        ...job,
+        deadline: parsedDate
+      };
+    });
   } catch (err) {
     console.error(`[extractJobsWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
     return [];
