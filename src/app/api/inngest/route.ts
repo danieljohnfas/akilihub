@@ -33,6 +33,7 @@ import { sendTenderAlertsJob } from "@/inngest/send-alerts";
 import { fetchHealthDataJob } from "@/inngest/fetch-health";
 import { enforceDataFreshnessJob } from "@/inngest/enforce-freshness";
 import { checkDataStatusJob } from "@/inngest/check-data-status";
+import { salaryConsensusVerificationJob } from "@/inngest/salary-consensus";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -67,5 +68,8 @@ export const { GET, POST, PUT } = serve({
 
     // Daily data-starvation check & alert (23:50 UTC)
     checkDataStatusJob,
+
+    // Salary verification – nightly consensus clustering (02:00 UTC)
+    salaryConsensusVerificationJob,
   ],
 });

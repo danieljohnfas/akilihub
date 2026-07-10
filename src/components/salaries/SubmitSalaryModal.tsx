@@ -48,6 +48,7 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
       grossMonthlySalary: Number(formData.get("grossMonthlySalary")),
       netMonthlySalary: formData.get("netMonthlySalary") ? Number(formData.get("netMonthlySalary")) : undefined,
       yearsOfExperience: formData.get("yearsOfExperience") ? Number(formData.get("yearsOfExperience")) : undefined,
+      workEmail: formData.get("workEmail") || undefined,
     };
 
     try {
@@ -178,6 +179,31 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
               <Label htmlFor="grossMonthlySalary">Gross Monthly Salary <span className="text-red-500">*</span></Label>
               <Input id="grossMonthlySalary" name="grossMonthlySalary" type="number" min="0" required placeholder="Before taxes" />
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="netMonthlySalary">Net Monthly Salary <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Input id="netMonthlySalary" name="netMonthlySalary" type="number" min="0" placeholder="After taxes" />
+          </div>
+
+          {/* Strategy 3: optional work email for auto-verification */}
+          <div className="space-y-2">
+            <Label htmlFor="workEmail">
+              Work Email
+              <span className="ml-2 text-xs font-normal text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5">
+                Instant Verify
+              </span>
+            </Label>
+            <Input
+              id="workEmail"
+              name="workEmail"
+              type="email"
+              placeholder="you@company.com (optional)"
+              className="bg-white/5"
+            />
+            <p className="text-xs text-muted-foreground">
+              Provide a non-personal work email to instantly verify your submission. We never store or display your email — it's discarded after verification.
+            </p>
           </div>
 
           <div className="flex justify-end pt-4">
