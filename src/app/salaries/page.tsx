@@ -6,6 +6,7 @@ import { SalaryCard } from '@/components/salaries/SalaryCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Search, SlidersHorizontal, Banknote } from 'lucide-react';
+import { SubmitSalaryModal } from '@/components/salaries/SubmitSalaryModal';
 import Link from 'next/link';
 
 export const metadata = {
@@ -42,6 +43,8 @@ export default async function SalariesPage({
     .orderBy(desc(salarySubmissions.submittedAt))
     .limit(20));
 
+  const allCountries = await safeQuery(db.select().from(countries).orderBy(countries.name));
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
       {/* Header & Search */}
@@ -64,9 +67,10 @@ export default async function SalariesPage({
             />
             {level && level !== 'all' && <input type="hidden" name="level" value={level} />}
           </div>
-          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10">
+          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10 mr-2">
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
+          <SubmitSalaryModal countries={allCountries} />
         </form>
       </div>
 
