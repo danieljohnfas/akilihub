@@ -27,6 +27,9 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
   const [employmentType, setEmploymentType] = useState("full_time");
   const [currency, setCurrency] = useState("USD");
   
+  const experienceLabels: Record<string, string> = { entry: "Entry Level", mid: "Mid Level", senior: "Senior Level", executive: "Executive" };
+  const employmentLabels: Record<string, string> = { full_time: "Full Time", part_time: "Part Time", contract: "Contract", consultancy: "Consultancy" };
+  
   const router = useRouter();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -101,7 +104,9 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
               <Label htmlFor="countryId">Country <span className="text-red-500">*</span></Label>
               <Select value={countryId} onValueChange={(val) => val && setCountryId(val)} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Country" />
+                  <span className="flex flex-1 text-left line-clamp-1">
+                    {countryId ? countries.find(c => c.id === countryId)?.name : "Select Country"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {countries.map((c) => (
@@ -114,7 +119,9 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
               <Label htmlFor="experienceLevel">Experience Level <span className="text-red-500">*</span></Label>
               <Select value={experienceLevel} onValueChange={(val) => val && setExperienceLevel(val)} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Level" />
+                  <span className="flex flex-1 text-left line-clamp-1">
+                    {experienceLabels[experienceLevel] || "Select Level"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="entry">Entry Level</SelectItem>
@@ -131,7 +138,9 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
               <Label htmlFor="employmentType">Employment Type <span className="text-red-500">*</span></Label>
               <Select value={employmentType} onValueChange={(val) => val && setEmploymentType(val)} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Type" />
+                  <span className="flex flex-1 text-left line-clamp-1">
+                    {employmentLabels[employmentType] || "Select Type"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="full_time">Full Time</SelectItem>
@@ -152,7 +161,9 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
               <Label htmlFor="currency">Currency <span className="text-red-500">*</span></Label>
               <Select value={currency} onValueChange={(val) => val && setCurrency(val)} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Currency" />
+                  <span className="flex flex-1 text-left line-clamp-1">
+                    {currency || "Currency"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USD">USD</SelectItem>
