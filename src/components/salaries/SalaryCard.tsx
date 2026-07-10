@@ -1,4 +1,4 @@
-import { Building2, MapPin, Briefcase, GraduationCap, DollarSign, CheckCircle2 } from 'lucide-react';
+import { Building2, MapPin, Briefcase, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
@@ -38,10 +38,15 @@ export function SalaryCard({
           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 capitalize">
             {experienceLevel.replace('_', ' ')}
           </Badge>
-          {isVerified && (
-            <Badge variant="default" className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30">
+          {isVerified ? (
+            <Badge variant="default" className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30">
               <CheckCircle2 className="w-3 h-3 mr-1" />
               Verified
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Crowdsourced
             </Badge>
           )}
         </div>
@@ -74,12 +79,9 @@ export function SalaryCard({
 
         <div className="mt-4 pt-4 border-t border-white/5">
           <p className="text-xs text-muted-foreground mb-1">Gross Monthly</p>
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 shrink-0 text-emerald-400" />
-            <span className="text-emerald-400 font-bold text-xl">
-              {currency} {Number(grossMonthlySalary).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
+          <span className="text-emerald-400 font-bold text-xl">
+            {currency} {Number(grossMonthlySalary).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
         </div>
       </CardContent>
 

@@ -8,6 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Search, SlidersHorizontal, Banknote } from 'lucide-react';
 import { SubmitSalaryModal } from '@/components/salaries/SubmitSalaryModal';
 import Link from 'next/link';
+import { AlertCircle } from 'lucide-react';
 
 export const metadata = {
   title: 'Salary Database | AkiliBrain',
@@ -87,6 +88,16 @@ export default async function SalariesPage({
             </Button>
           </Link>
         ))}
+      </div>
+
+      {/* Disclaimer Banner */}
+      <div className="flex items-start gap-3 px-4 py-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-sm text-amber-300/80">
+        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+        <p>
+          <span className="font-semibold text-amber-300">Crowdsourced data.</span>{' '}
+          Salary entries are submitted anonymously by community members and are not independently verified unless marked{' '}
+          <span className="font-semibold text-emerald-400">Verified</span>. Use this data as a reference only.
+        </p>
       </div>
 
       {/* Grid */}
