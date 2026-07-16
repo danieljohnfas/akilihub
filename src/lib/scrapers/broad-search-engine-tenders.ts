@@ -1,5 +1,4 @@
-import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { fetchHtml, htmlToText } from './compliance-base';
 import { searchGoogle } from './broad-search-engine';
@@ -36,8 +35,7 @@ Rules:
 `;
 
   try {
-    const { object } = await generateObject({
-      model: google('gemini-2.5-flash'),
+    const { object } = await generateObjectWithFallback({
       schema: z.object({
         tenders: z.array(z.object({
           referenceNo: z.string().min(3),
@@ -54,7 +52,7 @@ Rules:
       prompt,
     });
 
-    return object.tenders.map(tender => ({
+    return object.tenders.map((tender: { referenceNo: string; title: string; description: string | null; contractingAuthority: string; category: BroadTenderResource['category']; budgetNumber: number | null; currency: string; sourceUrl: string; deadlineIsoString: string | null }) => ({
       referenceNo: tender.referenceNo,
       title: tender.title,
       description: tender.description,

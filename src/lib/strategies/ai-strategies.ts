@@ -217,8 +217,7 @@ export class LangflowStrategy implements Strategy<AiInput, AiResult> {
 //   gemini-1.5-flash        → 1,500 RPD
 //   gemini-1.5-pro          →    50 RPD  (most capable, low quota)
 // ─────────────────────────────────────────────────────────────────────────────
-import { generateText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateTextWithFallback } from '../ai/router';
 
 function makeGeminiStrategy(modelName: string, strategyName: string, confidence = 0.90) {
   return class implements Strategy<AiInput, AiResult> {
@@ -228,8 +227,7 @@ function makeGeminiStrategy(modelName: string, strategyName: string, confidence 
       if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not set.');
       const { dbContext, sources } = await buildDbContext(input.query);
       const augmentedPrompt = buildPrompt(input.query, dbContext);
-      const { text } = await generateText({
-        model: google(modelName),
+      const { text } = await generateTextWithFallback({
         system: SYSTEM_PROMPT,
         prompt: augmentedPrompt,
       });

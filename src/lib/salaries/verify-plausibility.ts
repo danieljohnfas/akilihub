@@ -1,5 +1,4 @@
-import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 
 export interface PlausibilityResult {
@@ -40,8 +39,7 @@ Rules:
 - Return a short, factual reason (1 sentence max).`;
 
   try {
-    const { object } = await generateObject({
-      model: google('gemini-2.5-flash'),
+    const { object } = await generateObjectWithFallback({
       schema: z.object({
         plausible: z.boolean(),
         confidence: z.enum(['high', 'medium', 'low']),

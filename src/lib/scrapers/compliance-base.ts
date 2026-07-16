@@ -1,6 +1,5 @@
 import * as cheerio from 'cheerio';
-import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 
 export interface ComplianceResource {
@@ -147,8 +146,7 @@ Rules:
 - If a resource has no direct URL, use the base URL: ${baseUrl}
 - Return an empty array if no real resources are found.`;
 
-  const { object } = await generateObject({
-    model: google('gemini-2.5-flash'),
+  const { object } = await generateObjectWithFallback({
     schema: z.object({
       resources: z.array(z.object({
         title: z.string().min(3),

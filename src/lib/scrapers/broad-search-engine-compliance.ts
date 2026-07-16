@@ -1,5 +1,4 @@
-import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { fetchHtml, htmlToText } from './compliance-base';
 import { searchGoogle } from './broad-search-engine';
@@ -33,8 +32,7 @@ Rules:
 `;
 
   try {
-    const { object } = await generateObject({
-      model: google('gemini-2.5-flash'),
+    const { object } = await generateObjectWithFallback({
       schema: z.object({
         resources: z.array(z.object({
           title: z.string().min(5),
@@ -48,7 +46,7 @@ Rules:
       prompt,
     });
 
-    return object.resources.map(res => ({
+    return object.resources.map((res: { title: string; description: string; issuingAuthority: string; category: BroadComplianceResource['category']; resourceType: BroadComplianceResource['resourceType']; sourceUrl: string }) => ({
       title: res.title,
       description: res.description,
       issuingAuthority: res.issuingAuthority,

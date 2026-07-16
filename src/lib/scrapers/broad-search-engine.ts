@@ -1,5 +1,4 @@
-import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { fetchHtml, htmlToText } from './compliance-base';
 
@@ -81,8 +80,7 @@ Rules:
 `;
 
   try {
-    const { object } = await generateObject({
-      model: google('gemini-2.5-flash'),
+    const { object } = await generateObjectWithFallback({
       schema: z.object({
         jobs: z.array(z.object({
           title: z.string().min(3),
@@ -98,7 +96,7 @@ Rules:
       prompt,
     });
 
-    return object.jobs.map(job => {
+    return object.jobs.map((job: { title: string; companyName: string; description: string; requirements: string | null; location: string | null; jobType: BroadJobResource['jobType']; sourceUrl: string; deadlineIsoString: string | null }) => {
       let parsedDate = null;
       if (job.deadlineIsoString) {
         const d = new Date(job.deadlineIsoString);

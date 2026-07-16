@@ -1,0 +1,67 @@
+{
+  "requestsFinished": 0,
+  "requestsFailed": 1,
+  "requestsRetries": 1,
+  "requestsFailedPerMinute": 14,
+  "requestsFinishedPerMinute": 0,
+  "requestMinDurationMillis": null,
+  "requestMaxDurationMillis": 0,
+  "requestTotalFailedDurationMillis": 12,
+  "requestTotalFinishedDurationMillis": 0,
+  "crawlerStartedAt": "2026-07-16T13:58:14.952Z",
+  "crawlerFinishedAt": "2026-07-16T13:58:18.918Z",
+  "statsPersistedAt": "2026-07-16T13:58:18.920Z",
+  "crawlerRuntimeMillis": 4023,
+  "crawlerLastStartTimestamp": 1784210294897,
+  "requestRetryHistogram": [
+    null,
+    null,
+    1
+  ],
+  "statsId": 5,
+  "requestAvgFailedDurationMillis": 12,
+  "requestAvgFinishedDurationMillis": null,
+  "requestTotalDurationMillis": 12,
+  "requestsTotal": 1,
+  "requestsWithStatusCode": {},
+  "errors": {
+    "file:///C:/Users/nnm/Documents/projects/akilihub/node_modules/got/dist/source/core/index.js:198:21": {
+      "ENOTFOUND": {
+        "RequestError": {
+          "getaddrinfo ENOTFOUND www.armp.cd": {
+            "count": 1
+          }
+        }
+      }
+    },
+    "node:dns:121:26": {
+      "ENOTFOUND": {
+        "Error": {
+          "getaddrinfo ENOTFOUND www.armp.cd": {
+            "count": 1
+          }
+        }
+      }
+    }
+  },
+  "retryErrors": {
+    "file:///C:/Users/nnm/Documents/projects/akilihub/node_modules/got/dist/source/core/index.js:198:21": {
+      "ENOTFOUND": {
+        "RequestError": {
+          "getaddrinfo ENOTFOUND www.armp.cd": {
+            "count": 2
+          }
+        }
+      }
+    },
+    "node:dns:121:26": {
+      "ENOTFOUND": {
+        "Error": {
+          "getaddrinfo ENOTFOUND www.armp.cd": {
+            "count": 2
+          }
+        }
+      }
+    }
+  }
+}
