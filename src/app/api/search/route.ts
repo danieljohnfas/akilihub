@@ -17,9 +17,15 @@ export interface SearchResult {
 
 export async function GET(request: Request) {
   let query = '';
+  let page = 1;
+  let limit = 5;
   try {
     const url = new URL(request.url || 'http://localhost/api/search');
     query = url.searchParams.get('q') || '';
+    page = parseInt(url.searchParams.get('page') || '1', 10);
+    limit = parseInt(url.searchParams.get('limit') || '5', 10);
+    if (page < 1) page = 1;
+    if (limit < 1 || limit > 50) limit = 5;
   } catch (e) {
     // Vercel build phase might pass an invalid URL, safely ignore
     return NextResponse.json({ results: [] });
@@ -30,6 +36,7 @@ export async function GET(request: Request) {
   }
 
   const tsQuery = query.trim().split(' ').join(' & ');
+  const offset = (page - 1) * limit;
 
   try {
     // Run parallel FTS across all modules
@@ -41,7 +48,7 @@ export async function GET(request: Request) {
       })
         .from(tenders)
         .where(sql`to_tsvector('english', ${tenders.title} || ' ' || coalesce(${tenders.description}, '')) @@ plainto_tsquery('english', ${query})`)
-        .limit(5),
+        .limit(limit).offset(offset),
 
       db.select({
         id: complianceRequirements.id,
@@ -50,7 +57,7 @@ export async function GET(request: Request) {
       })
         .from(complianceRequirements)
         .where(sql`to_tsvector('english', ${complianceRequirements.title} || ' ' || ${complianceRequirements.description}) @@ plainto_tsquery('english', ${query})`)
-        .limit(5),
+        .limit(limit).offset(offset),
 
       db.select({
         id: salarySubmissions.id,
@@ -59,7 +66,7 @@ export async function GET(request: Request) {
       })
         .from(salarySubmissions)
         .where(sql`to_tsvector('english', ${salarySubmissions.jobTitle}) @@ plainto_tsquery('english', ${query})`)
-        .limit(5),
+        .limit(limit).offset(offset),
     ]);
 
     const results: SearchResult[] = [

@@ -1,6 +1,6 @@
 import { LanguageModel } from 'ai';
-import * as fs from 'fs';
-import * as path from 'path';
+import { db } from '@/lib/db/client';
+import { aiTelemetry } from '@/lib/db/schema/ai';
 
 export interface KeyEntry {
   id: string;
@@ -14,48 +14,53 @@ export interface KeyEntry {
   totalErrors: number;
 }
 
-const STATE_FILE = path.join(process.cwd(), '.ai-pool-state.json');
-
 class KeyPool {
   private keys: Map<string, KeyEntry> = new Map();
 
-  constructor() {
-    this.loadState();
-  }
-
-  private loadState() {
+  async loadState() {
     try {
-      if (fs.existsSync(STATE_FILE)) {
-        const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
-        for (const [id, state] of Object.entries(data)) {
-          if (this.keys.has(id)) {
-            const key = this.keys.get(id)!;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            Object.assign(key, state as any);
-          }
+      const records = await db.select().from(aiTelemetry);
+      for (const record of records) {
+        if (this.keys.has(record.id)) {
+          const key = this.keys.get(record.id)!;
+          key.coolUntil = record.coolUntil;
+          key.errorCount = record.errorCount;
+          key.lastUsed = record.lastUsed;
+          key.totalCalls = record.totalCalls;
+          key.totalErrors = record.totalErrors;
         }
       }
     } catch (e) {
-      console.warn('Failed to load KeyPool state', e);
+      console.warn('Failed to load KeyPool state from Supabase', e);
     }
   }
 
-  private saveState() {
+  async saveState(id: string) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state: Record<string, any> = {};
-      for (const [id, key] of this.keys.entries()) {
-        state[id] = {
+      const key = this.keys.get(id);
+      if (!key) return;
+      await db.insert(aiTelemetry).values({
+        id: key.id,
+        name: key.name,
+        coolUntil: key.coolUntil,
+        errorCount: key.errorCount,
+        lastUsed: key.lastUsed,
+        totalCalls: key.totalCalls,
+        totalErrors: key.totalErrors,
+        supportsStructured: key.supportsStructured,
+      }).onConflictDoUpdate({
+        target: aiTelemetry.id,
+        set: {
           coolUntil: key.coolUntil,
           errorCount: key.errorCount,
           lastUsed: key.lastUsed,
           totalCalls: key.totalCalls,
           totalErrors: key.totalErrors,
-        };
-      }
-      fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+          updatedAt: new Date(),
+        }
+      });
     } catch (e) {
-      // Ignore write errors in high-throughput
+      console.warn('Failed to save KeyPool state to Supabase', e);
     }
   }
 
@@ -68,11 +73,10 @@ class KeyPool {
       totalCalls: 0,
       totalErrors: 0,
     });
-    this.loadState(); // Sync up if another process already wrote state
   }
 
-  getNextKey(structuredOnly = false): KeyEntry | null {
-    this.loadState(); // Always get freshest state before picking
+  async getNextKey(structuredOnly = false): Promise<KeyEntry | null> {
+    await this.loadState();
     const now = Date.now();
     const available = Array.from(this.keys.values()).filter(
       k => k.coolUntil <= now && (!structuredOnly || k.supportsStructured)
@@ -81,16 +85,16 @@ class KeyPool {
     return available.sort((a, b) => a.lastUsed - b.lastUsed)[0];
   }
 
-  markSuccess(id: string) {
+  async markSuccess(id: string) {
     const key = this.keys.get(id);
     if (!key) return;
     key.errorCount = 0;
     key.lastUsed = Date.now();
     key.totalCalls++;
-    this.saveState();
+    await this.saveState(id);
   }
 
-  markFailed(id: string) {
+  async markFailed(id: string) {
     const key = this.keys.get(id);
     if (!key) return;
     key.errorCount++;
@@ -99,19 +103,19 @@ class KeyPool {
     const backoffSec = Math.min(30 * Math.pow(2, key.errorCount - 1), 300);
     key.coolUntil = Date.now() + backoffSec * 1000;
     console.warn(`[KeyPool] ${key.name} cooling for ${backoffSec}s (error #${key.errorCount})`);
-    this.saveState();
+    await this.saveState(id);
   }
 
   get size() { return this.keys.size; }
 
-  get availableCount() {
-    this.loadState();
+  async getAvailableCount() {
+    await this.loadState();
     const now = Date.now();
     return Array.from(this.keys.values()).filter(k => k.coolUntil <= now).length;
   }
 
-  getStatus(): Array<Omit<KeyEntry, 'model'> & { coolingFor: number; available: boolean }> {
-    this.loadState();
+  async getStatus(): Promise<Array<Omit<KeyEntry, 'model'> & { coolingFor: number; available: boolean }>> {
+    await this.loadState();
     const now = Date.now();
     return Array.from(this.keys.values()).map(({ model: _model, ...rest }) => ({
       ...rest,

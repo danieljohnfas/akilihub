@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, uuid, boolean, pgEnum, index } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { countries } from './shared';
 
 export const jobTypeEnum = pgEnum('job_type', ['full_time', 'part_time', 'contract', 'internship', 'remote']);
@@ -22,4 +23,5 @@ export const jobs = pgTable('jobs', {
   index('jobs_country_idx').on(table.countryId),
   index('jobs_deadline_idx').on(table.deadline),
   index('jobs_active_idx').on(table.isActive),
+  index('jobs_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
 ]);

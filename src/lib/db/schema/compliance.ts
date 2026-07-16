@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, uuid, boolean, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { countries } from './shared';
 
 export const complianceCategoryEnum = pgEnum('compliance_category', [
@@ -42,7 +43,7 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   renewalPeriodDays: text('renewal_period_days'),
   estimatedCost: text('estimated_cost'),
   requiredDocuments: text('required_documents').array(),
-  sourceUrl: text('source_url').unique(),
+  sourceUrl: text('source_url'),
   resourceType: complianceResourceTypeEnum('resource_type').notNull().default('guideline'),
   isActive: boolean('is_active').notNull().default(true),
   lastVerifiedAt: timestamp('last_verified_at'),
@@ -52,4 +53,5 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   index('compliance_country_idx').on(table.countryId),
   index('compliance_category_idx').on(table.category),
   uniqueIndex('compliance_title_country_udx').on(table.title, table.countryId),
+  index('compliance_req_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
 ]);

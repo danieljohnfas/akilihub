@@ -35,4 +35,5 @@ export const tenders = pgTable('tenders', {
   index('tenders_country_idx').on(table.countryId),
   index('tenders_status_idx').on(table.status),
   index('tenders_deadline_idx').on(table.deadline),
+  index('tenders_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
 ]);

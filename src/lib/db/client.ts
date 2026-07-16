@@ -10,6 +10,7 @@ import * as salariesSchema from './schema/salaries';
 import * as usersSchema from './schema/users';
 import * as adminSchema from './schema/admin';
 import * as jobsSchema from './schema/jobs';
+import * as aiSchema from './schema/ai';
 
 const schema = {
   ...sharedSchema,
@@ -20,6 +21,7 @@ const schema = {
   ...usersSchema,
   ...adminSchema,
   ...jobsSchema,
+  ...aiSchema,
 };
 
 // Prevent multiple instances during development HMR

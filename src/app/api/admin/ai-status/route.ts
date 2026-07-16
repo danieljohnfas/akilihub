@@ -11,7 +11,7 @@ export async function GET() {
   return NextResponse.json({
     timestamp: new Date().toISOString(),
     totalKeys: keyPool.size,
-    availableKeys: keyPool.availableCount,
-    keys: keyPool.getStatus()
+    availableKeys: await keyPool.getAvailableCount(),
+    keys: await keyPool.getStatus()
   });
 }

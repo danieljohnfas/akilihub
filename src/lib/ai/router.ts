@@ -128,14 +128,14 @@ const MAX_RETRIES = 5;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function generateObjectWithFallback(params: Record<string, any>) {
-  if (keyPool.availableCount === 0) {
+  if ((await keyPool.getAvailableCount()) === 0) {
     throw new Error('All AI models are currently exhausted or cooling down. Please try again later.');
   }
 
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const key = keyPool.getNextKey(true);
+    const key = await keyPool.getNextKey(true);
     if (!key) break; // Exhausted all keys
 
     try {
@@ -147,7 +147,7 @@ export async function generateObjectWithFallback(params: Record<string, any>) {
       const result = await (generateObject as any)({ ...params, model: key.model });
       
       // Success! Reset error count
-      keyPool.markSuccess(key.id);
+      await keyPool.markSuccess(key.id);
       return result;
       
     } catch (error: unknown) {
@@ -161,7 +161,7 @@ export async function generateObjectWithFallback(params: Record<string, any>) {
       }
       
       // Recoverable error (429, 5xx, Network) -> mark key as failed and apply cooldown backoff
-      keyPool.markFailed(key.id);
+      await keyPool.markFailed(key.id);
     }
   }
 
@@ -171,14 +171,14 @@ export async function generateObjectWithFallback(params: Record<string, any>) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function generateTextWithFallback(params: Record<string, any>) {
-  if (keyPool.availableCount === 0) {
+  if ((await keyPool.getAvailableCount()) === 0) {
     throw new Error('All AI models are currently exhausted or cooling down. Please try again later.');
   }
 
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const key = keyPool.getNextKey(false);
+    const key = await keyPool.getNextKey(false);
     if (!key) break;
 
     try {
@@ -189,14 +189,14 @@ export async function generateTextWithFallback(params: Record<string, any>) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await (generateText as any)({ ...params, model: key.model });
       
-      keyPool.markSuccess(key.id);
+      await keyPool.markSuccess(key.id);
       return result;
       
     } catch (error: unknown) {
       const err = error as Error;
       console.warn(`[AI Router] ${key.name} failed: ${err.message}`);
       lastError = error;
-      keyPool.markFailed(key.id);
+      await keyPool.markFailed(key.id);
     }
   }
 
