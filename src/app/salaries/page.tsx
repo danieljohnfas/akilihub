@@ -13,7 +13,7 @@ import { AlertCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Salary Database East Africa | AkiliBrain',
+  title: 'Salary Database East Africa',
   description:
     'Explore transparent, crowdsourced salary data for public and private sector roles across Kenya, Tanzania, Uganda, and Rwanda. Negotiate better compensation with real market data.',
   keywords: [
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     'salary negotiation Africa',
   ],
   openGraph: {
-    title: 'Salary Database East Africa | AkiliBrain',
+    title: 'Salary Database East Africa',
     description:
       'Crowdsourced compensation data for public and private sector roles across Kenya, Tanzania, Uganda, and Rwanda.',
     url: 'https://akilibrain.com/salaries',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Salary Database East Africa | AkiliBrain',
+    title: 'Salary Database East Africa',
     description: 'Real salary data for East Africa — negotiate your next offer with confidence.',
   },
   alternates: {

@@ -7,7 +7,7 @@ import { Shield, Zap, TerminalSquare } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Developer API & Toolbox | AkiliBrain',
+  title: 'Developer API & Toolbox',
   description:
     'Access the AkiliBrain developer API for East Africa intelligence data. RESTful endpoints for tenders, jobs, health indicators, and salaries with comprehensive documentation.',
   keywords: [
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     'developer tools Kenya',
   ],
   openGraph: {
-    title: 'Developer API & Toolbox | AkiliBrain',
+    title: 'Developer API & Toolbox',
     description:
       'Integrate East Africa intelligence data into your apps — tenders, jobs, health, and salaries via RESTful API.',
     url: 'https://akilibrain.com/developers',
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Developer API & Toolbox | AkiliBrain',
+    title: 'Developer API & Toolbox',
     description: 'Integrate East Africa intelligence data into your apps via RESTful API.',
   },
   alternates: {

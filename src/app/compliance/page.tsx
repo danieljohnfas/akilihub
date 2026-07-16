@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Business Registry & Compliance | AkiliBrain',
+  title: 'Business Registry & Compliance',
   description:
     'Search and verify registered businesses across East Africa. Access compliance requirements, permits, and licensing guides for Kenya, Tanzania, Uganda, and Rwanda.',
   keywords: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     'RDB Rwanda',
   ],
   openGraph: {
-    title: 'Business Registry & Compliance | AkiliBrain',
+    title: 'Business Registry & Compliance',
     description:
       'Search registered companies and verify compliance across African jurisdictions — Kenya, Tanzania, Uganda, Rwanda.',
     url: 'https://akilibrain.com/compliance',

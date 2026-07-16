@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Public Health Data Explorer | AkiliBrain',
+  title: 'Public Health Data Explorer',
   description:
     'Explore interactive public health dashboards, disease statistics, and health indicators across Africa. Data sourced from DHIS2, WHO, and national health ministries.',
   keywords: [
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     'health dashboard East Africa',
   ],
   openGraph: {
-    title: 'Public Health Data Explorer | AkiliBrain',
+    title: 'Public Health Data Explorer',
     description:
       'Track key health indicators, disease statistics, and outbreaks across East Africa using DHIS2 and WHO data.',
     url: 'https://akilibrain.com/health',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Public Health Data Explorer | AkiliBrain',
+    title: 'Public Health Data Explorer',
     description: 'Track key health indicators and disease statistics across East Africa.',
   },
   alternates: {

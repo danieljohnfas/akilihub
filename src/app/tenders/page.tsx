@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Government Tenders | AkiliBrain',
+  title: 'Government Tenders in East Africa',
   description:
     'Browse the latest government tenders, procurement opportunities, and contracts across Kenya, Tanzania, Uganda, Rwanda, and wider Africa. Updated hourly.',
   keywords: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     'PPB tenders',
   ],
   openGraph: {
-    title: 'Government Tenders | AkiliBrain',
+    title: 'Government Tenders in East Africa',
     description:
       'Browse the latest government tenders and procurement opportunities across East Africa — Kenya, Tanzania, Uganda, and Rwanda.',
     url: 'https://akilibrain.com/tenders',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Government Tenders | AkiliBrain',
+    title: 'Government Tenders in East Africa',
     description: 'Browse the latest government tenders and procurement opportunities across East Africa.',
   },
   alternates: {
