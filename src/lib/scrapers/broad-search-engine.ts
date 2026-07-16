@@ -67,10 +67,13 @@ export async function extractJobsWithAI(text: string, sourceUrl: string): Promis
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 16000)}
 
 Rules:
-- Extract any real job postings found in the text.
+- Extract any real job postings found in the text. Be highly comprehensive.
+- 'description': Include the full scope of work, duties, roles, and responsibilities. Do not write "No detailed description provided." if the details are on the page.
+- 'requirements': Include all qualifications, education, experience, and competencies required. If none are found, return the JSON null value (not the string "null").
+- 'location': Extract the specific city/region (e.g., "Kampala", "Nairobi"). If none is found, return the JSON null value (not the string "null").
 - If multiple jobs are listed, extract all of them.
 - Only extract actual open positions, not historical data or general company descriptions.
 - Ensure the source URL is correct (use the provided Source URL unless a specific direct link is found).

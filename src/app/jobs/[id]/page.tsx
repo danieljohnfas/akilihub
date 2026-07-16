@@ -154,7 +154,7 @@ export default async function JobDetailPage({
               Job Description
             </h2>
             <div className="prose prose-invert max-w-none text-muted-foreground">
-              {job.description ? (
+              {job.description && job.description !== 'null' && job.description.trim() !== '' ? (
                 <p className="whitespace-pre-wrap">{job.description}</p>
               ) : (
                 <p className="italic">No detailed description provided.</p>
@@ -162,7 +162,7 @@ export default async function JobDetailPage({
             </div>
           </section>
 
-          {job.requirements && (
+          {job.requirements && job.requirements !== 'null' && job.requirements.trim() !== '' && (
             <section className="space-y-4 bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-primary" />
@@ -207,7 +207,7 @@ export default async function JobDetailPage({
               <p className="text-sm text-muted-foreground">Location</p>
               <p className="font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4 shrink-0 text-primary" />
-                <span>{job.location || country || 'Unknown'}</span>
+                <span>{(job.location && job.location !== 'null') ? job.location : country || 'Unknown'}</span>
               </p>
             </div>
 
