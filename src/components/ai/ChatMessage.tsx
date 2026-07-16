@@ -64,7 +64,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
             </ReactMarkdown>
           </div>
         )}
-        <p className={cn('text-[10px] mt-1.5', isUser ? 'text-primary-foreground/60 text-right' : 'text-muted-foreground')}>
+        <p suppressHydrationWarning className={cn('text-[10px] mt-1.5', isUser ? 'text-primary-foreground/60 text-right' : 'text-muted-foreground')}>
           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>

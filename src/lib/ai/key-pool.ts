@@ -1,28 +1,63 @@
 import { LanguageModel } from 'ai';
+import * as fs from 'fs';
+import * as path from 'path';
 
-/**
- * Represents a single API key + model combination in the pool.
- */
 export interface KeyEntry {
-  id: string;           // unique: "groq-key1-llama70b"
-  name: string;         // human-readable for logs
+  id: string;
+  name: string;
   model: LanguageModel;
-  supportsStructured: boolean; // supports generateObject (JSON mode / tool use)
-  coolUntil: number;    // epoch ms — skip this key until then
-  errorCount: number;   // consecutive errors (resets on success)
-  lastUsed: number;     // epoch ms — used for LRU round-robin
+  supportsStructured: boolean;
+  coolUntil: number;
+  errorCount: number;
+  lastUsed: number;
   totalCalls: number;
   totalErrors: number;
 }
 
-/**
- * KeyPool — Singleton that manages all AI provider keys with:
- * - LRU round-robin: always picks the least-recently-used available key
- * - Per-key exponential backoff: 30s → 60s → 120s → 300s on failures
- * - Per-key success reset: errorCount resets after a successful call
- */
+const STATE_FILE = path.join(process.cwd(), '.ai-pool-state.json');
+
 class KeyPool {
   private keys: Map<string, KeyEntry> = new Map();
+
+  constructor() {
+    this.loadState();
+  }
+
+  private loadState() {
+    try {
+      if (fs.existsSync(STATE_FILE)) {
+        const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
+        for (const [id, state] of Object.entries(data)) {
+          if (this.keys.has(id)) {
+            const key = this.keys.get(id)!;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            Object.assign(key, state as any);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load KeyPool state', e);
+    }
+  }
+
+  private saveState() {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const state: Record<string, any> = {};
+      for (const [id, key] of this.keys.entries()) {
+        state[id] = {
+          coolUntil: key.coolUntil,
+          errorCount: key.errorCount,
+          lastUsed: key.lastUsed,
+          totalCalls: key.totalCalls,
+          totalErrors: key.totalErrors,
+        };
+      }
+      fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+    } catch (e) {
+      // Ignore write errors in high-throughput
+    }
+  }
 
   register(entry: Omit<KeyEntry, 'coolUntil' | 'errorCount' | 'lastUsed' | 'totalCalls' | 'totalErrors'>) {
     this.keys.set(entry.id, {
@@ -33,19 +68,16 @@ class KeyPool {
       totalCalls: 0,
       totalErrors: 0,
     });
+    this.loadState(); // Sync up if another process already wrote state
   }
 
-  /**
-   * Returns the least-recently-used key that is not in cooldown.
-   * Returns null if ALL keys are currently cooling.
-   */
   getNextKey(structuredOnly = false): KeyEntry | null {
+    this.loadState(); // Always get freshest state before picking
     const now = Date.now();
     const available = Array.from(this.keys.values()).filter(
       k => k.coolUntil <= now && (!structuredOnly || k.supportsStructured)
     );
     if (available.length === 0) return null;
-    // LRU: pick key with the oldest lastUsed timestamp
     return available.sort((a, b) => a.lastUsed - b.lastUsed)[0];
   }
 
@@ -55,12 +87,9 @@ class KeyPool {
     key.errorCount = 0;
     key.lastUsed = Date.now();
     key.totalCalls++;
+    this.saveState();
   }
 
-  /**
-   * Marks a key as failed and applies exponential backoff cooldown.
-   * Cooldown: 30s × 2^(consecutive_errors - 1), capped at 5 minutes.
-   */
   markFailed(id: string) {
     const key = this.keys.get(id);
     if (!key) return;
@@ -70,19 +99,19 @@ class KeyPool {
     const backoffSec = Math.min(30 * Math.pow(2, key.errorCount - 1), 300);
     key.coolUntil = Date.now() + backoffSec * 1000;
     console.warn(`[KeyPool] ${key.name} cooling for ${backoffSec}s (error #${key.errorCount})`);
+    this.saveState();
   }
 
-  /** How many keys are registered in total */
   get size() { return this.keys.size; }
 
-  /** How many keys are currently available (not cooling) */
   get availableCount() {
+    this.loadState();
     const now = Date.now();
     return Array.from(this.keys.values()).filter(k => k.coolUntil <= now).length;
   }
 
-  /** Full status snapshot for the admin dashboard */
   getStatus(): Array<Omit<KeyEntry, 'model'> & { coolingFor: number; available: boolean }> {
+    this.loadState();
     const now = Date.now();
     return Array.from(this.keys.values()).map(({ model: _model, ...rest }) => ({
       ...rest,
@@ -92,5 +121,4 @@ class KeyPool {
   }
 }
 
-// Module-level singleton — persists across requests in the same Node.js process
 export const keyPool = new KeyPool();

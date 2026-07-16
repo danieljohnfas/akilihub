@@ -1,0 +1,93 @@
+{
+  "google-flash-1": {
+    "coolUntil": 1784238751428,
+    "errorCount": 8,
+    "lastUsed": 1784236780248,
+    "totalCalls": 10,
+    "totalErrors": 8
+  },
+  "or-gemma2-1": {
+    "coolUntil": 1784238617228,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "or-llama3-1": {
+    "coolUntil": 1784238617289,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "groq-llama33-1": {
+    "coolUntil": 1784238617781,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "groq-gemma2-1": {
+    "coolUntil": 1784238618330,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "cerebras-llama33-1": {
+    "coolUntil": 1784238618900,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "mistral-small-1": {
+    "coolUntil": 1784238119872,
+    "errorCount": 0,
+    "lastUsed": 1784238488626,
+    "totalCalls": 62,
+    "totalErrors": 3
+  },
+  "hf-qwen2-1": {
+    "coolUntil": 1784238637091,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "gh-gpt4o-1": {
+    "coolUntil": 1784238638093,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "gh-llama3-1": {
+    "coolUntil": 1784238639204,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "sambanova-llama33-1": {
+    "coolUntil": 1784238640190,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "cohere-command-r-1": {
+    "coolUntil": 1784238640931,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  },
+  "cf-llama3-1": {
+    "coolUntil": 1784238647684,
+    "errorCount": 8,
+    "lastUsed": 0,
+    "totalCalls": 8,
+    "totalErrors": 8
+  }
+}

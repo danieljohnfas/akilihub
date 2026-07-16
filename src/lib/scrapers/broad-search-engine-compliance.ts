@@ -60,9 +60,9 @@ Rules:
   }
 }
 
-export async function discoverCompliance(query: string, maxPages: number = 3): Promise<BroadComplianceResource[]> {
+export async function discoverCompliance(query: string, maxPages: number = 100): Promise<BroadComplianceResource[]> {
   console.log(`[discoverCompliance] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 5);
+  const urls = await searchGoogle(query, 100);
   console.log(`[discoverCompliance] Found ${urls.length} viable URLs to scrape.`);
 
   const allResources: BroadComplianceResource[] = [];

@@ -69,9 +69,9 @@ Rules:
   }
 }
 
-export async function discoverTenders(query: string, maxPages: number = 5): Promise<BroadTenderResource[]> {
+export async function discoverTenders(query: string, maxPages: number = 100): Promise<BroadTenderResource[]> {
   console.log(`[discoverTenders] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 10);
+  const urls = await searchGoogle(query, 100);
   console.log(`[discoverTenders] Found ${urls.length} viable URLs to scrape.`);
 
   const allTenders: BroadTenderResource[] = [];

@@ -90,13 +90,27 @@ async function main() {
     }
   }
 
+  console.log("\n--- 1b. Testing Tenders (Broad Search) ---");
+  for (const country of countries) {
+    try {
+      console.log(`\n[Tenders Broad] Searching for ${country.name}...`);
+      const query = `open tenders procurement public contracts ${country.name} 2026`;
+      const tenderDocs = await discoverTenders(query, 100);
+      const inserted = await saveBroadResults(tenderDocs, country.code);
+      console.log(`✅ Found ${tenderDocs.length} broad tenders for ${country.name}. Saved ${inserted} to DB.`);
+      stats.tenders.found += inserted;
+    } catch (err) {
+      console.error(`❌ Failed broad tenders for ${country.name}:`, err);
+    }
+  }
+
   // 2. JOBS
   console.log("\n--- 2. Testing Jobs (Broad Search + Stealth HTML Proxy) ---");
   for (const country of countries) {
     try {
       console.log(`\n[Jobs] Searching for ${country.name}...`);
       const query = `jobs hiring in ${country.name} 2026`;
-      const jobs = await discoverJobs(query, 2); // Limit to 2 pages to save time but still fetch a lot
+      const jobs = await discoverJobs(query, 100); // 100 pages = 100 websites
       const inserted = await saveJobs(jobs, country.code);
       console.log(`✅ Found ${jobs.length} jobs via broad search for ${country.name}. Saved ${inserted} to DB.`);
       stats.jobs.found += inserted;
@@ -111,7 +125,7 @@ async function main() {
     try {
       console.log(`\n[Compliance] Searching for ${country.name}...`);
       const query = `tax compliance business registration guidelines forms ${country.name} 2026`;
-      const docs = await discoverCompliance(query, 2);
+      const docs = await discoverCompliance(query, 100);
       const inserted = await saveCompliance(docs, country.code);
       console.log(`✅ Found ${docs.length} compliance resources via broad search for ${country.name}. Saved ${inserted} to DB.`);
       stats.compliance.found += inserted;

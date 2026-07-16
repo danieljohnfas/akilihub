@@ -16,7 +16,7 @@ export interface BroadJobResource {
 /**
  * Searches Google using Serper.dev API to find relevant URLs.
  */
-export async function searchGoogle(query: string, numResults: number = 10): Promise<string[]> {
+export async function searchGoogle(query: string, numResults: number = 100): Promise<string[]> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) {
     console.error('SERPER_API_KEY is missing');
@@ -118,9 +118,9 @@ Rules:
 /**
  * Master function to run a broad search for jobs and extract them.
  */
-export async function discoverJobs(query: string, maxPages: number = 5): Promise<BroadJobResource[]> {
+export async function discoverJobs(query: string, maxPages: number = 100): Promise<BroadJobResource[]> {
   console.log(`[discoverJobs] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 10);
+  const urls = await searchGoogle(query, 100);
   console.log(`[discoverJobs] Found ${urls.length} viable URLs to scrape.`);
 
   const allJobs: BroadJobResource[] = [];
