@@ -8,14 +8,15 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Icon } from '@iconify/react';
 
 const navLinks = [
-  { href: '/tenders', label: 'Tenders' },
-  { href: '/jobs', label: 'Jobs' },
-  { href: '/compliance', label: 'Compliance' },
-  { href: '/health', label: 'Health Data' },
-  { href: '/salaries', label: 'Salaries' },
-  { href: '/developers', label: 'Dev Tools' },
+  { href: '/tenders', label: 'Tenders', icon: 'solar:document-text-bold-duotone' },
+  { href: '/jobs', label: 'Jobs', icon: 'solar:case-round-bold-duotone' },
+  { href: '/compliance', label: 'Compliance', icon: 'solar:shield-check-bold-duotone' },
+  { href: '/health', label: 'Health Data', icon: 'solar:heart-pulse-bold-duotone' },
+  { href: '/salaries', label: 'Salaries', icon: 'solar:wallet-money-bold-duotone' },
+  { href: '/developers', label: 'Dev Tools', icon: 'solar:code-circle-bold-duotone' },
 ];
 
 export function Navbar() {
@@ -32,8 +33,9 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
+                <Icon icon={link.icon} className="w-4 h-4 text-primary/70" />
                 {link.label}
               </Link>
             ))}
@@ -59,8 +61,9 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-lg font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    className="flex items-center gap-2 text-lg font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
+                    <Icon icon={link.icon} className="w-5 h-5 text-primary/70" />
                     {link.label}
                   </Link>
                 ))}

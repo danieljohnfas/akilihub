@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { FileText, ShieldCheck, Activity, Banknote, Code, ArrowRight, Briefcase } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { MagicCard } from "@/components/ui/magic-card";
 
 const features = [
   {
@@ -83,7 +84,7 @@ export default function Home() {
           {/* Make first two cards span more logically if needed, but 2+3 grid usually means 2 rows */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:col-span-3">
             {features.slice(0, 2).map((feature) => (
-              <Card key={feature.title} className="flex flex-col h-full hover:shadow-md transition-shadow">
+              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-md transition-shadow bg-card/80 backdrop-blur-xl">
                 <CardHeader>
                   <div className={`w-12 h-12 rounded-lg ${feature.bg} flex items-center justify-center mb-4`}>
                     <feature.icon className={`h-6 w-6 ${feature.color}`} />
@@ -96,13 +97,13 @@ export default function Home() {
                     Explore {feature.title} <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </CardFooter>
-              </Card>
+              </MagicCard>
             ))}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3">
-            {features.slice(2, 5).map((feature) => (
-              <Card key={feature.title} className="flex flex-col h-full hover:shadow-md transition-shadow">
+            {features.slice(2, 6).map((feature) => (
+              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-md transition-shadow bg-card/80 backdrop-blur-xl">
                 <CardHeader>
                   <div className={`w-12 h-12 rounded-lg ${feature.bg} flex items-center justify-center mb-4`}>
                     <feature.icon className={`h-6 w-6 ${feature.color}`} />
@@ -115,7 +116,7 @@ export default function Home() {
                     Explore <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </CardFooter>
-              </Card>
+              </MagicCard>
             ))}
           </div>
         </div>

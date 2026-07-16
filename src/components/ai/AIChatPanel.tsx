@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ChatMessage, Message } from './ChatMessage';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 const SUGGESTED_PROMPTS = [
   "Latest IT tenders in Tanzania",
@@ -219,10 +220,14 @@ export function AIChatPanel() {
                 <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-indigo-400" />
                 </div>
-                <div className="flex gap-1.5 items-center bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" />
+                <div className="flex gap-1.5 items-center bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-1">
+                  <div className="w-12 h-8">
+                    <DotLottieReact
+                      src="https://lottie.host/17b2b638-cdfc-4952-b8c7-43cf71db1cc3/L75y00W6K5.lottie"
+                      loop
+                      autoplay
+                    />
+                  </div>
                 </div>
               </div>
             )}

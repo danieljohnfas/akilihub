@@ -17,7 +17,9 @@ import { StrategyEngine } from './src/lib/strategies/engine';
 import { saveJobs } from './src/inngest/scrape-jobs';
 import { saveCompliance } from './src/inngest/scrape-compliance';
 import { saveTenderResults, saveBroadResults, getCountryId } from './src/inngest/scrape-tenders';
-
+import { fetchAllHealthIndicators } from './src/lib/scrapers/dhis2-tz';
+import { sql, eq, and, not } from "drizzle-orm";
+import { salarySubmissions } from './src/lib/db/schema/salaries';
 function buildStrategyEngine() {
   return new StrategyEngine([
     new ScraplingStrategy(),
@@ -116,12 +118,70 @@ async function main() {
     }
   }
 
+  // 4. HEALTH DATA
+  console.log("\n--- 4. Testing Health Data (WHO GHO API) ---");
+  try {
+    const healthInserted = await fetchAllHealthIndicators();
+    console.log(`✅ Found and saved ${healthInserted} health indicator records.`);
+    stats.health = { found: healthInserted };
+  } catch (err) {
+    console.error(`❌ Failed to fetch health data:`, err);
+    stats.health = { found: 0 };
+  }
+
+  // 5. SALARIES
+  console.log("\n--- 5. Testing Salaries (Consensus Verification) ---");
+  try {
+      const clusters = await db.execute(sql`
+        SELECT
+          LOWER(job_title) AS normalized_title,
+          country_id,
+          experience_level,
+          COUNT(*) AS submission_count,
+          PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY gross_monthly_salary::numeric) AS median_salary,
+          ARRAY_AGG(id) AS ids,
+          ARRAY_AGG(gross_monthly_salary::numeric) AS salaries
+        FROM salary_submissions
+        WHERE is_verified = false
+        GROUP BY LOWER(job_title), country_id, experience_level
+        HAVING COUNT(*) >= 3
+      `);
+
+      let totalVerified = 0;
+      for (const cluster of clusters as any[]) {
+        const median = Number(cluster.median_salary);
+        const lowerBound = median * 0.7;
+        const upperBound = median * 1.3;
+        const ids: string[] = cluster.ids;
+        const salaries: number[] = cluster.salaries.map(Number);
+        
+        const idsToVerify = ids.filter((_, i) => salaries[i] >= lowerBound && salaries[i] <= upperBound);
+        if (idsToVerify.length < 3) continue;
+
+        for (const id of idsToVerify) {
+          await db.update(salarySubmissions).set({ isVerified: true }).where(and(eq(salarySubmissions.id, id), not(salarySubmissions.isVerified)));
+        }
+        totalVerified += idsToVerify.length;
+      }
+      console.log(`✅ Salary consensus algorithm auto-verified ${totalVerified} submissions.`);
+      stats.salaries = { verified: totalVerified };
+  } catch (err) {
+      console.error(`❌ Failed to run salary consensus:`, err);
+      stats.salaries = { verified: 0 };
+  }
+
+  // 6. DEV TOOLS
+  console.log("\n--- 6. Dev Tools ---");
+  console.log("✅ Dev Tools are static web components (DHIS2, FHIR). No scraping needed.");
+
   console.log("\n==========================================");
   console.log("📊 FINAL ITERATION SUMMARY 📊");
   console.log("==========================================");
-  console.log(`Tenders: Discovered & Saved ${stats.tenders.found}`);
-  console.log(`Jobs:    Discovered & Saved ${stats.jobs.found}`);
-  console.log(`Comp:    Discovered & Saved ${stats.compliance.found}`);
+  console.log(`Tenders:      Discovered & Saved ${stats.tenders.found}`);
+  console.log(`Jobs:         Discovered & Saved ${stats.jobs.found}`);
+  console.log(`Compliance:   Discovered & Saved ${stats.compliance.found}`);
+  console.log(`Health Data:  Discovered & Saved ${(stats as any).health?.found || 0}`);
+  console.log(`Salaries:     Auto-Verified      ${(stats as any).salaries?.verified || 0}`);
   console.log("==========================================");
 
   process.exit(0);
