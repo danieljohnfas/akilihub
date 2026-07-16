@@ -1,0 +1,46 @@
+{
+  "name": "AkiliBrain",
+  "short_name": "AkiliBrain",
+  "description": "East Africa's professional intelligence platform for tenders, jobs, compliance, health data, and salaries.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-KE",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Tenders",
+      "short_name": "Tenders",
+      "url": "/tenders",
+      "description": "Browse the latest government tenders"
+    },
+    {
+      "name": "Find Jobs",
+      "short_name": "Jobs",
+      "url": "/jobs",
+      "description": "Browse job openings across East Africa"
+    },
+    {
+      "name": "Check Salaries",
+      "short_name": "Salaries",
+      "url": "/salaries",
+      "description": "Explore salary data for East Africa"
+    }
+  ]
+}

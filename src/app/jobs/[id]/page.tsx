@@ -9,13 +9,57 @@ import { buttonVariants } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildJobPostingSchema } from '@/components/seo/schemas';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
-  const data = await safeQuery(db.select({ title: jobs.title, companyName: jobs.companyName }).from(jobs).where(eq(jobs.id, resolvedParams.id)).limit(1));
+  const data = await safeQuery(
+    db
+      .select({
+        title: jobs.title,
+        companyName: jobs.companyName,
+        description: jobs.description,
+        location: jobs.location,
+        country: countries.name,
+        createdAt: jobs.createdAt,
+      })
+      .from(jobs)
+      .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .where(eq(jobs.id, resolvedParams.id))
+      .limit(1)
+  );
+
   if (!data.length) return { title: 'Job Not Found' };
-  
+
+  const job = data[0];
+  const title = `${job.title} at ${job.companyName} | AkiliBrain Jobs`;
+  const desc = job.description 
+    ? (job.description.slice(0, 150) + (job.description.length > 150 ? '...' : ''))
+    : `Apply for the ${job.title} position at ${job.companyName} in ${job.location || job.country || 'East Africa'}.`;
+
+  const url = `https://akilibrain.com/jobs/${resolvedParams.id}`;
+
   return {
-    title: `${data[0].title} at ${data[0].companyName} | AkiliBrain Jobs`,
+    title,
+    description: desc,
+    keywords: [job.title, job.companyName, job.location || '', job.country || '', 'job vacancy', 'career'].filter(Boolean),
+    openGraph: {
+      title,
+      description: desc,
+      url,
+      type: 'article',
+      publishedTime: job.createdAt.toISOString(),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: desc,
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
 
@@ -63,6 +107,20 @@ export default async function JobDetailPage({
 
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-8">
+      {/* JSON-LD Schema */}
+      <JsonLd schema={buildJobPostingSchema({
+        id: job.id,
+        title: job.title,
+        companyName: job.companyName,
+        description: job.description,
+        location: job.location,
+        country,
+        jobType: job.jobType,
+        postedDate: job.postedDate,
+        deadline: job.deadline,
+        sourceUrl: job.sourceUrl
+      })} />
+
       {/* Back Button */}
       <Link href="/jobs" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="mr-2 h-4 w-4" />

@@ -11,9 +11,39 @@ import { complianceRequirements } from '@/lib/db/schema/compliance';
 import { ResourceCard } from '@/components/compliance/ResourceCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export const metadata = {
-  title: 'Business Registry | AkiliBrain Compliance',
-  description: 'Search and verify registered businesses across Africa.',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Business Registry & Compliance | AkiliBrain',
+  description:
+    'Search and verify registered businesses across East Africa. Access compliance requirements, permits, and licensing guides for Kenya, Tanzania, Uganda, and Rwanda.',
+  keywords: [
+    'business registry Kenya',
+    'company search East Africa',
+    'business compliance Kenya',
+    'KRA compliance',
+    'company registration Africa',
+    'business license Kenya',
+    'CAK registration',
+    'BRELA Tanzania',
+    'URSB Uganda',
+    'RDB Rwanda',
+  ],
+  openGraph: {
+    title: 'Business Registry & Compliance | AkiliBrain',
+    description:
+      'Search registered companies and verify compliance across African jurisdictions — Kenya, Tanzania, Uganda, Rwanda.',
+    url: 'https://akilibrain.com/compliance',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Business Registry & Compliance | AkiliBrain',
+    description: 'Search registered companies and verify compliance across East Africa.',
+  },
+  alternates: {
+    canonical: 'https://akilibrain.com/compliance',
+  },
 };
 
 export default async function CompliancePage({

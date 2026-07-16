@@ -9,13 +9,56 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildTenderSchema } from '@/components/seo/schemas';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
-  const data = await safeQuery(db.select({ title: tenders.title }).from(tenders).where(eq(tenders.id, resolvedParams.id)).limit(1));
+  const data = await safeQuery(
+    db
+      .select({
+        title: tenders.title,
+        authority: tenders.contractingAuthority,
+        description: tenders.description,
+        country: countries.name,
+        publishedAt: tenders.publishedAt,
+      })
+      .from(tenders)
+      .leftJoin(countries, eq(tenders.countryId, countries.id))
+      .where(eq(tenders.id, resolvedParams.id))
+      .limit(1)
+  );
+
   if (!data.length) return { title: 'Tender Not Found' };
+
+  const tender = data[0];
+  const title = `${tender.title} | AkiliBrain Procurement`;
+  const desc = tender.description
+    ? (tender.description.slice(0, 150) + (tender.description.length > 150 ? '...' : ''))
+    : `Government tender by ${tender.authority} in ${tender.country || 'East Africa'}.`;
   
+  const url = `https://akilibrain.com/tenders/${resolvedParams.id}`;
+
   return {
-    title: `${data[0].title} | AkiliBrain Procurement`,
+    title,
+    description: desc,
+    keywords: [tender.title, tender.authority, tender.country || '', 'tender', 'procurement'].filter(Boolean),
+    openGraph: {
+      title,
+      description: desc,
+      url,
+      type: 'article',
+      ...(tender.publishedAt && { publishedTime: tender.publishedAt.toISOString() }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: desc,
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
 
@@ -52,6 +95,21 @@ export default async function TenderDetailPage({
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Tenders
       </Link>
+
+      {/* JSON-LD Schema */}
+      <JsonLd schema={buildTenderSchema({
+        id: tender.id,
+        title: tender.title,
+        description: tender.description,
+        contractingAuthority: tender.contractingAuthority,
+        country,
+        sector,
+        status: tender.status,
+        deadline: tender.deadline,
+        publishedAt: tender.publishedAt,
+        budget: tender.budget,
+        currency: tender.currency
+      })} />
 
       {/* Header */}
       <div className="space-y-4">

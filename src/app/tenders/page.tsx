@@ -11,9 +11,39 @@ import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
   title: 'Government Tenders | AkiliBrain',
-  description: 'Browse the latest government tenders, procurement opportunities, and contracts across Africa.',
+  description:
+    'Browse the latest government tenders, procurement opportunities, and contracts across Kenya, Tanzania, Uganda, Rwanda, and wider Africa. Updated hourly.',
+  keywords: [
+    'government tenders Kenya',
+    'tenders East Africa',
+    'procurement Africa',
+    'Kenya government contracts',
+    'Tanzania tenders',
+    'Uganda procurement',
+    'Rwanda tenders',
+    'open tenders Africa',
+    'PPRA tenders',
+    'PPB tenders',
+  ],
+  openGraph: {
+    title: 'Government Tenders | AkiliBrain',
+    description:
+      'Browse the latest government tenders and procurement opportunities across East Africa — Kenya, Tanzania, Uganda, and Rwanda.',
+    url: 'https://akilibrain.com/tenders',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Government Tenders | AkiliBrain',
+    description: 'Browse the latest government tenders and procurement opportunities across East Africa.',
+  },
+  alternates: {
+    canonical: 'https://akilibrain.com/tenders',
+  },
 };
 
 export default async function TendersPage({

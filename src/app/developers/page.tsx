@@ -7,8 +7,35 @@ import { Shield, Zap, TerminalSquare } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Developer API | AkiliBrain",
-  description: "Documentation and guides for the AkiliBrain Developer API.",
+  title: 'Developer API & Toolbox | AkiliBrain',
+  description:
+    'Access the AkiliBrain developer API for East Africa intelligence data. RESTful endpoints for tenders, jobs, health indicators, and salaries with comprehensive documentation.',
+  keywords: [
+    'AkiliBrain API',
+    'East Africa data API',
+    'tenders API Africa',
+    'DHIS2 API tools',
+    'FHIR tools Africa',
+    'HL7 East Africa',
+    'ICD-11 tools',
+    'health IT Africa',
+    'developer tools Kenya',
+  ],
+  openGraph: {
+    title: 'Developer API & Toolbox | AkiliBrain',
+    description:
+      'Integrate East Africa intelligence data into your apps — tenders, jobs, health, and salaries via RESTful API.',
+    url: 'https://akilibrain.com/developers',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Developer API & Toolbox | AkiliBrain',
+    description: 'Integrate East Africa intelligence data into your apps via RESTful API.',
+  },
+  alternates: {
+    canonical: 'https://akilibrain.com/developers',
+  },
 };
 
 export default function DevelopersPage() {

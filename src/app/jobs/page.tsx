@@ -10,9 +10,39 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: 'Jobs & Careers | AkiliBrain',
-  description: 'Browse the latest job openings and career opportunities across East Africa — Kenya, Tanzania, Uganda, and Rwanda.',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Jobs & Careers in East Africa | AkiliBrain',
+  description:
+    'Browse thousands of job openings and career opportunities across East Africa — Kenya, Tanzania, Uganda, and Rwanda. Full-time, part-time, remote, and internship roles updated daily.',
+  keywords: [
+    'jobs Kenya',
+    'careers East Africa',
+    'job vacancies Kenya 2024',
+    'jobs Tanzania',
+    'jobs Uganda',
+    'jobs Rwanda',
+    'remote jobs Africa',
+    'internships East Africa',
+    'graduate jobs Kenya',
+    'job board Africa',
+  ],
+  openGraph: {
+    title: 'Jobs & Careers in East Africa | AkiliBrain',
+    description:
+      'Discover thousands of active job openings across Kenya, Tanzania, Uganda, and Rwanda. Updated daily from across the web.',
+    url: 'https://akilibrain.com/jobs',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Jobs & Careers in East Africa | AkiliBrain',
+    description: 'Discover thousands of active job openings across East Africa. Updated daily.',
+  },
+  alternates: {
+    canonical: 'https://akilibrain.com/jobs',
+  },
 };
 
 export default async function JobsPage({

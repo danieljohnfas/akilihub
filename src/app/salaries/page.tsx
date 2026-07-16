@@ -10,9 +10,38 @@ import { SubmitSalaryModal } from '@/components/salaries/SubmitSalaryModal';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 
-export const metadata = {
-  title: 'Salary Database | AkiliBrain',
-  description: 'Explore verified government and private sector salaries across Africa.',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Salary Database East Africa | AkiliBrain',
+  description:
+    'Explore transparent, crowdsourced salary data for public and private sector roles across Kenya, Tanzania, Uganda, and Rwanda. Negotiate better compensation with real market data.',
+  keywords: [
+    'salary Kenya 2024',
+    'salary database East Africa',
+    'average salary Kenya',
+    'software engineer salary Kenya',
+    'government salary Kenya',
+    'salary comparison Africa',
+    'compensation data Tanzania',
+    'pay scale Uganda',
+    'salary negotiation Africa',
+  ],
+  openGraph: {
+    title: 'Salary Database East Africa | AkiliBrain',
+    description:
+      'Crowdsourced compensation data for public and private sector roles across Kenya, Tanzania, Uganda, and Rwanda.',
+    url: 'https://akilibrain.com/salaries',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Salary Database East Africa | AkiliBrain',
+    description: 'Real salary data for East Africa — negotiate your next offer with confidence.',
+  },
+  alternates: {
+    canonical: 'https://akilibrain.com/salaries',
+  },
 };
 
 export default async function SalariesPage({

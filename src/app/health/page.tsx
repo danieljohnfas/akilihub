@@ -10,9 +10,37 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: 'Public Health Data | AkiliBrain',
-  description: 'Track and analyze public health indicators across Africa.',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Public Health Data Explorer | AkiliBrain',
+  description:
+    'Explore interactive public health dashboards, disease statistics, and health indicators across Africa. Data sourced from DHIS2, WHO, and national health ministries.',
+  keywords: [
+    'public health data Africa',
+    'DHIS2 data Kenya',
+    'health indicators East Africa',
+    'WHO Africa statistics',
+    'maternal health Kenya',
+    'child health Tanzania',
+    'disease surveillance Africa',
+    'health dashboard East Africa',
+  ],
+  openGraph: {
+    title: 'Public Health Data Explorer | AkiliBrain',
+    description:
+      'Track key health indicators, disease statistics, and outbreaks across East Africa using DHIS2 and WHO data.',
+    url: 'https://akilibrain.com/health',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Public Health Data Explorer | AkiliBrain',
+    description: 'Track key health indicators and disease statistics across East Africa.',
+  },
+  alternates: {
+    canonical: 'https://akilibrain.com/health',
+  },
 };
 
 export default async function HealthPage({

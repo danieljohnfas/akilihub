@@ -134,7 +134,7 @@ export default function OgImage() {
             lineHeight: 1.4,
           }}
         >
-          Tenders · Compliance · Health Data · Salaries
+          Tenders · Jobs · Compliance · Health Data · Salaries
         </div>
       </div>
     ),

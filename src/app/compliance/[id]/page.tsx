@@ -8,13 +8,50 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildBusinessSchema } from '@/components/seo/schemas';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
-  const data = await db.select({ name: businesses.name }).from(businesses).where(eq(businesses.id, resolvedParams.id)).limit(1);
+  const data = await db
+    .select({
+      name: businesses.name,
+      regNo: businesses.registrationNumber,
+      country: countries.name,
+      type: businessTypes.name,
+    })
+    .from(businesses)
+    .leftJoin(countries, eq(businesses.countryId, countries.id))
+    .leftJoin(businessTypes, eq(businesses.typeId, businessTypes.id))
+    .where(eq(businesses.id, resolvedParams.id))
+    .limit(1);
+
   if (!data.length) return { title: 'Business Not Found' };
   
+  const b = data[0];
+  const title = `${b.name} | AkiliBrain Compliance`;
+  const desc = `View compliance and registration details for ${b.name}, a ${b.type || 'business'} registered in ${b.country || 'East Africa'}. (Reg: ${b.regNo})`;
+  const url = `https://akilibrain.com/compliance/${resolvedParams.id}`;
+
   return {
-    title: `${data[0].name} | AkiliBrain Compliance`,
+    title,
+    description: desc,
+    keywords: [b.name, b.regNo, b.type || '', b.country || '', 'business registry', 'compliance'].filter(Boolean),
+    openGraph: {
+      title,
+      description: desc,
+      url,
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: desc,
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
 
@@ -51,6 +88,18 @@ export default async function BusinessDetailPage({
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Registry
       </Link>
+
+      {/* JSON-LD Schema */}
+      <JsonLd schema={buildBusinessSchema({
+        id: business.id,
+        name: business.name,
+        registrationNumber: business.registrationNumber,
+        country,
+        type,
+        status: business.status,
+        registrationDate: business.registrationDate,
+        address: business.address
+      })} />
 
       {/* Header */}
       <div className="space-y-4">
