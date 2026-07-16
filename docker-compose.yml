@@ -8,9 +8,11 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - SCRAPLING_URL=http://scrapling:8001
     depends_on:
       - db
       - redis
+      - scrapling
 
   # 2. Database (Supabase replacement for local/VPS if needed, though we use managed Supabase)
   db:
@@ -27,7 +29,20 @@ services:
     ports:
       - "6379:6379"
 
-  # 3. Maxun (Visual Scraper)
+  # 3. Scrapling (Stealth Python Sidecar) — Cloudflare bypass + adaptive selectors
+  scrapling:
+    build:
+      context: ./scraper
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - crawl_data:/app/crawl_data
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  # 4. Maxun (Visual Scraper)
   maxun:
     image: maxunhq/maxun:latest
     ports:
@@ -87,3 +102,4 @@ services:
 volumes:
   db_data:
   redis_data:
+  crawl_data:

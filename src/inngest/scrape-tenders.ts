@@ -4,71 +4,215 @@ import { db } from "@/lib/db/client";
 import { tenders } from "@/lib/db/schema/tenders";
 import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
+import {
+  ScraplingStrategy,
+  FirecrawlStrategy,
+  CrawleeStrategy,
+  type TenderResult,
+  type PortalType,
+} from "@/lib/strategies/scraper-strategies";
+import { StrategyEngine } from "@/lib/strategies/engine";
 
-async function getCountryId(countryHint: string): Promise<string | null> {
-  const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, countryHint)).limit(1);
+// ── Portal definitions ────────────────────────────────────────────────────────
+// Each portal has a direct URL to scrape + a broad-search query as final fallback.
+const PORTALS: Array<{
+  id: string;
+  name: string;
+  cron: string;
+  countryCode: string;
+  portalType: PortalType;
+  url: string;
+  broadSearchQuery: string;
+}> = [
+  {
+    id: "scrape-tenders-tanzania",
+    name: "🇹🇿 Tenders Tanzania",
+    cron: "0 0 * * *",
+    countryCode: "TZ",
+    portalType: "ppra_tz",
+    url: "https://www.ppra.go.tz/tenders",
+    broadSearchQuery: "government tenders Tanzania 2026",
+  },
+  {
+    id: "scrape-tenders-kenya",
+    name: "🇰🇪 Tenders Kenya",
+    cron: "30 0 * * *",
+    countryCode: "KE",
+    portalType: "ppoa_ke",
+    url: "https://tenders.go.ke/tenders/open",
+    broadSearchQuery: "government tenders Kenya 2026",
+  },
+  {
+    id: "scrape-tenders-uganda",
+    name: "🇺🇬 Tenders Uganda",
+    cron: "0 1 * * *",
+    countryCode: "UG",
+    portalType: "ppda_ug",
+    url: "https://gpp.ppda.go.ug/public/bid-invitations",
+    broadSearchQuery: "government tenders Uganda 2026",
+  },
+  {
+    id: "scrape-tenders-rwanda",
+    name: "🇷🇼 Tenders Rwanda",
+    cron: "30 1 * * *",
+    countryCode: "RW",
+    portalType: "rppa_rw",
+    url: "https://www.rppa.gov.rw/index.php?id=33",
+    broadSearchQuery: "government tenders Rwanda 2026",
+  },
+  {
+    id: "scrape-tenders-ethiopia",
+    name: "🇪🇹 Tenders Ethiopia",
+    cron: "0 2 * * *",
+    countryCode: "ET",
+    portalType: "pppa_et",
+    url: "https://www.pppa.gov.et/index.php/procurement-opportunities",
+    broadSearchQuery: "government tenders Ethiopia 2026",
+  },
+  {
+    id: "scrape-tenders-congo-drc",
+    name: "🇨🇩 Tenders Congo DRC",
+    cron: "30 2 * * *",
+    countryCode: "CD",
+    portalType: "armp_cd",
+    url: "https://www.armp.cd/index.php/appels-doffres",
+    broadSearchQuery: "government tenders Congo DRC 2026",
+  },
+];
+
+// ── DB helpers ────────────────────────────────────────────────────────────────
+async function getCountryId(countryCode: string): Promise<string | null> {
+  const result = await db
+    .select({ id: countries.id })
+    .from(countries)
+    .where(eq(countries.code, countryCode))
+    .limit(1);
   return result.length > 0 ? result[0].id : null;
 }
 
-async function saveTenders(discovered: BroadTenderResource[], countryCode: string): Promise<number> {
-  const countryId = await getCountryId(countryCode);
-  if (!countryId) return 0;
-
+async function saveTenderResults(
+  items: TenderResult[],
+  countryId: string
+): Promise<number> {
   let inserted = 0;
-  for (const tender of discovered) {
+  for (const t of items) {
     try {
-      await db.insert(tenders).values({
-        referenceNo: tender.referenceNo,
-        title: tender.title,
-        description: tender.description,
-        contractingAuthority: tender.contractingAuthority,
-        category: tender.category,
-        budget: tender.budget?.toString() || null,
-        currency: tender.currency,
-        deadline: tender.deadline || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Default 14 days if missing
-        sourceUrl: tender.sourceUrl,
-        countryId,
-        status: 'open',
-      }).onConflictDoNothing();
+      await db
+        .insert(tenders)
+        .values({
+          referenceNo: t.referenceNo,
+          title: t.title,
+          description: t.description ?? null,
+          contractingAuthority: t.contractingAuthority,
+          deadline: t.deadline ? new Date(t.deadline) : new Date(Date.now() + 14 * 86400000),
+          sourceUrl: t.sourceUrl,
+          countryId,
+          status: "open",
+        })
+        .onConflictDoNothing();
       inserted++;
     } catch (e) {
-      console.error(`Failed to insert tender: ${tender.referenceNo}`, e);
+      console.error(`[scrape-tenders] Failed to insert: ${t.referenceNo}`, e);
     }
   }
   return inserted;
 }
 
-function makeTenderJob(
-  id: string,
-  name: string,
-  cron: string,
-  query: string,
-  countryCode: string
-) {
+async function saveBroadResults(
+  items: BroadTenderResource[],
+  countryId: string
+): Promise<number> {
+  let inserted = 0;
+  for (const t of items) {
+    try {
+      await db
+        .insert(tenders)
+        .values({
+          referenceNo: t.referenceNo,
+          title: t.title,
+          description: t.description ?? null,
+          contractingAuthority: t.contractingAuthority,
+          category: t.category,
+          budget: t.budget?.toString() ?? null,
+          currency: t.currency,
+          deadline: t.deadline ?? new Date(Date.now() + 14 * 86400000),
+          sourceUrl: t.sourceUrl,
+          countryId,
+          status: "open",
+        })
+        .onConflictDoNothing();
+      inserted++;
+    } catch (e) {
+      console.error(`[scrape-tenders] Broad insert failed: ${t.referenceNo}`, e);
+    }
+  }
+  return inserted;
+}
+
+// ── Strategy cascade ──────────────────────────────────────────────────────────
+// Order: Scrapling (stealth) → Firecrawl (cloud) → Crawlee (HTTP fallback)
+// If all three fail, falls back to broad Google Search + AI extraction.
+function buildStrategyEngine() {
+  return new StrategyEngine([
+    new ScraplingStrategy(),
+    new FirecrawlStrategy(),
+    new CrawleeStrategy(),
+  ]);
+}
+
+// ── Job factory ───────────────────────────────────────────────────────────────
+function makePortalJob(portal: (typeof PORTALS)[number]) {
   return inngest.createFunction(
-    { id, name, triggers: [{ cron }] },
+    { id: portal.id, name: portal.name, triggers: [{ cron: portal.cron }] },
     async ({ step }) => {
       const insertedCount = await step.run("execute-scraper", async () => {
-        const discovered = await discoverTenders(query, 5);
-        return await saveTenders(discovered, countryCode);
+        const countryId = await getCountryId(portal.countryCode);
+        if (!countryId) {
+          console.warn(`[${portal.id}] Country ${portal.countryCode} not found. Skipping.`);
+          return 0;
+        }
+
+        // 1. Try the strategy cascade (Scrapling → Firecrawl → Crawlee)
+        const engine = buildStrategyEngine();
+        try {
+          const { result, strategyUsed } = await engine.executeWithFallback({
+            url: portal.url,
+            portalType: portal.portalType,
+          });
+
+          if (result.length > 0) {
+            console.log(`[${portal.id}] ${strategyUsed} returned ${result.length} tenders.`);
+            return await saveTenderResults(result, countryId);
+          }
+
+          console.log(`[${portal.id}] Strategy cascade returned 0 results — falling back to broad search.`);
+        } catch (err) {
+          console.warn(`[${portal.id}] All strategies failed: ${(err as Error).message}. Falling back to broad search.`);
+        }
+
+        // 2. Final fallback: broad Google search + Gemini extraction (no portal URL needed)
+        const discovered = await discoverTenders(portal.broadSearchQuery, 5);
+        return await saveBroadResults(discovered, countryId);
       });
 
       if (insertedCount > 0) {
         await step.sendEvent("notify-new-tenders", {
           name: "tenders.new",
-          data: { count: insertedCount, source: name },
+          data: { count: insertedCount, source: portal.name },
         });
       }
 
-      return { message: `Scraped and inserted ${insertedCount} tenders for ${name}.` };
+      return {
+        message: `Scraped and inserted ${insertedCount} tenders for ${portal.name}.`,
+      };
     }
   );
 }
 
-// Daily jobs staggered by 30 min
-export const scrapePPRATanzaniaJob  = makeTenderJob("scrape-tenders-tanzania",  "🇹🇿 Tenders Tanzania",  "0 0 * * *",  "government tenders Tanzania 2026", "TZ");
-export const scrapePPRAKenyaJob     = makeTenderJob("scrape-tenders-kenya",     "🇰🇪 Tenders Kenya",     "30 0 * * *", "government tenders Kenya 2026", "KE");
-export const scrapePPDAUgandaJob    = makeTenderJob("scrape-tenders-uganda",    "🇺🇬 Tenders Uganda",    "0 1 * * *",  "government tenders Uganda 2026", "UG");
-export const scrapeRPPARwandaJob    = makeTenderJob("scrape-tenders-rwanda",    "🇷🇼 Tenders Rwanda",    "30 1 * * *", "government tenders Rwanda 2026", "RW");
-export const scrapePPPAEthiopiaJob  = makeTenderJob("scrape-tenders-ethiopia",  "🇪🇹 Tenders Ethiopia",  "0 2 * * *",  "government tenders Ethiopia 2026", "ET");
-export const scrapeARMPCongoDRCJob  = makeTenderJob("scrape-tenders-congo-drc", "🇨🇩 Tenders Congo DRC", "30 2 * * *", "government tenders Congo DRC 2026", "CD");
+// ── Exports ───────────────────────────────────────────────────────────────────
+export const scrapePPRATanzaniaJob = makePortalJob(PORTALS[0]);
+export const scrapePPRAKenyaJob    = makePortalJob(PORTALS[1]);
+export const scrapePPDAUgandaJob   = makePortalJob(PORTALS[2]);
+export const scrapeRPPARwandaJob   = makePortalJob(PORTALS[3]);
+export const scrapePPPAEthiopiaJob = makePortalJob(PORTALS[4]);
+export const scrapeARMPCongoDRCJob = makePortalJob(PORTALS[5]);

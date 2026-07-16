@@ -236,7 +236,74 @@ export class Crawl4AiStrategy implements Strategy<ScraperInput, TenderResult[]> 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STRATEGY 4: Crawlee/Cheerio — pure HTTP fallback, no JS rendering
+// STRATEGY 4 (new): Scrapling — Python sidecar with StealthyFetcher
+// Cloudflare bypass + adaptive CSS selectors + pause/resume for large crawls.
+// Runs on port 8001. Times out after 30s to give Chromium time to start.
+// ─────────────────────────────────────────────────────────────────────────────
+export class ScraplingStrategy implements Strategy<ScraperInput, TenderResult[]> {
+  name = 'Scrapling (Stealth Python Sidecar)';
+
+  private readonly baseUrl: string;
+
+  constructor() {
+    // Allow overriding the sidecar URL via env (useful in Docker Compose)
+    this.baseUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
+  }
+
+  async execute(input: ScraperInput): Promise<TenderResult[]> {
+    const controller = new AbortController();
+    // 30 s — StealthyFetcher needs time to launch Chromium + solve Cloudflare
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+
+    try {
+      console.log(`[ScraplingStrategy] Calling sidecar for ${input.url} (portal: ${input.portalType})`);
+
+      const response = await fetch(`${this.baseUrl}/scrape`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: input.url,
+          portal_type: input.portalType,
+          use_stealth: true,
+          max_pages: 1,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`Scrapling sidecar error ${response.status}: ${text.slice(0, 200)}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(`Scrapling reported failure: ${data.error ?? 'unknown'}`);
+      }
+
+      if (!data.robots_allowed) {
+        console.warn(`[ScraplingStrategy] robots.txt disallows ${input.url} — 0 results returned.`);
+        return [];
+      }
+
+      // Map Python snake_case → TypeScript camelCase TenderResult
+      return (data.tenders ?? []).map((t: any) => ({
+        title: t.title,
+        referenceNo: t.reference_no,
+        contractingAuthority: t.contracting_authority,
+        deadline: t.deadline,
+        sourceUrl: t.source_url,
+        description: t.description ?? undefined,
+        publishedDate: t.published_date ?? undefined,
+      })) as TenderResult[];
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STRATEGY 5: Crawlee/Cheerio — pure HTTP fallback, no JS rendering
 // Works on Vercel but won't parse JS-rendered portals
 // ─────────────────────────────────────────────────────────────────────────────
 import { CheerioCrawler, RequestList } from '@crawlee/cheerio';
