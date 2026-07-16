@@ -36,7 +36,9 @@ async function main() {
   const stats = {
     tenders: { found: 0, before: 0, after: 0 },
     jobs: { found: 0 },
-    compliance: { found: 0 }
+    compliance: { found: 0 },
+    health: { found: 0 },
+    salaries: { verified: 0 }
   };
 
   const countries = [
