@@ -3,7 +3,7 @@
   "retiredSessionsCount": 0,
   "sessions": [
     {
-      "id": "session_E26eYCmNNX",
+      "id": "session_7SzxdzyBbh",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -16,14 +16,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:47:42.282Z",
-      "createdAt": "2026-07-16T13:57:42.282Z",
+      "expiresAt": "2026-07-16T20:35:31.246Z",
+      "createdAt": "2026-07-16T19:45:31.246Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 0
     },
     {
-      "id": "session_AXhFmfXOBT",
+      "id": "session_hHDEaukQVZ",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -34,42 +34,42 @@
         "cookies": [
           {
             "key": "XSRF-TOKEN",
-            "value": "eyJpdiI6InVDakxueHcrdHhEVmpDUld6dTV4NkE9PSIsInZhbHVlIjoiNjVGWEFjS0JOMWdJdFIzbElkT1NQWWF3SC84NytzQkNOQ0RiK1F5SUhPNWwydS9pYzJqckhPbDJnTVg5RUFEK0dwYjNEUE5hNmJWSGZnMEFRa2JLdzAweHdBSGhFeXNXQ2hKclN1NGZDb3dtYlFTNllZMEZ6NWJqMU13akxMcnIiLCJtYWMiOiIxODFiY2QyM2YwZmQ3ZTY2MDIwZGE0ZjM1ZmJhOTk1YjJkZGQyOTM1ZjAzZjU4ZGEwM2FkZDFhNTdjNjU3NzljIiwidGFnIjoiIn0%3D",
-            "expires": "2026-07-16T16:03:52.000Z",
+            "value": "eyJpdiI6ImkxSU1FVVJ0bHpnYlRPODd1bXBSOXc9PSIsInZhbHVlIjoiaHEwdStqMDB0RWJaUEJKaEVaVUQ0Q1NNci9aTzJpemRyZ1NWT1hwbFB6YjMxUTRjRUo2U3g3NnErMnQrRjNRRTZlbldyR1U5M3RSREJsY2FtVjVIaytkZGZXUk1kNjRIWGpxOUtFZTdqWGYrbWdsdGRabXlwcFJ0OUM4ckZ0cGIiLCJtYWMiOiI5ZTBmNzYyMzc2NWVmMWU1YjhhZDM3N2EyYWFmNDk4YzBlZmZiNWJjMTMxMjQ3NTZiOTkzOWY4N2RiNDNjODJkIiwidGFnIjoiIn0%3D",
+            "expires": "2026-07-16T21:51:40.000Z",
             "maxAge": 7200,
             "domain": "tenders.go.ke",
             "path": "/",
             "secure": true,
             "hostOnly": false,
-            "creation": "2026-07-16T13:57:56.049Z",
-            "lastAccessed": "2026-07-16T13:57:56.049Z",
+            "creation": "2026-07-16T19:45:44.254Z",
+            "lastAccessed": "2026-07-16T19:45:44.254Z",
             "sameSite": "lax"
           },
           {
             "key": "ppip_session",
-            "value": "eyJpdiI6ImRJd2VqS0tKRFU1ZjJjaVhMcDVXU3c9PSIsInZhbHVlIjoiTm80VjdTR0F2elp1ZlpYbWVxVXBmWUZNK3JtZVlvOTF1T0gwRjBVdUJHN1kxeis5b2U5bVBCQUVJNlNjMnFodzZ6TlV1L2hTNEJHU3ZyUDJNZUFRY0lQQjdOWWM4KzBRY291cTBXWjhjNWhqd3JaR2gyNXhVL1VWUkdBRkhSY0IiLCJtYWMiOiJiZTgzODBmZWRlYzdjOWIwOTk5OTVjY2RjZjAwMjMwZTJmMGRjODBkNzIwM2Q3OGRlZWY5ZjBiMzRmYzk2NzdjIiwidGFnIjoiIn0%3D",
-            "expires": "2026-07-16T16:03:52.000Z",
+            "value": "eyJpdiI6IndkWkpORUpMWDRRczVaNXZsdXpiZnc9PSIsInZhbHVlIjoiZ1NTRWF5STh1dWYzbHVwWFlBZ1g4SldLbEtZRFg0S2RubnhnWmFNMGpUYzU1Q1ZiSnBFeG8xcG1RNDcva0o5Z21zYUZHZ2VINnlGbm9YUVFZdEVQNGM3dHFENTF4Y1Y4MVRwK205ejQzSUgrSnNxY1dvTEdMcmgxTitmZHhELzQiLCJtYWMiOiIzNWJjODFhOWE1ZWQ5OGFiNmNjNWIxMDAwNmI0MzMwZDM0NTYyNzNjMzg3ZDYyNDA2Mzc1NWUzYjlhOTY3YWFiIiwidGFnIjoiIn0%3D",
+            "expires": "2026-07-16T21:51:40.000Z",
             "maxAge": 7200,
             "domain": "tenders.go.ke",
             "path": "/",
             "httpOnly": true,
             "hostOnly": false,
-            "creation": "2026-07-16T13:57:56.050Z",
-            "lastAccessed": "2026-07-16T13:57:56.050Z",
+            "creation": "2026-07-16T19:45:44.255Z",
+            "lastAccessed": "2026-07-16T19:45:44.255Z",
             "sameSite": "lax"
           },
           {
-            "key": "xcPFfBSvvDWgof0PHm23Cf5fZ1yg3tzzuBrkPpBr",
-            "value": "eyJpdiI6ImJ1c0JiQlpRZlRIdlpVdGNXc3FTNEE9PSIsInZhbHVlIjoiYVNZRkhJc3k1V1lDU1Z4djYxdkFWQ1BkT09xQlVVWk1qVm5OZDdVazdXM2FMNk1EZTJNdnJ1dHBBMldwOFd3MUxIQ3VIdks5aXVZQXlxZUFLVjRqekNXelk4V2QyTlk0TVdQS2ZlejljSHlSYk1xTkxsN2FDT1AzWHhiREJvR3NPY2YvK1Z6THltRndNeXFGTk5qMVZUMTcwZHBQek0wanZ5b3lncWt0bVFvcW9nc1RkU250dzJCYzhuVVNJbGsrUTJLNERWemJDdWx4ajc0aUt5ZlNCSUxvTDVtbm9ObG9NTjVuamN2SkFLVEtZbG54MzZEUlB5ZXIyT0p6anZKWUZPL0I4NFdYV0NhZmJUVGlEeWlwb0NGRXFTbTQxYmQ0ODBqQVB5TCtPeUZJRXQveVF5K1lyRUt0SlpvTEVaTDZ0NFZ4am5aMW9ndVY2Q3ltTXQ1d2hGcnlVblBZTlNwOFJyNno0a25jZk5rbTFnNVpLcDFqRXdhaTJQbTNUSzFjIiwibWFjIjoiOGUxMzVhM2RlYmQ3NGQxZGY0MzA5ZDEyNWI1N2I5OWVlOWZjMGY3ODE5MWE5MGM4MDk4ODU3MDU2ZmY2Y2Q1NCIsInRhZyI6IiJ9",
-            "expires": "2026-07-16T16:03:52.000Z",
+            "key": "HP63RUpUHUOhzOP7kDNQpeQhR0Wpsv4hiTk9HZ7a",
+            "value": "eyJpdiI6ImRzc3Z3a2swWW50b0xmYzZzQ0VVNnc9PSIsInZhbHVlIjoibzVseDdEVjIxY3JwUktvOGJrRXhTVzVWSGR4bFdEck85ZTlqcFUzZlpRcDA2RU5BWnZ4aEtpd1o2MW0rYjlvS1g5eHhtbURMOHhNRTduMEF3bDl3ZTFzaFQ3RmJsaUUxTHJXUjB5anlUdng0RC80bVN5QUJKc0JESTBta0FRcFZCdW92bUhtWnhOK1UxbEpibTRrYzYrUXZuT2tYWDBDdWc2czJPaXQwQW14dnNRcE5xeEdHcUNDRm5ZdlVUeWdITWpEbTBkSTJsdHBnbm1seUJRTDNoSUVKR0N0MG1ZUmU4V3N5TkluU2EvTitaaHcvK1NkMG9VeDR6Y0kvVTFNM0VLaWM1bkZlcEdHZWhxTFNpaFB6OStMeHhvS2NnWU9vNDlWS00zcUFYTWthUWxHdkgydU5ackduUjJCOG5FVkRNK0RIRURoZmtMeGp2QW1EVHpjMVk3TXc3WGVzMmdsYU1HVHIzbjRhRGZNWHhqdXJQenVTMTRGeWNrSU1VWHpCIiwibWFjIjoiZWY1MTkxYWJlMDdjNGYzYWJiNTQ0YzFiN2EzNTE1OTAwMTFiZmMyYjg1ODNkYzIxZmNiODQxYTZlZTU3YjQzOSIsInRhZyI6IiJ9",
+            "expires": "2026-07-16T21:51:40.000Z",
             "maxAge": 7200,
             "domain": "tenders.go.ke",
             "path": "/",
             "secure": true,
             "httpOnly": true,
             "hostOnly": false,
-            "creation": "2026-07-16T13:57:56.050Z",
-            "lastAccessed": "2026-07-16T13:57:56.050Z",
+            "creation": "2026-07-16T19:45:44.256Z",
+            "lastAccessed": "2026-07-16T19:45:44.256Z",
             "sameSite": "lax"
           }
         ]
@@ -77,14 +77,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:47:55.275Z",
-      "createdAt": "2026-07-16T13:57:55.275Z",
+      "expiresAt": "2026-07-16T20:35:43.409Z",
+      "createdAt": "2026-07-16T19:45:43.409Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 0
     },
     {
-      "id": "session_eDDAadoG8t",
+      "id": "session_kE6Fsm2niV",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -97,14 +97,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:00.775Z",
-      "createdAt": "2026-07-16T13:58:00.775Z",
+      "expiresAt": "2026-07-16T20:35:47.265Z",
+      "createdAt": "2026-07-16T19:45:47.265Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 0
     },
     {
-      "id": "session_NreUb4nJCD",
+      "id": "session_qVhDQ7OzXK",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -121,22 +121,22 @@
             "secure": true,
             "httpOnly": true,
             "hostOnly": true,
-            "creation": "2026-07-16T13:58:10.177Z",
-            "lastAccessed": "2026-07-16T13:58:10.177Z"
+            "creation": "2026-07-16T19:45:55.606Z",
+            "lastAccessed": "2026-07-16T19:45:55.606Z"
           }
         ]
       },
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:07.346Z",
-      "createdAt": "2026-07-16T13:58:07.346Z",
+      "expiresAt": "2026-07-16T20:35:52.217Z",
+      "createdAt": "2026-07-16T19:45:52.217Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 0
     },
     {
-      "id": "session_houB2kKfuh",
+      "id": "session_yFvPteOcYH",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -149,14 +149,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:14.474Z",
-      "createdAt": "2026-07-16T13:58:14.474Z",
+      "expiresAt": "2026-07-16T20:35:58.989Z",
+      "createdAt": "2026-07-16T19:45:58.989Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 1
     },
     {
-      "id": "session_HtbDok1f3Z",
+      "id": "session_MQJL7DCDTa",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -169,14 +169,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:14.495Z",
-      "createdAt": "2026-07-16T13:58:14.495Z",
+      "expiresAt": "2026-07-16T20:35:59.011Z",
+      "createdAt": "2026-07-16T19:45:59.011Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 1
     },
     {
-      "id": "session_QWSYBotAv1",
+      "id": "session_iv6cUqqVhn",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -189,14 +189,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:14.507Z",
-      "createdAt": "2026-07-16T13:58:14.507Z",
+      "expiresAt": "2026-07-16T20:35:59.025Z",
+      "createdAt": "2026-07-16T19:45:59.025Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 1
     },
     {
-      "id": "session_s5dkBblNv6",
+      "id": "session_vipRNDDzN1",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -209,14 +209,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:18.796Z",
-      "createdAt": "2026-07-16T13:58:18.796Z",
+      "expiresAt": "2026-07-16T20:36:02.375Z",
+      "createdAt": "2026-07-16T19:46:02.375Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 1
     },
     {
-      "id": "session_NfEZNfRhfx",
+      "id": "session_M03BiyUdtb",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -229,14 +229,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:18.812Z",
-      "createdAt": "2026-07-16T13:58:18.812Z",
+      "expiresAt": "2026-07-16T20:36:02.388Z",
+      "createdAt": "2026-07-16T19:46:02.388Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 1
     },
     {
-      "id": "session_X7yzLHkEgx",
+      "id": "session_FvyeVTGvsM",
       "cookieJar": {
         "version": "tough-cookie@6.0.1",
         "storeType": "MemoryCookieStore",
@@ -249,8 +249,8 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2026-07-16T14:48:18.824Z",
-      "createdAt": "2026-07-16T13:58:18.824Z",
+      "expiresAt": "2026-07-16T20:36:02.397Z",
+      "createdAt": "2026-07-16T19:46:02.397Z",
       "usageCount": 1,
       "maxUsageCount": 50,
       "errorScore": 1
