@@ -3,6 +3,7 @@ import { google } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
+import { createCohere } from '@ai-sdk/cohere';
 import { keyPool } from './key-pool';
 
 // ------------------------------------------------------------------
@@ -74,6 +75,43 @@ getEnvKeys('HUGGINGFACE_API_KEY').forEach((key, i) => {
   });
   keyPool.register({ id: `hf-qwen2-${i+1}`, name: `HuggingFace Qwen2.5-72B (${i+1})`, model: hf('Qwen/Qwen2.5-72B-Instruct'), supportsStructured: true });
 });
+
+// -- GITHUB MODELS --
+getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
+  const gh = createOpenAI({
+    baseURL: 'https://models.inference.ai.azure.com',
+    apiKey: key,
+  });
+  keyPool.register({ id: `gh-gpt4o-${i+1}`, name: `GitHub GPT-4o (${i+1})`, model: gh('gpt-4o'), supportsStructured: true });
+  keyPool.register({ id: `gh-llama3-${i+1}`, name: `GitHub Llama-3.1-70B (${i+1})`, model: gh('meta-llama-3.1-70b-instruct'), supportsStructured: true });
+});
+
+// -- SAMBANOVA --
+getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
+  const sn = createOpenAI({
+    baseURL: 'https://api.sambanova.ai/v1',
+    apiKey: key,
+  });
+  keyPool.register({ id: `sambanova-llama33-${i+1}`, name: `SambaNova Llama-3.3-70B (${i+1})`, model: sn('Meta-Llama-3.3-70B-Instruct'), supportsStructured: true });
+});
+
+// -- COHERE --
+getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
+  const cohere = createCohere({ apiKey: key });
+  // Command R is optimized for RAG and tool use
+  keyPool.register({ id: `cohere-command-r-${i+1}`, name: `Cohere Command R (${i+1})`, model: cohere('command-r'), supportsStructured: true });
+});
+
+// -- CLOUDFLARE --
+const cfToken = process.env.CLOUDFLARE_API_TOKEN;
+const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+if (cfToken && cfAccountId) {
+  const cf = createOpenAI({
+    baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`,
+    apiKey: cfToken,
+  });
+  keyPool.register({ id: `cf-llama3-${1}`, name: `Cloudflare Llama-3.1-8B (1)`, model: cf('@cf/meta/llama-3.1-8b-instruct'), supportsStructured: true });
+}
 
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
