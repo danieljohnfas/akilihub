@@ -77,7 +77,7 @@ export function JobCard({
 
         <div className="flex items-center gap-2">
           <MapPin className="w-4 h-4 shrink-0" />
-          <span>{location || country}</span>
+          <span>{location && location !== 'null' ? location : country}</span>
         </div>
 
         {description && description !== 'null' && description.trim() !== '' && (
