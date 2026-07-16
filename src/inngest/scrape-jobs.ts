@@ -10,7 +10,7 @@ async function getCountryId(countryHint: string): Promise<string | null> {
   return result.length > 0 ? result[0].id : null;
 }
 
-async function saveJobs(discovered: BroadJobResource[], countryCode: string): Promise<number> {
+export async function saveJobs(discovered: BroadJobResource[], countryCode: string): Promise<number> {
   const countryId = await getCountryId(countryCode);
   if (!countryId) return 0;
 

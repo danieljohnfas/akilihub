@@ -80,9 +80,11 @@ export function JobCard({
           <span>{location || country}</span>
         </div>
 
-        <p className="line-clamp-3 text-white/50 leading-relaxed">
-          {description}
-        </p>
+        {description && description !== 'null' && description.trim() !== '' && (
+          <p className="line-clamp-3 text-white/50 leading-relaxed">
+            {description}
+          </p>
+        )}
       </CardContent>
 
       <CardFooter className="pt-4 border-t border-white/5 flex items-center justify-between">

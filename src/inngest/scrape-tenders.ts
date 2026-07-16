@@ -81,7 +81,7 @@ const PORTALS: Array<{
 ];
 
 // ── DB helpers ────────────────────────────────────────────────────────────────
-async function getCountryId(countryCode: string): Promise<string | null> {
+export async function getCountryId(countryCode: string): Promise<string | null> {
   const result = await db
     .select({ id: countries.id })
     .from(countries)
@@ -90,7 +90,7 @@ async function getCountryId(countryCode: string): Promise<string | null> {
   return result.length > 0 ? result[0].id : null;
 }
 
-async function saveTenderResults(
+export async function saveTenderResults(
   items: TenderResult[],
   countryId: string
 ): Promise<number> {
@@ -118,7 +118,7 @@ async function saveTenderResults(
   return inserted;
 }
 
-async function saveBroadResults(
+export async function saveBroadResults(
   items: BroadTenderResource[],
   countryId: string
 ): Promise<number> {

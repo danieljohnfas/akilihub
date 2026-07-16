@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 
 from scrapling.fetchers import Fetcher, StealthyFetcher
 
-from selectors import PORTAL_SELECTORS, FALLBACK_SELECTORS
+from css_selectors import PORTAL_SELECTORS, FALLBACK_SELECTORS
 
 logger = logging.getLogger(__name__)
 

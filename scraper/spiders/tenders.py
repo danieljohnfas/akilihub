@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 
 from scrapling.spiders import Spider, Request, Response
 
-from selectors import PORTAL_SELECTORS, FALLBACK_SELECTORS
+from css_selectors import PORTAL_SELECTORS, FALLBACK_SELECTORS
 
 logger = logging.getLogger(__name__)
 
