@@ -155,3 +155,32 @@ async def stealthy_scrape(
     tenders = _extract_tenders(page, portal_type, url)
     logger.info("Extracted %d tenders from %s", len(tenders), url)
     return tenders
+
+
+async def stealthy_fetch_html(
+    url: str,
+    use_stealth: bool = True,
+) -> str:
+    """
+    Fetch a single page and return its raw rendered HTML.
+    Used for jobs and compliance scraping where Gemini extracts the data.
+    """
+    logger.info("Fetching raw HTML for %s (stealth=%s)", url, use_stealth)
+
+    if use_stealth:
+        page = StealthyFetcher.fetch(
+            url,
+            headless=True,
+            network_idle=True,
+            solve_cloudflare=True,
+            google_search=False,
+        )
+    else:
+        page = Fetcher.get(
+            url,
+            stealthy_headers=True,
+            impersonate="chrome",
+        )
+
+    # Scrapling Response object provides .text (or .body) which is the raw HTML
+    return page.text or ""

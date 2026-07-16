@@ -17,10 +17,37 @@ const USER_AGENTS = [
 ];
 
 /**
- * Fetches HTML from a URL with multiple fallback user-agents.
- * Returns raw HTML text or null if all attempts fail.
+ * Fetches HTML from a URL.
+ * First tries the Scrapling Python Sidecar (to bypass Cloudflare and JS-render).
+ * If the sidecar is unreachable or fails, falls back to plain HTTP with multiple user-agents.
  */
 export async function fetchHtml(url: string): Promise<string | null> {
+  const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
+  
+  // 1. Try Scrapling Sidecar
+  try {
+    const res = await fetch(`${sidecarUrl}/fetch_html`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, use_stealth: true }),
+      signal: AbortSignal.timeout(45_000), // Give it time to launch Chrome
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.html && data.html.length > 500) {
+        console.log(`[fetchHtml:Sidecar] Got ${data.html.length} bytes from ${url}`);
+        return data.html;
+      } else if (!data.robots_allowed) {
+        console.warn(`[fetchHtml:Sidecar] robots.txt disallows scraping: ${url}`);
+        return null;
+      }
+    }
+  } catch (err) {
+    console.warn(`[fetchHtml:Sidecar] Sidecar failed or unreachable, falling back to plain HTTP. Error:`, (err as Error).message);
+  }
+
+  // 2. Fallback to plain HTTP if Sidecar fails
   for (const ua of USER_AGENTS) {
     try {
       const res = await fetch(url, {
@@ -33,19 +60,20 @@ export async function fetchHtml(url: string): Promise<string | null> {
       });
 
       if (!res.ok) {
-        console.log(`[fetchHtml] ${url} returned ${res.status} with UA ${ua}`);
+        console.log(`[fetchHtml:Fallback] ${url} returned ${res.status} with UA ${ua}`);
         continue;
       }
 
       const html = await res.text();
       if (html && html.length > 500) {
-        console.log(`[fetchHtml] Got ${html.length} bytes from ${url}`);
+        console.log(`[fetchHtml:Fallback] Got ${html.length} bytes from ${url}`);
         return html;
       }
     } catch (err) {
-      console.log(`[fetchHtml] Failed with UA "${ua}":`, (err as Error).message);
+      console.log(`[fetchHtml:Fallback] Failed with UA "${ua}":`, (err as Error).message);
     }
   }
+  
   return null;
 }
 

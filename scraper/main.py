@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 
 from spiders.tenders import TenderSpider
-from fetchers.stealthy import stealthy_scrape
+from fetchers.stealthy import stealthy_scrape, stealthy_fetch_html
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -125,6 +125,20 @@ class ScrapeResponse(BaseModel):
     error: str | None = None
 
 
+class HtmlFetchRequest(BaseModel):
+    url: str
+    use_stealth: bool = True
+
+
+class HtmlFetchResponse(BaseModel):
+    success: bool
+    url: str
+    html: str
+    robots_allowed: bool
+    duration_ms: int
+    error: str | None = None
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
@@ -184,6 +198,44 @@ async def scrape(req: ScrapeRequest):
         url=req.url,
         tenders=tenders,
         count=len(tenders),
+        robots_allowed=robots_allowed,
+        duration_ms=duration,
+    )
+
+
+@app.post("/fetch_html", response_model=HtmlFetchResponse)
+async def fetch_html(req: HtmlFetchRequest):
+    start = time.monotonic()
+    logger.info("HtmlFetch request: url=%s", req.url)
+
+    robots_allowed = _is_allowed(req.url)
+    if not robots_allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"robots.txt disallows scraping {req.url}. Aborting.",
+        )
+
+    try:
+        html = await stealthy_fetch_html(url=req.url, use_stealth=req.use_stealth)
+    except Exception as exc:
+        logger.error("HtmlFetch failed for %s: %s", req.url, exc, exc_info=True)
+        duration = int((time.monotonic() - start) * 1000)
+        return HtmlFetchResponse(
+            success=False,
+            url=req.url,
+            html="",
+            robots_allowed=robots_allowed,
+            duration_ms=duration,
+            error=str(exc),
+        )
+
+    duration = int((time.monotonic() - start) * 1000)
+    logger.info("Done: fetched %d bytes in %dms for %s", len(html), duration, req.url)
+
+    return HtmlFetchResponse(
+        success=True,
+        url=req.url,
+        html=html,
         robots_allowed=robots_allowed,
         duration_ms=duration,
     )
