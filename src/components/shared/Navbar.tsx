@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut, User } from 'lucide-react';
 import { Logo } from '@/components/shared/Logo';
 import { GlobalSearch } from '@/components/shared/GlobalSearch';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Icon } from '@iconify/react';
+import { createClient } from '@/lib/supabase/server';
+import { logout } from '@/app/auth/actions';
 
 const navLinks = [
   { href: '/tenders', label: 'Tenders', icon: 'solar:document-text-bold-duotone' },
@@ -19,7 +21,10 @@ const navLinks = [
   { href: '/developers', label: 'Dev Tools', icon: 'solar:code-circle-bold-duotone' },
 ];
 
-export function Navbar() {
+export async function Navbar() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
@@ -46,7 +51,21 @@ export function Navbar() {
           <div className="hidden md:block">
             <GlobalSearch />
           </div>
-          <Button variant="outline" className="hidden md:inline-flex">Sign In</Button>
+          
+          <div className="hidden md:flex items-center gap-2">
+            {user ? (
+              <form action={logout}>
+                <Button variant="ghost" size="sm" type="submit" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </Button>
+              </form>
+            ) : (
+              <Link href="/login">
+                <Button variant="outline">Sign In</Button>
+              </Link>
+            )}
+          </div>
           
           <Sheet>
             <SheetTrigger 
@@ -67,7 +86,24 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-                <Button className="mt-4" variant="outline">Sign In</Button>
+                
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  {user ? (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="w-4 h-4" />
+                        {user.email}
+                      </div>
+                      <form action={logout}>
+                        <Button className="w-full" variant="outline" type="submit">Sign Out</Button>
+                      </form>
+                    </div>
+                  ) : (
+                    <Link href="/login" className="block w-full">
+                      <Button className="w-full" variant="outline">Sign In</Button>
+                    </Link>
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>
