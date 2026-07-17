@@ -19,6 +19,8 @@
     "@iconify/react": "^6.0.2",
     "@lottiefiles/dotlottie-react": "^0.19.9",
     "@mendable/firecrawl-js": "^4.29.1",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@sentry/nextjs": "^10.63.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
