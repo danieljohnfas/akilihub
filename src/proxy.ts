@@ -48,6 +48,7 @@ export async function proxy(request: NextRequest) {
   }
   // ── End Admin Protection ────────────────────────────────────────────────
 
+
   try {
     // 1. Supabase Auth Logic
     let supabaseResponse = NextResponse.next({ request });
