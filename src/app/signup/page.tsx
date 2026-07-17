@@ -2,9 +2,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signup } from '@/app/auth/actions';
+import { signup, signInWithGoogle } from '@/app/auth/actions';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
+import { Icon } from '@iconify/react';
 
 export const metadata = {
   title: 'Sign Up - AkiliBrain',
@@ -41,6 +42,22 @@ export default async function SignupPage({
               <p>{message}</p>
             </div>
           )}
+          <form action={signInWithGoogle}>
+            <Button type="submit" variant="outline" className="w-full flex items-center gap-2 bg-white/5 border-white/10 hover:bg-white/10">
+              <Icon icon="flat-color-icons:google" className="w-5 h-5" />
+              Sign up with Google
+            </Button>
+          </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-black/40 px-2 text-muted-foreground">Or sign up with email</span>
+            </div>
+          </div>
+
           <form className="space-y-4" action={signup}>
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
