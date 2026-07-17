@@ -3,6 +3,8 @@ import { FileText, ShieldCheck, Activity, Banknote, Code, ArrowRight, Briefcase 
 import { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { MagicCard } from "@/components/ui/magic-card";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildFAQSchema } from "@/components/seo/schemas";
 
 const features = [
   {
@@ -56,9 +58,39 @@ const features = [
 ];
 
 
+const homeFAQSchema = buildFAQSchema([
+  {
+    question: 'What is AkiliBrain?',
+    answer:
+      "AkiliBrain is East Africa's professional intelligence platform that aggregates government tenders, job openings, business compliance requirements, public health data, and salary benchmarks for Kenya, Tanzania, Uganda, Rwanda, and Ethiopia — all in one place.",
+  },
+  {
+    question: 'Where can I find government tenders in Kenya?',
+    answer:
+      'AkiliBrain lists all open government tenders from Kenya, Tanzania, Uganda, and Rwanda. Visit akilibrain.com/tenders to browse and filter by status, sector, or keyword.',
+  },
+  {
+    question: 'Does AkiliBrain list jobs in East Africa?',
+    answer:
+      'Yes. AkiliBrain automatically scrapes hundreds of job boards and employer websites daily to give you the freshest job listings across East Africa, including full-time, part-time, contract, internship, and remote roles.',
+  },
+  {
+    question: 'Is AkiliBrain free to use?',
+    answer:
+      'Yes. AkiliBrain is completely free to access. You can browse tenders, jobs, compliance guides, health data, and salary data without creating an account.',
+  },
+  {
+    question: 'What business compliance information does AkiliBrain provide?',
+    answer:
+      'AkiliBrain provides compliance requirements for businesses in East Africa, including permits, licenses, tax registration, employment regulations, and sector-specific requirements sourced from official government publications.',
+  },
+]);
+
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center pt-16 pb-24 space-y-24">
+    <>
+      <JsonLd schema={homeFAQSchema} />
+      <div className="flex flex-col items-center justify-center pt-16 pb-24 space-y-24">
       {/* Hero Section */}
       <section className="container mx-auto px-4 text-center space-y-6 max-w-4xl">
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
@@ -122,5 +154,6 @@ export default function Home() {
         </div>
       </section>
     </div>
+    </>
   );
 }

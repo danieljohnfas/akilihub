@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Search, SlidersHorizontal, Activity } from 'lucide-react';
 import Link from 'next/link';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildDatasetSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,8 +74,28 @@ export default async function HealthPage({
     .orderBy(desc(healthDataPoints.year), desc(healthDataPoints.createdAt))
     .limit(20));
 
+  const datasetSchema = buildDatasetSchema({
+    name: 'East Africa Public Health Indicators',
+    description:
+      'Aggregated public health data points including maternal health, child health, infectious disease, and mortality statistics across Kenya, Tanzania, Uganda, Rwanda, and Ethiopia. Sourced from DHIS2 and national health ministries.',
+    url: 'https://akilibrain.com/health',
+    keywords: [
+      'public health Africa', 'DHIS2', 'health indicators East Africa',
+      'maternal health', 'child health', 'disease surveillance',
+    ],
+    creator: 'DHIS2 / National Health Ministries',
+    dateModified: new Date().toISOString().split('T')[0],
+  });
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: 'https://akilibrain.com' },
+    { name: 'Public Health Data Explorer', url: 'https://akilibrain.com/health' },
+  ]);
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      <JsonLd schema={datasetSchema} />
+      <JsonLd schema={breadcrumbSchema} />
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
         <div className="space-y-2">

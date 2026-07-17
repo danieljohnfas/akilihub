@@ -212,3 +212,95 @@ export function buildBusinessSchema(business: BusinessInput): Record<string, unk
     areaServed: business.country ?? "East Africa",
   };
 }
+
+// ─── ItemList (for listing pages — jobs/tenders) ─────────────────────────────
+
+export interface ItemListEntry {
+  name: string;
+  description?: string;
+  url: string;
+  position: number;
+}
+
+export function buildItemListSchema(
+  name: string,
+  description: string,
+  items: ItemListEntry[]
+): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    description,
+    numberOfItems: items.length,
+    itemListElement: items.map((item) => ({
+      "@type": "ListItem",
+      position: item.position,
+      name: item.name,
+      description: item.description,
+      url: item.url,
+    })),
+  };
+}
+
+// ─── FAQPage ──────────────────────────────────────────────────────────────────
+
+export interface FAQEntry {
+  question: string;
+  answer: string;
+}
+
+export function buildFAQSchema(faqs: FAQEntry[]): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
+// ─── Dataset (for health data page) ──────────────────────────────────────────
+
+export function buildDatasetSchema(opts: {
+  name: string;
+  description: string;
+  url: string;
+  keywords: string[];
+  creator: string;
+  dateModified?: string;
+}): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: opts.name,
+    description: opts.description,
+    url: opts.url,
+    keywords: opts.keywords,
+    creator: {
+      "@type": "Organization",
+      name: opts.creator,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: BASE_URL,
+    },
+    license: "https://creativecommons.org/licenses/by/4.0/",
+    ...(opts.dateModified ? { dateModified: opts.dateModified } : {}),
+    spatialCoverage: {
+      "@type": "Place",
+      name: "East Africa",
+      geo: {
+        "@type": "GeoShape",
+        name: "East Africa",
+        description: "Kenya, Tanzania, Uganda, Rwanda, Ethiopia",
+      },
+    },
+  };
+}

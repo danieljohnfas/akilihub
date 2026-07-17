@@ -8,6 +8,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Search, Inbox, Briefcase, Building2, MapPin, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyStateLottie } from '@/components/ui/empty-state-lottie';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,8 +109,26 @@ export default async function JobsPage({
 
   const hasFilters = q || type || company || location;
 
+  const itemListSchema = buildItemListSchema(
+    'Jobs & Careers in East Africa',
+    'Active job openings across Kenya, Tanzania, Uganda, and Rwanda.',
+    data.slice(0, 20).map(({ job, country }, idx) => ({
+      position: idx + 1,
+      name: `${job.title} at ${job.companyName}`,
+      description: job.description?.slice(0, 120) ?? undefined,
+      url: `https://akilibrain.com/jobs/${job.id}`,
+    }))
+  );
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: 'https://akilibrain.com' },
+    { name: 'Jobs & Careers', url: 'https://akilibrain.com/jobs' },
+  ]);
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      {data.length > 0 && <JsonLd schema={itemListSchema} />}
+      <JsonLd schema={breadcrumbSchema} />
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
         <div className="space-y-2">

@@ -10,7 +10,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';
-import { buildJobPostingSchema } from '@/components/seo/schemas';
+import { buildJobPostingSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -107,7 +107,7 @@ export default async function JobDetailPage({
 
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-8">
-      {/* JSON-LD Schema */}
+      {/* JSON-LD Schemas */}
       <JsonLd schema={buildJobPostingSchema({
         id: job.id,
         title: job.title,
@@ -120,6 +120,11 @@ export default async function JobDetailPage({
         deadline: job.deadline,
         sourceUrl: job.sourceUrl
       })} />
+      <JsonLd schema={buildBreadcrumbSchema([
+        { name: 'Home', url: 'https://akilibrain.com' },
+        { name: 'Jobs & Careers', url: 'https://akilibrain.com/jobs' },
+        { name: `${job.title} at ${job.companyName}`, url: `https://akilibrain.com/jobs/${job.id}` },
+      ])} />
 
       {/* Back Button */}
       <Link href="/jobs" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">

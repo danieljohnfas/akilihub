@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';
-import { buildTenderSchema } from '@/components/seo/schemas';
+import { buildTenderSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -110,6 +110,11 @@ export default async function TenderDetailPage({
         budget: tender.budget,
         currency: tender.currency
       })} />
+      <JsonLd schema={buildBreadcrumbSchema([
+        { name: 'Home', url: 'https://akilibrain.com' },
+        { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
+        { name: tender.title, url: `https://akilibrain.com/tenders/${tender.id}` },
+      ])} />
 
       {/* Header */}
       <div className="space-y-4">

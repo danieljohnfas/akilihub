@@ -8,6 +8,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Search, SlidersHorizontal, Inbox } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,8 +77,26 @@ export default async function TendersPage({
     .orderBy(desc(tenders.publishedAt))
     .limit(20));
 
+  const itemListSchema = buildItemListSchema(
+    'Government Tenders in East Africa',
+    'Latest government tenders and procurement opportunities across Kenya, Tanzania, Uganda, and Rwanda.',
+    data.slice(0, 20).map(({ tender, country }, idx) => ({
+      position: idx + 1,
+      name: tender.title,
+      description: `By ${tender.contractingAuthority}${country ? ` — ${country}` : ''}. Deadline: ${tender.deadline.toDateString()}.`,
+      url: `https://akilibrain.com/tenders/${tender.id}`,
+    }))
+  );
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: 'https://akilibrain.com' },
+    { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
+  ]);
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      {data.length > 0 && <JsonLd schema={itemListSchema} />}
+      <JsonLd schema={breadcrumbSchema} />
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
         <div className="space-y-2">
