@@ -130,21 +130,19 @@ export default async function JobsPage({
       {data.length > 0 && <JsonLd schema={itemListSchema} />}
       <JsonLd schema={breadcrumbSchema} />
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8 mb-4">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center ring-1 ring-primary/30">
-              <Briefcase className="w-6 h-6 text-primary" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Jobs & Careers</h1>
+      <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
+        <div className="space-y-4 flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center ring-1 ring-primary/30 mb-2">
+            <Briefcase className="w-8 h-8 text-primary" />
           </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Jobs & Careers</h1>
           <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Discover active job opportunities across East Africa, automatically sourced from across the web.
           </p>
           {data.length > 0 && (
-            <p className="text-sm text-white/40 font-medium">
-              Showing <span className="text-white/70">{data.length}</span> active positions
-            </p>
+            <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70 mt-2">
+              Showing <span className="text-white mx-1">{data.length}</span> active positions
+            </div>
           )}
         </div>
       </div>

@@ -117,16 +117,16 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:col-span-3">
             {features.slice(0, 2).map((feature) => (
               <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-white/10">
-                <CardHeader className="text-left">
+                <CardHeader className="text-center flex flex-col items-center">
                   <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-5 ring-1 ring-white/10 shadow-inner`}>
                     <feature.icon className={`h-7 w-7 ${feature.color}`} />
                   </div>
                   <CardTitle className="text-2xl font-bold tracking-tight">{feature.title}</CardTitle>
                   <CardDescription className="text-base pt-3 leading-relaxed">{feature.description}</CardDescription>
                 </CardHeader>
-                <CardFooter className="mt-auto pt-8 pb-6 bg-transparent border-t-0">
-                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-between hover:bg-white/5" })}>
-                    <span className="font-medium">Explore {feature.title}</span> <ArrowRight className="h-5 w-5 ml-2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <CardFooter className="mt-auto pt-8 pb-6 bg-transparent border-t-0 flex justify-center">
+                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-white/5 group" })}>
+                    <span className="font-medium">Explore {feature.title}</span> <ArrowRight className="h-5 w-5 ml-2 text-muted-foreground group-hover:translate-x-1 group-hover:text-foreground transition-all" />
                   </Link>
                 </CardFooter>
               </MagicCard>
@@ -136,16 +136,16 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3">
             {features.slice(2, 6).map((feature) => (
               <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-white/10">
-                <CardHeader className="text-left">
+                <CardHeader className="text-center flex flex-col items-center">
                   <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4 ring-1 ring-white/10 shadow-inner`}>
                     <feature.icon className={`h-6 w-6 ${feature.color}`} />
                   </div>
                   <CardTitle className="text-xl font-bold tracking-tight">{feature.title}</CardTitle>
                   <CardDescription className="pt-2 leading-relaxed">{feature.description}</CardDescription>
                 </CardHeader>
-                <CardFooter className="mt-auto pt-6 pb-6 bg-transparent border-t-0">
-                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-between hover:bg-white/5" })}>
-                    <span className="font-medium">Explore</span> <ArrowRight className="h-4 w-4 ml-2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <CardFooter className="mt-auto pt-6 pb-6 bg-transparent border-t-0 flex justify-center">
+                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-white/5 group" })}>
+                    <span className="font-medium">Explore</span> <ArrowRight className="h-4 w-4 ml-2 text-muted-foreground group-hover:translate-x-1 group-hover:text-foreground transition-all" />
                   </Link>
                 </CardFooter>
               </MagicCard>
