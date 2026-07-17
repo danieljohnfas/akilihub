@@ -88,10 +88,10 @@ export default async function CompliancePage({
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
       {/* Header & Search */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Business Registry</h1>
-          <p className="text-muted-foreground text-lg max-w-2xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8 mb-4">
+        <div className="space-y-3">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Business Registry</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Search registered companies and verify compliance status across African jurisdictions.
           </p>
         </div>

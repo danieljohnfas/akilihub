@@ -130,20 +130,20 @@ export default async function JobsPage({
       {data.length > 0 && <JsonLd schema={itemListSchema} />}
       <JsonLd schema={breadcrumbSchema} />
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
-        <div className="space-y-2">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8 mb-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-primary" />
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center ring-1 ring-primary/30">
+              <Briefcase className="w-6 h-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Jobs & Careers</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Jobs & Careers</h1>
           </div>
-          <p className="text-muted-foreground text-lg max-w-2xl">
+          <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Discover active job opportunities across East Africa, automatically sourced from across the web.
           </p>
           {data.length > 0 && (
-            <p className="text-sm text-white/40">
-              Showing <span className="text-white/70 font-medium">{data.length}</span> active positions
+            <p className="text-sm text-white/40 font-medium">
+              Showing <span className="text-white/70">{data.length}</span> active positions
             </p>
           )}
         </div>

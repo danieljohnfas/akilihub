@@ -93,18 +93,18 @@ export default function Home() {
       <div className="flex flex-col items-center justify-center pt-16 pb-24 space-y-24">
       {/* Hero Section */}
       <section className="container mx-auto px-4 text-center space-y-6 max-w-4xl">
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-          East Africa&apos;s Professional <span className="text-primary">Intelligence Platform</span>
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-foreground/70 pb-2">
+          East Africa&apos;s Professional <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Intelligence Platform</span>
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Access curated government tenders, compliance requirements, crowdsourced salaries, 
           and actionable health data in one unified hub.
         </p>
-        <div className="flex justify-center gap-4 pt-4">
-          <Link href="/tenders" className={buttonVariants({ size: "lg" })}>
+        <div className="flex justify-center gap-4 pt-6">
+          <Link href="/tenders" className={buttonVariants({ size: "lg", className: "rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-105 duration-300" })}>
             Browse Tenders
           </Link>
-          <Link href="/salaries" className={buttonVariants({ size: "lg", variant: "outline" })}>
+          <Link href="/salaries" className={buttonVariants({ size: "lg", variant: "outline", className: "rounded-full backdrop-blur-md bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300" })}>
             Check Salaries
           </Link>
         </div>
@@ -116,17 +116,17 @@ export default function Home() {
           {/* Make first two cards span more logically if needed, but 2+3 grid usually means 2 rows */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:col-span-3">
             {features.slice(0, 2).map((feature) => (
-              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-md transition-shadow bg-card/80 backdrop-blur-xl">
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg ${feature.bg} flex items-center justify-center mb-4`}>
-                    <feature.icon className={`h-6 w-6 ${feature.color}`} />
+              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-white/10">
+                <CardHeader className="text-left">
+                  <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-5 ring-1 ring-white/10 shadow-inner`}>
+                    <feature.icon className={`h-7 w-7 ${feature.color}`} />
                   </div>
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription className="text-base pt-2">{feature.description}</CardDescription>
+                  <CardTitle className="text-2xl font-bold tracking-tight">{feature.title}</CardTitle>
+                  <CardDescription className="text-base pt-3 leading-relaxed">{feature.description}</CardDescription>
                 </CardHeader>
-                <CardFooter className="mt-auto pt-6">
-                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-between" })}>
-                    Explore {feature.title} <ArrowRight className="h-4 w-4 ml-2" />
+                <CardFooter className="mt-auto pt-8 pb-6 bg-transparent border-t-0">
+                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-between hover:bg-white/5" })}>
+                    <span className="font-medium">Explore {feature.title}</span> <ArrowRight className="h-5 w-5 ml-2 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Link>
                 </CardFooter>
               </MagicCard>
@@ -135,17 +135,17 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3">
             {features.slice(2, 6).map((feature) => (
-              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-md transition-shadow bg-card/80 backdrop-blur-xl">
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg ${feature.bg} flex items-center justify-center mb-4`}>
+              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-white/10">
+                <CardHeader className="text-left">
+                  <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4 ring-1 ring-white/10 shadow-inner`}>
                     <feature.icon className={`h-6 w-6 ${feature.color}`} />
                   </div>
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription className="pt-2">{feature.description}</CardDescription>
+                  <CardTitle className="text-xl font-bold tracking-tight">{feature.title}</CardTitle>
+                  <CardDescription className="pt-2 leading-relaxed">{feature.description}</CardDescription>
                 </CardHeader>
-                <CardFooter className="mt-auto pt-6">
-                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-between" })}>
-                    Explore <ArrowRight className="h-4 w-4 ml-2" />
+                <CardFooter className="mt-auto pt-6 pb-6 bg-transparent border-t-0">
+                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-between hover:bg-white/5" })}>
+                    <span className="font-medium">Explore</span> <ArrowRight className="h-4 w-4 ml-2 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Link>
                 </CardFooter>
               </MagicCard>

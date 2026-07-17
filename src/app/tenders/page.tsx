@@ -98,10 +98,10 @@ export default async function TendersPage({
       {data.length > 0 && <JsonLd schema={itemListSchema} />}
       <JsonLd schema={breadcrumbSchema} />
       {/* Header & Search */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Procurement Directory</h1>
-          <p className="text-muted-foreground text-lg max-w-2xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8 mb-4">
+        <div className="space-y-3">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Procurement Directory</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Discover and track government tenders and contracts from across the continent.
           </p>
         </div>
