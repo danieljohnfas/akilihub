@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Menu, LogOut, User } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { Logo } from '@/components/shared/Logo';
 import { GlobalSearch } from '@/components/shared/GlobalSearch';
 import { Button } from '@/components/ui/button';
@@ -8,18 +8,10 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Icon } from '@iconify/react';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/auth/actions';
+import { NavUserMenu } from '@/components/shared/NavUserMenu';
 
 const navLinks = [
   { href: '/tenders', label: 'Tenders', icon: 'solar:document-text-bold-duotone' },
@@ -63,47 +55,7 @@ export async function Navbar() {
           
           <div className="hidden md:flex items-center gap-2">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger 
-                  render={
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-primary/20 text-primary font-medium text-xs">
-                          {user.email?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  }
-                />
-                <DropdownMenuContent className="!w-56 min-w-[14rem]" align="end">
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Account</p>
-                      <p className="text-xs leading-none text-muted-foreground truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    render={
-                      <Link href="/account" className="cursor-pointer w-full flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        My Account
-                      </Link>
-                    }
-                  />
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-400 focus:text-red-400 focus:bg-red-400/10">
-                    <form action={logout} className="w-full">
-                      <button type="submit" className="w-full flex items-center gap-2 cursor-pointer">
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </button>
-                    </form>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <NavUserMenu email={user.email ?? ''} />
             ) : (
               <Link href="/login">
                 <Button variant="outline">Sign In</Button>
@@ -133,11 +85,10 @@ export async function Navbar() {
                 
                 <div className="mt-4 pt-4 border-t border-white/10">
                   {user ? (
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="w-4 h-4" />
+                    <div className="flex flex-col gap-3">
+                      <p className="text-xs text-muted-foreground truncate">
                         {user.email}
-                      </div>
+                      </p>
                       <Link href="/account" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
                         <User className="w-4 h-4" />
                         My Account
