@@ -8,6 +8,15 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Icon } from '@iconify/react';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/auth/actions';
@@ -54,12 +63,47 @@ export async function Navbar() {
           
           <div className="hidden md:flex items-center gap-2">
             {user ? (
-              <form action={logout}>
-                <Button variant="ghost" size="sm" type="submit" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </Button>
-              </form>
+              <DropdownMenu>
+                <DropdownMenuTrigger 
+                  render={
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary/20 text-primary font-medium text-xs">
+                          {user.email?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent className="!w-56 min-w-[14rem]" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">Account</p>
+                      <p className="text-xs leading-none text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    render={
+                      <Link href="/account" className="cursor-pointer w-full flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        My Account
+                      </Link>
+                    }
+                  />
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-400 focus:text-red-400 focus:bg-red-400/10">
+                    <form action={logout} className="w-full">
+                      <button type="submit" className="w-full flex items-center gap-2 cursor-pointer">
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </form>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link href="/login">
                 <Button variant="outline">Sign In</Button>
@@ -94,6 +138,10 @@ export async function Navbar() {
                         <User className="w-4 h-4" />
                         {user.email}
                       </div>
+                      <Link href="/account" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+                        <User className="w-4 h-4" />
+                        My Account
+                      </Link>
                       <form action={logout}>
                         <Button className="w-full" variant="outline" type="submit">Sign Out</Button>
                       </form>
