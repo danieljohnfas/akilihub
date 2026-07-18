@@ -5,15 +5,10 @@ const nextConfig: NextConfig = {
   // the one true URL is https://akilibrain.com (no www, no http)
   async redirects() {
     return [
-      // http://akilibrain.com/* → https://akilibrain.com/*
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'akilibrain.com' }],
-        destination: 'https://akilibrain.com/:path*',
-        permanent: true,
-        // Only fires when request is over plain http (Vercel handles https upgrade, but this covers edge cases)
-      },
-      // https://www.akilibrain.com/* → https://akilibrain.com/*
+      // www.akilibrain.com/* → akilibrain.com/*
+      // NOTE: Do NOT add a redirect for akilibrain.com → https://akilibrain.com
+      // Vercel handles https upgrades automatically. Adding it here causes
+      // ERR_TOO_MANY_REDIRECTS because the rule matches the canonical domain itself.
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.akilibrain.com' }],
