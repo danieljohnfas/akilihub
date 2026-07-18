@@ -96,7 +96,7 @@ export default async function AccountPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {allCountries.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        <SelectItem key={c.id} value={c.id} label={c.name}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -133,10 +133,10 @@ export default async function AccountPage() {
                         <SelectValue placeholder="Select module" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="tenders">Tenders</SelectItem>
-                        <SelectItem value="jobs">Jobs</SelectItem>
-                        <SelectItem value="compliance">Compliance</SelectItem>
-                        <SelectItem value="health">Health Data</SelectItem>
+                        <SelectItem value="tenders" label="Tenders">Tenders</SelectItem>
+                        <SelectItem value="jobs" label="Jobs">Jobs</SelectItem>
+                        <SelectItem value="compliance" label="Compliance">Compliance</SelectItem>
+                        <SelectItem value="health" label="Health Data">Health Data</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -148,9 +148,9 @@ export default async function AccountPage() {
                         <SelectValue placeholder="Select frequency" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="immediate">Immediate</SelectItem>
-                        <SelectItem value="daily">Daily Digest</SelectItem>
-                        <SelectItem value="weekly">Weekly Summary</SelectItem>
+                        <SelectItem value="immediate" label="Immediate">Immediate</SelectItem>
+                        <SelectItem value="daily" label="Daily Digest">Daily Digest</SelectItem>
+                        <SelectItem value="weekly" label="Weekly Summary">Weekly Summary</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -174,9 +174,9 @@ export default async function AccountPage() {
                       <SelectValue placeholder="Any country" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any country</SelectItem>
+                      <SelectItem value="" label="Any country">Any country</SelectItem>
                       {allCountries.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        <SelectItem key={c.id} value={c.id} label={c.name}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
