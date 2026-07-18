@@ -113,6 +113,25 @@ if (cfToken && cfAccountId) {
   keyPool.register({ id: `cf-llama3-${1}`, name: `Cloudflare Llama-3.1-8B (1)`, model: cf('@cf/meta/llama-3.1-8b-instruct'), supportsStructured: true });
 }
 
+// -- DEEPSEEK --
+getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
+  const ds = createOpenAI({
+    baseURL: 'https://api.deepseek.com',
+    apiKey: key,
+  });
+  keyPool.register({ id: `deepseek-v3-${i+1}`, name: `DeepSeek V3 (${i+1})`, model: ds('deepseek-chat'), supportsStructured: true });
+});
+
+// -- HYPERBOLIC --
+getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
+  const hyper = createOpenAI({
+    baseURL: 'https://api.hyperbolic.xyz/v1',
+    apiKey: key,
+  });
+  // Hyperbolic provides Llama 3.3 70B
+  keyPool.register({ id: `hyperbolic-llama33-${i+1}`, name: `Hyperbolic Llama-3.3-70B (${i+1})`, model: hyper('meta-llama/Llama-3.3-70B-Instruct'), supportsStructured: true });
+});
+
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
 } else {
