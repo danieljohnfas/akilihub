@@ -40,8 +40,7 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
 // -- GROQ --
 getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
   const groq = createGroq({ apiKey: key });
-  // openai/gpt-oss-20b and 120b support json_schema structured output on Groq
-  keyPool.register({ id: `groq-gpt20b-${i+1}`, name: `Groq GPT-OSS-20B (${i+1})`, model: groq('openai/gpt-oss-20b'), supportsStructured: true });
+  // gpt-oss-20b removed: consistently fails JSON schema validation on complex extraction
   keyPool.register({ id: `groq-gpt120b-${i+1}`, name: `Groq GPT-OSS-120B (${i+1})`, model: groq('openai/gpt-oss-120b'), supportsStructured: true });
 });
 

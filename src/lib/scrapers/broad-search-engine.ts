@@ -66,47 +66,51 @@ export async function extractJobsWithAI(text: string, sourceUrl: string): Promis
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 16000)}
+${text.substring(0, 12000)}
 
 Rules:
-- Extract any real job postings found in the text. Be highly comprehensive.
-- 'description': Include the full scope of work, duties, roles, and responsibilities. Do not write "No detailed description provided." if the details are on the page.
-- 'requirements': Include all qualifications, education, experience, and competencies required. If none are found, return the JSON null value (not the string "null").
-- 'location': Extract the specific city/region (e.g., "Kampala", "Nairobi"). If none is found, return the JSON null value (not the string "null").
-- If multiple jobs are listed, extract all of them.
-- Only extract actual open positions, not historical data or general company descriptions.
-- Ensure the source URL is correct (use the provided Source URL unless a specific direct link is found).
-- If no jobs are found, return an empty array.
+- Extract any real job postings found in the text. Be comprehensive.
+- For 'description': Include scope of work, duties and responsibilities.
+- For 'requirements': Qualifications, experience needed. Use empty string if none.
+- For 'location': City or region (e.g., "Nairobi"). Use empty string if none.
+- For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.
+- For 'deadlineIsoString': ISO 8601 date if found, otherwise empty string.
+- Extract all open positions found. Return empty array if none found.
 `;
+
 
   try {
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         jobs: z.array(z.object({
           title: z.string().min(3),
-          companyName: z.string().min(2),
+          companyName: z.string(),
           description: z.string(),
-          requirements: z.string().nullable(),
-          location: z.string().nullable(),
+          requirements: z.string(),
+          location: z.string(),
           jobType: z.enum(['full_time', 'part_time', 'contract', 'internship', 'remote']),
           sourceUrl: z.string(),
-          deadlineIsoString: z.string().nullable().describe("ISO 8601 format if found, else null"),
+          deadlineIsoString: z.string(),
         }))
       }),
       prompt,
     });
 
-    return object.jobs.map((job: { title: string; companyName: string; description: string; requirements: string | null; location: string | null; jobType: BroadJobResource['jobType']; sourceUrl: string; deadlineIsoString: string | null }) => {
+    return object.jobs.map((job: any) => {
       let parsedDate = null;
-      if (job.deadlineIsoString) {
+      if (job.deadlineIsoString && job.deadlineIsoString.trim()) {
         const d = new Date(job.deadlineIsoString);
-        if (!isNaN(d.getTime())) {
-          parsedDate = d;
-        }
+        if (!isNaN(d.getTime())) parsedDate = d;
       }
       return {
-        ...job,
-        deadline: parsedDate
+        title: job.title,
+        companyName: job.companyName || 'Unknown',
+        description: job.description,
+        requirements: job.requirements || null,
+        location: job.location || null,
+        jobType: job.jobType,
+        sourceUrl: job.sourceUrl,
+        deadline: parsedDate,
       };
     });
   } catch (err) {
