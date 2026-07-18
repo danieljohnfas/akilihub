@@ -124,7 +124,7 @@ export async function generateObjectWithFallback(params: Record<string, any>) {
       }
       
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (generateObject as any)({ ...params, model: key.model });
+      const result = await (generateObject as any)({ ...params, model: key.model, abortSignal: AbortSignal.timeout(60_000) });
       
       // Success! Reset error count
       await keyPool.markSuccess(key.id);
@@ -169,7 +169,7 @@ export async function generateTextWithFallback(params: Record<string, any>) {
       }
       
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (generateText as any)({ ...params, model: key.model });
+      const result = await (generateText as any)({ ...params, model: key.model, abortSignal: AbortSignal.timeout(60_000) });
       
       await keyPool.markSuccess(key.id);
       return result;
