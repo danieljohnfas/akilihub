@@ -54,9 +54,12 @@ export function BusinessCard({
       
       <CardContent className="pb-4 flex-1 space-y-3 text-sm text-muted-foreground">
         {type && (
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 shrink-0" />
-            <span className="truncate">{type}</span>
+          <div className="flex items-start gap-2">
+            <Building2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+            <div className="min-w-0">
+              <span className="text-xs text-white/40 uppercase tracking-wider font-semibold block leading-none mb-0.5">Entity Type</span>
+              <span className="text-sm font-medium text-white/90 leading-snug line-clamp-2">{type}</span>
+            </div>
           </div>
         )}
         
