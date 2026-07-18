@@ -259,6 +259,7 @@ export default async function JobsPage({
               title={job.title}
               companyName={job.companyName}
               description={job.description}
+              requirements={job.requirements}
               location={job.location}
               country={country || 'Africa'}
               jobType={job.jobType ?? 'full_time'}

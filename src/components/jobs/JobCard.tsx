@@ -10,6 +10,7 @@ export interface JobCardProps {
   title: string;
   companyName: string;
   description: string;
+  requirements?: string | null;
   location: string | null;
   country: string;
   jobType: 'full_time' | 'part_time' | 'contract' | 'internship' | 'remote';
@@ -39,6 +40,7 @@ export function JobCard({
   title,
   companyName,
   description,
+  requirements,
   location,
   country,
   jobType,
@@ -49,7 +51,11 @@ export function JobCard({
   const isExpired = deadline ? deadline < new Date() : false;
 
   return (
-    <Card className="group hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col">
+    <Card className="group relative hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col focus-within:ring-2 focus-within:ring-primary/50">
+      <Link href={`/jobs/${id}`} className="absolute inset-0 z-10">
+        <span className="sr-only">View Details for {title}</span>
+      </Link>
+      
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start gap-4 mb-2">
           <Badge
@@ -59,10 +65,10 @@ export function JobCard({
             {jobTypeLabels[jobType]}
           </Badge>
           {isExpired && (
-            <Badge variant="secondary" className="text-xs">Expired</Badge>
+            <Badge variant="secondary" className="text-xs relative z-20">Expired</Badge>
           )}
         </div>
-        <h3 className="text-lg font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="text-lg font-semibold line-clamp-2 group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
           {title}
         </h3>
       </CardHeader>
@@ -81,13 +87,22 @@ export function JobCard({
         </div>
 
         {description && description !== 'null' && description.trim() !== '' && (
-          <p className="line-clamp-3 text-white/50 leading-relaxed">
+          <p className="line-clamp-2 text-white/50 leading-relaxed mt-2">
             {description}
           </p>
         )}
+        
+        {requirements && requirements !== 'null' && requirements.trim() !== '' && (
+          <div className="pt-2">
+            <span className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-1 block">Requirements</span>
+            <p className="line-clamp-2 text-white/50 leading-relaxed text-xs">
+              {requirements}
+            </p>
+          </div>
+        )}
       </CardContent>
 
-      <CardFooter className="pt-4 border-t border-white/5 flex items-center justify-between">
+      <CardFooter className="pt-4 border-t border-white/5 flex items-center justify-between bg-black/20 rounded-b-xl">
         <div className="flex items-center gap-2 text-xs font-medium text-white/60">
           <Calendar className="w-3.5 h-3.5" />
           {deadline ? (
@@ -100,17 +115,10 @@ export function JobCard({
             <span>Posted recently</span>
           )}
         </div>
-        <Link
-          href={`/jobs/${id}`}
-          className={buttonVariants({
-            size: 'sm',
-            variant: 'secondary',
-            className: 'group-hover:bg-primary group-hover:text-primary-foreground transition-all',
-          })}
-        >
-          <ExternalLink className="w-4 h-4 mr-2" />
+        <div className="relative z-20 flex items-center text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
           View Details
-        </Link>
+          <ExternalLink className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-0.5" />
+        </div>
       </CardFooter>
     </Card>
   );
