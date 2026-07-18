@@ -48,6 +48,8 @@ export const metadata: Metadata = {
   },
 };
 
+const PAGE_SIZE = 20;
+
 export default async function TendersPage({
   searchParams,
 }: {
@@ -56,6 +58,8 @@ export default async function TendersPage({
   const params = await searchParams;
   const q = params.q || '';
   const status = params.status || 'open';
+  const page = Math.max(1, parseInt(params.page || '1', 10));
+  const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(tenders.title, `%${q}%`) : undefined,
@@ -75,7 +79,8 @@ export default async function TendersPage({
     .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
     .where(whereClause)
     .orderBy(desc(tenders.publishedAt))
-    .limit(20));
+    .limit(PAGE_SIZE)
+    .offset(offset));
 
   const itemListSchema = buildItemListSchema(
     'Government Tenders in East Africa',
@@ -174,7 +179,30 @@ export default async function TendersPage({
         </div>
       )}
 
-      {/* SEO: Internal linking — crawlable status / country browse links */}
+      {/* Pagination */}
+      {data.length > 0 && (
+        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
+          {page > 1 && (
+            <Link
+              href={`/tenders?q=${q}&status=${status}&page=${page - 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              ← Previous
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">Page {page}</span>
+          {data.length === PAGE_SIZE && (
+            <Link
+              href={`/tenders?q=${q}&status=${status}&page=${page + 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Next →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {/* SEO: Internal linking */}
       <div className="border-t border-white/5 pt-10 mt-4">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Procurement Categories</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

@@ -196,8 +196,10 @@ export async function generateTextWithFallback(params: Record<string, any>) {
 
   let lastError: unknown = null;
 
+  const requiresStructured = !!params.tools || !!params.responseFormat;
+
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const key = await keyPool.getNextKey(false);
+    const key = await keyPool.getNextKey(requiresStructured);
     if (!key) break;
 
     try {

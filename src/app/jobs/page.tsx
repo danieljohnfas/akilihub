@@ -48,16 +48,20 @@ export const metadata: Metadata = {
   },
 };
 
+const PAGE_SIZE = 30;
+
 export default async function JobsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string; company?: string; location?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; company?: string; location?: string; page?: string }>;
 }) {
   const params = await searchParams;
   const q = params.q || '';
   const type = params.type || '';
   const company = params.company || '';
   const location = params.location || '';
+  const page = Math.max(1, parseInt(params.page || '1', 10));
+  const offset = (page - 1) * PAGE_SIZE;
 
   const activeCondition = and(
     eq(jobs.isActive, true),
@@ -84,7 +88,8 @@ export default async function JobsPage({
       .leftJoin(countries, eq(jobs.countryId, countries.id))
       .where(whereClause)
       .orderBy(desc(jobs.createdAt))
-      .limit(30)
+      .limit(PAGE_SIZE)
+      .offset(offset)
   );
 
   // Fetch unique companies and locations for the dropdowns
@@ -268,6 +273,29 @@ export default async function JobsPage({
               deadline={job.deadline}
             />
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {data.length > 0 && (
+        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
+          {page > 1 && (
+            <Link
+              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&page=${page - 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              ← Previous
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">Page {page}</span>
+          {data.length === PAGE_SIZE && (
+            <Link
+              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&page=${page + 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Next →
+            </Link>
+          )}
         </div>
       )}
 

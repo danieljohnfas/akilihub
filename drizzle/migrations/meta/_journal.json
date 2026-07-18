@@ -43,6 +43,13 @@
       "when": 1784241129882,
       "tag": "0005_ordinary_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784400662394,
+      "tag": "0006_windy_madame_masque",
+      "breakpoints": true
     }
   ]
 }

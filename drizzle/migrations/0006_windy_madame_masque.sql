@@ -1,0 +1,1 @@
+ALTER TABLE "ai_telemetry" ALTER COLUMN "supports_structured" SET DEFAULT true;
