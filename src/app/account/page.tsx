@@ -90,7 +90,11 @@ export default async function AccountPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="countryId">Default Country</Label>
-                  <Select name="countryId" defaultValue={dbUser?.countryId || ''}>
+                  <Select 
+                    name="countryId" 
+                    defaultValue={dbUser?.countryId || ''}
+                    items={allCountries.map(c => ({ value: c.id, label: c.name }))}
+                  >
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Select a country" />
                     </SelectTrigger>
@@ -128,7 +132,12 @@ export default async function AccountPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="module">Module</Label>
-                    <Select name="module" required>
+                    <Select name="module" required items={[
+                      { value: 'tenders', label: 'Tenders' },
+                      { value: 'jobs', label: 'Jobs' },
+                      { value: 'compliance', label: 'Compliance' },
+                      { value: 'health', label: 'Health Data' }
+                    ]}>
                       <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select module" />
                       </SelectTrigger>
@@ -143,7 +152,11 @@ export default async function AccountPage() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="frequency">Frequency</Label>
-                    <Select name="frequency" defaultValue="daily">
+                    <Select name="frequency" defaultValue="daily" items={[
+                      { value: 'immediate', label: 'Immediate' },
+                      { value: 'daily', label: 'Daily Digest' },
+                      { value: 'weekly', label: 'Weekly Summary' }
+                    ]}>
                       <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select frequency" />
                       </SelectTrigger>
@@ -169,7 +182,10 @@ export default async function AccountPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="alertCountry">Country Filter (Optional)</Label>
-                  <Select name="countryId">
+                  <Select name="countryId" items={[
+                    { value: '', label: 'Any country' },
+                    ...allCountries.map(c => ({ value: c.id, label: c.name }))
+                  ]}>
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Any country" />
                     </SelectTrigger>
