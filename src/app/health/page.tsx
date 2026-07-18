@@ -139,20 +139,58 @@ export default async function HealthPage({
 
       {/* Grid */}
       {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
-          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-            <Activity className="w-8 h-8 text-muted-foreground" />
+        <>
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
+            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+              <Activity className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Health data coming soon</h3>
+            <p className="text-muted-foreground max-w-md">
+              We are actively importing public health indicators from DHIS2, WHO AFRO, and national health ministries across East Africa. Check back soon.
+            </p>
+            {(q || (category && category !== 'all')) && (
+              <Link href="/health" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
+                Clear all filters
+              </Link>
+            )}
           </div>
-          <h3 className="text-xl font-semibold mb-2">No health data found</h3>
-          <p className="text-muted-foreground max-w-md">
-            We couldn&apos;t find any health indicators matching your search criteria.
-          </p>
-          {(q || (category && category !== 'all')) && (
-            <Link href="/health" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
-              Clear all filters
-            </Link>
-          )}
-        </div>
+
+          {/* SEO-rich static content for Googlebot when DB is empty */}
+          <section className="mt-12 space-y-8 text-muted-foreground">
+            <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+              <h2 className="text-xl font-bold text-foreground mb-3">About the Public Health Data Explorer</h2>
+              <p className="leading-relaxed">
+                AkiliBrain&apos;s Health Data module aggregates public health statistics from <strong>DHIS2</strong> (District Health Information Software), the <strong>WHO Africa Regional Office (WHO AFRO)</strong>, and official national health ministries across Kenya, Tanzania, Uganda, Rwanda, and Ethiopia. Our goal is to make East Africa&apos;s public health data accessible, searchable, and comparable in one place.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+                <h2 className="text-lg font-semibold text-foreground mb-2">Health Indicators Tracked</h2>
+                <ul className="space-y-1 text-sm list-disc list-inside">
+                  <li>Maternal mortality ratio (per 100,000 live births)</li>
+                  <li>Under-5 child mortality rate</li>
+                  <li>HIV/AIDS prevalence and treatment coverage</li>
+                  <li>Malaria incidence per 1,000 population</li>
+                  <li>Tuberculosis detection and treatment rates</li>
+                  <li>Immunization coverage (DPT3, measles, polio)</li>
+                  <li>Skilled birth attendance rates</li>
+                  <li>Antenatal care (ANC) visit coverage</li>
+                </ul>
+              </div>
+              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+                <h2 className="text-lg font-semibold text-foreground mb-2">Data Sources</h2>
+                <ul className="space-y-1 text-sm list-disc list-inside">
+                  <li><strong>Kenya:</strong> DHIS2 Kenya — Ministry of Health</li>
+                  <li><strong>Tanzania:</strong> DHIS2 Tanzania — MoHCDGEC</li>
+                  <li><strong>Uganda:</strong> DHIS2 Uganda — Ministry of Health</li>
+                  <li><strong>Rwanda:</strong> DHIS2 Rwanda — Ministry of Health</li>
+                  <li><strong>Ethiopia:</strong> DHIS2 Ethiopia — Federal Ministry of Health</li>
+                  <li><strong>Regional:</strong> WHO AFRO Open Health Data</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {data.map(({ dataPoint, indicator, country }) => (

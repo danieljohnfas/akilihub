@@ -150,20 +150,53 @@ export default async function SalariesPage({
 
       {/* Grid */}
       {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
-          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-            <Banknote className="w-8 h-8 text-muted-foreground" />
+        <>
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
+            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+              <Banknote className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Salary data coming soon</h3>
+            <p className="text-muted-foreground max-w-md">
+              We are actively crowdsourcing and verifying salary data across East Africa to build the most comprehensive compensation database. Check back soon.
+            </p>
+            {(q || (level && level !== 'all')) && (
+              <Link href="/salaries" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
+                Clear all filters
+              </Link>
+            )}
           </div>
-          <h3 className="text-xl font-semibold mb-2">No salaries found</h3>
-          <p className="text-muted-foreground max-w-md">
-            We couldn&apos;t find any salary data matching your current search criteria.
-          </p>
-          {(q || (level && level !== 'all')) && (
-            <Link href="/salaries" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
-              Clear all filters
-            </Link>
-          )}
-        </div>
+
+          {/* SEO-rich static content for Googlebot when DB is empty */}
+          <section className="mt-12 space-y-8 text-muted-foreground">
+            <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+              <h2 className="text-xl font-bold text-foreground mb-3">About the AkiliBrain Salary Database</h2>
+              <p className="leading-relaxed">
+                The AkiliBrain Salary Database provides transparent, verified compensation data for professionals across Kenya, Tanzania, Uganda, Rwanda, and the wider African market. We aim to empower job seekers and employers with accurate insights into base salaries, bonuses, and equity compensation across various industries.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+                <h2 className="text-lg font-semibold text-foreground mb-2">Why Salary Transparency Matters</h2>
+                <ul className="space-y-1 text-sm list-disc list-inside">
+                  <li>Empowers candidates during salary negotiations</li>
+                  <li>Helps employers benchmark their compensation packages</li>
+                  <li>Reduces the gender pay gap by exposing disparities</li>
+                  <li>Highlights regional pay differences across East Africa</li>
+                  <li>Tracks compensation trends for in-demand roles (e.g., Software Engineering)</li>
+                </ul>
+              </div>
+              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+                <h2 className="text-lg font-semibold text-foreground mb-2">How We Collect Data</h2>
+                <ul className="space-y-1 text-sm list-disc list-inside">
+                  <li><strong>Anonymous Submissions:</strong> Professionals securely share their compensation details.</li>
+                  <li><strong>Verification:</strong> We cross-reference submissions with market averages and employer data.</li>
+                  <li><strong>Aggregated Insights:</strong> Data is anonymized and aggregated to protect individual privacy.</li>
+                  <li><strong>Market Research:</strong> We analyze publicly available data and partner with recruitment agencies.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {data.map(({ salary, employer, country }) => (
