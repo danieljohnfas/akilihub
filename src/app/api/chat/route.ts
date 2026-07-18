@@ -33,7 +33,7 @@ Context: ${JSON.stringify(contextParams)}`;
           parameters: z.object({
             keyword: z.string().describe('Keyword to search for in job titles or descriptions (e.g. "software", "Nairobi", "driver")'),
           }),
-          execute: async ({ keyword }) => {
+          execute: async ({ keyword }: { keyword: string }) => {
             console.log(`[AI Tool] Searching jobs for: ${keyword}`);
             const found = await db.select({
               title: jobs.title,
@@ -57,7 +57,7 @@ Context: ${JSON.stringify(contextParams)}`;
           parameters: z.object({
             keyword: z.string().describe('Keyword to search for in tender titles or descriptions (e.g. "construction", "computers", "Dodoma")'),
           }),
-          execute: async ({ keyword }) => {
+          execute: async ({ keyword }: { keyword: string }) => {
             console.log(`[AI Tool] Searching tenders for: ${keyword}`);
             const found = await db.select({
               title: tenders.title,
@@ -81,7 +81,7 @@ Context: ${JSON.stringify(contextParams)}`;
           parameters: z.object({
             keyword: z.string().describe('Name of the company or registration number'),
           }),
-          execute: async ({ keyword }) => {
+          execute: async ({ keyword }: { keyword: string }) => {
             console.log(`[AI Tool] Searching businesses for: ${keyword}`);
             const found = await db.select({
               name: businesses.name,
