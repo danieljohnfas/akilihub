@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTextWithFallback } from '@/lib/ai/router';
-import { tool } from 'ai';
+// Removed tool import
+
 import { z } from 'zod';
 import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
@@ -28,7 +29,7 @@ Context: ${JSON.stringify(contextParams)}`;
       prompt: query.trim(),
       maxSteps: 3, // Allow the AI to call a tool, read the result, and respond
       tools: {
-        searchJobs: tool({
+        searchJobs: {
           description: 'Search for jobs in the database by keyword or location',
           parameters: z.object({
             keyword: z.string().describe('Keyword to search for in job titles or descriptions (e.g. "software", "Nairobi", "driver")'),
@@ -48,8 +49,8 @@ Context: ${JSON.stringify(contextParams)}`;
             .limit(10);
             return JSON.stringify(found);
           }
-        }),
-        searchTenders: tool({
+        },
+        searchTenders: {
           description: 'Search for government tenders by keyword',
           parameters: z.object({
             keyword: z.string().describe('Keyword to search for in tender titles or descriptions (e.g. "construction", "computers", "Dodoma")'),
@@ -69,8 +70,8 @@ Context: ${JSON.stringify(contextParams)}`;
             .limit(10);
             return JSON.stringify(found);
           }
-        }),
-        searchCompliance: tool({
+        },
+        searchCompliance: {
           description: 'Search for registered businesses to check their compliance status',
           parameters: z.object({
             keyword: z.string().describe('Name of the company or registration number'),
@@ -87,7 +88,7 @@ Context: ${JSON.stringify(contextParams)}`;
             .limit(10);
             return JSON.stringify(found);
           }
-        }),
+        }
       }
     });
 
