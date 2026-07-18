@@ -73,7 +73,7 @@ export default async function JobsPage({
     q ? ilike(jobs.title, `%${q}%`) : undefined,
     type ? eq(jobs.jobType, type as never) : undefined,
     company ? eq(jobs.companyName, company) : undefined,
-    location ? eq(jobs.location, location) : undefined,
+    location ? (location.startsWith('country:') ? eq(countries.name, location.replace('country:', '')) : eq(jobs.location, location)) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -219,6 +219,7 @@ export default async function JobsPage({
                 <option value="">All Locations</option>
                 {sortedCountries.map(country => (
                   <optgroup key={country} label={country} className="bg-black/90 text-white font-semibold">
+                    <option value={`country:${country}`} className="font-normal text-primary">All {country}</option>
                     {locationsByCountry[country].map(l => (
                       <option key={l} value={l} className="font-normal">{l}</option>
                     ))}
