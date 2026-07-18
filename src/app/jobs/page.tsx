@@ -270,6 +270,31 @@ export default async function JobsPage({
           ))}
         </div>
       )}
+
+      {/* SEO: Internal linking — crawlable category / location links */}
+      <div className="border-t border-white/5 pt-10 mt-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Popular Categories</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Full Time Jobs', href: '/jobs?type=full_time' },
+            { label: 'Remote Jobs in Africa', href: '/jobs?type=remote' },
+            { label: 'Contract Jobs', href: '/jobs?type=contract' },
+            { label: 'Internships & Graduate Jobs', href: '/jobs?type=internship' },
+            { label: 'Jobs in Kenya', href: '/jobs?location=Kenya' },
+            { label: 'Jobs in Tanzania', href: '/jobs?location=Tanzania' },
+            { label: 'Jobs in Uganda', href: '/jobs?location=Uganda' },
+            { label: 'Jobs in Rwanda', href: '/jobs?location=Rwanda' },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

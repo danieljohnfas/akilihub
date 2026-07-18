@@ -173,6 +173,31 @@ export default async function TendersPage({
           ))}
         </div>
       )}
+
+      {/* SEO: Internal linking — crawlable status / country browse links */}
+      <div className="border-t border-white/5 pt-10 mt-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Procurement Categories</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Open Tenders', href: '/tenders?status=open' },
+            { label: 'Awarded Contracts', href: '/tenders?status=awarded' },
+            { label: 'Closed Tenders', href: '/tenders?status=closed' },
+            { label: 'Tenders in Kenya', href: '/tenders?q=kenya' },
+            { label: 'Tenders in Tanzania', href: '/tenders?q=tanzania' },
+            { label: 'Tenders in Uganda', href: '/tenders?q=uganda' },
+            { label: 'Construction Tenders', href: '/tenders?q=construction' },
+            { label: 'ICT & Technology Tenders', href: '/tenders?q=ict' },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

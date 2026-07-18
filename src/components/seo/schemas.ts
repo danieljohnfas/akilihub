@@ -304,3 +304,66 @@ export function buildDatasetSchema(opts: {
     },
   };
 }
+
+// ─── Salary Listing (uses JobPosting with baseSalary for rich snippets) ───────
+
+export interface SalaryEntry {
+  jobTitle: string;
+  country: string | null;
+  currency: string;
+  grossMonthlySalary: number;
+  experienceLevel: string;
+}
+
+/**
+ * Builds an ItemList of JobPosting schemas, each with baseSalary.
+ * Google surfaces baseSalary data directly in job-related search snippets.
+ */
+export function buildSalaryListSchema(salaries: SalaryEntry[]): Record<string, unknown> {
+  const experienceLabelMap: Record<string, string> = {
+    entry: 'Entry Level',
+    mid: 'Mid Level',
+    senior: 'Senior Level',
+    executive: 'Executive',
+  };
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Salary Data — East Africa",
+    description:
+      "Crowdsourced compensation benchmarks for professional roles across Kenya, Tanzania, Uganda, and Rwanda.",
+    numberOfItems: salaries.length,
+    itemListElement: salaries.map((s, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      item: {
+        "@type": "JobPosting",
+        title: s.jobTitle,
+        description: `${experienceLabelMap[s.experienceLevel] ?? s.experienceLevel} salary for ${s.jobTitle} in ${s.country ?? "East Africa"}.`,
+        hiringOrganization: {
+          "@type": "Organization",
+          name: SITE_NAME,
+          sameAs: BASE_URL,
+        },
+        jobLocation: {
+          "@type": "Place",
+          address: {
+            "@type": "PostalAddress",
+            addressCountry: s.country ?? "East Africa",
+          },
+        },
+        baseSalary: {
+          "@type": "MonetaryAmount",
+          currency: s.currency,
+          value: {
+            "@type": "QuantitativeValue",
+            value: s.grossMonthlySalary,
+            unitText: "MONTH",
+          },
+        },
+        url: `${BASE_URL}/salaries`,
+      },
+    })),
+  };
+}

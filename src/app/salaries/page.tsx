@@ -9,6 +9,8 @@ import { Search, SlidersHorizontal, Banknote } from 'lucide-react';
 import { SubmitSalaryModal } from '@/components/salaries/SubmitSalaryModal';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildSalaryListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 
 import type { Metadata } from 'next';
 
@@ -75,8 +77,25 @@ export default async function SalariesPage({
 
   const allCountries = await safeQuery(db.select().from(countries).orderBy(countries.name));
 
+  const salarySchema = buildSalaryListSchema(
+    data.slice(0, 20).map(({ salary, country }) => ({
+      jobTitle: salary.jobTitle,
+      country: country ?? null,
+      currency: salary.currency,
+      grossMonthlySalary: Number(salary.grossMonthlySalary),
+      experienceLevel: salary.experienceLevel,
+    }))
+  );
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: 'https://akilibrain.com' },
+    { name: 'Salary Database', url: 'https://akilibrain.com/salaries' },
+  ]);
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      {data.length > 0 && <JsonLd schema={salarySchema} />}
+      <JsonLd schema={breadcrumbSchema} />
       {/* Header & Search */}
       <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
         <div className="space-y-4 flex flex-col items-center">
@@ -165,6 +184,31 @@ export default async function SalariesPage({
           ))}
         </div>
       )}
+
+      {/* SEO: Internal linking */}
+      <div className="border-t border-white/5 pt-10 mt-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Salaries by Role</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Software Engineer Salaries', href: '/salaries?q=software+engineer' },
+            { label: 'Nurse Salaries', href: '/salaries?q=nurse' },
+            { label: 'Teacher Salaries', href: '/salaries?q=teacher' },
+            { label: 'Finance & Accounting', href: '/salaries?q=accountant' },
+            { label: 'Senior Level Salaries', href: '/salaries?level=senior' },
+            { label: 'Entry Level Salaries', href: '/salaries?level=entry' },
+            { label: 'Executive Salaries', href: '/salaries?level=executive' },
+            { label: 'Mid Level Salaries', href: '/salaries?level=mid' },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
