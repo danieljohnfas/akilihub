@@ -28,7 +28,20 @@ async function processInBatches<T, R>(items: T[], limit: number, fn: (item: T) =
 async function runMassScrape() {
   console.log('🚀 Starting Mass Scraping Task 🚀');
   
-  const allCountries = await db.select().from(countries);
+  // Retry the initial DB fetch — Supabase's PgBouncer can timeout briefly
+  // after previous connections are released. 3 attempts with 5s backoff.
+  let allCountries: typeof import('../src/lib/db/schema/shared').countries.$inferSelect[] = [];
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      allCountries = await db.select().from(countries);
+      break;
+    } catch (e: any) {
+      console.warn(`[DB] Countries fetch attempt ${attempt} failed: ${e.message}`);
+      if (attempt === 3) throw e;
+      await new Promise(r => setTimeout(r, 5000 * attempt));
+    }
+  }
+
   console.log(`Found ${allCountries.length} countries.`);
 
   for (const country of allCountries) {
