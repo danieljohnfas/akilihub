@@ -152,7 +152,7 @@ Rules:
         title: z.string().min(3),
         description: z.string(),
         resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
-        sourceUrl: z.string().url(),
+        sourceUrl: z.string(),
       }))
     }),
     prompt: fullPrompt,

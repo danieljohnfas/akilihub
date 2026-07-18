@@ -45,7 +45,7 @@ Rules:
           category: z.enum(['goods', 'works', 'services', 'consultancy']),
           budgetNumber: z.number().nullable().describe("Numeric budget if specified, else null"),
           currency: z.string().default('USD'),
-          sourceUrl: z.string().url(),
+          sourceUrl: z.string(),
           deadlineIsoString: z.string().nullable().describe("ISO 8601 format if found, else null"),
         }))
       }),

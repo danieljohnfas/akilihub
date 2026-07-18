@@ -40,7 +40,7 @@ Rules:
           issuingAuthority: z.string().min(2),
           category: z.enum(['tax', 'business_registration', 'employment', 'environment', 'health_safety', 'sector_specific']),
           resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
-          sourceUrl: z.string().url(),
+          sourceUrl: z.string(),
         }))
       }),
       prompt,

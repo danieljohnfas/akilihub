@@ -89,7 +89,7 @@ Rules:
           requirements: z.string().nullable(),
           location: z.string().nullable(),
           jobType: z.enum(['full_time', 'part_time', 'contract', 'internship', 'remote']),
-          sourceUrl: z.string().url(),
+          sourceUrl: z.string(),
           deadlineIsoString: z.string().nullable().describe("ISO 8601 format if found, else null"),
         }))
       }),
