@@ -74,11 +74,12 @@ export function JobCard({
       </CardHeader>
 
       <CardContent className="pb-4 flex-1 space-y-3 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 shrink-0 text-primary" />
-          <span className="truncate font-medium text-white/80">
-            Recruiting: <span className="text-white">{companyName}</span>
-          </span>
+        <div className="flex items-start gap-2">
+          <Building2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+          <div className="min-w-0">
+            <span className="text-xs text-white/40 uppercase tracking-wider font-semibold block leading-none mb-0.5">Recruiter</span>
+            <span className="text-sm font-semibold text-primary/90 leading-snug line-clamp-2">{companyName}</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
