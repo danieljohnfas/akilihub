@@ -46,7 +46,10 @@ Context: ${JSON.stringify(contextParams)}`;
             .where(or(ilike(jobs.title, `%${keyword}%`), ilike(jobs.description, `%${keyword}%`)))
             .orderBy(desc(jobs.postedDate))
             .limit(10);
-            return found;
+            return found.map(f => ({
+              ...f,
+              posted: f.posted?.toISOString() || null
+            }));
           }
         }),
         searchTenders: tool({
@@ -67,7 +70,10 @@ Context: ${JSON.stringify(contextParams)}`;
             .where(or(ilike(tenders.title, `%${keyword}%`), ilike(tenders.description, `%${keyword}%`)))
             .orderBy(desc(tenders.publishedAt))
             .limit(10);
-            return found;
+            return found.map(f => ({
+              ...f,
+              deadline: f.deadline?.toISOString() || null
+            }));
           }
         }),
         searchCompliance: tool({
