@@ -33,32 +33,22 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
 });
 
 // -- OPENROUTER --
-getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
-  const or = createOpenAI({
-    baseURL: 'https://openrouter.ai/api/v1',
-    apiKey: key,
-    headers: { 'HTTP-Referer': 'https://akilibrain.com', 'X-Title': 'AkiliBrain' }
-  });
-  keyPool.register({ id: `or-gemma2-${i+1}`, name: `OpenRouter Gemma-2-9b (${i+1})`, model: or('google/gemma-2-9b-it:free'), supportsStructured: true });
-  keyPool.register({ id: `or-llama3-${i+1}`, name: `OpenRouter Llama-3.1-8b (${i+1})`, model: or('meta-llama/llama-3.1-8b-instruct:free'), supportsStructured: true });
-});
+// NOTE: As of mid-2025, most OpenRouter :free models require a payment method.
+// Re-enable below when you add credits to the OpenRouter account.
+// getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => { ... });
 
 // -- GROQ --
 getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
   const groq = createGroq({ apiKey: key });
-  // Llama 3.3 70B is excellent for structured extraction
-  keyPool.register({ id: `groq-llama33-${i+1}`, name: `Groq Llama-3.3-70B (${i+1})`, model: groq('llama-3.3-70b-versatile'), supportsStructured: true });
-  keyPool.register({ id: `groq-gemma2-${i+1}`, name: `Groq Gemma2-9b (${i+1})`, model: groq('gemma2-9b-it'), supportsStructured: true });
+  // openai/gpt-oss-20b and 120b support json_schema structured output on Groq
+  keyPool.register({ id: `groq-gpt20b-${i+1}`, name: `Groq GPT-OSS-20B (${i+1})`, model: groq('openai/gpt-oss-20b'), supportsStructured: true });
+  keyPool.register({ id: `groq-gpt120b-${i+1}`, name: `Groq GPT-OSS-120B (${i+1})`, model: groq('openai/gpt-oss-120b'), supportsStructured: true });
 });
 
 // -- CEREBRAS --
-getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
-  const cerebras = createOpenAI({
-    baseURL: 'https://api.cerebras.ai/v1',
-    apiKey: key,
-  });
-  keyPool.register({ id: `cerebras-llama33-${i+1}`, name: `Cerebras Llama-3.3-70B (${i+1})`, model: cerebras('llama3.1-8b'), supportsStructured: true });
-});
+// NOTE: API key returns "Not Found" for all models. Key likely expired - re-enable when renewed.
+// getEnvKeys('CEREBRAS_API_KEY').forEach(...);
+
 
 // -- MISTRAL --
 getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
@@ -67,70 +57,41 @@ getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
 });
 
 // -- HUGGINGFACE --
-getEnvKeys('HUGGINGFACE_API_KEY').forEach((key, i) => {
-  // HuggingFace exposes an OpenAI compatible endpoint
-  const hf = createOpenAI({
-    baseURL: 'https://api-inference.huggingface.co/v1/',
-    apiKey: key,
-  });
-  keyPool.register({ id: `hf-qwen2-${i+1}`, name: `HuggingFace Qwen2.5-72B (${i+1})`, model: hf('Qwen/Qwen2.5-72B-Instruct'), supportsStructured: true });
-});
+// NOTE: HuggingFace inference routers return Bad Request for Qwen2.5 — disabled until a working endpoint is confirmed.
+// getEnvKeys('HUGGINGFACE_API_KEY').forEach(...);
 
-// -- GITHUB MODELS --
-getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
-  const gh = createOpenAI({
-    baseURL: 'https://models.inference.ai.azure.com',
-    apiKey: key,
-  });
-  keyPool.register({ id: `gh-gpt4o-${i+1}`, name: `GitHub GPT-4o (${i+1})`, model: gh('gpt-4o'), supportsStructured: true });
-  keyPool.register({ id: `gh-llama3-${i+1}`, name: `GitHub Llama-3.1-70B (${i+1})`, model: gh('meta-llama-3.1-70b-instruct'), supportsStructured: true });
-});
+// -- GITHUB MODELS -- (Requires a PAT with `models:read` scope - classic tokens don't work)
+// Disabled: GitHub Models requires a fine-grained PAT, not a classic token.
+// To enable, create a PAT with models:read at github.com/settings/tokens
+// getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => { ... });
 
 // -- SAMBANOVA --
-getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
-  const sn = createOpenAI({
-    baseURL: 'https://api.sambanova.ai/v1',
-    apiKey: key,
-  });
-  keyPool.register({ id: `sambanova-llama33-${i+1}`, name: `SambaNova Llama-3.3-70B (${i+1})`, model: sn('Meta-Llama-3.3-70B-Instruct'), supportsStructured: true });
-});
+// NOTE: All models return "Unsupported model on Response API" despite compatibility mode.
+// Likely an account-level restriction. Re-enable when resolved.
+// getEnvKeys('SAMBANOVA_API_KEY').forEach(...);
+
 
 // -- COHERE --
 getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
   const cohere = createCohere({ apiKey: key });
   // Command R is optimized for RAG and tool use
-  keyPool.register({ id: `cohere-command-r-${i+1}`, name: `Cohere Command R (${i+1})`, model: cohere('command-r'), supportsStructured: true });
+  keyPool.register({ id: `cohere-command-r-${i+1}`, name: `Cohere Command R+ (${i+1})`, model: cohere('command-r-plus-08-2024'), supportsStructured: true });
 });
 
 // -- CLOUDFLARE --
-const cfToken = process.env.CLOUDFLARE_API_TOKEN;
-const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-if (cfToken && cfAccountId) {
-  const cf = createOpenAI({
-    baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`,
-    apiKey: cfToken,
-  });
-  keyPool.register({ id: `cf-llama3-${1}`, name: `Cloudflare Llama-3.1-8B (1)`, model: cf('@cf/meta/llama-3.1-8b-instruct'), supportsStructured: true });
-}
+// NOTE: Cloudflare Workers AI does not support json_schema structured output ("oneOf not met" error).
+// Disabled until Cloudflare adds json_schema support.
+// const cfToken = process.env.CLOUDFLARE_API_TOKEN;
 
 // -- DEEPSEEK --
-getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
-  const ds = createOpenAI({
-    baseURL: 'https://api.deepseek.com',
-    apiKey: key,
-  });
-  keyPool.register({ id: `deepseek-v3-${i+1}`, name: `DeepSeek V3 (${i+1})`, model: ds('deepseek-chat'), supportsStructured: true });
-});
+// NOTE: API returns "Not Found" for v4-flash and v4-pro. Key may be on old tier.
+// getEnvKeys('DEEPSEEK_API_KEY').forEach(...);
+
 
 // -- HYPERBOLIC --
-getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
-  const hyper = createOpenAI({
-    baseURL: 'https://api.hyperbolic.xyz/v1',
-    apiKey: key,
-  });
-  // Hyperbolic provides Llama 3.3 70B
-  keyPool.register({ id: `hyperbolic-llama33-${i+1}`, name: `Hyperbolic Llama-3.3-70B (${i+1})`, model: hyper('meta-llama/Llama-3.3-70B-Instruct'), supportsStructured: true });
-});
+// NOTE: API returns "Not Found" for all models. Key likely expired.
+// getEnvKeys('HYPERBOLIC_API_KEY').forEach(...);
+
 
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
