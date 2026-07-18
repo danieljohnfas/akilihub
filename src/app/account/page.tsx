@@ -12,6 +12,9 @@ import { updateProfile, createAlert, deleteAlert, toggleAlert } from './actions'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bell, User, Trash2 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30; // seconds — Vercel Hobby allows up to 60s
+
 export const metadata = {
   title: 'My Account | AkiliBrain',
   description: 'Manage your AkiliBrain profile and alerts.',
@@ -25,20 +28,14 @@ export default async function AccountPage() {
     redirect('/login');
   }
 
-  // Fetch DB user profile
-  const dbUserResult = await safeQuery(db.select().from(users).where(eq(users.id, user.id)));
+  // Run all DB queries in parallel to avoid sequential waterfall latency
+  const [dbUserResult, alerts, allCountries] = await Promise.all([
+    safeQuery(db.select().from(users).where(eq(users.id, user.id))),
+    safeQuery(db.select().from(userAlerts).where(eq(userAlerts.userId, user.id))),
+    safeQuery(db.select().from(countries)),
+  ]);
+
   const dbUser = dbUserResult[0];
-
-  if (!dbUser) {
-    // If the DB trigger hasn't fired yet or failed, we can still show a fallback
-    // Or we should ideally wait/refresh. For now, we'll just show the auth email.
-  }
-
-  // Fetch alerts
-  const alerts = await safeQuery(db.select().from(userAlerts).where(eq(userAlerts.userId, user.id)));
-  
-  // Fetch countries
-  const allCountries = await safeQuery(db.select().from(countries));
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
