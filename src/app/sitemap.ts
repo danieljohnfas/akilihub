@@ -7,20 +7,11 @@ import { eq, sql } from 'drizzle-orm';
 
 const BASE_URL = 'https://akilibrain.com';
 
-/**
- * Paginated sitemap using generateSitemaps.
- * Google allows max 50,000 URLs per sitemap XML.
- * We chunk dynamic routes into pages of PAGE_SIZE each.
- *
- * Sitemaps will be served at:
- *   /sitemap/0.xml  → static pages + first chunk of dynamic routes
- *   /sitemap/1.xml  → tenders chunk 1
- *   /sitemap/2.xml  → tenders chunk 2
- *   /sitemap/3.xml  → jobs chunk 1
- *   ... etc.
- *
- * If the DB is small (current state), a single sitemap is returned.
- */
+// Serve sitemaps dynamically on each request — never statically pre-rendered at build time.
+// ISR revalidation caches the output for 1 hour on Vercel's edge.
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 
 const PAGE_SIZE = 5000;
 
