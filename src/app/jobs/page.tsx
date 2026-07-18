@@ -97,11 +97,26 @@ export default async function JobsPage({
     db.selectDistinct({ name: jobs.companyName }).from(jobs).where(activeCondition)
   );
   const uniqueLocationsData = await safeQuery(
-    db.selectDistinct({ name: jobs.location }).from(jobs).where(activeCondition)
+    db.selectDistinct({ name: jobs.location, country: countries.name })
+      .from(jobs)
+      .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .where(activeCondition)
   );
 
   const uniqueCompanies = uniqueCompaniesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
-  const uniqueLocations = uniqueLocationsData.map(l => l.name).filter((l): l is string => Boolean(l)).sort();
+  
+  const locationsByCountry = uniqueLocationsData.reduce((acc, curr) => {
+    if (!curr.name) return acc;
+    const country = curr.country || 'Other';
+    if (!acc[country]) acc[country] = [];
+    acc[country].push(curr.name);
+    return acc;
+  }, {} as Record<string, string[]>);
+  
+  for (const country in locationsByCountry) {
+    locationsByCountry[country].sort();
+  }
+  const sortedCountries = Object.keys(locationsByCountry).sort();
 
   const jobTypes = [
     { value: '', label: 'All Types' },
@@ -202,8 +217,12 @@ export default async function JobsPage({
                 className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/20 pl-9 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 appearance-none text-foreground"
               >
                 <option value="">All Locations</option>
-                {uniqueLocations.map(l => (
-                  <option key={l} value={l}>{l}</option>
+                {sortedCountries.map(country => (
+                  <optgroup key={country} label={country} className="bg-black/90 text-white font-semibold">
+                    {locationsByCountry[country].map(l => (
+                      <option key={l} value={l} className="font-normal">{l}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
