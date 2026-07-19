@@ -1,5 +1,5 @@
 import { inngest } from "./client";
-import { fetchAllHealthIndicators } from "@/lib/scrapers/dhis2-tz";
+import { fetchAllHealthIndicators } from "@/lib/scrapers/health-world-bank";
 
 /**
  * Runs daily at 03:00 UTC — after all tender scraping jobs finish.
