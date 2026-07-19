@@ -66,7 +66,7 @@ export async function extractJobsWithAI(text: string, sourceUrl: string): Promis
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 8000)}
 
 Rules:
 - Extract any real job postings found in the text. Be comprehensive.

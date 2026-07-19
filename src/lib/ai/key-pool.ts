@@ -1,6 +1,4 @@
 import { LanguageModel } from 'ai';
-import { db } from '@/lib/db/client';
-import { aiTelemetry } from '@/lib/db/schema/ai';
 
 export interface KeyEntry {
   id: string;
@@ -14,29 +12,70 @@ export interface KeyEntry {
   totalErrors: number;
 }
 
+/**
+ * Pure in-memory key pool.
+ * 
+ * No async DB calls during generation — state lives entirely in-memory.
+ * This is intentional: Supabase connection failures must NEVER block AI generation.
+ * Telemetry is written fire-and-forget after success/failure, so the scraper keeps
+ * running even if the DB is temporarily unreachable.
+ */
 class KeyPool {
   private keys: Map<string, KeyEntry> = new Map();
 
-  async loadState() {
-    try {
-      const records = await db.select().from(aiTelemetry);
-      for (const record of records) {
-        if (this.keys.has(record.id)) {
-          const key = this.keys.get(record.id)!;
-          key.coolUntil = record.coolUntil;
-          key.errorCount = record.errorCount;
-          key.lastUsed = record.lastUsed;
-          key.totalCalls = record.totalCalls;
-          key.totalErrors = record.totalErrors;
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to load KeyPool state from Supabase', e);
-    }
+  register(entry: Omit<KeyEntry, 'coolUntil' | 'errorCount' | 'lastUsed' | 'totalCalls' | 'totalErrors'>) {
+    this.keys.set(entry.id, {
+      ...entry,
+      coolUntil: 0,
+      errorCount: 0,
+      lastUsed: 0,
+      totalCalls: 0,
+      totalErrors: 0,
+    });
   }
 
-  async saveState(id: string) {
+  /** Synchronous — no DB roundtrip. Returns the least-recently-used available key. */
+  getNextKey(structuredOnly = false): KeyEntry | null {
+    const now = Date.now();
+    const available = Array.from(this.keys.values()).filter(
+      k => k.coolUntil <= now && (!structuredOnly || k.supportsStructured)
+    );
+    if (available.length === 0) return null;
+    return available.sort((a, b) => a.lastUsed - b.lastUsed)[0];
+  }
+
+  /** Synchronous success mark — updates in-memory state only. */
+  markSuccess(id: string) {
+    const key = this.keys.get(id);
+    if (!key) return;
+    key.errorCount = 0;
+    key.lastUsed = Date.now();
+    key.totalCalls++;
+    // Fire-and-forget telemetry write (doesn't block)
+    this._persistAsync(id).catch(() => {});
+  }
+
+  /** Synchronous failure mark — updates in-memory state only. */
+  markFailed(id: string) {
+    const key = this.keys.get(id);
+    if (!key) return;
+    key.errorCount++;
+    key.totalErrors++;
+    key.totalCalls++;
+    const backoffSec = Math.min(30 * Math.pow(2, key.errorCount - 1), 300);
+    key.coolUntil = Date.now() + backoffSec * 1000;
+    console.warn(`[KeyPool] ${key.name} cooling for ${backoffSec}s (error #${key.errorCount})`);
+    // Fire-and-forget telemetry write (doesn't block)
+    this._persistAsync(id).catch(() => {});
+  }
+
+  /** Attempts to write telemetry to DB, silently ignoring any errors. */
+  private async _persistAsync(id: string): Promise<void> {
     try {
+      // Dynamic import so the DB client isn't loaded at all in edge/script contexts
+      // that don't need it. Also prevents circular dependency issues.
+      const { db } = await import('../db/client');
+      const { aiTelemetry } = await import('../db/schema/ai');
       const key = this.keys.get(id);
       if (!key) return;
       await db.insert(aiTelemetry).values({
@@ -59,63 +98,19 @@ class KeyPool {
           updatedAt: new Date(),
         }
       });
-    } catch (e) {
-      console.warn('Failed to save KeyPool state to Supabase', e);
+    } catch {
+      // Silently ignore — telemetry is non-critical
     }
-  }
-
-  register(entry: Omit<KeyEntry, 'coolUntil' | 'errorCount' | 'lastUsed' | 'totalCalls' | 'totalErrors'>) {
-    this.keys.set(entry.id, {
-      ...entry,
-      coolUntil: 0,
-      errorCount: 0,
-      lastUsed: 0,
-      totalCalls: 0,
-      totalErrors: 0,
-    });
-  }
-
-  async getNextKey(structuredOnly = false): Promise<KeyEntry | null> {
-    await this.loadState();
-    const now = Date.now();
-    const available = Array.from(this.keys.values()).filter(
-      k => k.coolUntil <= now && (!structuredOnly || k.supportsStructured)
-    );
-    if (available.length === 0) return null;
-    return available.sort((a, b) => a.lastUsed - b.lastUsed)[0];
-  }
-
-  async markSuccess(id: string) {
-    const key = this.keys.get(id);
-    if (!key) return;
-    key.errorCount = 0;
-    key.lastUsed = Date.now();
-    key.totalCalls++;
-    await this.saveState(id);
-  }
-
-  async markFailed(id: string) {
-    const key = this.keys.get(id);
-    if (!key) return;
-    key.errorCount++;
-    key.totalErrors++;
-    key.totalCalls++;
-    const backoffSec = Math.min(30 * Math.pow(2, key.errorCount - 1), 300);
-    key.coolUntil = Date.now() + backoffSec * 1000;
-    console.warn(`[KeyPool] ${key.name} cooling for ${backoffSec}s (error #${key.errorCount})`);
-    await this.saveState(id);
   }
 
   get size() { return this.keys.size; }
 
-  async getAvailableCount() {
-    await this.loadState();
+  getAvailableCount(): number {
     const now = Date.now();
     return Array.from(this.keys.values()).filter(k => k.coolUntil <= now).length;
   }
 
-  async getStatus(): Promise<Array<Omit<KeyEntry, 'model'> & { coolingFor: number; available: boolean }>> {
-    await this.loadState();
+  getStatus(): Array<Omit<KeyEntry, 'model'> & { coolingFor: number; available: boolean }> {
     const now = Date.now();
     return Array.from(this.keys.values()).map(({ model: _model, ...rest }) => ({
       ...rest,

@@ -138,7 +138,7 @@ Authority: ${authorityName}
 Base URL: ${baseUrl}
 
 Scraped content (links and text):
-${text.substring(0, 12000)}
+${text.substring(0, 8000)}
 
 Rules:
 - Only extract real, specific resources (forms, calculators, guidelines, notices). 
@@ -146,18 +146,23 @@ Rules:
 - If a resource has no direct URL, use the base URL: ${baseUrl}
 - Return an empty array if no real resources are found.`;
 
-  const { object } = await generateObjectWithFallback({
-    schema: z.object({
-      resources: z.array(z.object({
-        title: z.string().min(3),
-        description: z.string(),
-        resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
-        sourceUrl: z.string(),
-      }))
-    }),
-    prompt: fullPrompt,
-  });
+  try {
+    const { object } = await generateObjectWithFallback({
+      schema: z.object({
+        resources: z.array(z.object({
+          title: z.string().min(3),
+          description: z.string(),
+          resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
+          sourceUrl: z.string(),
+        }))
+      }),
+      prompt: fullPrompt,
+    });
 
-  console.log(`[extractResourcesWithAI] AI extracted ${object.resources.length} resources`);
-  return object.resources;
+    console.log(`[extractResourcesWithAI] AI extracted ${object.resources.length} resources`);
+    return object.resources;
+  } catch (err) {
+    console.error(`[extractResourcesWithAI] Failed on ${baseUrl}:`, (err as Error).message);
+    return [];
+  }
 }

@@ -1,6 +1,5 @@
 import { generateObject, generateText } from 'ai';
 import { google } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
 import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
 import { createCohere } from '@ai-sdk/cohere';
@@ -10,7 +9,7 @@ import { keyPool } from './key-pool';
 // 1. DYNAMIC PROVIDER LOADER
 // ------------------------------------------------------------------
 
-// Helper to extract numbered env vars (e.g., GROQ_API_KEY, GROQ_API_KEY_2)
+// Helper: extract all env vars starting with baseName (supports _2, _3, etc.)
 function getEnvKeys(baseName: string): string[] {
   const keys: string[] = [];
   for (const [key, value] of Object.entries(process.env)) {
@@ -22,8 +21,11 @@ function getEnvKeys(baseName: string): string[] {
 }
 
 // -- GOOGLE (Gemini) --
+// Most reliable. Supports json_schema structured output natively.
 getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
-  const g = google('gemini-2.5-flash');
+  // Use a fresh instance per key so each has isolated state
+  const { google: makeGoogle } = require('@ai-sdk/google');
+  const g = makeGoogle('gemini-2.5-flash', { apiKey: key });
   keyPool.register({
     id: `google-flash-${i + 1}`,
     name: `Google Gemini Flash (${i + 1})`,
@@ -32,154 +34,165 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   });
 });
 
-// -- OPENROUTER --
-// NOTE: As of mid-2025, most OpenRouter :free models require a payment method.
-// Re-enable below when you add credits to the OpenRouter account.
-// getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => { ... });
-
 // -- GROQ --
+// Supports structured output via 'json' mode on llama-3.3-70b-versatile.
+// Note: does NOT support json_schema mode — use mode: 'json' when calling.
 getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
   const groq = createGroq({ apiKey: key });
-  // gpt-oss-20b removed: consistently fails JSON schema validation on complex extraction
-  keyPool.register({ id: `groq-gpt120b-${i+1}`, name: `Groq GPT-OSS-120B (${i+1})`, model: groq('openai/gpt-oss-120b'), supportsStructured: true });
+  keyPool.register({
+    id: `groq-llama33-${i + 1}`,
+    name: `Groq LLaMA 3.3 70B (${i + 1})`,
+    model: groq('llama-3.3-70b-versatile'),
+    supportsStructured: true,
+  });
 });
-
-// -- CEREBRAS --
-// NOTE: API key returns "Not Found" for all models. Key likely expired - re-enable when renewed.
-// getEnvKeys('CEREBRAS_API_KEY').forEach(...);
-
 
 // -- MISTRAL --
+// Supports json_schema structured output.
 getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
   const mistral = createMistral({ apiKey: key });
-  keyPool.register({ id: `mistral-small-${i+1}`, name: `Mistral Small (${i+1})`, model: mistral('mistral-small-latest'), supportsStructured: true });
+  keyPool.register({
+    id: `mistral-small-${i + 1}`,
+    name: `Mistral Small (${i + 1})`,
+    model: mistral('mistral-small-latest'),
+    supportsStructured: true,
+  });
 });
-
-// -- HUGGINGFACE --
-// NOTE: HuggingFace inference routers return Bad Request for Qwen2.5 — disabled until a working endpoint is confirmed.
-// getEnvKeys('HUGGINGFACE_API_KEY').forEach(...);
-
-// -- GITHUB MODELS -- (Requires a PAT with `models:read` scope - classic tokens don't work)
-// Disabled: GitHub Models requires a fine-grained PAT, not a classic token.
-// To enable, create a PAT with models:read at github.com/settings/tokens
-// getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => { ... });
-
-// -- SAMBANOVA --
-// NOTE: All models return "Unsupported model on Response API" despite compatibility mode.
-// Likely an account-level restriction. Re-enable when resolved.
-// getEnvKeys('SAMBANOVA_API_KEY').forEach(...);
-
 
 // -- COHERE --
+// Command R+ supports json_schema structured output.
 getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
   const cohere = createCohere({ apiKey: key });
-  // Command R is optimized for RAG and tool use
-  keyPool.register({ id: `cohere-command-r-${i+1}`, name: `Cohere Command R+ (${i+1})`, model: cohere('command-r-plus-08-2024'), supportsStructured: true });
+  keyPool.register({
+    id: `cohere-command-r-${i + 1}`,
+    name: `Cohere Command R+ (${i + 1})`,
+    model: cohere('command-r-plus-08-2024'),
+    supportsStructured: true,
+  });
 });
 
-// -- CLOUDFLARE --
-// NOTE: Cloudflare Workers AI does not support json_schema structured output ("oneOf not met" error).
-// Disabled until Cloudflare adds json_schema support.
-// const cfToken = process.env.CLOUDFLARE_API_TOKEN;
+// -- OPENROUTER --
+// Re-enable when credits are added.
+// getEnvKeys('OPENROUTER_API_KEY').forEach(...)
 
-// -- DEEPSEEK --
-// NOTE: API returns "Not Found" for v4-flash and v4-pro. Key may be on old tier.
-// getEnvKeys('DEEPSEEK_API_KEY').forEach(...);
-
-
-// -- HYPERBOLIC --
-// NOTE: API returns "Not Found" for all models. Key likely expired.
-// getEnvKeys('HYPERBOLIC_API_KEY').forEach(...);
-
+// -- CEREBRAS / SAMBANOVA / DEEPSEEK / HYPERBOLIC --
+// Disabled: key issues or no structured output support. Re-test when renewed.
 
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
 } else {
-  console.log(`[AI Router] Loaded ${keyPool.size} models into the distributed pool.`);
+  console.log(`[AI Router] Loaded ${keyPool.size} model(s) into the pool.`);
 }
 
-
 // ------------------------------------------------------------------
-// 2. SELF-HEALING ROTATION LOGIC
+// 2. GENERATION WITH FALLBACK
 // ------------------------------------------------------------------
 
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 3;
+const AI_TIMEOUT_MS = 45_000; // 45s per attempt
+
+/**
+ * Wraps a promise with a hard timeout.
+ * Unlike AbortSignal.timeout(), this works on all Node.js versions and
+ * doesn't silently hang if the underlying fetch ignores the signal.
+ */
+function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`[Timeout] ${label} exceeded ${ms}ms`)), ms);
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function generateObjectWithFallback(params: Record<string, any>) {
-  if ((await keyPool.getAvailableCount()) === 0) {
-    throw new Error('All AI models are currently exhausted or cooling down. Please try again later.');
+  if (keyPool.getAvailableCount() === 0) {
+    throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
   }
 
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const key = await keyPool.getNextKey(true);
-    if (!key) break; // Exhausted all keys
+    const key = keyPool.getNextKey(true);
+    if (!key) {
+      // All keys on cooldown — wait 5s and try once more
+      await new Promise(r => setTimeout(r, 5000));
+      const retryKey = keyPool.getNextKey(true);
+      if (!retryKey) break;
+    }
+    const activeKey = keyPool.getNextKey(true)!;
+
+    console.log(`[AI Router] [Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[AI Router] [Attempt ${attempt}] Routing to: ${key.name}`);
-      }
-      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (generateObject as any)({ ...params, model: key.model, abortSignal: AbortSignal.timeout(60_000) });
-      
-      // Success! Reset error count
-      await keyPool.markSuccess(key.id);
+      const result = await withHardTimeout(
+        (generateObject as any)({
+          ...params,
+          model: activeKey.model,
+          // Use json mode for Groq (doesn't support json_schema)
+          ...(activeKey.id.startsWith('groq-') ? { mode: 'json' } : {}),
+        }),
+        AI_TIMEOUT_MS,
+        activeKey.name,
+      );
+
+      keyPool.markSuccess(activeKey.id);
       return result;
-      
+
     } catch (error: unknown) {
       const err = error as Error & { name?: string };
-      console.warn(`[AI Router] ${key.name} failed: ${err.message}`);
+      console.warn(`[AI Router] ${activeKey.name} failed (attempt ${attempt}): ${err.message?.slice(0, 120)}`);
       lastError = error;
 
-      // Unrecoverable errors (bad prompt / bad schema) should NOT burn the key
+      // Schema/validation errors are unrecoverable — don't burn the key
       if (err.name === 'TypeValidationError' || err.name === 'JSONParseError') {
+        keyPool.markSuccess(activeKey.id); // key is fine, schema is the problem
         throw error;
       }
-      
-      // Recoverable error (429, 5xx, Network) -> mark key as failed and apply cooldown backoff
-      await keyPool.markFailed(key.id);
+
+      keyPool.markFailed(activeKey.id);
     }
   }
 
-  console.error('[AI Router] All fallback attempts exhausted for this request.');
-  throw lastError;
+  console.error('[AI Router] All fallback attempts exhausted.');
+  return {} as any;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function generateTextWithFallback(params: Record<string, any>) {
-  if ((await keyPool.getAvailableCount()) === 0) {
-    throw new Error('All AI models are currently exhausted or cooling down. Please try again later.');
+  if (keyPool.getAvailableCount() === 0) {
+    throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
   }
 
   let lastError: unknown = null;
-
   const requiresStructured = !!params.tools || !!params.responseFormat;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const key = await keyPool.getNextKey(requiresStructured);
-    if (!key) break;
+    const activeKey = keyPool.getNextKey(requiresStructured);
+    if (!activeKey) break;
+
+    console.log(`[AI Router] [Text][Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[AI Router] [Attempt ${attempt}] Routing text generation to: ${key.name}`);
-      }
-      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (generateText as any)({ ...params, model: key.model, abortSignal: AbortSignal.timeout(60_000) });
-      
-      await keyPool.markSuccess(key.id);
+      const result = await withHardTimeout(
+        (generateText as any)({ ...params, model: activeKey.model }),
+        AI_TIMEOUT_MS,
+        activeKey.name,
+      );
+      keyPool.markSuccess(activeKey.id);
       return result;
-      
+
     } catch (error: unknown) {
       const err = error as Error;
-      console.warn(`[AI Router] ${key.name} failed: ${err.message}`);
+      console.warn(`[AI Router] ${activeKey.name} failed: ${err.message?.slice(0, 120)}`);
       lastError = error;
-      await keyPool.markFailed(key.id);
+      keyPool.markFailed(activeKey.id);
     }
   }
 
-  throw lastError;
+  throw lastError ?? new Error('[AI Router] Unknown failure');
 }

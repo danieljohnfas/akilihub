@@ -22,7 +22,7 @@ export async function extractTendersWithAI(text: string, sourceUrl: string): Pro
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 8000)}
 
 Rules:
 - Extract any real tender, bid, or procurement postings found in the text.
