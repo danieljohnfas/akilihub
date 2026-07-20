@@ -92,9 +92,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-KE">
-      <body className={inter.className}>
+      <head>
         <JsonLd schema={buildOrganizationSchema()} />
         <JsonLd schema={buildWebSiteSchema()} />
+      </head>
+      <body className={inter.className}>
         <Script
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2501499631331261`}
