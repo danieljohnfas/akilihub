@@ -46,3 +46,5 @@ storage/
 .ai-pool-state.json
 scripts/push-secrets.ps1
 scripts/push-vercel-env.ps1scraper-progress.json
+
+scripts/push-vercel-env.ps1

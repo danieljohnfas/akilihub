@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { inflateSync, inflateRawSync } from 'zlib';
+import { db } from '@/lib/db/client';
+import { userDocuments } from '@/lib/db/schema/documents';
+import { generateTextWithFallback } from '@/lib/ai/router';
 
 export const runtime = 'nodejs';
 
@@ -163,10 +166,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let summary = null;
+    const MAX_CHARS = 30000;
+
+    if (cleanText.length > MAX_CHARS) {
+      console.log(`[CV Upload] Document too large (${cleanText.length} chars). Compressing...`);
+      try {
+        const res = await generateTextWithFallback({
+          system: 'You are an expert HR assistant. Summarize the following CV/document. Extract ALL key skills, experiences, dates, roles, and education precisely. Do not miss any keyword or technical skill. Output as a dense, structured markdown summary.',
+          prompt: cleanText,
+          temperature: 0.1,
+        });
+        summary = (res as { text: string }).text;
+      } catch (err) {
+        console.error('[CV Upload] Compression failed:', err);
+        // Fallback: truncate the text if compression completely fails
+        cleanText = cleanText.substring(0, MAX_CHARS) + '\n...[TRUNCATED]';
+      }
+    }
+
+    const sessionId = crypto.randomUUID(); // Fallback anonymous session
+
+    const [doc] = await db.insert(userDocuments).values({
+      sessionId,
+      filename: file.name,
+      content: cleanText,
+      summary,
+    }).returning({ id: userDocuments.id });
+
     return NextResponse.json({
       success: true,
-      text: cleanText,
+      text: summary || cleanText, // Return the compressed text if it exists
       filename: file.name,
+      documentId: doc.id,
       characters: cleanText.length,
     });
   } catch (error) {

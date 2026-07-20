@@ -34,6 +34,7 @@ import { fetchHealthDataJob } from "@/inngest/fetch-health";
 import { enforceDataFreshnessJob } from "@/inngest/enforce-freshness";
 import { checkDataStatusJob } from "@/inngest/check-data-status";
 import { salaryConsensusVerificationJob } from "@/inngest/salary-consensus";
+import { generateWeeklyGuidesJob } from "@/inngest/generate-guides";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -71,5 +72,9 @@ export const { GET, POST, PUT } = serve({
 
     // Salary verification – nightly consensus clustering (02:00 UTC)
     salaryConsensusVerificationJob,
+
+    // Weekly AI editorial guides generation (Monday 08:00 UTC)
+    generateWeeklyGuidesJob,
   ],
 });
+

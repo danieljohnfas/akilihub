@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ChatMessage, Message } from './ChatMessage';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { usePathname } from 'next/navigation';
 
 const SUGGESTED_PROMPTS = [
   "Latest IT tenders in Tanzania",
@@ -19,7 +20,7 @@ const SUGGESTED_PROMPTS = [
 type CvState =
   | { status: 'idle' }
   | { status: 'uploading' }
-  | { status: 'ready'; filename: string; text: string }
+  | { status: 'ready'; filename: string; documentId: string }
   | { status: 'error'; message: string };
 
 export function AIChatPanel() {
@@ -35,9 +36,33 @@ export function AIChatPanel() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [cvState, setCvState] = useState<CvState>({ status: 'idle' });
+  const [proactiveMessage, setProactiveMessage] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pathname = usePathname();
+
+  // Proactive messaging based on route
+  useEffect(() => {
+    if (isOpen) {
+      setProactiveMessage(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (pathname?.startsWith('/jobs/')) {
+        setProactiveMessage("Need a cover letter for this job? Upload your CV and I'll draft one!");
+      } else if (pathname?.startsWith('/tenders/')) {
+        setProactiveMessage("Want me to summarize this tender's requirements?");
+      } else if (pathname?.startsWith('/salaries')) {
+        setProactiveMessage("Curious if you're underpaid? Upload your CV and I'll estimate your market value.");
+      } else {
+        setProactiveMessage(null);
+      }
+    }, 3000); // Show thought bubble after 3 seconds on the page
+
+    return () => clearTimeout(timer);
+  }, [pathname, isOpen]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,7 +92,11 @@ export function AIChatPanel() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query.trim() }),
+        body: JSON.stringify({ 
+          query: query.trim(),
+          contextParams: { pathname },
+          documentId: cvState.status === 'ready' ? cvState.documentId : undefined
+        }),
       });
 
       const data = await res.json();
@@ -111,10 +140,16 @@ export function AIChatPanel() {
         return;
       }
 
-      setCvState({ status: 'ready', filename: data.filename, text: data.text });
+      setCvState({ status: 'ready', filename: data.filename, documentId: data.documentId });
 
-      // Auto-send the CV for job matching
-      const cvQuery = `Here is my CV — please find the best matching jobs for me from your database:\n\n${data.text.substring(0, 8000)}`;
+      // Auto-send a contextual message depending on the route
+      let cvQuery = "Here is my CV — please find the best matching jobs for me from your database.";
+      if (pathname?.startsWith('/jobs/')) {
+        cvQuery = "Here is my CV — please write a highly tailored cover letter for the job I am currently viewing.";
+      } else if (pathname?.startsWith('/salaries')) {
+        cvQuery = "Here is my CV — based on my experience, what is a fair salary expectation in East Africa?";
+      }
+
       await sendMessage(cvQuery);
 
     } catch {
@@ -148,9 +183,28 @@ export function AIChatPanel() {
         aria-label="Upload CV"
       />
 
+      {/* Proactive Thought Bubble */}
+      {!isOpen && proactiveMessage && (
+        <div className="fixed bottom-24 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-white text-black p-3 rounded-2xl rounded-br-none shadow-xl border border-gray-200 max-w-[240px] relative">
+            <p className="text-sm font-medium">{proactiveMessage}</p>
+            <button 
+              onClick={() => setProactiveMessage(null)}
+              className="absolute -top-2 -right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full p-1"
+            >
+              <X className="w-3 h-3" />
+            </button>
+            <div className="absolute -bottom-2 right-4 w-4 h-4 bg-white border-b border-r border-gray-200 transform rotate-45"></div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Trigger Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+          setProactiveMessage(null);
+        }}
         aria-label="Open AI Assistant"
         className={cn(
           'fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl',

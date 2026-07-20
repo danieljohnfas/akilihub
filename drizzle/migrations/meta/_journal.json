@@ -57,6 +57,13 @@
       "when": 1784570956368,
       "tag": "0007_add_salary_to_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784573011402,
+      "tag": "0008_add_guides_table",
+      "breakpoints": true
     }
   ]
 }

@@ -11,6 +11,8 @@ import * as usersSchema from './schema/users';
 import * as adminSchema from './schema/admin';
 import * as jobsSchema from './schema/jobs';
 import * as aiSchema from './schema/ai';
+import * as guidesSchema from './schema/guides';
+import * as documentsSchema from './schema/documents';
 
 const schema = {
   ...sharedSchema,
@@ -22,7 +24,10 @@ const schema = {
   ...adminSchema,
   ...jobsSchema,
   ...aiSchema,
+  ...guidesSchema,
+  ...documentsSchema,
 };
+
 
 // Prevent multiple instances during development HMR
 const globalForDb = globalThis as unknown as { conn: postgres.Sql };
