@@ -3,132 +3,67 @@ import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 const BASE_URL = 'https://akilibrain.com';
 
-// Serve sitemaps dynamically on each request — never statically pre-rendered at build time.
-// ISR revalidation caches the output for 1 hour on Vercel's edge.
+// Cache the sitemap on Vercel's edge for 1 hour to prevent DB overload.
 export const revalidate = 3600;
 
-
-const PAGE_SIZE = 5000;
-
-// ID slots:
-// 0 = static pages
-// 1–9 = tender pages (up to 45,000 tenders)
-// 10–19 = job pages (up to 50,000 jobs)
-// 20–29 = business pages (up to 50,000 businesses)
-
-export async function generateSitemaps() {
-  const [tenderCount, jobCount, businessCount] = await Promise.all([
-    safeQuery(db.select({ count: sql<number>`count(*)` }).from(tenders)),
-    safeQuery(db.select({ count: sql<number>`count(*)` }).from(jobs).where(eq(jobs.isActive, true))),
-    safeQuery(db.select({ count: sql<number>`count(*)` }).from(businesses).where(eq(businesses.status, 'active'))),
-  ]);
-
-  const tenderPages = Math.max(1, Math.ceil(Number(tenderCount[0]?.count ?? 0) / PAGE_SIZE));
-  const jobPages = Math.max(1, Math.ceil(Number(jobCount[0]?.count ?? 0) / PAGE_SIZE));
-  const businessPages = Math.max(1, Math.ceil(Number(businessCount[0]?.count ?? 0) / PAGE_SIZE));
-
-  const ids = [
-    { id: 0 }, // static
-    ...Array.from({ length: tenderPages }, (_, i) => ({ id: i + 1 })),
-    ...Array.from({ length: jobPages }, (_, i) => ({ id: i + 10 })),
-    ...Array.from({ length: businessPages }, (_, i) => ({ id: i + 20 })),
-  ];
-
-  return ids;
-}
-
-export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
-  const numericId = Number(id);
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // ─── Static pages (id = 0) ─────────────────────────────────────────────────
-  if (numericId === 0) {
-    return [
-      { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
-      { url: `${BASE_URL}/tenders`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
-      { url: `${BASE_URL}/jobs`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
-      { url: `${BASE_URL}/compliance`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
-      { url: `${BASE_URL}/health`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/salaries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/developers`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-      { url: `${BASE_URL}/guides`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-      // Trust & legal pages — required for AdSense and E-E-A-T
-      { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-      { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-      { url: `${BASE_URL}/privacy`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-      { url: `${BASE_URL}/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-      // SEO-optimised filter pages (these are crawlable HTML links from the listing pages)
-      { url: `${BASE_URL}/jobs?type=full_time`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-      { url: `${BASE_URL}/jobs?type=remote`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-      { url: `${BASE_URL}/jobs?type=internship`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
-      { url: `${BASE_URL}/jobs?location=Kenya`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-      { url: `${BASE_URL}/jobs?location=Tanzania`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-      { url: `${BASE_URL}/jobs?location=Uganda`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
-      { url: `${BASE_URL}/tenders?status=open`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },
-      { url: `${BASE_URL}/tenders?status=awarded`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
-    ];
-  }
+  // 1. Static & Filter Pages
+  const staticPages: MetadataRoute.Sitemap = [
+    { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
+    { url: `${BASE_URL}/tenders`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${BASE_URL}/jobs`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${BASE_URL}/compliance`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/health`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/salaries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/developers`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/guides`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/privacy`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE_URL}/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE_URL}/jobs?type=full_time`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
+    { url: `${BASE_URL}/jobs?type=remote`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
+    { url: `${BASE_URL}/jobs?type=internship`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
+    { url: `${BASE_URL}/jobs?location=Kenya`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
+    { url: `${BASE_URL}/jobs?location=Tanzania`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
+    { url: `${BASE_URL}/jobs?location=Uganda`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
+    { url: `${BASE_URL}/tenders?status=open`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },
+    { url: `${BASE_URL}/tenders?status=awarded`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
+  ];
 
+  // 2. Fetch all active entities, capped to ensure we never breach Next.js 50k limit in a single file
+  const [tenderRows, jobRows, businessRows] = await Promise.all([
+    safeQuery(db.select({ id: tenders.id, updatedAt: tenders.updatedAt }).from(tenders).limit(15000)),
+    safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(eq(jobs.isActive, true)).limit(20000)),
+    safeQuery(db.select({ id: businesses.id, updatedAt: businesses.updatedAt }).from(businesses).where(eq(businesses.status, 'active')).limit(10000)),
+  ]);
 
-  // ─── Tenders (ids 1-9) ─────────────────────────────────────────────────────
-  if (numericId >= 1 && numericId <= 9) {
-    const page = numericId - 1;
-    const rows = await safeQuery(
-      db
-        .select({ id: tenders.id, updatedAt: tenders.updatedAt })
-        .from(tenders)
-        .limit(PAGE_SIZE)
-        .offset(page * PAGE_SIZE)
-    );
-    return rows.map((t) => ({
-      url: `${BASE_URL}/tenders/${t.id}`,
-      lastModified: t.updatedAt,
-      changeFrequency: 'daily',
-      priority: 0.7,
-    }));
-  }
+  const tenderPages: MetadataRoute.Sitemap = tenderRows.map((t) => ({
+    url: `${BASE_URL}/tenders/${t.id}`,
+    lastModified: t.updatedAt,
+    changeFrequency: 'daily',
+    priority: 0.7,
+  }));
 
-  // ─── Jobs (ids 10-19) ──────────────────────────────────────────────────────
-  if (numericId >= 10 && numericId <= 19) {
-    const page = numericId - 10;
-    const rows = await safeQuery(
-      db
-        .select({ id: jobs.id, updatedAt: jobs.updatedAt })
-        .from(jobs)
-        .where(eq(jobs.isActive, true))
-        .limit(PAGE_SIZE)
-        .offset(page * PAGE_SIZE)
-    );
-    return rows.map((j) => ({
-      url: `${BASE_URL}/jobs/${j.id}`,
-      lastModified: j.updatedAt,
-      changeFrequency: 'daily',
-      priority: 0.7,
-    }));
-  }
+  const jobPages: MetadataRoute.Sitemap = jobRows.map((j) => ({
+    url: `${BASE_URL}/jobs/${j.id}`,
+    lastModified: j.updatedAt,
+    changeFrequency: 'hourly',
+    priority: 0.8,
+  }));
 
-  // ─── Businesses (ids 20-29) ────────────────────────────────────────────────
-  if (numericId >= 20 && numericId <= 29) {
-    const page = numericId - 20;
-    const rows = await safeQuery(
-      db
-        .select({ id: businesses.id, updatedAt: businesses.updatedAt })
-        .from(businesses)
-        .where(eq(businesses.status, 'active'))
-        .limit(PAGE_SIZE)
-        .offset(page * PAGE_SIZE)
-    );
-    return rows.map((b) => ({
-      url: `${BASE_URL}/compliance/${b.id}`,
-      lastModified: b.updatedAt,
-      changeFrequency: 'weekly',
-      priority: 0.6,
-    }));
-  }
+  const businessPages: MetadataRoute.Sitemap = businessRows.map((b) => ({
+    url: `${BASE_URL}/compliance/${b.id}`,
+    lastModified: b.updatedAt,
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
 
-  return [];
+  return [...staticPages, ...tenderPages, ...jobPages, ...businessPages];
 }
