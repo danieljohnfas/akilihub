@@ -11,6 +11,9 @@ export interface BroadJobResource {
   jobType: 'full_time' | 'part_time' | 'contract' | 'internship' | 'remote';
   sourceUrl: string;
   deadline: Date | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string | null; // ISO 4217, e.g. "KES", "TZS"
 }
 
 /**
@@ -75,6 +78,9 @@ Rules:
 - For 'location': City or region (e.g., "Nairobi"). Use empty string if none.
 - For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.
 - For 'deadlineIsoString': ISO 8601 date if found, otherwise empty string.
+- For 'salaryMin': Minimum salary as a plain number (no currency symbol) if stated, otherwise 0.
+- For 'salaryMax': Maximum salary as a plain number if stated, otherwise 0. If only one figure is given, use it for both min and max.
+- For 'salaryCurrency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "USD"). Infer from context or country if not explicit. Use empty string if salary is completely absent.
 - Extract all open positions found. Return empty array if none found.
 `;
 
@@ -91,6 +97,9 @@ Rules:
           jobType: z.enum(['full_time', 'part_time', 'contract', 'internship', 'remote']),
           sourceUrl: z.string(),
           deadlineIsoString: z.string(),
+          salaryMin: z.number().default(0),
+          salaryMax: z.number().default(0),
+          salaryCurrency: z.string().default(''),
         }))
       }),
       prompt,
@@ -111,6 +120,9 @@ Rules:
         jobType: job.jobType,
         sourceUrl: job.sourceUrl,
         deadline: parsedDate,
+        salaryMin: job.salaryMin > 0 ? job.salaryMin : null,
+        salaryMax: job.salaryMax > 0 ? job.salaryMax : null,
+        salaryCurrency: job.salaryCurrency?.trim() || null,
       };
     });
   } catch (err) {

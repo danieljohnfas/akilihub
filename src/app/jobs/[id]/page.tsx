@@ -122,8 +122,12 @@ export default async function JobDetailPage({
         jobType: job.jobType,
         postedDate: job.postedDate,
         deadline: job.deadline,
-        sourceUrl: job.sourceUrl
+        sourceUrl: job.sourceUrl,
+        salaryMin: job.salaryMin ? parseFloat(job.salaryMin) : null,
+        salaryMax: job.salaryMax ? parseFloat(job.salaryMax) : null,
+        salaryCurrency: job.salaryCurrency,
       })} />
+
 
       <JsonLd schema={buildBreadcrumbSchema([
         { name: 'Home', url: 'https://akilibrain.com' },

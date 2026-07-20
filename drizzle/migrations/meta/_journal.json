@@ -50,6 +50,13 @@
       "when": 1784400662394,
       "tag": "0006_windy_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784570956368,
+      "tag": "0007_add_salary_to_jobs",
+      "breakpoints": true
     }
   ]
 }

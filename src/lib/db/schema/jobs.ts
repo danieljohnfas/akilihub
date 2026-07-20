@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, pgEnum, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, pgEnum, index, numeric } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { countries } from './shared';
 
@@ -16,6 +16,10 @@ export const jobs = pgTable('jobs', {
   sourceUrl: text('source_url').notNull().unique(),
   postedDate: timestamp('posted_date'),
   deadline: timestamp('deadline'),
+  // Salary fields — populated by scraper when the source page lists them
+  salaryMin: numeric('salary_min', { precision: 14, scale: 2 }),
+  salaryMax: numeric('salary_max', { precision: 14, scale: 2 }),
+  salaryCurrency: text('salary_currency'), // ISO 4217, e.g. "KES", "TZS", "UGX"
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -25,3 +29,4 @@ export const jobs = pgTable('jobs', {
   index('jobs_active_idx').on(table.isActive),
   index('jobs_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
 ]);
+

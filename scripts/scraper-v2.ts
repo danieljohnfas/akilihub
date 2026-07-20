@@ -160,6 +160,9 @@ async function processJobUrl(
               jobType: job.jobType,
               sourceUrl: job.sourceUrl || url,
               deadline: job.deadline,
+              salaryMin: job.salaryMin?.toString() ?? null,
+              salaryMax: job.salaryMax?.toString() ?? null,
+              salaryCurrency: job.salaryCurrency ?? null,
             }).onConflictDoNothing({ target: jobs.sourceUrl }).execute()
           );
           if (ok) saved++;
