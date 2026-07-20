@@ -9,7 +9,6 @@ const BASE_URL = 'https://akilibrain.com';
 
 // Serve sitemaps dynamically on each request — never statically pre-rendered at build time.
 // ISR revalidation caches the output for 1 hour on Vercel's edge.
-export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 
@@ -43,10 +42,11 @@ export async function generateSitemaps() {
 }
 
 export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
+  const numericId = Number(id);
   const now = new Date();
 
   // ─── Static pages (id = 0) ─────────────────────────────────────────────────
-  if (id === 0) {
+  if (numericId === 0) {
     return [
       { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
       { url: `${BASE_URL}/tenders`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
@@ -75,8 +75,8 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
 
 
   // ─── Tenders (ids 1-9) ─────────────────────────────────────────────────────
-  if (id >= 1 && id <= 9) {
-    const page = id - 1;
+  if (numericId >= 1 && numericId <= 9) {
+    const page = numericId - 1;
     const rows = await safeQuery(
       db
         .select({ id: tenders.id, updatedAt: tenders.updatedAt })
@@ -93,8 +93,8 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   }
 
   // ─── Jobs (ids 10-19) ──────────────────────────────────────────────────────
-  if (id >= 10 && id <= 19) {
-    const page = id - 10;
+  if (numericId >= 10 && numericId <= 19) {
+    const page = numericId - 10;
     const rows = await safeQuery(
       db
         .select({ id: jobs.id, updatedAt: jobs.updatedAt })
@@ -112,8 +112,8 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   }
 
   // ─── Businesses (ids 20-29) ────────────────────────────────────────────────
-  if (id >= 20 && id <= 29) {
-    const page = id - 20;
+  if (numericId >= 20 && numericId <= 29) {
+    const page = numericId - 20;
     const rows = await safeQuery(
       db
         .select({ id: businesses.id, updatedAt: businesses.updatedAt })
