@@ -90,17 +90,20 @@ export default async function JobDetailPage({
     .select({
       job: jobs,
       country: countries.name,
+      countryCode: countries.code,
     })
     .from(jobs)
     .leftJoin(countries, eq(jobs.countryId, countries.id))
     .where(eq(jobs.id, resolvedParams.id))
     .limit(1));
 
+
   if (!data.length) {
     notFound();
   }
 
-  const { job, country } = data[0];
+  const { job, country, countryCode } = data[0];
+
   const isExpired = job.deadline ? job.deadline < new Date() : !job.isActive;
   const typeColor = jobTypeColors[job.jobType || 'full_time'] || jobTypeColors['full_time'];
   const typeLabel = jobTypeLabels[job.jobType || 'full_time'] || 'Full Time';
@@ -115,11 +118,13 @@ export default async function JobDetailPage({
         description: job.description,
         location: job.location,
         country,
+        countryCode,
         jobType: job.jobType,
         postedDate: job.postedDate,
         deadline: job.deadline,
         sourceUrl: job.sourceUrl
       })} />
+
       <JsonLd schema={buildBreadcrumbSchema([
         { name: 'Home', url: 'https://akilibrain.com' },
         { name: 'Jobs & Careers', url: 'https://akilibrain.com/jobs' },

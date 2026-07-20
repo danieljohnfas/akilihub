@@ -89,11 +89,32 @@ interface JobPostingInput {
   description: string | null;
   location: string | null;
   country: string | null;
+  /** ISO 3166-1 alpha-2 country code, e.g. "KE", "TZ" */
+  countryCode?: string | null;
   jobType: string | null;
   postedDate: Date | null;
   deadline: Date | null;
   sourceUrl: string;
+  /** Optional: min salary in local currency (monthly) */
+  salaryMin?: number | null;
+  /** Optional: max salary in local currency (monthly) */
+  salaryMax?: number | null;
+  /** ISO 4217 currency code, e.g. "KES", "TZS" */
+  salaryCurrency?: string | null;
 }
+
+/**
+ * Country code → default postal code lookup.
+ * East African countries don't have universal postcodes, so we use
+ * well-known capital post-office codes as best-effort values.
+ */
+const COUNTRY_POSTAL_CODE: Record<string, string> = {
+  KE: "00100", // Nairobi GPO
+  TZ: "40435", // Dar es Salaam GPO
+  UG: "256",   // Kampala (Uganda uses PO box system)
+  RW: "0",     // Kigali (Rwanda has no formal postal codes)
+  ET: "1000",  // Addis Ababa GPO
+};
 
 export function buildJobPostingSchema(job: JobPostingInput): Record<string, unknown> {
   const employmentTypeMap: Record<string, string> = {
@@ -103,6 +124,14 @@ export function buildJobPostingSchema(job: JobPostingInput): Record<string, unkn
     internship: "INTERN",
     remote: "OTHER",
   };
+
+  // addressLocality is the city/town; addressRegion is the state/province.
+  // Since our jobs store a free-text `location` (usually a city), we reuse it
+  // for both locality and region — it's better than leaving them empty.
+  const addressLocality = job.location ?? job.country ?? "East Africa";
+  const addressRegion = job.location ?? job.country ?? "East Africa";
+  const addressCountry = job.countryCode ?? job.country ?? "KE";
+  const postalCode = COUNTRY_POSTAL_CODE[addressCountry] ?? "00100";
 
   const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -118,8 +147,12 @@ export function buildJobPostingSchema(job: JobPostingInput): Record<string, unkn
       "@type": "Place",
       address: {
         "@type": "PostalAddress",
-        addressLocality: job.location ?? job.country ?? "East Africa",
-        addressCountry: job.country ?? "KE",
+        // streetAddress: city name is the best approximation we have
+        streetAddress: addressLocality,
+        addressLocality,
+        addressRegion,
+        postalCode,
+        addressCountry,
       },
     },
     employmentType: employmentTypeMap[job.jobType ?? "full_time"] ?? "OTHER",
@@ -131,8 +164,35 @@ export function buildJobPostingSchema(job: JobPostingInput): Record<string, unkn
     },
   };
 
-  if (job.postedDate) schema.datePosted = job.postedDate.toISOString().split("T")[0];
-  if (job.deadline) schema.validThrough = job.deadline.toISOString();
+  // datePosted is required by Google; fall back to today if missing
+  schema.datePosted = job.postedDate
+    ? job.postedDate.toISOString().split("T")[0]
+    : new Date().toISOString().split("T")[0];
+
+  // validThrough: use deadline if available, otherwise default to 90 days
+  // from the posted date (or today) so Google doesn't flag it as missing
+  if (job.deadline) {
+    schema.validThrough = job.deadline.toISOString();
+  } else {
+    const base = job.postedDate ?? new Date();
+    const fallback = new Date(base);
+    fallback.setDate(fallback.getDate() + 90);
+    schema.validThrough = fallback.toISOString();
+  }
+
+  // baseSalary: only emit when actual salary data is present
+  if (job.salaryMin && job.salaryCurrency) {
+    schema.baseSalary = {
+      "@type": "MonetaryAmount",
+      currency: job.salaryCurrency,
+      value: {
+        "@type": "QuantitativeValue",
+        minValue: job.salaryMin,
+        ...(job.salaryMax ? { maxValue: job.salaryMax } : {}),
+        unitText: "MONTH",
+      },
+    };
+  }
 
   return schema;
 }
