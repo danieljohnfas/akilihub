@@ -5,21 +5,25 @@ export function Footer() {
   return (
     <footer className="border-t bg-muted/20 mt-16">
       <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between gap-8">
-        <div className="space-y-4 max-w-sm">
+        <div className="space-y-4 max-w-xs">
           <div className="flex items-center space-x-2">
             <Logo className="h-6 w-6" />
             <h3 className="text-xl font-bold">AkiliBrain</h3>
           </div>
           <p className="text-sm text-muted-foreground">
-            East Africa&apos;s unified professional intelligence platform. 
+            East Africa&apos;s unified professional intelligence platform.
             Providing critical data for professionals across the region.
           </p>
+          <p className="text-xs text-muted-foreground/60">
+            Independent platform. Not affiliated with or endorsed by any government body.
+          </p>
         </div>
-        <div className="grid grid-cols-2 gap-8 sm:gap-16">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
           <div className="space-y-4">
             <h4 className="font-semibold">Modules</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/tenders" className="hover:text-primary transition-colors">Procurement</Link></li>
+              <li><Link href="/jobs" className="hover:text-primary transition-colors">Jobs</Link></li>
               <li><Link href="/compliance" className="hover:text-primary transition-colors">Compliance</Link></li>
               <li><Link href="/health" className="hover:text-primary transition-colors">Health Data</Link></li>
               <li><Link href="/salaries" className="hover:text-primary transition-colors">Salaries</Link></li>
@@ -27,12 +31,26 @@ export function Footer() {
             </ul>
           </div>
           <div className="space-y-4">
+            <h4 className="font-semibold">Company</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+            </ul>
+          </div>
+          <div className="space-y-4">
+            <h4 className="font-semibold">Legal</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+            </ul>
+          </div>
+          <div className="space-y-4">
             <h4 className="font-semibold">Data Sources</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>PPRA (TZ), PPOA (KE)</li>
-              <li>DHIS2 (Tanzania MoH)</li>
-              <li>WHO AFRO</li>
-              <li>BRELA, TRA</li>
+              <li>WHO AFRO / World Bank</li>
+              <li>BRELA, TRA, KRA</li>
+              <li>URSB (UG), RRA (RW)</li>
             </ul>
           </div>
         </div>

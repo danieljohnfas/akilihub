@@ -55,6 +55,11 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
       { url: `${BASE_URL}/health`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
       { url: `${BASE_URL}/salaries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
       { url: `${BASE_URL}/developers`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+      // Trust & legal pages — required for AdSense and E-E-A-T
+      { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+      { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+      { url: `${BASE_URL}/privacy`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+      { url: `${BASE_URL}/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
       // SEO-optimised filter pages (these are crawlable HTML links from the listing pages)
       { url: `${BASE_URL}/jobs?type=full_time`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
       { url: `${BASE_URL}/jobs?type=remote`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
@@ -66,6 +71,7 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
       { url: `${BASE_URL}/tenders?status=awarded`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
     ];
   }
+
 
   // ─── Tenders (ids 1-9) ─────────────────────────────────────────────────────
   if (id >= 1 && id <= 9) {
