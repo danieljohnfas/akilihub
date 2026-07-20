@@ -25,14 +25,7 @@ type CvState =
 
 export function AIChatPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: "Hi! I'm AkiliBrain's AI assistant. Ask me about tenders, business registrations, health data, or salaries across East Africa.\n\n📎 You can also **upload your CV** (PDF or TXT) and I'll find the best matching jobs for you!",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [cvState, setCvState] = useState<CvState>({ status: 'idle' });
@@ -41,6 +34,38 @@ export function AIChatPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
+
+  // Contextual Greetings
+  useEffect(() => {
+    let greeting = "Hi! I'm AkiliBrain's AI assistant. Ask me about tenders, business registrations, health data, or salaries across East Africa.\n\n📎 You can also **upload your CV** (PDF or TXT) and I'll find the best matching jobs for you!";
+    
+    if (pathname?.startsWith('/jobs/')) {
+      greeting = "Hi there! I see you're looking at a job. I can help you draft a cover letter, review your CV for this role, or suggest interview questions. How can I assist?";
+    } else if (pathname?.startsWith('/tenders/')) {
+      greeting = "Hello! Analyzing this tender? I can summarize the requirements, explain the eligibility criteria, or help you draft a bid response.";
+    } else if (pathname?.startsWith('/salaries')) {
+      greeting = "Welcome to the salaries module! Ask me about compensation trends in East Africa, or upload your CV to get a personalized market value estimate.";
+    } else if (pathname?.startsWith('/compliance')) {
+      greeting = "Navigating business compliance can be tricky. Ask me about registration processes, necessary permits, or check a specific company's status.";
+    } else if (pathname?.startsWith('/health')) {
+      greeting = "Exploring public health data? I can help interpret DHIS2 statistics, find disease prevalence trends, or summarize health reports.";
+    }
+
+    setMessages(prev => {
+      // If the chat is empty or only contains a previous greeting, replace it
+      if (prev.length === 0 || (prev.length === 1 && prev[0].id.startsWith('welcome'))) {
+        return [{
+          id: `welcome-${pathname}`,
+          role: 'assistant',
+          content: greeting,
+          timestamp: new Date(),
+        }];
+      }
+      // If there's an ongoing conversation and the user navigates, optionally append a soft nudge
+      // We'll just keep the existing conversation to not interrupt them.
+      return prev;
+    });
+  }, [pathname]);
 
   // Proactive messaging based on route
   useEffect(() => {
@@ -51,15 +76,38 @@ export function AIChatPanel() {
 
     const timer = setTimeout(() => {
       if (pathname?.startsWith('/jobs/')) {
-        setProactiveMessage("Need a cover letter for this job? Upload your CV and I'll draft one!");
+        const prompts = [
+          "Need a cover letter for this job? Upload your CV and I'll draft one!",
+          "Want to know if your skills match this role? Let's check your CV.",
+          "I can help you prepare for an interview for this position. Want to practice?",
+          "Curious about the typical salary for this role? Ask me!"
+        ];
+        setProactiveMessage(prompts[Math.floor(Math.random() * prompts.length)]);
       } else if (pathname?.startsWith('/tenders/')) {
-        setProactiveMessage("Want me to summarize this tender's requirements?");
+        const prompts = [
+          "Want me to summarize this tender's requirements?",
+          "Need help drafting a bid for this tender? I can outline it.",
+          "Confused by the eligibility criteria? Ask me to clarify."
+        ];
+        setProactiveMessage(prompts[Math.floor(Math.random() * prompts.length)]);
       } else if (pathname?.startsWith('/salaries')) {
-        setProactiveMessage("Curious if you're underpaid? Upload your CV and I'll estimate your market value.");
+        const prompts = [
+          "Curious if you're underpaid? Upload your CV and I'll estimate your market value.",
+          "Want to know the highest paying tech roles in Nairobi?",
+          "I can compare your current salary against our database. Let's talk!"
+        ];
+        setProactiveMessage(prompts[Math.floor(Math.random() * prompts.length)]);
+      } else if (pathname?.startsWith('/compliance')) {
+        const prompts = [
+          "Need to register a business? I can guide you through the process.",
+          "Looking up a company? I can help verify their status.",
+          "Confused by tax compliance requirements? Ask me!"
+        ];
+        setProactiveMessage(prompts[Math.floor(Math.random() * prompts.length)]);
       } else {
         setProactiveMessage(null);
       }
-    }, 3000); // Show thought bubble after 3 seconds on the page
+    }, 4000); // Show thought bubble after 4 seconds on the page
 
     return () => clearTimeout(timer);
   }, [pathname, isOpen]);
