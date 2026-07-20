@@ -10,6 +10,5 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: 'https://akilibrain.com/sitemap.xml',
-    host: 'https://akilibrain.com',
   };
 }
