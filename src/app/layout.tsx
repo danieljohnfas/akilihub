@@ -83,7 +83,6 @@ export const metadata: Metadata = {
 };
 
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
-import Script from 'next/script';
 
 export default function RootLayout({
   children,
@@ -95,14 +94,13 @@ export default function RootLayout({
       <head>
         <JsonLd schema={buildOrganizationSchema()} />
         <JsonLd schema={buildWebSiteSchema()} />
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2501499631331261"
+          crossOrigin="anonymous"
+        ></script>
       </head>
       <body className={inter.className}>
-        <Script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2501499631331261`}
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
         <PostHogProvider>
           <Navbar />
           <main className="min-h-screen">
