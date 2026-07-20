@@ -1,13 +1,13 @@
-import { inngest } from "./client";
-import { generateObjectWithFallback } from "@/lib/ai/router";
-import { db } from "@/lib/db/client";
-import { guides } from "@/lib/db/schema/guides";
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
+import { generateObjectWithFallback } from "../src/lib/ai/router";
+import { db } from "../src/lib/db/client";
+import { guides } from "../src/lib/db/schema/guides";
 import { z } from "zod";
-import { searchGoogle } from "@/lib/scrapers/broad-search-engine";
-import { eq } from "drizzle-orm";
+import { searchGoogle } from "../src/lib/scrapers/broad-search-engine";
 
 const TROPICS = [
-  // Health Data & Systems
   "Tanzania health data trends DHIS2",
   "Digital health implementations in Kenyan public hospitals",
   "Uganda electronic medical records rollout",
@@ -18,8 +18,6 @@ const TROPICS = [
   "Malaria case reporting accuracy in Uganda",
   "FHIR and HL7 standards adoption in East African healthcare",
   "Community health worker data collection tools in Kenya",
-  
-  // Compliance & Business
   "Kenya business compliance changes KRA eTIMS",
   "Uganda tax registration updates URSB",
   "Tanzania BRELA company registration guide",
@@ -30,8 +28,6 @@ const TROPICS = [
   "Foreign business ownership rules in Uganda",
   "Data protection and privacy laws in East Africa",
   "Work permit application process in Rwanda",
-  
-  // Procurement & Tenders
   "PPRA Tanzania procurement guidelines update",
   "How SMEs can win government tenders in Kenya",
   "Uganda PPDA bidding process for contractors",
@@ -42,49 +38,36 @@ const TROPICS = [
   "Understanding tender security and bid bonds in Uganda",
   "Public-private partnerships in Ethiopian infrastructure projects",
   "Women and youth in procurement policies (AGPO) in Kenya",
-
-  // Jobs & Tech
-  "East Africa tech salaries trends 2026",
-  "Demand for software engineers in Nairobi",
-  "Remote work opportunities for East African developers",
-  "How to structure a CV for the Tanzanian job market",
-  "Uganda's growing tech hub and startup ecosystem",
-  "Rwanda Kigali Innovation City job trends",
-  "Data science and AI job demand in East Africa",
-  "Nursing and healthcare professional salaries in Kenya",
-  "Accounting and finance job market in Tanzania",
-  "Navigating technical interviews in East African tech companies",
-  "Project management certifications valued in Uganda",
-  "Entry-level job opportunities for graduates in Kenya",
-  "The impact of AI on East African job markets",
-  "Freelancing and the gig economy in Tanzania",
-  "Ethiopia's telecom liberalization and new tech jobs"
 ];
 
 const GuideContentSchema = z.object({
-  slug: z.string().describe("URL-friendly slug, e.g. tanzania-tb-incidence-explained"),
-  title: z.string().describe("Engaging, professional title for the guide"),
-  summary: z.string().describe("1-2 sentence meta description/summary"),
-  contentHtml: z.string().describe("Full HTML body of the guide. Use <article>, <section>, <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>. Do NOT include <h1> or outer layout wrappers. Use Tailwind classes like 'space-y-4' and 'text-muted-foreground' where appropriate. Make it professional, insightful, and data-driven."),
+  slug: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  contentHtml: z.string(),
   category: z.enum(['procurement', 'health', 'compliance', 'jobs', 'salaries', 'general']),
-  keywords: z.string().describe("Comma-separated keywords for SEO"),
+  keywords: z.string(),
   readingTimeMinutes: z.number().int(),
 });
 
-export const generateWeeklyGuidesJob = inngest.createFunction(
-  { id: "generate-weekly-guides", name: "Generate Weekly Editorial Guides", triggers: [{ cron: "0 8 * * 1" }] }, // Every Monday at 8:00 AM UTC
-  async ({ step }) => {
-    // 1. Pick a random topic to cover this week
-    const topic = TROPICS[Math.floor(Math.random() * TROPICS.length)];
+async function runSeed() {
+  // Limit to 15 guides for the initial seed to prevent hitting hard daily API limits across all models
+  const subset = TROPICS.slice(0, 15);
+  console.log(`Starting to generate ${subset.length} guides...`);
 
-    // 2. Search for recent news on this topic
-    const searchResults = await step.run("search-news", async () => {
-      const urls = await searchGoogle(topic, 5);
-      return urls;
-    });
+  // Process sequentially to avoid rate limits
+  for (let i = 0; i < subset.length; i++) {
+    const topic = subset[i];
+    console.log(`\n[${i + 1}/${subset.length}] Generating guide for: "${topic}"...`);
 
-    // 3. Generate the guide
-    const guideData = await step.run("generate-guide-content", async () => {
+    try {
+      // 1. Search for context
+      console.log(`  -> Searching Google for context...`);
+      const searchResults = await searchGoogle(topic, 3);
+      console.log(`  -> Found ${searchResults.length} references.`);
+
+      // 2. Generate content
+      console.log(`  -> Calling AI to write article (this takes a moment)...`);
       const prompt = `You are the lead editor for AkiliBrain, East Africa's Professional Intelligence Platform.
 Your audience consists of professionals, contractors, health workers, and developers in Kenya, Tanzania, Uganda, Rwanda, and Ethiopia.
 Write a deep-dive, professional guide/article about the following topic: "${topic}".
@@ -92,20 +75,19 @@ Write a deep-dive, professional guide/article about the following topic: "${topi
 Use insights that reflect East African realities. 
 Here are some reference URLs found on this topic recently: ${searchResults.join(', ')}.
 
-Return the response strictly adhering to the JSON schema. Ensure the HTML content is well-structured and uses semantic tags.`;
+Return the response strictly adhering to the JSON schema. Ensure the HTML content is well-structured and uses semantic tags. Make it long, detailed, and highly valuable (1000+ words).`;
 
       const result = await generateObjectWithFallback({
         prompt,
         schema: GuideContentSchema,
         temperature: 0.7,
-        maxTokens: 3000,
+        maxTokens: 4000,
       });
 
-      return result.object;
-    });
+      const guideData = result.object;
 
-    // 4. Upsert to DB
-    await step.run("upsert-guide", async () => {
+      // 3. Upsert to DB
+      console.log(`  -> Saving guide "${guideData.title}" to database...`);
       await db.insert(guides).values({
         slug: guideData.slug,
         title: guideData.title,
@@ -129,8 +111,19 @@ Return the response strictly adhering to the JSON schema. Ensure the HTML conten
           updatedAt: new Date(),
         }
       });
-    });
+      console.log(`  -> ✅ Done.`);
 
-    return { message: `Successfully generated and saved guide for topic: ${topic}` };
+    } catch (error) {
+      console.log(`  -> ❌ Error generating guide for topic: ${topic}`, error);
+    }
+    
+    // Add a 10 second delay between requests to let the AI models cool down
+    console.log(`  -> Waiting 10 seconds before next generation to prevent rate limits...`);
+    await new Promise(resolve => setTimeout(resolve, 10000));
   }
-);
+
+  console.log(`\nFinished generating guides!`);
+  process.exit(0);
+}
+
+runSeed();

@@ -3,6 +3,7 @@ import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';
+import { guides } from '@/lib/db/schema/guides';
 import { eq } from 'drizzle-orm';
 
 const BASE_URL = 'https://akilibrain.com';
@@ -38,10 +39,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // 2. Fetch all active entities, capped to ensure we never breach Next.js 50k limit in a single file
-  const [tenderRows, jobRows, businessRows] = await Promise.all([
+  const [tenderRows, jobRows, businessRows, guideRows] = await Promise.all([
     safeQuery(db.select({ id: tenders.id, updatedAt: tenders.updatedAt }).from(tenders).limit(15000)),
     safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(eq(jobs.isActive, true)).limit(20000)),
     safeQuery(db.select({ id: businesses.id, updatedAt: businesses.updatedAt }).from(businesses).where(eq(businesses.status, 'active')).limit(10000)),
+    safeQuery(db.select({ slug: guides.slug, updatedAt: guides.updatedAt }).from(guides).where(eq(guides.isPublished, true)).limit(5000)),
   ]);
 
   const tenderPages: MetadataRoute.Sitemap = tenderRows.map((t) => ({
@@ -65,5 +67,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...tenderPages, ...jobPages, ...businessPages];
+  const guidePages: MetadataRoute.Sitemap = guideRows.map((g) => ({
+    url: `${BASE_URL}/guides/${g.slug}`,
+    lastModified: g.updatedAt,
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  }));
+
+  return [...staticPages, ...tenderPages, ...jobPages, ...businessPages, ...guidePages];
 }
