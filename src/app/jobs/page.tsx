@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { EmptyStateLottie } from '@/components/ui/empty-state-lottie';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { RelatedGuides } from '@/components/guides/RelatedGuides';
 
 export const dynamic = 'force-dynamic';
 
@@ -318,6 +319,11 @@ export default async function JobsPage({
           )}
         </div>
       )}
+
+      {/* Related Guides Interweave */}
+      <div className="pt-10 mt-8">
+        <RelatedGuides category="jobs" title="Career & Interview Insights" />
+      </div>
 
       {/* SEO: Internal linking — crawlable category / location links */}
       <div className="border-t border-white/5 pt-10 mt-4">

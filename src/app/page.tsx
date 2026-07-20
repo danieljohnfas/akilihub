@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { MagicCard } from "@/components/ui/magic-card";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildFAQSchema } from "@/components/seo/schemas";
+import { RelatedGuides } from '@/components/guides/RelatedGuides';
 
 const features = [
   {
@@ -152,6 +153,11 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Latest Insights Section */}
+      <section className="container mx-auto px-4 w-full max-w-6xl">
+        <RelatedGuides title="Latest Insights & Guides" />
       </section>
     </div>
     </>

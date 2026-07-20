@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { RelatedGuides } from '@/components/guides/RelatedGuides';
 
 export const dynamic = 'force-dynamic';
 
@@ -201,6 +202,11 @@ export default async function TendersPage({
           )}
         </div>
       )}
+
+      {/* Related Guides Interweave */}
+      <div className="pt-10 mt-8">
+        <RelatedGuides category="procurement" title="Procurement Insights & Guides" />
+      </div>
 
       {/* SEO: Internal linking */}
       <div className="border-t border-white/5 pt-10 mt-4">

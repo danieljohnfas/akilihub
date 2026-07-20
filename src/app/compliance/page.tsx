@@ -5,6 +5,10 @@ import { eq, desc, ilike, and } from 'drizzle-orm';
 import { BusinessCard } from '@/components/compliance/BusinessCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { redirect } from 'next/navigation';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { Search, SlidersHorizontal, Inbox, Building2, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { complianceRequirements } from '@/lib/db/schema/compliance';
@@ -277,6 +281,11 @@ export default async function CompliancePage({
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Related Guides Interweave */}
+      <div className="pt-10 mt-8 border-t border-white/5">
+        <RelatedGuides category="compliance" title="Compliance & Registration Guides" />
+      </div>
     </div>
   );
 }

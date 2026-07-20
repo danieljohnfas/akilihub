@@ -19,6 +19,7 @@ const navLinks = [
   { href: '/compliance', label: 'Compliance', icon: 'solar:shield-check-bold-duotone' },
   { href: '/health', label: 'Health Data', icon: 'solar:heart-pulse-bold-duotone' },
   { href: '/salaries', label: 'Salaries', icon: 'solar:wallet-money-bold-duotone' },
+  { href: '/guides', label: 'Insights', icon: 'solar:book-bookmark-bold-duotone' },
   { href: '/developers', label: 'Dev Tools', icon: 'solar:code-circle-bold-duotone' },
 ];
 
