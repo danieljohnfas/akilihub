@@ -93,7 +93,7 @@ Context: ${JSON.stringify(contextParams)}`;
     });
 
     return NextResponse.json({
-      response: result.text,
+      response: (result as { text: string }).text,
       confidence: 1.0,
       sources: [],
       strategyUsed: 'Vercel AI Pool with RAG Tools',

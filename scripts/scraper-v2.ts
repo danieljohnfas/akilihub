@@ -100,7 +100,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 /** Retry a DB insert up to N times with exponential backoff. */
-async function dbInsertWithRetry(fn: () => Promise<void>): Promise<boolean> {
+async function dbInsertWithRetry(fn: () => Promise<unknown>): Promise<boolean> {
   for (let i = 1; i <= DB_RETRY_ATTEMPTS; i++) {
     try {
       await fn();
