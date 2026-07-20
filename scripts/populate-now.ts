@@ -4,7 +4,7 @@ import { scrapePPDAUganda } from '../src/lib/scrapers/ppda-ug';
 import { scrapeRPPARwanda } from '../src/lib/scrapers/rppa-rw';
 import { scrapePPPAEthiopia } from '../src/lib/scrapers/pppa-et';
 import { scrapeARMPCongoDRC } from '../src/lib/scrapers/armp-cd';
-import { fetchAllHealthIndicators } from '../src/lib/scrapers/dhis2-tz';
+import { fetchAllHealthIndicators } from '../src/lib/scrapers/health-world-bank';
 import { config } from 'dotenv';
 
 // Load environment variables for local execution
