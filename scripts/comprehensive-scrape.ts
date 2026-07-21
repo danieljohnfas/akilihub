@@ -20,9 +20,9 @@ const PORTALS: Array<{ id: string; name: string; countryCode: string; portalType
   { id: "scrape-tenders-tanzania", name: "🇹🇿 Tenders Tanzania", countryCode: "TZ", portalType: "ppra_tz", url: "https://www.ppra.go.tz/tenders", broadSearchQuery: "government tenders Tanzania 2026" },
   { id: "scrape-tenders-kenya", name: "🇰🇪 Tenders Kenya", countryCode: "KE", portalType: "ppoa_ke", url: "https://tenders.go.ke/tenders/open", broadSearchQuery: "government tenders Kenya 2026" },
   { id: "scrape-tenders-uganda", name: "🇺🇬 Tenders Uganda", countryCode: "UG", portalType: "ppda_ug", url: "https://gpp.ppda.go.ug/public/bid-invitations", broadSearchQuery: "government tenders Uganda 2026" },
-  { id: 'rw_rppa', name: 'Rwanda Public Procurement', countryCode: 'RW', portalType: 'modern', url: 'https://www.umucyo.gov.rw/', broadSearchQuery: 'government tenders procurement Rwanda 2026' },
-  { id: 'et_ppa', name: 'Ethiopia Public Procurement', countryCode: 'ET', portalType: 'modern', url: 'https://egp.ppa.gov.et/', broadSearchQuery: 'government tenders procurement Ethiopia 2026' },
-  { id: 'cd_armp', name: 'DRC Autorité de Régulation', countryCode: 'CD', portalType: 'modern', url: 'https://www.armp-rdc.cd/', broadSearchQuery: 'appels d\'offres gouvernementaux marchés publics RDC Congo 2026' }
+  { id: 'rwanda-rppa', name: '🇷🇼 Tenders Rwanda', countryCode: 'RW', portalType: 'rppa_rw', url: 'https://www.umucyo.gov.rw/', broadSearchQuery: 'tenders UMUCYO Rwanda 2026' },
+  { id: 'ethiopia-pppa', name: '🇪🇹 Tenders Ethiopia', countryCode: 'ET', portalType: 'pppa_et', url: 'https://egp.ppa.gov.et/egp/bids/published', broadSearchQuery: 'Ethiopia public procurement tenders 2026' },
+  { id: 'drc-armp', name: '🇨🇩 Tenders DRC', countryCode: 'CD', portalType: 'armp_cd', url: 'https://www.armp-rdc.org/marches-publics/', broadSearchQuery: 'appels d\'offres ARMP RDC 2026' }
 ];
 
 const JOB_QUERIES = [
