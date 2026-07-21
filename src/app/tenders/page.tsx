@@ -5,7 +5,7 @@ import { eq, desc, ilike, and, sql } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, ArrowRight, Calendar, Building, FileText, Globe } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowRight, Calendar, Building, FileText, Globe, Inbox } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
