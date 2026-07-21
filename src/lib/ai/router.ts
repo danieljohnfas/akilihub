@@ -88,11 +88,64 @@ getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
 });
 
 // -- OPENROUTER --
-// Re-enable when credits are added.
-// getEnvKeys('OPENROUTER_API_KEY').forEach(...)
+getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
+  const { createOpenAI } = require('@ai-sdk/openai');
+  const openrouter = createOpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1' });
+  keyPool.register({
+    id: `openrouter-${i + 1}`,
+    name: `OpenRouter (${i + 1})`,
+    model: openrouter('meta-llama/llama-3.3-70b-instruct'),
+    supportsStructured: true,
+  });
+});
 
-// -- CEREBRAS / SAMBANOVA / DEEPSEEK / HYPERBOLIC --
-// Disabled: key issues or no structured output support. Re-test when renewed.
+// -- DEEPSEEK --
+getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
+  const { createOpenAI } = require('@ai-sdk/openai');
+  const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com' });
+  keyPool.register({
+    id: `deepseek-${i + 1}`,
+    name: `DeepSeek Chat (${i + 1})`,
+    model: deepseek('deepseek-chat'),
+    supportsStructured: true,
+  });
+});
+
+// -- SAMBANOVA --
+getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
+  const { createOpenAI } = require('@ai-sdk/openai');
+  const sambanova = createOpenAI({ apiKey: key, baseURL: 'https://api.sambanova.ai/v1' });
+  keyPool.register({
+    id: `sambanova-${i + 1}`,
+    name: `SambaNova Llama3.1 70B (${i + 1})`,
+    model: sambanova('Meta-Llama-3.1-70B-Instruct'),
+    supportsStructured: true,
+  });
+});
+
+// -- CEREBRAS --
+getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
+  const { createOpenAI } = require('@ai-sdk/openai');
+  const cerebras = createOpenAI({ apiKey: key, baseURL: 'https://api.cerebras.ai/v1' });
+  keyPool.register({
+    id: `cerebras-${i + 1}`,
+    name: `Cerebras Llama3.1 70B (${i + 1})`,
+    model: cerebras('llama3.1-70b'),
+    supportsStructured: true,
+  });
+});
+
+// -- HYPERBOLIC --
+getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
+  const { createOpenAI } = require('@ai-sdk/openai');
+  const hyperbolic = createOpenAI({ apiKey: key, baseURL: 'https://api.hyperbolic.xyz/v1' });
+  keyPool.register({
+    id: `hyperbolic-${i + 1}`,
+    name: `Hyperbolic Llama3.1 70B (${i + 1})`,
+    model: hyperbolic('meta-llama/Meta-Llama-3.1-70B-Instruct'),
+    supportsStructured: true,
+  });
+});
 
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
