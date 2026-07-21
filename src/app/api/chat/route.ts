@@ -7,6 +7,7 @@ import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { userDocuments } from '@/lib/db/schema/documents';
 import { ilike, or, desc, eq } from 'drizzle-orm';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -103,11 +104,14 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
             const found = await db.select({
               title: jobs.title,
               company: jobs.companyName,
-              location: jobs.location,
+              region: regions.name,
+              country: countries.name,
               url: jobs.sourceUrl,
               posted: jobs.postedDate
             })
             .from(jobs)
+            .leftJoin(countries, eq(jobs.countryId, countries.id))
+            .leftJoin(regions, eq(jobs.regionId, regions.id))
             .where(or(ilike(jobs.title, `%${keyword}%`), ilike(jobs.description, `%${keyword}%`)))
             .orderBy(desc(jobs.postedDate))
             .limit(10);

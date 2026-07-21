@@ -1,6 +1,6 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
-import { countries } from '@/lib/db/schema/shared';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { Calendar, Building2, MapPin, ExternalLink, ArrowLeft, Clock, Briefcase } from 'lucide-react';
@@ -21,12 +21,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         title: jobs.title,
         companyName: jobs.companyName,
         description: jobs.description,
-        location: jobs.location,
+        region: regions.name,
         country: countries.name,
         createdAt: jobs.createdAt,
       })
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
       .where(eq(jobs.id, resolvedParams.id))
       .limit(1)
   );
@@ -37,14 +38,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const title = `${job.title} at ${job.companyName} | AkiliBrain Jobs`;
   const desc = job.description 
     ? (job.description.slice(0, 150) + (job.description.length > 150 ? '...' : ''))
-    : `Apply for the ${job.title} position at ${job.companyName} in ${job.location || job.country || 'East Africa'}.`;
+    : `Apply for the ${job.title} position at ${job.companyName} in ${job.region || job.country || 'East Africa'}.`;
 
   const url = `https://akilibrain.com/jobs/${resolvedParams.id}`;
 
   return {
     title,
     description: desc,
-    keywords: [job.title, job.companyName, job.location || '', job.country || '', 'job vacancy', 'career'].filter(Boolean),
+    keywords: [job.title, job.companyName, job.region || '', job.country || '', 'job vacancy', 'career'].filter(Boolean),
     openGraph: {
       title,
       description: desc,
@@ -91,9 +92,11 @@ export default async function JobDetailPage({
       job: jobs,
       country: countries.name,
       countryCode: countries.code,
+      region: regions.name,
     })
     .from(jobs)
     .leftJoin(countries, eq(jobs.countryId, countries.id))
+    .leftJoin(regions, eq(jobs.regionId, regions.id))
     .where(eq(jobs.id, resolvedParams.id))
     .limit(1));
 
@@ -102,7 +105,7 @@ export default async function JobDetailPage({
     notFound();
   }
 
-  const { job, country, countryCode } = data[0];
+  const { job, country, countryCode, region } = data[0];
 
   const isExpired = job.deadline ? job.deadline < new Date() : !job.isActive;
   const typeColor = jobTypeColors[job.jobType || 'full_time'] || jobTypeColors['full_time'];
@@ -116,7 +119,7 @@ export default async function JobDetailPage({
         title: job.title,
         companyName: job.companyName,
         description: job.description,
-        location: job.location,
+        location: region,
         country,
         countryCode,
         jobType: job.jobType,
@@ -221,7 +224,7 @@ export default async function JobDetailPage({
               <p className="text-sm text-muted-foreground">Location</p>
               <p className="font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4 shrink-0 text-primary" />
-                <span>{(job.location && job.location !== 'null') ? job.location : country || 'Unknown'}</span>
+                <span>{region ? `${country} • ${region}` : country || 'Unknown'}</span>
               </p>
             </div>
 

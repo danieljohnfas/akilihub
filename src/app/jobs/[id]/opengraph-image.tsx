@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
-import { countries } from '@/lib/db/schema/shared';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
 
 export const alt = 'Job posting on AkiliBrain';
@@ -26,12 +26,13 @@ export default async function OgImage({
       .select({
         title: jobs.title,
         companyName: jobs.companyName,
-        location: jobs.location,
+        region: regions.name,
         jobType: jobs.jobType,
         country: countries.name,
       })
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
       .where(eq(jobs.id, params.id))
       .limit(1)
   );
@@ -39,7 +40,7 @@ export default async function OgImage({
   const job = data[0];
   const title = job?.title ?? 'Job Opening';
   const company = job?.companyName ?? 'Company';
-  const location = job?.location ?? job?.country ?? 'East Africa';
+  const location = job?.region ? `${job.country} • ${job.region}` : job?.country ?? 'East Africa';
   const type = jobTypeLabels[job?.jobType ?? 'full_time'] ?? 'Full Time';
 
   return new ImageResponse(

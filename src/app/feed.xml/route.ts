@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
-import { countries } from '@/lib/db/schema/shared';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, desc, and, isNull, or, gt } from 'drizzle-orm';
 
 const BASE_URL = 'https://akilibrain.com';
@@ -26,7 +26,7 @@ export async function GET() {
         title: jobs.title,
         companyName: jobs.companyName,
         description: jobs.description,
-        location: jobs.location,
+        region: regions.name,
         country: countries.name,
         postedDate: jobs.postedDate,
         updatedAt: jobs.updatedAt,
@@ -34,6 +34,7 @@ export async function GET() {
       })
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
       .where(
         and(
           eq(jobs.isActive, true),
@@ -66,7 +67,7 @@ export async function GET() {
 
   const jobItems = jobRows.map((j) => {
     const title = escapeXml(`${j.title} — ${j.companyName}`);
-    const location = j.location ?? j.country ?? 'East Africa';
+    const location = j.region ? `${j.country} • ${j.region}` : j.country ?? 'East Africa';
     const desc = escapeXml(
       (j.description ?? `${j.title} at ${j.companyName} in ${location}.`).slice(0, 300)
     );
