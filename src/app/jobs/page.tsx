@@ -6,7 +6,7 @@ import { JobCard } from '@/components/jobs/JobCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Inbox, Briefcase, Building2, MapPin, Filter, Clock } from 'lucide-react';
+import { Search, Inbox, Briefcase, Building2, MapPin, Filter, Clock, LayoutGrid, List } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyStateLottie } from '@/components/ui/empty-state-lottie';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -63,6 +63,7 @@ export default async function JobsPage({
   const company = params.company === 'all' ? '' : (params.company || '');
   const location = params.location === 'all' ? '' : (params.location || '');
   const time = params.time === 'all' ? '' : (params.time || '');
+  const layout = params.layout === 'list' ? 'list' : 'grid';
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -187,6 +188,7 @@ export default async function JobsPage({
         
         <form className="flex flex-col md:flex-row gap-4 items-end" action="/jobs" method="GET">
           {type && <input type="hidden" name="type" value={type} />}
+          {layout === 'list' && <input type="hidden" name="layout" value="list" />}
           
           <div className="space-y-1.5 flex-1 w-full">
             <label className="text-xs text-muted-foreground font-medium pl-1">Job Title / Keyword</label>
@@ -276,6 +278,7 @@ export default async function JobsPage({
                 ...(company ? { company } : {}),
                 ...(location ? { location } : {}),
                 ...(time ? { time } : {}),
+                ...(layout === 'list' ? { layout } : {}),
                 ...(value ? { type: value } : {}),
               }).toString()}`}
             >
@@ -309,10 +312,29 @@ export default async function JobsPage({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map(({ job, country }) => (
-            <JobCard
-              key={job.id}
+        <div className="space-y-4">
+          <div className="flex justify-end mb-2">
+            <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-lg">
+              <Link
+                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'grid' }).toString()}`}
+                className={`p-1.5 rounded-md transition-colors ${layout === 'grid' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
+                title="Grid View"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Link>
+              <Link
+                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'list' }).toString()}`}
+                className={`p-1.5 rounded-md transition-colors ${layout === 'list' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
+                title="List View"
+              >
+                <List className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+          <div className={layout === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-3"}>
+            {data.map(({ job, country }) => (
+              <JobCard
+                key={job.id}
               id={job.id}
               title={job.title}
               companyName={job.companyName}
@@ -324,6 +346,7 @@ export default async function JobsPage({
               sourceUrl={job.sourceUrl}
               postedDate={job.postedDate}
               deadline={job.deadline}
+              layout={layout}
             />
           ))}
         </div>
@@ -334,7 +357,7 @@ export default async function JobsPage({
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
           {page > 1 && (
             <Link
-              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&page=${page - 1}`}
+              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&layout=${layout}&page=${page - 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
@@ -343,7 +366,7 @@ export default async function JobsPage({
           <span className="text-sm text-muted-foreground">Page {page}</span>
           {data.length === PAGE_SIZE && (
             <Link
-              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&page=${page + 1}`}
+              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&layout=${layout}&page=${page + 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →

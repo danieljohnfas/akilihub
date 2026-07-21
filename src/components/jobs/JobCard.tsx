@@ -17,6 +17,7 @@ export interface JobCardProps {
   sourceUrl: string;
   postedDate: Date | null;
   deadline: Date | null;
+  layout?: 'grid' | 'list';
 }
 
 const jobTypeLabels: Record<JobCardProps['jobType'], string> = {
@@ -47,8 +48,48 @@ export function JobCard({
   sourceUrl,
   postedDate,
   deadline,
+  layout = 'grid',
 }: JobCardProps) {
   const isExpired = deadline ? deadline < new Date() : false;
+
+  if (layout === 'list') {
+    return (
+      <Card className="group relative hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col md:flex-row items-start md:items-center p-4 gap-4 focus-within:ring-2 focus-within:ring-primary/50">
+        <Link href={`/jobs/${id}`} className="absolute inset-0 z-10">
+          <span className="sr-only">View Details for {title}</span>
+        </Link>
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-semibold line-clamp-1 group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+              {title}
+            </h3>
+            {isExpired && <Badge variant="secondary" className="text-[10px] h-4 px-1 z-20 relative">Expired</Badge>}
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Building2 className="w-3.5 h-3.5 text-primary" />
+              <span className="font-medium text-white/90">{companyName}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>{location && location !== 'null' ? location : country}</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto mt-2 md:mt-0">
+          <Badge variant="outline" className={`text-xs border ${jobTypeColors[jobType]}`}>
+            {jobTypeLabels[jobType]}
+          </Badge>
+          <div className="flex items-center gap-1.5 text-xs text-white/60 md:w-32 md:justify-end">
+            <Calendar className="w-3.5 h-3.5" />
+            <span className="truncate">
+              {deadline ? (isExpired ? 'Closed' : `Due ${formatDistanceToNow(deadline)}`) : postedDate ? `${formatDistanceToNow(postedDate)}` : 'Recent'}
+            </span>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="group relative hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col focus-within:ring-2 focus-within:ring-primary/50">
