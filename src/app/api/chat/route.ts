@@ -9,8 +9,20 @@ import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';
 import { userDocuments } from '@/lib/db/schema/documents';
 import { ilike, or, desc, eq } from 'drizzle-orm';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 export const maxDuration = 30; // Extend Vercel timeout for tool calling
+
+// 10 requests per minute per IP — protects the AI key pool from abuse
+const ratelimit = process.env.UPSTASH_REDIS_REST_URL
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(10, '1 m'),
+      analytics: true,
+      prefix: 'akilihub:chat',
+    })
+  : null;
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +30,25 @@ export async function POST(req: NextRequest) {
 
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
       return NextResponse.json({ error: 'Query is required.' }, { status: 400 });
+    }
+
+    // Rate limiting: 10 requests per minute per IP
+    if (ratelimit) {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'anonymous';
+      const { success, limit, remaining, reset } = await ratelimit.limit(ip);
+      if (!success) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please wait a moment before trying again.' },
+          {
+            status: 429,
+            headers: {
+              'X-RateLimit-Limit': String(limit),
+              'X-RateLimit-Remaining': String(remaining),
+              'X-RateLimit-Reset': String(reset),
+            },
+          }
+        );
+      }
     }
 
     let documentContext = '';

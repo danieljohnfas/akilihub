@@ -184,14 +184,13 @@ export async function generateObjectWithFallback(params: Record<string, any>) {
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const key = keyPool.getNextKey(true);
-    if (!key) {
+    let activeKey = keyPool.getNextKey(true);
+    if (!activeKey) {
       // All keys on cooldown — wait 5s and try once more
       await new Promise(r => setTimeout(r, 5000));
-      const retryKey = keyPool.getNextKey(true);
-      if (!retryKey) break;
+      activeKey = keyPool.getNextKey(true);
+      if (!activeKey) break;
     }
-    const activeKey = keyPool.getNextKey(true)!;
 
     console.log(`[AI Router] [Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 

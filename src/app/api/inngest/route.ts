@@ -31,6 +31,7 @@ import {
 // Alerts and monitoring
 import { sendTenderAlertsJob } from "@/inngest/send-alerts";
 import { fetchHealthDataJob } from "@/inngest/fetch-health";
+import { syncHealthDataJob } from "@/inngest/sync-health-data";
 import { enforceDataFreshnessJob } from "@/inngest/enforce-freshness";
 import { checkDataStatusJob } from "@/inngest/check-data-status";
 import { salaryConsensusVerificationJob } from "@/inngest/salary-consensus";
@@ -61,8 +62,9 @@ export const { GET, POST, PUT } = serve({
     // Tender new-record alerts (event-driven)
     sendTenderAlertsJob,
 
-    // Health data (03:00 UTC)
+    // Health data — WHO GHO + DHIS2 sync (Monday 03:00 UTC)
     fetchHealthDataJob,
+    syncHealthDataJob,
 
     // Data freshness enforcement (06:00 and 18:00 UTC)
     enforceDataFreshnessJob,

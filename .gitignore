@@ -40,11 +40,27 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-.env*
-storage/
+# project-specific ignores
 .ai-pool-state.json
-scripts/push-secrets.ps1
-scripts/push-vercel-env.ps1scraper-progress.json
+scraper-progress.json
+storage/
 
+# downloaded CLI binaries & zips (never commit these)
+koyeb.zip
+koyeb_cli/
+render.zip
+render_cli/
+
+# one-off deployment/migration scripts
+push-env.js
+deploy-hf.py
+scratch-test-db.js
+
+# vercel env snapshots
+.env.vercel
+.env.vercel.prod
+.env.vercel.tmp
+
+# scripts with embedded secrets
+scripts/push-secrets.ps1
 scripts/push-vercel-env.ps1

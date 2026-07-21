@@ -10,7 +10,7 @@ Endpoints:
   POST /extract_text    — extract clean text from HTML via trafilatura
   POST /crawl4ai        — structured CSS extraction via Crawl4AI
 
-Port: 8001
+Port: 7860
 """
 
 from __future__ import annotations
