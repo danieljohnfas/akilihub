@@ -18,8 +18,7 @@ export const metadata: Metadata = {
     default: "AkiliBrain | East Africa's Professional Intelligence Platform",
     template: "%s | AkiliBrain",
   },
-  description:
-    "East Africa's most comprehensive professional intelligence platform. Find government tenders, job opportunities, business compliance data, public health indicators, and salary benchmarks for Kenya, Tanzania, Uganda, and Rwanda.",
+  description: "Find jobs, tenders & compliance data in East Africa.",
   keywords: [
     "government tenders Kenya",
     "procurement East Africa",
@@ -42,13 +41,12 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "AkiliBrain",
     title: "AkiliBrain | East Africa's Professional Intelligence Platform",
-    description:
-      "Find government tenders, jobs, compliance data, health indicators, and salary benchmarks across Kenya, Tanzania, Uganda, and Rwanda.",
+    description: "Find jobs, tenders & compliance data in East Africa.",
     url: BASE_URL,
     locale: "en_KE",
     images: [
       {
-        url: "/opengraph-image.png",
+        url: "/og.png",
         width: 1200,
         height: 630,
         alt: "AkiliBrain — East Africa's Professional Intelligence Platform",
@@ -58,9 +56,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AkiliBrain | East Africa's Professional Intelligence Platform",
-    description:
-      "Find government tenders, jobs, compliance data, health indicators, and salary benchmarks across East Africa.",
-    images: ["/opengraph-image.png"],
+    description: "Find jobs, tenders & compliance data in East Africa.",
+    images: ["/og.png"],
     site: "@akilibrain",
   },
   alternates: {
