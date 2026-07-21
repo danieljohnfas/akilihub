@@ -349,6 +349,7 @@ export default async function JobsPage({
               layout={layout}
             />
           ))}
+          </div>
         </div>
       )}
 
