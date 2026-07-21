@@ -150,7 +150,7 @@ export default async function AccountPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {userBookmarks.map(({ bookmark, job, tender }) => {
+                  {userBookmarks.map(({ bookmark, job, tender, region }) => {
                     if (bookmark.itemType === 'job' && job) {
                       return (
                         <JobCard
