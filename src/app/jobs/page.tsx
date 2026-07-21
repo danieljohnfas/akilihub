@@ -1,12 +1,12 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, or, isNull, gt } from 'drizzle-orm';
+import { eq, desc, ilike, and, or, isNull, gt, count } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Inbox, Briefcase, Building2, MapPin, Filter } from 'lucide-react';
+import { Search, Inbox, Briefcase, Building2, MapPin, Filter, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyStateLottie } from '@/components/ui/empty-state-lottie';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -62,6 +62,7 @@ export default async function JobsPage({
   const type = params.type === 'all' ? '' : (params.type || '');
   const company = params.company === 'all' ? '' : (params.company || '');
   const location = params.location === 'all' ? '' : (params.location || '');
+  const time = params.time === 'all' ? '' : (params.time || '');
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -76,9 +77,17 @@ export default async function JobsPage({
     type ? eq(jobs.jobType, type as never) : undefined,
     company ? eq(jobs.companyName, company) : undefined,
     location ? (location.startsWith('country:') ? eq(countries.name, location.replace('country:', '')) : eq(jobs.location, location)) : undefined,
+    time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
+    time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
+    time === '90d' ? gt(jobs.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const totalCountResult = await safeQuery(
+    db.select({ value: count() }).from(jobs).leftJoin(countries, eq(jobs.countryId, countries.id)).where(whereClause)
+  );
+  const totalCount = totalCountResult?.[0]?.value || 0;
 
   const data = await safeQuery(
     db
@@ -161,9 +170,9 @@ export default async function JobsPage({
           <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Discover active job opportunities across East Africa, automatically sourced from across the web.
           </p>
-          {data.length > 0 && (
+          {totalCount > 0 && (
             <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70 mt-2">
-              Showing <span className="text-white mx-1">{data.length}</span> active positions
+              Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> active positions
             </div>
           )}
         </div>
@@ -234,6 +243,24 @@ export default async function JobsPage({
             </div>
           </div>
 
+          <div className="space-y-1.5 flex-[0.8] w-full">
+            <label className="text-xs text-muted-foreground font-medium pl-1">Posted Within</label>
+            <div className="relative">
+              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Select name="time" defaultValue={time || 'all'}>
+                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 pl-9">
+                  <SelectValue placeholder="Any time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any time</SelectItem>
+                  <SelectItem value="7d">Last 7 days</SelectItem>
+                  <SelectItem value="30d">Last 30 days</SelectItem>
+                  <SelectItem value="90d">Last 90 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <Button type="submit" className="w-full md:w-auto h-10 px-8">
             Filter Results
           </Button>
@@ -248,6 +275,7 @@ export default async function JobsPage({
                 ...(q ? { q } : {}),
                 ...(company ? { company } : {}),
                 ...(location ? { location } : {}),
+                ...(time ? { time } : {}),
                 ...(value ? { type: value } : {}),
               }).toString()}`}
             >
@@ -306,7 +334,7 @@ export default async function JobsPage({
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
           {page > 1 && (
             <Link
-              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&page=${page - 1}`}
+              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&page=${page - 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
@@ -315,7 +343,7 @@ export default async function JobsPage({
           <span className="text-sm text-muted-foreground">Page {page}</span>
           {data.length === PAGE_SIZE && (
             <Link
-              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&page=${page + 1}`}
+              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&page=${page + 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →

@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { tenders, tenderSectors } from '@/lib/db/schema/tenders';
 import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, sql } from 'drizzle-orm';
+import { eq, desc, ilike, and, sql, count } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -72,6 +72,11 @@ export default async function TendersPage({
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+  const totalCountResult = await safeQuery(
+    db.select({ value: count() }).from(tenders).leftJoin(countries, eq(tenders.countryId, countries.id)).where(whereClause)
+  );
+  const totalCount = totalCountResult?.[0]?.value || 0;
+
   const data = await safeQuery(db
     .select({
       tender: tenders,
@@ -124,6 +129,11 @@ export default async function TendersPage({
           <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Discover and track government tenders and contracts from across the continent.
           </p>
+          {totalCount > 0 && (
+            <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70 mt-2">
+              Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> results
+            </div>
+          )}
         </div>
       </div>
 

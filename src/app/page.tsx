@@ -6,6 +6,8 @@ import { MagicCard } from "@/components/ui/magic-card";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildFAQSchema } from "@/components/seo/schemas";
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { LiveStats } from '@/components/home/LiveStats';
+import { Suspense } from 'react';
 
 const features = [
   {
@@ -109,6 +111,9 @@ export default function Home() {
             Check Salaries
           </Link>
         </div>
+        <Suspense fallback={<div className="h-24 mt-8" />}>
+          <LiveStats />
+        </Suspense>
       </section>
 
       {/* Features Grid */}

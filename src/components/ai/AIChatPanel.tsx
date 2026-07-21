@@ -112,6 +112,21 @@ export function AIChatPanel() {
     return () => clearTimeout(timer);
   }, [pathname, isOpen]);
 
+  // Keyboard shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsOpen((prev) => {
+          if (!prev) setProactiveMessage(null);
+          return !prev;
+        });
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -253,7 +268,8 @@ export function AIChatPanel() {
           setIsOpen(true);
           setProactiveMessage(null);
         }}
-        aria-label="Open AI Assistant"
+        aria-label="Open AI Assistant (Cmd+K)"
+        title="Open AI Assistant (Cmd+K)"
         className={cn(
           'fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl',
           'bg-gradient-to-br from-indigo-500 to-primary flex items-center justify-center',
