@@ -1,6 +1,6 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
-import { fetchHtml, htmlToText } from './compliance-base';
+import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { searchGoogle } from './broad-search-engine';
 
 export interface BroadTenderResource {
@@ -13,16 +13,25 @@ export interface BroadTenderResource {
   currency: string;
   deadline: Date | null;
   sourceUrl: string;
+  pdfLinks?: string[]; // PDF attachment URLs found on the source page
 }
 
-export async function extractTendersWithAI(text: string, sourceUrl: string): Promise<BroadTenderResource[]> {
+export async function extractTendersWithAI(
+  text: string,
+  sourceUrl: string,
+  pdfLinks: string[] = [],
+): Promise<BroadTenderResource[]> {
   if (!text || text.length < 50) return [];
+
+  const pdfSection = pdfLinks.length > 0
+    ? `\nPDF/document attachments found on this page:\n${pdfLinks.map(l => `- ${l}`).join('\n')}\n`
+    : '';
 
   const prompt = `You are a specialized AI assistant that extracts government tender (procurement) opportunities from raw website text.
 Source URL: ${sourceUrl}
-
+${pdfSection}
 Scraped content:
-${text.substring(0, 8000)}
+${text.substring(0, 12000)}
 
 Rules:
 - Extract any real tender, bid, or procurement postings found in the text.
@@ -32,6 +41,7 @@ Rules:
 - If no tenders are found, return an empty array.
 - For referenceNo, if none is explicitly provided, use a short slugified version of the title or generate a unique looking string from the text.
 - Try to classify the category as goods, works, services, or consultancy.
+- If PDF attachment links are listed above, include the most relevant one as the documentUrl in description or note it.
 `;
 
   try {
@@ -52,7 +62,11 @@ Rules:
       prompt,
     });
 
-    return object.tenders.map((tender: { referenceNo: string; title: string; description: string | null; contractingAuthority: string; category: BroadTenderResource['category']; budgetNumber: number | null; currency: string; sourceUrl: string; deadlineIsoString: string | null }) => ({
+    return object.tenders.map((tender: {
+      referenceNo: string; title: string; description: string | null;
+      contractingAuthority: string; category: BroadTenderResource['category'];
+      budgetNumber: number | null; currency: string; sourceUrl: string; deadlineIsoString: string | null;
+    }) => ({
       referenceNo: tender.referenceNo,
       title: tender.title,
       description: tender.description,
@@ -60,8 +74,9 @@ Rules:
       category: tender.category,
       budget: tender.budgetNumber,
       currency: tender.currency,
-      sourceUrl: tender.sourceUrl,
-      deadline: tender.deadlineIsoString ? new Date(tender.deadlineIsoString) : null
+      sourceUrl: tender.sourceUrl || sourceUrl,
+      deadline: tender.deadlineIsoString ? new Date(tender.deadlineIsoString) : null,
+      pdfLinks,
     }));
   } catch (err) {
     console.error(`[extractTendersWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
@@ -69,9 +84,9 @@ Rules:
   }
 }
 
-export async function discoverTenders(query: string, maxPages: number = 100): Promise<BroadTenderResource[]> {
+export async function discoverTenders(query: string, maxPages: number = 5): Promise<BroadTenderResource[]> {
   console.log(`[discoverTenders] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 100);
+  const urls = await searchGoogle(query, 20);
   console.log(`[discoverTenders] Found ${urls.length} viable URLs to scrape.`);
 
   const allTenders: BroadTenderResource[] = [];
@@ -79,22 +94,23 @@ export async function discoverTenders(query: string, maxPages: number = 100): Pr
 
   for (const url of urls) {
     if (pagesProcessed >= maxPages) break;
-    
+
     console.log(`[discoverTenders] Scraping ${url}...`);
     const html = await fetchHtml(url);
     if (!html) continue;
 
-    const text = htmlToText(html, url);
-    const tenders = await extractTendersWithAI(text, url);
-    
+    // Use trafilatura-enriched extraction (returns text + PDF links)
+    const { text, pdfLinks } = await htmlToTextEnriched(html, url);
+    const tenders = await extractTendersWithAI(text, url, pdfLinks);
+
     if (tenders.length > 0) {
-      console.log(`[discoverTenders] Extracted ${tenders.length} tenders from ${url}`);
+      console.log(`[discoverTenders] Extracted ${tenders.length} tenders from ${url} (${pdfLinks.length} PDF links)`);
       allTenders.push(...tenders);
     }
-    
+
     pagesProcessed++;
-    // Polite delay: 4s between pages
-    await new Promise(res => setTimeout(res, 4000));
+    // Polite delay between pages
+    await new Promise(res => setTimeout(res, 3000));
   }
 
   console.log(`[discoverTenders] Finished. Total tenders discovered: ${allTenders.length}`);

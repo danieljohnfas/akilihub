@@ -64,6 +64,13 @@
       "when": 1784573011402,
       "tag": "0008_add_guides_table",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784615335135,
+      "tag": "0009_tough_molecule_man",
+      "breakpoints": true
     }
   ]
 }

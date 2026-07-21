@@ -1,13 +1,13 @@
 """
-fetchers/stealthy.py — Single-page scraping with Scrapling's StealthyFetcher.
+fetchers/stealthy.py — Single-page scraping with Scrapling's AsyncStealthyFetcher.
 
-StealthyFetcher opens a real Chromium browser with fingerprint spoofing and
-can solve Cloudflare Turnstile/Interstitial challenges automatically.
+AsyncStealthyFetcher (Scrapling ≥ 0.4) opens a real Chromium browser with
+fingerprint spoofing in a non-blocking async context, meaning concurrent
+requests within FastAPI's event loop are no longer serialized.
 
 `auto_save=True` on element selection writes element signatures to a local
-SQLite cache (~/.scrapling/). If the page redesigns later, passing
-`adaptive=True` re-uses those signatures to find the relocated elements —
-no manual selector updates needed.
+SQLite cache (~/.scrapling/). If the page redesigns later, Scrapling's
+adaptive mode uses those signatures to find relocated elements automatically.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 
-from scrapling.fetchers import Fetcher, StealthyFetcher
+from scrapling.fetchers import Fetcher
 
 from css_selectors import PORTAL_SELECTORS, FALLBACK_SELECTORS
 
@@ -129,27 +129,45 @@ async def stealthy_scrape(
     """
     Fetch a single page and extract tenders.
 
-    use_stealth=True  → StealthyFetcher (Cloudflare bypass, headless Chromium)
+    use_stealth=True  → AsyncStealthyFetcher (Cloudflare bypass, headless Chromium, non-blocking)
     use_stealth=False → Fetcher (fast HTTP, TLS fingerprint spoofing, no browser)
     """
+    import asyncio
     logger.info("Fetching %s (stealth=%s)", url, use_stealth)
 
     if use_stealth:
-        # StealthyFetcher.adaptive=True enables global adaptive mode:
-        # all subsequent css() calls with auto_save=True will persist signatures.
-        StealthyFetcher.adaptive = True
-        page = StealthyFetcher.fetch(
-            url,
-            headless=True,
-            network_idle=True,        # wait for XHR/fetch to settle
-            solve_cloudflare=True,    # auto-solve Cloudflare Turnstile
-            google_search=False,      # don't use Google as referrer
-        )
+        try:
+            # AsyncStealthyFetcher (Scrapling ≥ 0.4) — truly non-blocking
+            from scrapling.fetchers import AsyncStealthyFetcher
+
+            page = await AsyncStealthyFetcher.async_fetch(
+                url,
+                headless=True,
+                network_idle=True,
+                solve_cloudflare=True,
+                google_search=False,
+                adaptive=True,
+            )
+        except (ImportError, AttributeError):
+            # Scrapling < 0.4 compatibility: run sync StealthyFetcher in executor
+            logger.warning("AsyncStealthyFetcher unavailable — falling back to sync in executor.")
+            from scrapling.fetchers import StealthyFetcher
+            loop = asyncio.get_event_loop()
+            page = await loop.run_in_executor(
+                None,
+                lambda: StealthyFetcher.fetch(
+                    url,
+                    headless=True,
+                    network_idle=True,
+                    solve_cloudflare=True,
+                    google_search=False,
+                ),
+            )
     else:
         page = Fetcher.get(
             url,
-            stealthy_headers=True,    # realistic browser headers
-            impersonate="chrome",     # TLS fingerprint of Chrome
+            stealthy_headers=True,
+            impersonate="chrome",
         )
 
     tenders = _extract_tenders(page, portal_type, url)
@@ -165,16 +183,32 @@ async def stealthy_fetch_html(
     Fetch a single page and return its raw rendered HTML.
     Used for jobs and compliance scraping where Gemini extracts the data.
     """
+    import asyncio
     logger.info("Fetching raw HTML for %s (stealth=%s)", url, use_stealth)
 
     if use_stealth:
-        page = StealthyFetcher.fetch(
-            url,
-            headless=True,
-            network_idle=True,
-            solve_cloudflare=True,
-            google_search=False,
-        )
+        try:
+            from scrapling.fetchers import AsyncStealthyFetcher
+            page = await AsyncStealthyFetcher.async_fetch(
+                url,
+                headless=True,
+                network_idle=True,
+                solve_cloudflare=True,
+                google_search=False,
+            )
+        except (ImportError, AttributeError):
+            from scrapling.fetchers import StealthyFetcher
+            loop = asyncio.get_event_loop()
+            page = await loop.run_in_executor(
+                None,
+                lambda: StealthyFetcher.fetch(
+                    url,
+                    headless=True,
+                    network_idle=True,
+                    solve_cloudflare=True,
+                    google_search=False,
+                ),
+            )
     else:
         page = Fetcher.get(
             url,
@@ -182,5 +216,4 @@ async def stealthy_fetch_html(
             impersonate="chrome",
         )
 
-    # Scrapling Response object provides .text (or .body) which is the raw HTML
     return page.text or ""

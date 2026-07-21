@@ -1,0 +1,59 @@
+{
+  "ppra_tz": {
+    "row":       "table tr:not(:first-child)",
+    "ref":       "td:nth-child(1)",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "published": "td:nth-child(4)",
+    "deadline":  "td:nth-child(5)"
+  },
+  "ppoa_ke": {
+    "row":       ".tender-list tr:not(:first-child), table.tenders tr:not(:first-child), table tr:not(:first-child)",
+    "ref":       "td:nth-child(1)",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:nth-child(4)"
+  },
+  "ppda_ug": {
+    "row":       ".views-table tr:not(:first-child), table tr:not(:first-child)",
+    "ref":       "td:nth-child(1)",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:nth-child(4)"
+  },
+  "brela_tz": {
+    "row":       ".search-result, .company-row, table tr:not(:first-child)",
+    "ref":       "td:nth-child(1)",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:nth-child(4)"
+  },
+  "rppa_rw": {
+    "row":       ".tender-item, table tr:not(:first-child)",
+    "ref":       "td:nth-child(1)",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:nth-child(4)"
+  },
+  "pppa_et": {
+    "row":       ".bid-item, table tr:not(:first-child)",
+    "ref":       "td:nth-child(1)",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:nth-child(4)"
+  },
+  "armp_cd": {
+    "row":       ".appel-item, article.appel, table tr:not(:first-child)",
+    "ref":       "td:nth-child(1)",
+    "title":     "td:nth-child(2), h3, .title",
+    "authority": "td:nth-child(3), .entity",
+    "deadline":  "td:nth-child(4), .date"
+  },
+  "_fallback": {
+    "row":       "table tr:not(:first-child)",
+    "ref":       "td:first-child",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:last-child"
+  }
+}

@@ -1,6 +1,6 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
-import { fetchHtml, htmlToText } from './compliance-base';
+import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { searchGoogle } from './broad-search-engine';
 
 export interface BroadComplianceResource {
@@ -46,7 +46,12 @@ Rules:
       prompt,
     });
 
-    return object.resources.map((res: { title: string; description: string; issuingAuthority: string; category: BroadComplianceResource['category']; resourceType: BroadComplianceResource['resourceType']; sourceUrl: string }) => ({
+    return object.resources.map((res: {
+      title: string; description: string; issuingAuthority: string;
+      category: BroadComplianceResource['category'];
+      resourceType: BroadComplianceResource['resourceType'];
+      sourceUrl: string;
+    }) => ({
       title: res.title,
       description: res.description,
       issuingAuthority: res.issuingAuthority,
@@ -60,9 +65,9 @@ Rules:
   }
 }
 
-export async function discoverCompliance(query: string, maxPages: number = 100): Promise<BroadComplianceResource[]> {
+export async function discoverCompliance(query: string, maxPages: number = 5): Promise<BroadComplianceResource[]> {
   console.log(`[discoverCompliance] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 100);
+  const urls = await searchGoogle(query, 20);
   console.log(`[discoverCompliance] Found ${urls.length} viable URLs to scrape.`);
 
   const allResources: BroadComplianceResource[] = [];
@@ -70,22 +75,23 @@ export async function discoverCompliance(query: string, maxPages: number = 100):
 
   for (const url of urls) {
     if (pagesProcessed >= maxPages) break;
-    
+
     console.log(`[discoverCompliance] Scraping ${url}...`);
     const html = await fetchHtml(url);
     if (!html) continue;
 
-    const text = htmlToText(html, url);
+    // trafilatura-backed extraction (sidecar) — falls back to Cheerio if sidecar unavailable
+    const { text } = await htmlToTextEnriched(html, url);
     const resources = await extractComplianceWithAI(text, url);
-    
+
     if (resources.length > 0) {
       console.log(`[discoverCompliance] Extracted ${resources.length} resources from ${url}`);
       allResources.push(...resources);
     }
-    
+
     pagesProcessed++;
-    // Polite delay: 4s between pages
-    await new Promise(res => setTimeout(res, 4000));
+    // Polite delay between pages
+    await new Promise(res => setTimeout(res, 3000));
   }
 
   console.log(`[discoverCompliance] Finished. Total compliance resources discovered: ${allResources.length}`);

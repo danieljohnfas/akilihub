@@ -1,6 +1,6 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
-import { fetchHtml, htmlToText } from './compliance-base';
+import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 
 export interface BroadJobResource {
   title: string;
@@ -16,51 +16,96 @@ export interface BroadJobResource {
   salaryCurrency: string | null; // ISO 4217, e.g. "KES", "TZS"
 }
 
-/**
- * Searches Google using Serper.dev API to find relevant URLs.
- */
-export async function searchGoogle(query: string, numResults: number = 100): Promise<string[]> {
-  const apiKey = process.env.SERPER_API_KEY;
-  if (!apiKey) {
-    console.error('SERPER_API_KEY is missing');
+// ── Blocked job board domains (block heavy aggregators, prefer employer sites) ──
+const BLOCKED_DOMAINS = [
+  'linkedin.com', 'glassdoor.com', 'indeed.com', 'fuzu.com',
+  'brightermonday.co.ke', 'myjobmag.com', 'jobwebkenya.com',
+];
+
+// ── DuckDuckGo search via Python sidecar (free, no API key) ───────────────────
+async function searchDDGS(query: string, numResults: number): Promise<string[]> {
+  const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
+
+  try {
+    const res = await fetch(`${sidecarUrl}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, max_results: numResults, region: 'wt-wt' }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!res.ok) {
+      console.warn(`[searchDDGS] Sidecar /search returned ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.results)) return [];
+
+    const urls: string[] = data.results
+      .map((r: { url?: string }) => r.url)
+      .filter((u: string | undefined) => !!u && !BLOCKED_DOMAINS.some(d => u.includes(d)));
+
+    console.log(`[searchDDGS] DuckDuckGo returned ${urls.length} URLs for: "${query}"`);
+    return urls;
+  } catch (err) {
+    console.warn(`[searchDDGS] Failed:`, (err as Error).message);
     return [];
   }
+}
+
+// ── Serper.dev fallback (paid, used only when SERPER_API_KEY is set and ddgs fails) ──
+async function searchSerper(query: string, numResults: number): Promise<string[]> {
+  const apiKey = process.env.SERPER_API_KEY;
+  if (!apiKey) return [];
 
   try {
     const res = await fetch('https://google.serper.dev/search', {
       method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        q: query,
-        num: numResults
-      })
+      headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: query, num: numResults }),
     });
 
     if (!res.ok) {
-      console.error(`Serper API failed: ${res.statusText}`);
+      console.error(`[searchSerper] API failed: ${res.statusText}`);
       return [];
     }
 
     const data = await res.json();
     if (!data.organic || !Array.isArray(data.organic)) return [];
 
-    // Filter out standard job boards that block scrapers or aren't direct sources
-    const blockedDomains = ['linkedin.com', 'glassdoor.com', 'indeed.com', 'fuzu.com', 'brightermonday.co.ke', 'myjobmag.com'];
-    
     return data.organic
-      .map((item: any) => item.link)
-      .filter((link: string) => !blockedDomains.some(d => link.includes(d)));
+      .map((item: { link?: string }) => item.link)
+      .filter((link: string | undefined) => !!link && !BLOCKED_DOMAINS.some(d => link.includes(d)));
   } catch (error) {
-    console.error('Error searching Google:', error);
+    console.error('[searchSerper] Error:', error);
     return [];
   }
 }
 
 /**
- * Uses Gemini AI to extract Job postings from scraped text.
+ * Searches for relevant URLs.
+ * Primary:  DuckDuckGo via Python sidecar (FREE — no API key needed)
+ * Fallback: Serper.dev (only if SERPER_API_KEY is set and ddgs returns 0 results)
+ */
+export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
+  // Always try DuckDuckGo first (free)
+  const ddgsUrls = await searchDDGS(query, numResults);
+  if (ddgsUrls.length > 0) return ddgsUrls;
+
+  // Serper fallback (only if key is available)
+  if (process.env.SERPER_API_KEY) {
+    console.log(`[searchGoogle] DuckDuckGo returned 0 results — falling back to Serper`);
+    const serperUrls = await searchSerper(query, numResults);
+    if (serperUrls.length > 0) return serperUrls;
+  }
+
+  console.warn(`[searchGoogle] All search engines returned 0 results for: "${query}"`);
+  return [];
+}
+
+/**
+ * Uses AI to extract Job postings from scraped text.
  */
 export async function extractJobsWithAI(text: string, sourceUrl: string): Promise<BroadJobResource[]> {
   if (!text || text.length < 50) return [];
@@ -69,7 +114,7 @@ export async function extractJobsWithAI(text: string, sourceUrl: string): Promis
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 8000)}
+${text.substring(0, 12000)}
 
 Rules:
 - Extract any real job postings found in the text. Be comprehensive.
@@ -83,7 +128,6 @@ Rules:
 - For 'salaryCurrency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "USD"). Infer from context or country if not explicit. Use empty string if salary is completely absent.
 - Extract all open positions found. Return empty array if none found.
 `;
-
 
   try {
     const { object } = await generateObjectWithFallback({
@@ -105,7 +149,11 @@ Rules:
       prompt,
     });
 
-    return object.jobs.map((job: any) => {
+    return object.jobs.map((job: {
+      title: string; companyName: string; description: string; requirements: string;
+      location: string; jobType: BroadJobResource['jobType']; sourceUrl: string;
+      deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string;
+    }) => {
       let parsedDate = null;
       if (job.deadlineIsoString && job.deadlineIsoString.trim()) {
         const d = new Date(job.deadlineIsoString);
@@ -118,7 +166,7 @@ Rules:
         requirements: job.requirements || null,
         location: job.location || null,
         jobType: job.jobType,
-        sourceUrl: job.sourceUrl,
+        sourceUrl: job.sourceUrl || sourceUrl,
         deadline: parsedDate,
         salaryMin: job.salaryMin > 0 ? job.salaryMin : null,
         salaryMax: job.salaryMax > 0 ? job.salaryMax : null,
@@ -134,9 +182,9 @@ Rules:
 /**
  * Master function to run a broad search for jobs and extract them.
  */
-export async function discoverJobs(query: string, maxPages: number = 100): Promise<BroadJobResource[]> {
+export async function discoverJobs(query: string, maxPages: number = 5): Promise<BroadJobResource[]> {
   console.log(`[discoverJobs] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 100);
+  const urls = await searchGoogle(query, 20);
   console.log(`[discoverJobs] Found ${urls.length} viable URLs to scrape.`);
 
   const allJobs: BroadJobResource[] = [];
@@ -144,22 +192,22 @@ export async function discoverJobs(query: string, maxPages: number = 100): Promi
 
   for (const url of urls) {
     if (pagesProcessed >= maxPages) break;
-    
+
     console.log(`[discoverJobs] Scraping ${url}...`);
     const html = await fetchHtml(url);
     if (!html) continue;
 
-    const text = htmlToText(html, url);
+    const { text } = await htmlToTextEnriched(html, url);
     const jobs = await extractJobsWithAI(text, url);
-    
+
     if (jobs.length > 0) {
       console.log(`[discoverJobs] Extracted ${jobs.length} jobs from ${url}`);
       allJobs.push(...jobs);
     }
-    
+
     pagesProcessed++;
-    // Polite delay: 4s between pages keeps us well under the 20 req/min Gemini free-tier limit
-    await new Promise(res => setTimeout(res, 4000));
+    // Polite delay between pages
+    await new Promise(res => setTimeout(res, 3000));
   }
 
   console.log(`[discoverJobs] Finished. Total jobs discovered: ${allJobs.length}`);
