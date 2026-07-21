@@ -30,3 +30,25 @@ export async function saveComplianceDb(discovered: BroadComplianceResource[], co
   }
   return insertedCount;
 }
+
+import { inngest } from "./client";
+
+function makeComplianceScraper(id: string, name: string, cron: string, query: string, countryCode: string) {
+  return inngest.createFunction(
+    { id, name, triggers: [{ cron }] },
+    async ({ step }) => {
+      const insertedCount = await step.run("execute-compliance-scraper", async () => {
+        const discovered = await discoverCompliance(query, 1);
+        return await saveComplianceDb(discovered, countryCode);
+      });
+      return { message: `Scraped and inserted ${insertedCount} compliance resources for ${name}.` };
+    }
+  );
+}
+
+export const scrapeComplianceKenyaJob = makeComplianceScraper('scrape-compliance-kenya', '🇰🇪 Compliance Kenya', '0 3 * * *', 'business registration tax compliance KRA BRS Kenya forms', 'KE');
+export const scrapeComplianceTanzaniaJob = makeComplianceScraper('scrape-compliance-tanzania', '🇹🇿 Compliance Tanzania', '15 3 * * *', 'business registration tax compliance TRA BRELA Tanzania forms', 'TZ');
+export const scrapeComplianceUgandaJob = makeComplianceScraper('scrape-compliance-uganda', '🇺🇬 Compliance Uganda', '30 3 * * *', 'business registration tax compliance URA URSB Uganda forms', 'UG');
+export const scrapeComplianceRwandaJob = makeComplianceScraper('scrape-compliance-rwanda', '🇷🇼 Compliance Rwanda', '45 3 * * *', 'business registration tax compliance RRA RDB Rwanda forms', 'RW');
+export const scrapeComplianceEthiopiaJob = makeComplianceScraper('scrape-compliance-ethiopia', '🇪🇹 Compliance Ethiopia', '0 4 * * *', 'business registration tax compliance Ethiopia forms', 'ET');
+export const scrapeComplianceDRCJob = makeComplianceScraper('scrape-compliance-drc', '🇨🇩 Compliance DRC', '15 4 * * *', 'enregistrement entreprise conformite fiscale DGI RDC formulaires', 'CD');

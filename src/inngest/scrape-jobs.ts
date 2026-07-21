@@ -63,3 +63,6 @@ export const scrapeJobsKenyaJob    = makeJobScraper("scrape-jobs-kenya",    "�
 export const scrapeJobsTanzaniaJob = makeJobScraper("scrape-jobs-tanzania", "🇹🇿 Jobs Tanzania", "0 5 * * *",  "jobs vacancies Tanzania Dar es Salaam 2026", "TZ");
 export const scrapeJobsUgandaJob   = makeJobScraper("scrape-jobs-uganda",   "🇺🇬 Jobs Uganda",   "30 5 * * *", "jobs vacancies Uganda Kampala 2026", "UG");
 export const scrapeJobsRwandaJob   = makeJobScraper("scrape-jobs-rwanda",   "🇷🇼 Jobs Rwanda",   "0 6 * * *",  "jobs vacancies Rwanda Kigali 2026", "RW");
+
+export const scrapeJobsEthiopiaJob = makeJobScraper('scrape-jobs-ethiopia', '🇪🇹 Jobs Ethiopia', '30 6 * * *', 'jobs vacancies Ethiopia Addis Ababa 2026', 'ET');
+export const scrapeJobsDRCJob = makeJobScraper('scrape-jobs-drc', '🇨🇩 Jobs DRC', '0 7 * * *', 'offres emploi RDC Kinshasa 2026', 'CD');

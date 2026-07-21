@@ -15,9 +15,12 @@ import {
 
 // Compliance (now daily, broad search)
 import {
-  scrapeTRAResourcesJob,
-  scrapeKRAResourcesJob,
-  scrapeBRELAResourcesJob,
+  scrapeComplianceKenyaJob,
+  scrapeComplianceTanzaniaJob,
+  scrapeComplianceUgandaJob,
+  scrapeComplianceRwandaJob,
+  scrapeComplianceEthiopiaJob,
+  scrapeComplianceDRCJob,
 } from "@/inngest/scrape-compliance";
 
 // Jobs (new daily automation)
@@ -26,7 +29,29 @@ import {
   scrapeJobsTanzaniaJob,
   scrapeJobsUgandaJob,
   scrapeJobsRwandaJob,
+  scrapeJobsEthiopiaJob,
+  scrapeJobsDRCJob,
 } from "@/inngest/scrape-jobs";
+
+// Salaries
+import {
+  scrapeSalariesKenyaJob,
+  scrapeSalariesTanzaniaJob,
+  scrapeSalariesUgandaJob,
+  scrapeSalariesRwandaJob,
+  scrapeSalariesEthiopiaJob,
+  scrapeSalariesDRCJob,
+} from "@/inngest/scrape-salaries";
+
+// Health
+import {
+  scrapeHealthKenyaJob,
+  scrapeHealthTanzaniaJob,
+  scrapeHealthUgandaJob,
+  scrapeHealthRwandaJob,
+  scrapeHealthEthiopiaJob,
+  scrapeHealthDRCJob,
+} from "@/inngest/scrape-health";
 
 // Alerts and monitoring
 import { sendTenderAlertsJob } from "@/inngest/send-alerts";
@@ -48,16 +73,37 @@ export const { GET, POST, PUT } = serve({
     scrapePPPAEthiopiaJob,
     scrapeARMPCongoDRCJob,
 
-    // Compliance – 3-source daily broad search (03:00–04:00 UTC)
-    scrapeTRAResourcesJob,
-    scrapeKRAResourcesJob,
-    scrapeBRELAResourcesJob,
+    // Compliance – 6-country daily broad search
+    scrapeComplianceKenyaJob,
+    scrapeComplianceTanzaniaJob,
+    scrapeComplianceUgandaJob,
+    scrapeComplianceRwandaJob,
+    scrapeComplianceEthiopiaJob,
+    scrapeComplianceDRCJob,
 
-    // Jobs – 4-country daily broad search (04:30–06:00 UTC)
+    // Jobs – 6-country daily broad search
     scrapeJobsKenyaJob,
     scrapeJobsTanzaniaJob,
     scrapeJobsUgandaJob,
     scrapeJobsRwandaJob,
+    scrapeJobsEthiopiaJob,
+    scrapeJobsDRCJob,
+    
+    // Salaries
+    scrapeSalariesKenyaJob,
+    scrapeSalariesTanzaniaJob,
+    scrapeSalariesUgandaJob,
+    scrapeSalariesRwandaJob,
+    scrapeSalariesEthiopiaJob,
+    scrapeSalariesDRCJob,
+
+    // Health
+    scrapeHealthKenyaJob,
+    scrapeHealthTanzaniaJob,
+    scrapeHealthUgandaJob,
+    scrapeHealthRwandaJob,
+    scrapeHealthEthiopiaJob,
+    scrapeHealthDRCJob,
 
     // Tender new-record alerts (event-driven)
     sendTenderAlertsJob,

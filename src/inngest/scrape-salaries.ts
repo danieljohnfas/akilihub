@@ -61,3 +61,25 @@ export async function saveSalariesDb(discovered: BroadSalaryResource[], countryC
   }
   return insertedCount;
 }
+
+import { inngest } from "./client";
+
+function makeSalaryScraper(id: string, name: string, cron: string, query: string, countryCode: string) {
+  return inngest.createFunction(
+    { id, name, triggers: [{ cron }] },
+    async ({ step }) => {
+      const insertedCount = await step.run("execute-salary-scraper", async () => {
+        const discovered = await discoverSalaries(query, 1);
+        return await saveSalariesDb(discovered, countryCode);
+      });
+      return { message: `Scraped and inserted ${insertedCount} salaries for ${name}.` };
+    }
+  );
+}
+
+export const scrapeSalariesKenyaJob = makeSalaryScraper('scrape-salaries-kenya', '🇰🇪 Salaries Kenya', '0 7 * * *', 'average salary compensation benchmarks Kenya 2026', 'KE');
+export const scrapeSalariesTanzaniaJob = makeSalaryScraper('scrape-salaries-tanzania', '🇹🇿 Salaries Tanzania', '15 7 * * *', 'average salary compensation benchmarks Tanzania 2026', 'TZ');
+export const scrapeSalariesUgandaJob = makeSalaryScraper('scrape-salaries-uganda', '🇺🇬 Salaries Uganda', '30 7 * * *', 'average salary compensation benchmarks Uganda 2026', 'UG');
+export const scrapeSalariesRwandaJob = makeSalaryScraper('scrape-salaries-rwanda', '🇷🇼 Salaries Rwanda', '45 7 * * *', 'average salary compensation benchmarks Rwanda 2026', 'RW');
+export const scrapeSalariesEthiopiaJob = makeSalaryScraper('scrape-salaries-ethiopia', '🇪🇹 Salaries Ethiopia', '0 8 * * *', 'average salary compensation benchmarks Ethiopia 2026', 'ET');
+export const scrapeSalariesDRCJob = makeSalaryScraper('scrape-salaries-drc', '🇨🇩 Salaries DRC', '15 8 * * *', 'salaire moyen remuneration RDC Congo 2026', 'CD');

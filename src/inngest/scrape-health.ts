@@ -49,3 +49,25 @@ export async function saveHealthDb(discovered: BroadHealthResource[], countryCod
   }
   return insertedCount;
 }
+
+import { inngest } from "./client";
+
+function makeHealthScraper(id: string, name: string, cron: string, query: string, countryCode: string) {
+  return inngest.createFunction(
+    { id, name, triggers: [{ cron }] },
+    async ({ step }) => {
+      const insertedCount = await step.run("execute-health-scraper", async () => {
+        const discovered = await discoverHealth(query, 1);
+        return await saveHealthDb(discovered, countryCode);
+      });
+      return { message: `Scraped and inserted ${insertedCount} health data points for ${name}.` };
+    }
+  );
+}
+
+export const scrapeHealthKenyaJob = makeHealthScraper('scrape-health-kenya', '🇰🇪 Health Kenya', '0 8 * * *', 'public health statistics maternal mortality DHIS2 Kenya', 'KE');
+export const scrapeHealthTanzaniaJob = makeHealthScraper('scrape-health-tanzania', '🇹🇿 Health Tanzania', '15 8 * * *', 'public health statistics maternal mortality DHIS2 Tanzania', 'TZ');
+export const scrapeHealthUgandaJob = makeHealthScraper('scrape-health-uganda', '🇺🇬 Health Uganda', '30 8 * * *', 'public health statistics maternal mortality DHIS2 Uganda', 'UG');
+export const scrapeHealthRwandaJob = makeHealthScraper('scrape-health-rwanda', '🇷🇼 Health Rwanda', '45 8 * * *', 'public health statistics maternal mortality DHIS2 Rwanda', 'RW');
+export const scrapeHealthEthiopiaJob = makeHealthScraper('scrape-health-ethiopia', '🇪🇹 Health Ethiopia', '0 9 * * *', 'public health statistics maternal mortality DHIS2 Ethiopia', 'ET');
+export const scrapeHealthDRCJob = makeHealthScraper('scrape-health-drc', '🇨🇩 Health DRC', '15 9 * * *', 'statistiques sante publique mortalite maternelle RDC Congo', 'CD');
