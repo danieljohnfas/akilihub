@@ -125,10 +125,11 @@ export default async function JobsPage({
   const uniqueCompanies = uniqueCompaniesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
   
   const locationsByCountry = uniqueLocationsData.reduce((acc, curr) => {
-    if (!curr.name) return acc;
     const country = curr.country || 'Other';
     if (!acc[country]) acc[country] = [];
-    acc[country].push(curr.name);
+    if (curr.name) {
+      acc[country].push(curr.name);
+    }
     return acc;
   }, {} as Record<string, string[]>);
   
