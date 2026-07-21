@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/auth/actions';
 import { NavUserMenu } from '@/components/shared/NavUserMenu';
 import { DesktopNav, MobileNavLinks } from '@/components/shared/NavLinks';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -31,6 +32,7 @@ export async function Navbar() {
         
         <div className="flex items-center gap-4">
           <GlobalSearch />
+          <ThemeToggle />
           
           <div className="hidden md:flex items-center gap-2">
             {user ? (

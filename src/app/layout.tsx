@@ -7,6 +7,7 @@ import { AIChatPanel } from "@/components/ai/AIChatPanel";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildOrganizationSchema, buildWebSiteSchema } from "@/components/seo/schemas";
 import { ClarityAnalytics } from "@/components/analytics/Clarity";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -88,7 +89,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-KE">
+    <html lang="en-KE" suppressHydrationWarning>
       <head>
         <JsonLd schema={buildOrganizationSchema()} />
         <JsonLd schema={buildWebSiteSchema()} />
@@ -101,12 +102,19 @@ export default function RootLayout({
       <body className={inter.className}>
         <ClarityAnalytics />
         <PostHogProvider>
-          <Navbar />
-          <main className="min-h-screen">
-            {children}
-          </main>
-          <Footer />
-          <AIChatPanel />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Navbar />
+            <main className="min-h-screen">
+              {children}
+            </main>
+            <Footer />
+            <AIChatPanel />
+          </ThemeProvider>
         </PostHogProvider>
       </body>
     </html>
