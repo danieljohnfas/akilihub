@@ -183,6 +183,7 @@ export default async function AccountPage() {
                           sourceUrl={tender.sourceUrl}
                           postedDate={tender.postedDate}
                           deadline={tender.deadline}
+                          documentUrl={tender.documentUrl}
                         />
                       );
                     }

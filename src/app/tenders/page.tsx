@@ -172,6 +172,16 @@ export default async function TendersPage({
             </div>
           </div>
 
+          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10 mr-2">
+            <SlidersHorizontal className="h-4 w-4" />
+          </Button>
+          <Button asChild variant="outline" className="shrink-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300">
+            <Link href="/tenders/calendar">
+              <Calendar className="h-4 w-4 mr-2" />
+              Calendar
+            </Link>
+          </Button>
+
           <Button type="submit" className="w-full md:w-auto h-10 px-8">
             Filter Results
           </Button>
@@ -223,6 +233,7 @@ export default async function TendersPage({
               deadline={tender.deadline}
               budget={tender.budget}
               currency={tender.currency}
+              documentUrl={tender.documentUrl}
             />
           ))}
         </div>
