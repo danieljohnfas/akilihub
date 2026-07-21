@@ -71,6 +71,22 @@ getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
   });
 });
 
+// -- MINIMAX --
+// Uses OpenAI-compatible endpoint.
+getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
+  const { createOpenAI } = require('@ai-sdk/openai');
+  const minimax = createOpenAI({ 
+    apiKey: key,
+    baseURL: 'https://api.minimax.chat/v1',
+  });
+  keyPool.register({
+    id: `minimax-m3-${i + 1}`,
+    name: `Minimax M3 (${i + 1})`,
+    model: minimax('MiniMax-Text-01'), // or abab6.5s-chat depending on user's exact M3 mapping
+    supportsStructured: true, // Uses OpenAI structured output wrapper
+  });
+});
+
 // -- OPENROUTER --
 // Re-enable when credits are added.
 // getEnvKeys('OPENROUTER_API_KEY').forEach(...)
