@@ -138,7 +138,9 @@ export function buildJobPostingSchema(job: JobPostingInput): Record<string, unkn
     "@type": "JobPosting",
     "@id": `${BASE_URL}/jobs/${job.id}`,
     title: job.title,
-    description: job.description ?? `${job.title} at ${job.companyName}`,
+    description: (job.description && job.description !== 'null' && job.description.trim() !== '') 
+      ? job.description 
+      : `${job.title} at ${job.companyName}`,
     hiringOrganization: {
       "@type": "Organization",
       name: job.companyName,

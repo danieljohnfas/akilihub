@@ -15,49 +15,43 @@ export interface BroadComplianceResource {
 export async function extractComplianceWithAI(text: string, sourceUrl: string): Promise<BroadComplianceResource[]> {
   if (!text || text.length < 50) return [];
 
-  const prompt = `You are a specialized AI assistant that extracts compliance requirements, tax forms, business registration guidelines, and regulatory notices from raw website text.
+  const prompt = `You are a specialized AI assistant that extracts business compliance, tax, and registration information from raw website text.
 Source URL: ${sourceUrl}
 
 Scraped content:
 ${text.substring(0, 12000)}
 
 Rules:
-- Extract any real compliance resources, forms, guidelines, or notices found in the text.
-- If multiple resources are listed, extract all of them.
-- Only extract actionable regulatory/compliance information.
-- Ensure the source URL is correct (use the provided Source URL unless a specific direct link to a PDF or form is found).
-- If no compliance resources are found, return an empty array.
-- Try to classify the category as tax, business_registration, employment, environment, health_safety, or sector_specific.
-- Try to classify the resource type as form, calculator, guideline, or notice.
+- Extract any compliance requirements, official forms, guidelines, or regulatory notices found in the text. Be comprehensive.
+- For 'title': The name of the compliance requirement or form (e.g. "VAT Registration", "PAYE Form").
+- For 'description': A brief explanation of what it is and who needs it.
+- For 'category': Must be one of: tax, business_registration, employment, environment, health_safety, sector_specific.
+- For 'issuingAuthority': The government body (e.g. "KRA", "TRA", "URSB").
+- For 'resourceType': Must be one of: form, calculator, guideline, notice.
+- Extract all compliance resources found. Return empty array if none found.
 `;
 
   try {
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         resources: z.array(z.object({
-          title: z.string().min(5),
-          description: z.string().min(10),
-          issuingAuthority: z.string().min(2),
+          title: z.string().min(3),
+          description: z.string(),
           category: z.enum(['tax', 'business_registration', 'employment', 'environment', 'health_safety', 'sector_specific']),
+          issuingAuthority: z.string(),
           resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
-          sourceUrl: z.string(),
         }))
       }),
       prompt,
     });
 
-    return object.resources.map((res: {
-      title: string; description: string; issuingAuthority: string;
-      category: BroadComplianceResource['category'];
-      resourceType: BroadComplianceResource['resourceType'];
-      sourceUrl: string;
-    }) => ({
-      title: res.title,
-      description: res.description,
-      issuingAuthority: res.issuingAuthority,
-      category: res.category,
-      resourceType: res.resourceType,
-      sourceUrl: res.sourceUrl,
+    return object.resources.map((r: any) => ({
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      issuingAuthority: r.issuingAuthority,
+      resourceType: r.resourceType,
+      sourceUrl,
     }));
   } catch (err) {
     console.error(`[extractComplianceWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
@@ -65,9 +59,9 @@ Rules:
   }
 }
 
-export async function discoverCompliance(query: string, maxPages: number = 5): Promise<BroadComplianceResource[]> {
+export async function discoverCompliance(query: string, maxPages: number = 3): Promise<BroadComplianceResource[]> {
   console.log(`[discoverCompliance] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 20);
+  const urls = await searchGoogle(query, 10);
   console.log(`[discoverCompliance] Found ${urls.length} viable URLs to scrape.`);
 
   const allResources: BroadComplianceResource[] = [];
@@ -80,7 +74,6 @@ export async function discoverCompliance(query: string, maxPages: number = 5): P
     const html = await fetchHtml(url);
     if (!html) continue;
 
-    // trafilatura-backed extraction (sidecar) — falls back to Cheerio if sidecar unavailable
     const { text } = await htmlToTextEnriched(html, url);
     const resources = await extractComplianceWithAI(text, url);
 
@@ -90,10 +83,9 @@ export async function discoverCompliance(query: string, maxPages: number = 5): P
     }
 
     pagesProcessed++;
-    // Polite delay between pages
-    await new Promise(res => setTimeout(res, 3000));
+    await new Promise(res => setTimeout(res, 2000));
   }
 
-  console.log(`[discoverCompliance] Finished. Total compliance resources discovered: ${allResources.length}`);
+  console.log(`[discoverCompliance] Finished. Total resources discovered: ${allResources.length}`);
   return allResources;
 }

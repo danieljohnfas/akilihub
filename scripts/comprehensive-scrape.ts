@@ -3,26 +3,62 @@ import { tenders } from '../src/lib/db/schema/tenders';
 import { jobs } from '../src/lib/db/schema/jobs';
 import { countries } from '../src/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
-import { FirecrawlStrategy, CrawleeStrategy, type TenderResult, type PortalType } from '../src/lib/strategies/scraper-strategies';
+import { FirecrawlStrategy, CrawleeStrategy, ScraplingStrategy, Crawl4AiStrategy, MaxunStrategy, type TenderResult, type PortalType } from '../src/lib/strategies/scraper-strategies';
 import { StrategyEngine } from '../src/lib/strategies/engine';
 import { discoverTenders } from '../src/lib/scrapers/broad-search-engine-tenders';
 import { discoverJobs } from '../src/lib/scrapers/broad-search-engine';
+import { discoverSalaries } from '../src/lib/scrapers/broad-search-engine-salaries';
+import { discoverCompliance } from '../src/lib/scrapers/broad-search-engine-compliance';
+import { discoverHealth } from '../src/lib/scrapers/broad-search-engine-health';
 import { saveTenderResults, saveBroadResults } from '../src/inngest/scrape-tenders';
 import { saveJobs as saveJobsDb } from '../src/inngest/scrape-jobs';
+import { saveSalariesDb } from '../src/inngest/scrape-salaries';
+import { saveComplianceDb } from '../src/inngest/scrape-compliance';
+import { saveHealthDb } from '../src/inngest/scrape-health';
 
 const PORTALS: Array<{ id: string; name: string; countryCode: string; portalType: PortalType; url: string; broadSearchQuery: string }> = [
   { id: "scrape-tenders-tanzania", name: "🇹🇿 Tenders Tanzania", countryCode: "TZ", portalType: "ppra_tz", url: "https://www.ppra.go.tz/tenders", broadSearchQuery: "government tenders Tanzania 2026" },
   { id: "scrape-tenders-kenya", name: "🇰🇪 Tenders Kenya", countryCode: "KE", portalType: "ppoa_ke", url: "https://tenders.go.ke/tenders/open", broadSearchQuery: "government tenders Kenya 2026" },
   { id: "scrape-tenders-uganda", name: "🇺🇬 Tenders Uganda", countryCode: "UG", portalType: "ppda_ug", url: "https://gpp.ppda.go.ug/public/bid-invitations", broadSearchQuery: "government tenders Uganda 2026" },
-  { id: "scrape-tenders-rwanda", name: "🇷🇼 Tenders Rwanda", countryCode: "RW", portalType: "rppa_rw", url: "https://www.rppa.gov.rw/index.php?id=33", broadSearchQuery: "government tenders Rwanda 2026" },
-  { id: "scrape-tenders-ethiopia", name: "🇪🇹 Tenders Ethiopia", countryCode: "ET", portalType: "pppa_et", url: "https://www.pppa.gov.et/index.php/procurement-opportunities", broadSearchQuery: "government tenders Ethiopia 2026" },
+  { id: 'rw_rppa', name: 'Rwanda Public Procurement', countryCode: 'RW', portalType: 'modern', url: 'https://www.umucyo.gov.rw/', broadSearchQuery: 'government tenders procurement Rwanda 2026' },
+  { id: 'et_ppa', name: 'Ethiopia Public Procurement', countryCode: 'ET', portalType: 'modern', url: 'https://egp.ppa.gov.et/', broadSearchQuery: 'government tenders procurement Ethiopia 2026' },
+  { id: 'cd_armp', name: 'DRC Autorité de Régulation', countryCode: 'CD', portalType: 'modern', url: 'https://www.armp-rdc.cd/', broadSearchQuery: 'appels d\'offres gouvernementaux marchés publics RDC Congo 2026' }
 ];
 
-const JOB_SEARCHES = [
-  { name: "🇰🇪 Jobs Kenya", query: "jobs hiring in Nairobi Kenya 2026", countryCode: "KE" },
-  { name: "🇹🇿 Jobs Tanzania", query: "jobs vacancies Tanzania Dar es Salaam 2026", countryCode: "TZ" },
-  { name: "🇺🇬 Jobs Uganda", query: "jobs vacancies Uganda Kampala 2026", countryCode: "UG" },
-  { name: "🇷🇼 Jobs Rwanda", query: "jobs vacancies Rwanda Kigali 2026", countryCode: "RW" },
+const JOB_QUERIES = [
+  { country: 'Kenya', code: 'KE', query: 'jobs vacancies Kenya Nairobi 2026' },
+  { country: 'Tanzania', code: 'TZ', query: 'jobs vacancies Tanzania Dar es Salaam 2026' },
+  { country: 'Uganda', code: 'UG', query: 'jobs vacancies Uganda Kampala 2026' },
+  { country: 'Rwanda', code: 'RW', query: 'jobs vacancies Rwanda Kigali 2026' },
+  { country: 'Ethiopia', code: 'ET', query: 'jobs vacancies Ethiopia Addis Ababa 2026' },
+  { country: 'DRC', code: 'CD', query: 'offres d\'emploi RDC Kinshasa 2026' },
+];
+
+const SALARY_QUERIES = [
+  { country: 'Kenya', code: 'KE', query: 'average salary compensation benchmarks Kenya 2026' },
+  { country: 'Tanzania', code: 'TZ', query: 'average salary compensation benchmarks Tanzania 2026' },
+  { country: 'Uganda', code: 'UG', query: 'average salary compensation benchmarks Uganda 2026' },
+  { country: 'Rwanda', code: 'RW', query: 'average salary compensation benchmarks Rwanda 2026' },
+  { country: 'Ethiopia', code: 'ET', query: 'average salary compensation benchmarks Ethiopia 2026' },
+  { country: 'DRC', code: 'CD', query: 'salaire moyen rémunération RDC Congo 2026' },
+];
+
+const COMPLIANCE_QUERIES = [
+  { country: 'Kenya', code: 'KE', query: 'business registration tax compliance KRA BRS Kenya forms' },
+  { country: 'Tanzania', code: 'TZ', query: 'business registration tax compliance TRA BRELA Tanzania forms' },
+  { country: 'Uganda', code: 'UG', query: 'business registration tax compliance URA URSB Uganda forms' },
+  { country: 'Rwanda', code: 'RW', query: 'business registration tax compliance RRA RDB Rwanda forms' },
+  { country: 'Ethiopia', code: 'ET', query: 'business registration tax compliance Ethiopia forms' },
+  { country: 'DRC', code: 'CD', query: 'enregistrement entreprise conformité fiscale DGI RDC formulaires' },
+];
+
+const HEALTH_QUERIES = [
+  { country: 'Kenya', code: 'KE', query: 'public health statistics maternal mortality DHIS2 Kenya' },
+  { country: 'Tanzania', code: 'TZ', query: 'public health statistics maternal mortality DHIS2 Tanzania' },
+  { country: 'Uganda', code: 'UG', query: 'public health statistics maternal mortality DHIS2 Uganda' },
+  { country: 'Rwanda', code: 'RW', query: 'public health statistics maternal mortality DHIS2 Rwanda' },
+  { country: 'Ethiopia', code: 'ET', query: 'public health statistics maternal mortality DHIS2 Ethiopia' },
+  { country: 'DRC', code: 'CD', query: 'statistiques santé publique mortalité maternelle RDC Congo' },
 ];
 
 async function getCountryId(code: string) {
@@ -32,9 +68,19 @@ async function getCountryId(code: string) {
 
 async function main() {
   console.log("=== COMPREHENSIVE SCRAPE (ONLINE ONLY) ===");
-  console.log("Using ONLY cloud strategies: Firecrawl, Crawlee, and AI Broad Search.\n");
+  console.log("Using ALL strategies: Scrapling, Firecrawl, Crawlee, Crawl4Ai, Maxun, and AI Broad Search.\n");
 
-  const engine = new StrategyEngine([new FirecrawlStrategy(), new CrawleeStrategy()]);
+  // Force the strategies to use the live Render URL instead of localhost
+  process.env.SIDECAR_URL = process.env.SCRAPLING_URL;
+  console.log("Sidecar URL set to: " + process.env.SIDECAR_URL);
+
+  const engine = new StrategyEngine([
+    new ScraplingStrategy(),
+    new FirecrawlStrategy(),
+    new CrawleeStrategy(),
+    new Crawl4AiStrategy(),
+    new MaxunStrategy()
+  ]);
 
   console.log("--- TENDERS ---");
   for (const portal of PORTALS) {
@@ -70,19 +116,43 @@ async function main() {
   }
 
   console.log("\n--- JOBS ---");
-  for (const job of JOB_SEARCHES) {
-    console.log(`\nAI Broad Search for ${job.name}...`);
+  for (const job of JOB_QUERIES) {
+    console.log(`\nAI Broad Search for ${job.country} Jobs...`);
     try {
       const discovered = await discoverJobs(job.query, 2);
       console.log(`🤖 AI Router extracted ${discovered.length} jobs via Search.`);
-      const inserted = await saveJobsDb(discovered, job.countryCode);
+      const inserted = await saveJobsDb(discovered, job.code);
       console.log(`-> Inserted ${inserted} new jobs.`);
     } catch (e: any) {
-      console.log(`❌ AI Search failed for ${job.name}: ${e.message}`);
+      console.log(`❌ AI Search failed for ${job.country}: ${e.message}`);
     }
   }
-  
-  console.log("\n=== SCRAPE COMPLETE ===");
+
+  console.log("\n--- SALARIES ---");
+  for (const q of SALARY_QUERIES) {
+    console.log(`\nAI Broad Search for ${q.country} Salaries...`);
+    const results = await discoverSalaries(q.query, 1);
+    const inserted = await saveSalariesDb(results, q.code);
+    console.log(`-> Inserted ${inserted} new salaries.`);
+  }
+
+  console.log("\n--- COMPLIANCE ---");
+  for (const q of COMPLIANCE_QUERIES) {
+    console.log(`\nAI Broad Search for ${q.country} Compliance...`);
+    const results = await discoverCompliance(q.query, 1);
+    const inserted = await saveComplianceDb(results, q.code);
+    console.log(`-> Inserted ${inserted} new compliance resources.`);
+  }
+
+  console.log("\n--- HEALTH ---");
+  for (const q of HEALTH_QUERIES) {
+    console.log(`\nAI Broad Search for ${q.country} Health...`);
+    const results = await discoverHealth(q.query, 1);
+    const inserted = await saveHealthDb(results, q.code);
+    console.log(`-> Inserted ${inserted} new health data points.`);
+  }
+
+  console.log("\n=== SCRAPE COMPLETE ===\n");
   process.exit(0);
 }
 
