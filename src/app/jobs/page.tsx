@@ -55,7 +55,7 @@ const PAGE_SIZE = 30;
 export default async function JobsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string; company?: string; location?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; company?: string; location?: string; time?: string; layout?: string; page?: string }>;
 }) {
   const params = await searchParams;
   const q = params.q || '';
