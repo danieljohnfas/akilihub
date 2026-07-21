@@ -37,25 +37,33 @@ Rules:
 - For 'netMonthlySalary': The net salary if stated, otherwise 0 (will map to null).
 - For 'yearsOfExperience': Years required or possessed, otherwise 0.
 - Extract all salary data points found. Return empty array if none found.
+- If 'employerName' is unknown, use "Market Average".
+- If 'jobCategoryName' is unknown, use "General".
+- If 'employmentType' is unknown, use "full_time".
+- If 'currency' is unknown, use "USD".
+- If 'netMonthlySalary' is unknown, use 0.
+- If 'yearsOfExperience' is unknown, use 0.
 `;
 
   try {
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         salaries: z.array(z.object({
-          jobTitle: z.string().min(3),
-          employerName: z.string().default('Market Average'),
-          jobCategoryName: z.string().default('General'),
+          jobTitle: z.string(),
+          employerName: z.string(),
+          jobCategoryName: z.string(),
           experienceLevel: z.enum(['entry', 'mid', 'senior', 'executive']),
-          employmentType: z.enum(['full_time', 'part_time', 'contract', 'consultancy']).default('full_time'),
-          currency: z.string().default('USD'),
-          grossMonthlySalary: z.number().min(1),
-          netMonthlySalary: z.number().default(0),
-          yearsOfExperience: z.number().default(0),
+          employmentType: z.enum(['full_time', 'part_time', 'contract', 'consultancy']),
+          currency: z.string(),
+          grossMonthlySalary: z.number(),
+          netMonthlySalary: z.number(),
+          yearsOfExperience: z.number(),
         }))
       }),
       prompt,
     });
+
+    if (!object || !object.salaries) return [];
 
     return object.salaries.map((s: any) => ({
       jobTitle: s.jobTitle,

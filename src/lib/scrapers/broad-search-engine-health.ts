@@ -31,22 +31,27 @@ Rules:
 - For 'value': The actual statistic or number as a float/integer.
 - For 'year': The year the data represents (e.g. 2023). If not stated, use 2024.
 - Extract all health data points found. Return empty array if none found.
+- If 'unit' is unknown, use "count".
+- If 'category' is unknown, use "general".
+- If 'year' is unknown, use 2024.
 `;
 
   try {
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         dataPoints: z.array(z.object({
-          indicatorCode: z.string().min(2).max(10),
-          indicatorName: z.string().min(3),
-          unit: z.string().default('count'),
-          category: z.enum(['maternal', 'child', 'infectious', 'general']).default('general'),
+          indicatorCode: z.string(),
+          indicatorName: z.string(),
+          unit: z.string(),
+          category: z.enum(['maternal', 'child', 'infectious', 'general']),
           value: z.number(),
-          year: z.number().default(2024),
+          year: z.number(),
         }))
       }),
       prompt,
     });
+
+    if (!object || !object.dataPoints) return [];
 
     return object.dataPoints.map((dp: any) => ({
       indicatorCode: dp.indicatorCode,

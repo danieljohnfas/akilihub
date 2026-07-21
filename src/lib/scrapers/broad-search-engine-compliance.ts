@@ -35,7 +35,7 @@ Rules:
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         resources: z.array(z.object({
-          title: z.string().min(3),
+          title: z.string(),
           description: z.string(),
           category: z.enum(['tax', 'business_registration', 'employment', 'environment', 'health_safety', 'sector_specific']),
           issuingAuthority: z.string(),
@@ -44,6 +44,8 @@ Rules:
       }),
       prompt,
     });
+
+    if (!object || !object.resources) return [];
 
     return object.resources.map((r: any) => ({
       title: r.title,

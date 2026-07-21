@@ -92,7 +92,7 @@ export async function fetchHtml(url: string): Promise<string | null> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, use_stealth: true }),
-      signal: AbortSignal.timeout(60_000), // Chromium takes time to start
+      signal: AbortSignal.timeout(90_000), // Chromium takes time to start
     });
 
     if (res.ok) {
@@ -274,7 +274,7 @@ Rules:
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         resources: z.array(z.object({
-          title: z.string().min(3),
+          title: z.string(),
           description: z.string(),
           resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
           sourceUrl: z.string(),
@@ -282,6 +282,8 @@ Rules:
       }),
       prompt: fullPrompt,
     });
+
+    if (!object || !object.resources) return [];
 
     console.log(`[extractResourcesWithAI] AI extracted ${object.resources.length} resources`);
     return object.resources;
