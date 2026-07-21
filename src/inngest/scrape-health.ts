@@ -50,7 +50,7 @@ export async function saveHealthDb(discovered: BroadHealthResource[], countryCod
   return insertedCount;
 }
 
-import { inngest } from "./client";
+
 
 function makeHealthScraper(id: string, name: string, cron: string, query: string, countryCode: string) {
   return inngest.createFunction(

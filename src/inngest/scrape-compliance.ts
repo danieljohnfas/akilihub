@@ -31,7 +31,7 @@ export async function saveComplianceDb(discovered: BroadComplianceResource[], co
   return insertedCount;
 }
 
-import { inngest } from "./client";
+
 
 function makeComplianceScraper(id: string, name: string, cron: string, query: string, countryCode: string) {
   return inngest.createFunction(

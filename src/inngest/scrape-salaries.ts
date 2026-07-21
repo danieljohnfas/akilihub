@@ -62,7 +62,7 @@ export async function saveSalariesDb(discovered: BroadSalaryResource[], countryC
   return insertedCount;
 }
 
-import { inngest } from "./client";
+
 
 function makeSalaryScraper(id: string, name: string, cron: string, query: string, countryCode: string) {
   return inngest.createFunction(
