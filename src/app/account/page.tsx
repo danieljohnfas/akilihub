@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { db, safeQuery } from '@/lib/db/client';
-import { users, userAlerts } from '@/lib/db/schema/users';
+import { users, userAlerts, bookmarks } from '@/lib/db/schema/users';
 import { countries } from '@/lib/db/schema/shared';
-import { eq } from 'drizzle-orm';
+import { jobs } from '@/lib/db/schema/jobs';
+import { tenders } from '@/lib/db/schema/tenders';
+import { eq, and, desc } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -10,7 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { updateProfile, createAlert, deleteAlert, toggleAlert } from './actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, User, Trash2 } from 'lucide-react';
+import { Bell, User, Trash2, Bookmark } from 'lucide-react';
+import { JobCard } from '@/components/jobs/JobCard';
+import { TenderCard } from '@/components/tenders/TenderCard';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // seconds — Vercel Hobby allows up to 60s
@@ -29,10 +33,22 @@ export default async function AccountPage() {
   }
 
   // Run all DB queries in parallel to avoid sequential waterfall latency
-  const [dbUserResult, alerts, allCountries] = await Promise.all([
+  const [dbUserResult, alerts, allCountries, userBookmarks] = await Promise.all([
     safeQuery(db.select().from(users).where(eq(users.id, user.id))),
     safeQuery(db.select().from(userAlerts).where(eq(userAlerts.userId, user.id))),
     safeQuery(db.select().from(countries)),
+    safeQuery(
+      db.select({
+        bookmark: bookmarks,
+        job: jobs,
+        tender: tenders,
+      })
+      .from(bookmarks)
+      .where(eq(bookmarks.userId, user.id))
+      .leftJoin(jobs, and(eq(bookmarks.itemId, jobs.id), eq(bookmarks.itemType, 'job')))
+      .leftJoin(tenders, and(eq(bookmarks.itemId, tenders.id), eq(bookmarks.itemType, 'tender')))
+      .orderBy(desc(bookmarks.createdAt))
+    )
   ]);
 
   const dbUser = dbUserResult[0];
@@ -50,6 +66,10 @@ export default async function AccountPage() {
             <TabsTrigger value="profile" className="flex items-center gap-2 px-4">
               <User className="w-4 h-4" />
               Profile
+            </TabsTrigger>
+            <TabsTrigger value="bookmarks" className="flex items-center gap-2 px-4">
+              <Bookmark className="w-4 h-4" />
+              Saved Items
             </TabsTrigger>
             <TabsTrigger value="alerts" className="flex items-center gap-2 px-4">
               <Bell className="w-4 h-4" />
@@ -118,6 +138,59 @@ export default async function AccountPage() {
                 </p>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="bookmarks" className="space-y-6">
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl font-semibold">Your Saved Items</h2>
+              {(!userBookmarks || userBookmarks.length === 0) ? (
+                <div className="rounded-xl border border-dashed border-white/20 p-12 text-center text-muted-foreground">
+                  You haven't saved any items yet.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {userBookmarks.map(({ bookmark, job, tender }) => {
+                    if (bookmark.itemType === 'job' && job) {
+                      return (
+                        <JobCard
+                          key={bookmark.id}
+                          id={job.id}
+                          title={job.title}
+                          companyName={job.companyName}
+                          description={job.description}
+                          requirements={job.requirements}
+                          location={job.location}
+                          country={allCountries.find(c => c.id === job.countryId)?.name || 'Africa'}
+                          jobType={job.jobType ?? 'full_time'}
+                          sourceUrl={job.sourceUrl}
+                          postedDate={job.postedDate}
+                          deadline={job.deadline}
+                          layout="grid"
+                        />
+                      );
+                    }
+                    if (bookmark.itemType === 'tender' && tender) {
+                      return (
+                        <TenderCard
+                          key={bookmark.id}
+                          id={tender.id}
+                          title={tender.title}
+                          buyerName={tender.buyerName}
+                          description={tender.description}
+                          location={tender.location}
+                          country={allCountries.find(c => c.id === tender.countryId)?.name || 'Africa'}
+                          tenderType={tender.tenderType ?? 'works'}
+                          sourceUrl={tender.sourceUrl}
+                          postedDate={tender.postedDate}
+                          deadline={tender.deadline}
+                        />
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="alerts" className="space-y-6">
