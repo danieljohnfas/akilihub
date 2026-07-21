@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/client';
 import { bookmarks } from '@/lib/db/schema/users';
 import { and, eq } from 'drizzle-orm';
 import { createServerClient } from '@supabase/ssr';
