@@ -14,8 +14,9 @@ import { Redis } from '@upstash/redis';
 
 export const maxDuration = 30; // Extend Vercel timeout for tool calling
 
-// 10 requests per minute per IP — protects the AI key pool from abuse
-const ratelimit = process.env.UPSTASH_REDIS_REST_URL
+// 10 requests per minute per IP — protects the AI key pool from abuse.
+// Guard: only instantiate if the URL is a real https:// endpoint (not a placeholder).
+const ratelimit = process.env.UPSTASH_REDIS_REST_URL?.startsWith('https://')
   ? new Ratelimit({
       redis: Redis.fromEnv(),
       limiter: Ratelimit.slidingWindow(10, '1 m'),
