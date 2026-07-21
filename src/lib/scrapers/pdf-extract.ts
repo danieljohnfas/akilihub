@@ -24,7 +24,7 @@ import { db } from '../db/client';
 import { tenderAttachments } from '../db/schema/attachments';
 
 // Lazily import pdf-parse only when needed (keeps cold starts fast)
-async function parsePdf(buffer: Buffer): Promise<string> {
+export async function parsePdf(buffer: Buffer): Promise<string> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pdfParse = require('pdf-parse');
@@ -82,7 +82,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
  * Download a single document URL and return { buffer, sizeBytes }.
  * Returns null if the fetch fails or times out.
  */
-async function downloadDocument(url: string): Promise<{ buffer: Buffer; sizeBytes: number } | null> {
+export async function downloadDocument(url: string): Promise<{ buffer: Buffer; sizeBytes: number } | null> {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': UA, Accept: 'application/pdf,application/octet-stream,*/*' },

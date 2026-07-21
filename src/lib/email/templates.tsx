@@ -451,3 +451,142 @@ export function PasswordResetEmail({ resetLink, name }: PasswordResetEmailProps)
     </EmailWrapper>
   );
 }
+
+// ─── 5. Daily Digest ─────────────────────────────────────────────────────────
+
+export interface DigestItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  url: string;
+}
+
+export interface DailyDigestEmailProps {
+  name?: string;
+  items: DigestItem[];
+}
+
+export function DailyDigestEmail({ name, items }: DailyDigestEmailProps) {
+  const count = items.length;
+  return (
+    <EmailWrapper preview={`Your AkiliBrain Daily Digest: ${count} new matches`}>
+      <Heading
+        style={{ fontSize: "22px", fontWeight: "700", color: "#ffffff", margin: "0 0 8px" }}
+      >
+        📬 Daily Intelligence Digest
+      </Heading>
+      <Text style={{ color: TEXT_MUTED, fontSize: "14px", margin: "0 0 24px" }}>
+        {name ? `Hi ${name}, here` : "Here"} are the latest opportunities that match your active alerts in the last 24 hours.
+      </Text>
+
+      {items.slice(0, 15).map((item) => (
+        <Section
+          key={item.id}
+          style={{
+            backgroundColor: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "8px",
+            padding: "16px",
+            marginBottom: "12px",
+          }}
+        >
+          <Text style={{ color: "#ffffff", fontSize: "15px", fontWeight: "600", margin: "0 0 4px" }}>
+            {item.title}
+          </Text>
+          <Text style={{ color: TEXT_MUTED, fontSize: "13px", margin: "0 0 12px" }}>
+            {item.subtitle}
+          </Text>
+          <Button
+            href={item.url}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.05)",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "6px",
+              padding: "8px 16px",
+              fontSize: "12px",
+              fontWeight: "600",
+              textDecoration: "none",
+            }}
+          >
+            View Details →
+          </Button>
+        </Section>
+      ))}
+
+      {count > 15 && (
+        <Text style={{ color: TEXT_MUTED, fontSize: "13px", textAlign: "center", marginTop: "16px" }}>
+          + {count - 15} more matches available on your dashboard.
+        </Text>
+      )}
+    </EmailWrapper>
+  );
+}
+
+// ─── 6. Weekly Newsletter ─────────────────────────────────────────────────────────
+
+export interface WeeklyNewsletterEmailProps {
+  name?: string;
+  topTenders: DigestItem[];
+  topJobs: DigestItem[];
+}
+
+export function WeeklyNewsletterEmail({ name, topTenders, topJobs }: WeeklyNewsletterEmailProps) {
+  return (
+    <EmailWrapper preview="Your AkiliBrain Weekly Intelligence Recap">
+      <Heading
+        style={{ fontSize: "24px", fontWeight: "700", color: "#ffffff", margin: "0 0 8px" }}
+      >
+        🌍 The AkiliBrain Weekly
+      </Heading>
+      <Text style={{ color: TEXT_MUTED, fontSize: "14px", margin: "0 0 24px" }}>
+        {name ? `Hi ${name}, here's` : "Here's"} a summary of the top government and private sector opportunities across East Africa this week.
+      </Text>
+
+      {topTenders.length > 0 && (
+        <Section style={{ marginBottom: "24px" }}>
+          <Heading style={{ fontSize: "18px", color: BRAND_COLOR, margin: "0 0 12px" }}>
+            🏆 Top Tenders of the Week
+          </Heading>
+          {topTenders.map(t => (
+            <Text key={t.id} style={{ color: "#ffffff", fontSize: "14px", margin: "0 0 8px" }}>
+              • <Link href={t.url} style={{ color: "#ffffff", textDecoration: "none", fontWeight: "600" }}>{t.title}</Link> 
+              <br/><span style={{ color: TEXT_MUTED, fontSize: "12px", marginLeft: "12px" }}>{t.subtitle}</span>
+            </Text>
+          ))}
+        </Section>
+      )}
+
+      {topJobs.length > 0 && (
+        <Section style={{ marginBottom: "24px" }}>
+          <Heading style={{ fontSize: "18px", color: "#10b981", margin: "0 0 12px" }}>
+            💼 Featured Job Openings
+          </Heading>
+          {topJobs.map(j => (
+            <Text key={j.id} style={{ color: "#ffffff", fontSize: "14px", margin: "0 0 8px" }}>
+              • <Link href={j.url} style={{ color: "#ffffff", textDecoration: "none", fontWeight: "600" }}>{j.title}</Link> 
+              <br/><span style={{ color: TEXT_MUTED, fontSize: "12px", marginLeft: "12px" }}>{j.subtitle}</span>
+            </Text>
+          ))}
+        </Section>
+      )}
+
+      <Section style={{ textAlign: "center" as const, marginTop: "24px" }}>
+        <Button
+          href={`${BASE_URL}/account`}
+          style={{
+            backgroundColor: BRAND_COLOR,
+            color: "#ffffff",
+            borderRadius: "8px",
+            padding: "12px 28px",
+            fontSize: "14px",
+            fontWeight: "600",
+            textDecoration: "none",
+          }}
+        >
+          View Your Full Account →
+        </Button>
+      </Section>
+    </EmailWrapper>
+  );
+}

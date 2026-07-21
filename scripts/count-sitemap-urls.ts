@@ -6,6 +6,7 @@ const sql = postgres(process.env.DATABASE_URL + '?sslmode=require');
 
 async function run() {
   try {
+    await sql`SET statement_timeout = 60000`; // 60 seconds
     const [tendersRes] = await sql`SELECT count(*) FROM tenders`;
     const [jobsRes] = await sql`SELECT count(*) FROM jobs WHERE is_active = true`;
     const [businessesRes] = await sql`SELECT count(*) FROM businesses WHERE status = 'active'`;

@@ -106,7 +106,7 @@ getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `deepseek-${i + 1}`,
     name: `DeepSeek Chat (${i + 1})`,
-    model: deepseek('deepseek-chat'),
+    model: deepseek('deepseek-v4-flash'),
     supportsStructured: true,
   });
 });
@@ -118,7 +118,7 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `sambanova-${i + 1}`,
     name: `SambaNova Llama3.1 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.1-70B-Instruct'),
+    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
     supportsStructured: true,
   });
 });
@@ -130,7 +130,7 @@ getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `cerebras-${i + 1}`,
     name: `Cerebras Llama3.1 70B (${i + 1})`,
-    model: cerebras('llama3.1-70b'),
+    model: cerebras('gemma-4-31b'),
     supportsStructured: true,
   });
 });
@@ -142,7 +142,7 @@ getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `hyperbolic-${i + 1}`,
     name: `Hyperbolic Llama3.1 70B (${i + 1})`,
-    model: hyperbolic('meta-llama/Meta-Llama-3.1-70B-Instruct'),
+    model: hyperbolic('meta-llama/Llama-3.3-70B-Instruct'),
     supportsStructured: true,
   });
 });

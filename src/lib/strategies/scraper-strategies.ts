@@ -204,76 +204,6 @@ export class FirecrawlStrategy implements Strategy<ScraperInput, TenderResult[]>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STRATEGY 3: Crawlee/Playwright — stealth JS browser, free, runs locally
-// Upgraded from CheerioCrawler (plain HTTP, no JS) to PlaywrightCrawler.
-// Crawlee has built-in fingerprint generation so no extra stealth plugin needed.
-// ─────────────────────────────────────────────────────────────────────────────
-export class CrawleeStrategy implements Strategy<ScraperInput, TenderResult[]> {
-  name = 'Crawlee (Playwright Stealth)';
-
-  async execute(input: ScraperInput): Promise<TenderResult[]> {
-    console.log(`[CrawleeStrategy] Scraping ${input.url} with Playwright stealth...`);
-    let results: TenderResult[] = [];
-
-    try {
-      // Dynamic import — Playwright only on environments that have it installed
-      const { PlaywrightCrawler } = await import('@crawlee/playwright');
-
-      const crawler = new PlaywrightCrawler({
-        maxRequestsPerCrawl: 1,
-        requestHandlerTimeoutSecs: 60,
-        navigationTimeoutSecs: 45,
-        // Crawlee's built-in browser fingerprint rotation — no extra stealth plugin needed
-        browserPoolOptions: {
-          fingerprintOptions: {
-            fingerprintGeneratorOptions: {
-              browsers: ['chrome'],
-              operatingSystems: ['windows', 'linux', 'macos'],
-            },
-          },
-        },
-
-        async requestHandler({ page, request, log }) {
-          log.info(`CrawleeStrategy: scraping ${request.url}`);
-          // Wait for the main content to render
-          await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
-          const html = await page.content();
-          results = extractFromHtml(html, input.portalType, request.url);
-          log.info(`CrawleeStrategy: extracted ${results.length} tenders`);
-        },
-
-        failedRequestHandler({ request, log }) {
-          log.error(`CrawleeStrategy: failed to scrape ${request.url} after retries.`);
-        },
-      });
-
-      await crawler.run([input.url]);
-    } catch (importErr) {
-      // @crawlee/playwright may not be installed — fall back to CheerioCrawler
-      console.warn(`[CrawleeStrategy] PlaywrightCrawler unavailable, falling back to CheerioCrawler:`, (importErr as Error).message);
-      const { CheerioCrawler, RequestList } = await import('@crawlee/cheerio');
-
-      const requestList = await RequestList.open(null, [input.url]);
-      const crawler = new CheerioCrawler({
-        requestList,
-        maxRequestRetries: 2,
-        requestHandlerTimeoutSecs: 45,
-        navigationTimeoutSecs: 30,
-        async requestHandler({ $, request }) {
-          const html = $.html();
-          results = extractFromHtml(html, input.portalType, request.url);
-        },
-        failedRequestHandler({ request, log }) {
-          log.error(`Failed to scrape ${request.url} after retries.`);
-        },
-      });
-      await crawler.run();
-    }
-
-    return results;
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STRATEGY 4: Crawl4AI — via Python sidecar /crawl4ai endpoint
@@ -326,28 +256,3 @@ export class Crawl4AiStrategy implements Strategy<ScraperInput, TenderResult[]> 
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STRATEGY 5: Maxun — local Docker only, fails fast (5s) in production
-// ─────────────────────────────────────────────────────────────────────────────
-export class MaxunStrategy implements Strategy<ScraperInput, TenderResult[]> {
-  name = 'Maxun (Visual API)';
-
-  async execute(input: ScraperInput): Promise<TenderResult[]> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    try {
-      const response = await fetch('http://localhost:8080/api/run-robot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ robotId: input.portalType, url: input.url }),
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error(`Maxun API failed: ${response.status}`);
-      const data = await response.json();
-      return data.tenders as TenderResult[];
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-}

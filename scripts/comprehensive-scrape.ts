@@ -3,7 +3,7 @@ import { tenders } from '../src/lib/db/schema/tenders';
 import { jobs } from '../src/lib/db/schema/jobs';
 import { countries } from '../src/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
-import { FirecrawlStrategy, CrawleeStrategy, ScraplingStrategy, Crawl4AiStrategy, MaxunStrategy, type TenderResult, type PortalType } from '../src/lib/strategies/scraper-strategies';
+import { FirecrawlStrategy, ScraplingStrategy, Crawl4AiStrategy, type TenderResult, type PortalType } from '../src/lib/strategies/scraper-strategies';
 import { StrategyEngine } from '../src/lib/strategies/engine';
 import { discoverTenders } from '../src/lib/scrapers/broad-search-engine-tenders';
 import { discoverJobs } from '../src/lib/scrapers/broad-search-engine';
@@ -77,9 +77,7 @@ async function main() {
   const engine = new StrategyEngine([
     new ScraplingStrategy(),
     new FirecrawlStrategy(),
-    new CrawleeStrategy(),
-    new Crawl4AiStrategy(),
-    new MaxunStrategy()
+    new Crawl4AiStrategy()
   ]);
 
   console.log("--- TENDERS ---");

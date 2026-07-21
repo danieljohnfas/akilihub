@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
+import { downloadDocument, parsePdf } from './pdf-extract';
 
 export interface ComplianceResource {
   title: string;
@@ -147,15 +148,42 @@ export async function htmlToTextEnriched(
   html: string,
   baseUrl: string,
 ): Promise<{ text: string; pdfLinks: string[] }> {
+  let text = '';
+  let pdfLinks: string[] = [];
+
   // Try sidecar trafilatura extraction first (best quality)
   const sidecarResult = await extractTextViaSidecar(baseUrl, html);
   if (sidecarResult) {
     console.log(`[htmlToText:trafilatura] ${sidecarResult.text.length} chars, ${sidecarResult.pdfLinks.length} PDF links`);
-    return sidecarResult;
+    text = sidecarResult.text;
+    pdfLinks = sidecarResult.pdfLinks;
+  } else {
+    // Fallback: local Cheerio extraction
+    text = htmlToText(html, baseUrl);
+    pdfLinks = extractPdfLinksFromHtml(html, baseUrl);
   }
 
-  // Fallback: local Cheerio extraction
-  return { text: htmlToText(html, baseUrl), pdfLinks: extractPdfLinksFromHtml(html, baseUrl) };
+  // Optimize: Actually read the contents of the first 2 PDFs found
+  if (pdfLinks.length > 0) {
+    console.log(`[pdf-extract] Attempting to parse text from ${Math.min(pdfLinks.length, 2)} PDF(s) for ${baseUrl}`);
+    for (const link of pdfLinks.slice(0, 2)) {
+      try {
+        const doc = await downloadDocument(link);
+        if (doc && doc.buffer) {
+          const pdfText = await parsePdf(doc.buffer);
+          if (pdfText && pdfText.length > 50) {
+            console.log(`[pdf-extract] Successfully extracted ${pdfText.length} chars from ${link}`);
+            // Append PDF text, capped to ~10k chars to avoid blowing up the prompt
+            text += `\n\n--- CONTENT FROM ATTACHED PDF (${link}) ---\n${pdfText.substring(0, 10000)}`;
+          }
+        }
+      } catch (err) {
+        console.warn(`[pdf-extract] Failed to parse PDF ${link}:`, (err as Error).message);
+      }
+    }
+  }
+
+  return { text, pdfLinks };
 }
 
 /**
