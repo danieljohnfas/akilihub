@@ -77,10 +77,10 @@ export function GlobalSearch() {
       <button
         id="global-search-trigger"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white hover:bg-white/10 transition-all"
+        className="flex items-center justify-center md:justify-start gap-2 w-9 h-9 md:w-auto md:h-auto md:px-3 md:py-1.5 rounded-full md:rounded-lg bg-white/5 border border-white/10 text-sm text-white/50 hover:text-white hover:bg-white/10 transition-all"
       >
-        <Search className="w-3.5 h-3.5" />
-        <span>Search...</span>
+        <Search className="w-4 h-4 md:w-3.5 md:h-3.5" />
+        <span className="hidden md:inline">Search...</span>
         <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-white/10 text-white/40">
           Ctrl K
         </kbd>

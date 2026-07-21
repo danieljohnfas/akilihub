@@ -5,7 +5,8 @@ import { eq, desc, ilike, and, sql } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, Inbox } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowRight, Calendar, Building, FileText, Globe } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -54,17 +55,19 @@ const PAGE_SIZE = 20;
 export default async function TendersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; sector?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; sector?: string; page?: string; country?: string }>;
 }) {
   const params = await searchParams;
   const q = params.q || '';
   const status = params.status || 'open';
+  const countryParam = params.country === 'all' ? '' : (params.country || '');
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(tenders.title, `%${q}%`) : undefined,
     status ? eq(tenders.status, status as never) : undefined,
+    countryParam ? eq(countries.name, countryParam) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -83,6 +86,15 @@ export default async function TendersPage({
     .limit(PAGE_SIZE)
     .offset(offset));
 
+  // Fetch unique countries for the filter dropdown
+  const uniqueCountriesData = await safeQuery(
+    db.selectDistinct({ name: countries.name })
+      .from(tenders)
+      .innerJoin(countries, eq(tenders.countryId, countries.id))
+  );
+  const uniqueCountriesList = uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+
+
   const itemListSchema = buildItemListSchema(
     'Government Tenders in East Africa',
     'Latest government tenders and procurement opportunities across Kenya, Tanzania, Uganda, and Rwanda.',
@@ -99,6 +111,8 @@ export default async function TendersPage({
     { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
   ]);
 
+  const hasFilters = q || status !== 'open' || countryParam;
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
       {data.length > 0 && <JsonLd schema={itemListSchema} />}
@@ -111,37 +125,61 @@ export default async function TendersPage({
             Discover and track government tenders and contracts from across the continent.
           </p>
         </div>
-        
-        <form className="w-full max-w-md flex items-center gap-2" action="/tenders" method="GET">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              name="q"
-              placeholder="Search tenders..." 
-              className="pl-9 bg-white/5 border-white/10 focus-visible:ring-primary/50"
-              defaultValue={q}
-            />
-            {status && <input type="hidden" name="status" value={status} />}
-          </div>
-          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10">
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </form>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {['all', 'open', 'closed', 'awarded', 'cancelled'].map((s) => (
-          <Link key={s} href={`/tenders?${new URLSearchParams({ ...(q ? { q } : {}), ...(s !== 'all' ? { status: s } : {}) }).toString()}`}>
-            <Button
-              variant={status === s || (s === 'all' && !status) ? 'default' : 'secondary'}
-              size="sm"
-              className="rounded-full"
-            >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </Button>
-          </Link>
-        ))}
+      {/* Filter Panel */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+        <form className="flex flex-col md:flex-row gap-4 items-end" action="/tenders" method="GET">
+          {status && <input type="hidden" name="status" value={status} />}
+          
+          <div className="space-y-1.5 flex-1 w-full">
+            <label className="text-xs text-muted-foreground font-medium pl-1">Search Keywords</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                name="q"
+                placeholder="Search tenders..."
+                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
+                defaultValue={q}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5 flex-1 w-full md:max-w-xs">
+            <label className="text-xs text-muted-foreground font-medium pl-1">Country</label>
+            <div className="relative">
+              <Select name="country" defaultValue={countryParam || 'all'}>
+                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 px-3 py-2 text-sm text-foreground">
+                  <SelectValue placeholder="All Countries" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {uniqueCountriesList.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full md:w-auto h-10 px-8">
+            Filter Results
+          </Button>
+        </form>
+
+        <div className="pt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {['all', 'open', 'closed', 'awarded', 'cancelled'].map((s) => (
+            <Link key={s} href={`/tenders?${new URLSearchParams({ ...(q ? { q } : {}), ...(countryParam ? { country: countryParam } : {}), ...(s !== 'all' ? { status: s } : {}) }).toString()}`}>
+              <Button
+                variant={status === s || (s === 'all' && !status) ? 'default' : 'secondary'}
+                size="sm"
+                className="rounded-full whitespace-nowrap h-8 text-xs bg-black/20"
+              >
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </Button>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Grid */}
@@ -154,7 +192,7 @@ export default async function TendersPage({
           <p className="text-muted-foreground max-w-md">
             We couldn&apos;t find any tenders matching your current search criteria. Try adjusting your filters or search term.
           </p>
-          {(q || status !== 'open') && (
+          {hasFilters && (
             <Link href="/tenders" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
               Clear all filters
             </Link>
@@ -185,7 +223,7 @@ export default async function TendersPage({
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
           {page > 1 && (
             <Link
-              href={`/tenders?q=${q}&status=${status}&page=${page - 1}`}
+              href={`/tenders?q=${q}&status=${status}&country=${countryParam}&page=${page - 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
@@ -194,7 +232,7 @@ export default async function TendersPage({
           <span className="text-sm text-muted-foreground">Page {page}</span>
           {data.length === PAGE_SIZE && (
             <Link
-              href={`/tenders?q=${q}&status=${status}&page=${page + 1}`}
+              href={`/tenders?q=${q}&status=${status}&country=${countryParam}&page=${page + 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →

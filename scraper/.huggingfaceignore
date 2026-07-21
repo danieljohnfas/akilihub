@@ -1,0 +1,9 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+crawl_data/
+node_modules/
+fastvenv/

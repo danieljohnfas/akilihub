@@ -12,16 +12,7 @@ import { Icon } from '@iconify/react';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/auth/actions';
 import { NavUserMenu } from '@/components/shared/NavUserMenu';
-
-const navLinks = [
-  { href: '/tenders', label: 'Tenders', icon: 'solar:document-text-bold-duotone' },
-  { href: '/jobs', label: 'Jobs', icon: 'solar:case-round-bold-duotone' },
-  { href: '/compliance', label: 'Compliance', icon: 'solar:shield-check-bold-duotone' },
-  { href: '/health', label: 'Health Data', icon: 'solar:heart-pulse-bold-duotone' },
-  { href: '/salaries', label: 'Salaries', icon: 'solar:wallet-money-bold-duotone' },
-  { href: '/guides', label: 'Insights', icon: 'solar:book-bookmark-bold-duotone' },
-  { href: '/developers', label: 'Dev Tools', icon: 'solar:code-circle-bold-duotone' },
-];
+import { DesktopNav, MobileNavLinks } from '@/components/shared/NavLinks';
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -35,24 +26,11 @@ export async function Navbar() {
             <Logo className="h-6 w-6" />
             <span className="font-bold text-xl inline-block">AkiliBrain</span>
           </Link>
-          <nav className="hidden md:flex gap-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Icon icon={link.icon} className="w-4 h-4 text-primary/70" />
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <DesktopNav />
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="hidden md:block">
-            <GlobalSearch />
-          </div>
+          <GlobalSearch />
           
           <div className="hidden md:flex items-center gap-2">
             {user ? (
@@ -73,16 +51,7 @@ export async function Navbar() {
             </SheetTrigger>
             <SheetContent side="right">
               <div className="flex flex-col gap-4 mt-8">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex items-center gap-2 text-lg font-medium text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <Icon icon={link.icon} className="w-5 h-5 text-primary/70" />
-                    {link.label}
-                  </Link>
-                ))}
+                <MobileNavLinks />
                 
                 <div className="mt-4 pt-4 border-t border-white/10">
                   {user ? (

@@ -5,6 +5,7 @@ import { eq, desc, ilike, and, or, isNull, gt } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Inbox, Briefcase, Building2, MapPin, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyStateLottie } from '@/components/ui/empty-state-lottie';
@@ -58,9 +59,9 @@ export default async function JobsPage({
 }) {
   const params = await searchParams;
   const q = params.q || '';
-  const type = params.type || '';
-  const company = params.company || '';
-  const location = params.location || '';
+  const type = params.type === 'all' ? '' : (params.type || '');
+  const company = params.company === 'all' ? '' : (params.company || '');
+  const location = params.location === 'all' ? '' : (params.location || '');
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -195,16 +196,17 @@ export default async function JobsPage({
             <label className="text-xs text-muted-foreground font-medium pl-1">Who is recruiting?</label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <select
-                name="company"
-                defaultValue={company}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/20 pl-9 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 appearance-none text-foreground"
-              >
-                <option value="">All Companies</option>
-                {uniqueCompanies.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <Select name="company" defaultValue={company || 'all'}>
+                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 pl-9">
+                  <SelectValue placeholder="All Companies" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Companies</SelectItem>
+                  {uniqueCompanies.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -212,21 +214,23 @@ export default async function JobsPage({
             <label className="text-xs text-muted-foreground font-medium pl-1">Location</label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <select
-                name="location"
-                defaultValue={location}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/20 pl-9 pr-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 appearance-none text-foreground"
-              >
-                <option value="">All Locations</option>
-                {sortedCountries.map(country => (
-                  <optgroup key={country} label={country} className="bg-black/90 text-white font-semibold">
-                    <option value={`country:${country}`} className="font-normal text-primary">All {country}</option>
-                    {locationsByCountry[country].map(l => (
-                      <option key={l} value={l} className="font-normal">{l}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+              <Select name="location" defaultValue={location || 'all'}>
+                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 pl-9">
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {sortedCountries.map(country => (
+                    <SelectGroup key={country}>
+                      <SelectLabel className="text-white font-semibold">{country}</SelectLabel>
+                      <SelectItem value={`country:${country}`} className="text-primary font-medium pl-6">All {country}</SelectItem>
+                      {locationsByCountry[country].map(l => (
+                        <SelectItem key={l} value={l} className="pl-6">{l}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
