@@ -354,6 +354,7 @@ export default async function JobsPage({
               sourceUrl={job.sourceUrl}
               postedDate={job.postedDate}
               deadline={job.deadline}
+              createdAt={job.createdAt}
               layout={layout}
             />
           ))}

@@ -192,13 +192,15 @@ export default async function JobDetailPage({
           )}
 
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
-              <p className="text-sm text-muted-foreground mb-1">Posted</p>
-              <p className="font-medium flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                {job.postedDate ? format(job.postedDate, 'PPP') : 'Recently'}
-              </p>
-            </div>
+            {job.postedDate && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
+                <p className="text-sm text-muted-foreground mb-1">Posted</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  {format(job.postedDate, 'PPP')}
+                </p>
+              </div>
+            )}
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
               <p className="text-sm text-muted-foreground mb-1">Last Crawled</p>
               <p className="font-medium flex items-center gap-2">
