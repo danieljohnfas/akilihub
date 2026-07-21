@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internal Server Error | AkiliBrain</title>
+  <style>
+    :root {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --brand: 221.2 83.2% 53.3%;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .container {
+      max-w-md: 400px;
+      padding: 2rem;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 1rem;
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin: 0;
+      background: linear-gradient(to right, #ef4444, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 0.5rem;
+      color: rgba(255,255,255,0.9);
+    }
+    p {
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+    .btn {
+      display: inline-block;
+      background-color: hsl(var(--brand));
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .meta {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.3);
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>500</h1>
+    <h2>Internal Server Error</h2>
+    <p>Something went wrong on our end. Our engineering team has been notified. Please try refreshing or come back later.</p>
+    <a href="/" class="btn">Return Home</a>
+    <div class="meta">
+      Error: ::vercel:ERROR_CODE::<br>
+      ID: ::vercel:REQUEST_ID::
+    </div>
+  </div>
+</body>
+</html>

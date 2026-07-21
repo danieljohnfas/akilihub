@@ -32,24 +32,23 @@ export default async function AccountPage() {
     redirect('/login');
   }
 
-  // Run all DB queries in parallel to avoid sequential waterfall latency
-  const [dbUserResult, alerts, allCountries, userBookmarks] = await Promise.all([
-    safeQuery(db.select().from(users).where(eq(users.id, user.id))),
-    safeQuery(db.select().from(userAlerts).where(eq(userAlerts.userId, user.id))),
-    safeQuery(db.select().from(countries)),
-    safeQuery(
-      db.select({
-        bookmark: bookmarks,
-        job: jobs,
-        tender: tenders,
-      })
-      .from(bookmarks)
-      .where(eq(bookmarks.userId, user.id))
-      .leftJoin(jobs, and(eq(bookmarks.itemId, jobs.id), eq(bookmarks.itemType, 'job')))
-      .leftJoin(tenders, and(eq(bookmarks.itemId, tenders.id), eq(bookmarks.itemType, 'tender')))
-      .orderBy(desc(bookmarks.createdAt))
-    )
-  ]);
+  // Run queries sequentially because Vercel Serverless environment + Postgres max: 1 pool
+  // can deadlock or timeout when trying to resolve 4 concurrent queries.
+  const dbUserResult = await safeQuery(db.select().from(users).where(eq(users.id, user.id)));
+  const alerts = await safeQuery(db.select().from(userAlerts).where(eq(userAlerts.userId, user.id)));
+  const allCountries = await safeQuery(db.select().from(countries));
+  const userBookmarks = await safeQuery(
+    db.select({
+      bookmark: bookmarks,
+      job: jobs,
+      tender: tenders,
+    })
+    .from(bookmarks)
+    .where(eq(bookmarks.userId, user.id))
+    .leftJoin(jobs, and(eq(bookmarks.itemId, jobs.id), eq(bookmarks.itemType, 'job')))
+    .leftJoin(tenders, and(eq(bookmarks.itemId, tenders.id), eq(bookmarks.itemType, 'tender')))
+    .orderBy(desc(bookmarks.createdAt))
+  );
 
   const dbUser = dbUserResult[0];
 
