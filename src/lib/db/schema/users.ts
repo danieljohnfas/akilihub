@@ -25,3 +25,13 @@ export const userAlerts = pgTable('user_alerts', {
   lastSentAt: timestamp('last_sent_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
+
+export const bookmarkItemTypeEnum = pgEnum('bookmark_item_type', ['job', 'tender', 'guide']);
+
+export const bookmarks = pgTable('bookmarks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  itemType: bookmarkItemTypeEnum('item_type').notNull(),
+  itemId: uuid('item_id').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});

@@ -1,9 +1,11 @@
 import Link from 'next/link';
-import { Calendar, Building2, MapPin, DollarSign, FileText } from 'lucide-react';
+import { Calendar, Building2, MapPin, DollarSign, FileText, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
+import { BookmarkButton } from '@/components/shared/BookmarkButton';
+import { ShareButton } from '@/components/shared/ShareButton';
 
 export interface TenderCardProps {
   id: string;
@@ -99,15 +101,16 @@ export function TenderCard({
         </div>
         <Link 
           href={`/tenders/${id}`}
-          className={buttonVariants({ 
-            size: "sm", 
-            variant: "secondary", 
-            className: "group-hover:bg-primary group-hover:text-primary-foreground transition-all" 
-          })}
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          View Details
-        </Link>
+          className="absolute inset-0 z-10"
+        />
+        <div className="flex items-center gap-2">
+          <BookmarkButton itemId={id} itemType="tender" className="hover:bg-white/10" />
+          <ShareButton url={`/tenders/${id}`} title={title} className="hover:bg-white/10" />
+          <div className="relative z-20 flex items-center text-sm font-medium text-primary group-hover:text-primary/80 transition-colors ml-2">
+            View Details
+            <ExternalLink className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        </div>
       </CardFooter>
     </Card>
   );

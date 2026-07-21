@@ -4,6 +4,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
+import { BookmarkButton } from '@/components/shared/BookmarkButton';
+import { ShareButton } from '@/components/shared/ShareButton';
 
 export interface JobCardProps {
   id: string;
@@ -76,11 +78,15 @@ export function JobCard({
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto mt-2 md:mt-0">
+        <div className="flex items-center gap-4 w-full md:w-auto mt-2 md:mt-0">
           <Badge variant="outline" className={`text-xs border ${jobTypeColors[jobType]}`}>
             {jobTypeLabels[jobType]}
           </Badge>
-          <div className="flex items-center gap-1.5 text-xs text-white/60 md:w-32 md:justify-end">
+          <div className="flex items-center gap-1">
+            <BookmarkButton itemId={id} itemType="job" />
+            <ShareButton url={`/jobs/${id}`} title={title} />
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-white/60 md:w-32 md:justify-end ml-auto md:ml-0">
             <Calendar className="w-3.5 h-3.5" />
             <span className="truncate">
               {deadline ? (isExpired ? 'Closed' : `Due ${formatDistanceToNow(deadline)}`) : postedDate ? `${formatDistanceToNow(postedDate)}` : 'Recent'}
@@ -157,9 +163,13 @@ export function JobCard({
             <span>Posted recently</span>
           )}
         </div>
-        <div className="relative z-20 flex items-center text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
-          View Details
-          <ExternalLink className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-0.5" />
+        <div className="flex items-center gap-2">
+          <BookmarkButton itemId={id} itemType="job" className="hover:bg-white/10" />
+          <ShareButton url={`/jobs/${id}`} title={title} className="hover:bg-white/10" />
+          <div className="relative z-20 flex items-center text-sm font-medium text-primary group-hover:text-primary/80 transition-colors ml-2">
+            View Details
+            <ExternalLink className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
         </div>
       </CardFooter>
     </Card>
