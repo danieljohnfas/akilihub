@@ -20,6 +20,7 @@ export interface TenderCardProps {
   referenceNo: string;
   contractingAuthority: string;
   country: string;
+  region?: string;
   sector?: string;
   status: 'open' | 'closed' | 'awarded' | 'cancelled';
   deadline: Date;
@@ -34,6 +35,7 @@ export function TenderCard({
   referenceNo,
   contractingAuthority,
   country,
+  region,
   sector,
   status,
   deadline,
@@ -80,9 +82,15 @@ export function TenderCard({
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <MapPin className="w-4 h-4 shrink-0" />
           <span>{country}</span>
+          {region && (
+            <>
+              <span className="text-white/20">•</span>
+              <span className="truncate">{region}</span>
+            </>
+          )}
           {sector && (
             <>
               <span className="text-white/20">•</span>

@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, uuid, boolean, pgEnum } from 'drizzle-orm/pg-core';
-import { countries } from './shared';
+import { countries, regions } from './shared';
 
 export const alertFrequencyEnum = pgEnum('alert_frequency', ['immediate', 'daily', 'weekly']);
 
@@ -8,6 +8,7 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   fullName: text('full_name'),
   countryId: uuid('country_id').references(() => countries.id),
+  regionId: uuid('region_id').references(() => regions.id),
   isPro: boolean('is_pro').notNull().default(false),
   proExpiresAt: timestamp('pro_expires_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -20,6 +21,7 @@ export const userAlerts = pgTable('user_alerts', {
   module: text('module').notNull(), // 'tenders' | 'compliance' | 'health' | 'salaries'
   keywords: text('keywords').array(),
   countryId: uuid('country_id').references(() => countries.id),
+  regionId: uuid('region_id').references(() => regions.id),
   frequency: alertFrequencyEnum('frequency').notNull().default('daily'),
   isActive: boolean('is_active').notNull().default(true),
   lastSentAt: timestamp('last_sent_at'),

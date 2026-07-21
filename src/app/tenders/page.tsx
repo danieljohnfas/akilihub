@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { tenders, tenderSectors } from '@/lib/db/schema/tenders';
-import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, sql, count } from 'drizzle-orm';
+import { countries, regions } from '@/lib/db/schema/shared';
+import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -82,10 +82,12 @@ export default async function TendersPage({
       tender: tenders,
       country: countries.name,
       sector: tenderSectors.name,
+      region: regions.name,
     })
     .from(tenders)
     .leftJoin(countries, eq(tenders.countryId, countries.id))
     .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
+    .leftJoin(regions, eq(tenders.regionId, regions.id))
     .where(whereClause)
     .orderBy(desc(tenders.publishedAt))
     .limit(PAGE_SIZE)
@@ -221,7 +223,7 @@ export default async function TendersPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map(({ tender, country, sector }) => (
+          {data.map(({ tender, country, sector, region }) => (
             <TenderCard
               key={tender.id}
               id={tender.id}
@@ -229,6 +231,7 @@ export default async function TendersPage({
               referenceNo={tender.referenceNo}
               contractingAuthority={tender.contractingAuthority}
               country={country || 'Unknown'}
+              region={region || undefined}
               sector={sector || undefined}
               status={tender.status}
               deadline={tender.deadline}

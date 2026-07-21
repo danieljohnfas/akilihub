@@ -1,4 +1,5 @@
 import { generateObjectWithFallback } from '../ai/router';
+import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 
@@ -7,7 +8,7 @@ export interface BroadJobResource {
   companyName: string;
   description: string;
   requirements: string | null;
-  location: string | null;
+  regionId: string | null;
   jobType: 'full_time' | 'part_time' | 'contract' | 'internship' | 'remote';
   sourceUrl: string;
   deadline: Date | null;
@@ -149,7 +150,7 @@ Rules:
       prompt,
     });
 
-    return object.jobs.map((job: {
+    const rawJobs = object.jobs.map((job: {
       title: string; companyName: string; description: string; requirements: string;
       location: string; jobType: BroadJobResource['jobType']; sourceUrl: string;
       deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string;
@@ -160,19 +161,31 @@ Rules:
         if (!isNaN(d.getTime())) parsedDate = d;
       }
       return {
-        title: job.title,
-        companyName: job.companyName || 'Unknown',
-        description: job.description,
-        requirements: job.requirements || null,
-        location: job.location || null,
-        jobType: job.jobType,
-        sourceUrl: job.sourceUrl || sourceUrl,
-        deadline: parsedDate,
-        salaryMin: job.salaryMin > 0 ? job.salaryMin : null,
-        salaryMax: job.salaryMax > 0 ? job.salaryMax : null,
-        salaryCurrency: job.salaryCurrency?.trim() || null,
+        ...job,
+        parsedDate
       };
     });
+
+    const normalizedJobs = await Promise.all(
+      rawJobs.map(async (job: any) => {
+        const regionId = await normalizeLocationAndGetRegionId(job.location);
+        return {
+          title: job.title,
+          companyName: job.companyName || 'Unknown',
+          description: job.description,
+          requirements: job.requirements || null,
+          regionId: regionId,
+          jobType: job.jobType,
+          sourceUrl: job.sourceUrl || sourceUrl,
+          deadline: job.parsedDate,
+          salaryMin: job.salaryMin > 0 ? job.salaryMin : null,
+          salaryMax: job.salaryMax > 0 ? job.salaryMax : null,
+          salaryCurrency: job.salaryCurrency?.trim() || null,
+        };
+      })
+    );
+
+    return normalizedJobs;
   } catch (err) {
     console.error(`[extractJobsWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
     return [];

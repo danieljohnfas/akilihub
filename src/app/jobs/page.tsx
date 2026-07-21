@@ -1,6 +1,6 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
-import { countries } from '@/lib/db/schema/shared';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and, or, isNull, gt, count } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
 import { Input } from '@/components/ui/input';
@@ -77,7 +77,7 @@ export default async function JobsPage({
     q ? ilike(jobs.title, `%${q}%`) : undefined,
     type ? eq(jobs.jobType, type as never) : undefined,
     company ? eq(jobs.companyName, company) : undefined,
-    location ? (location.startsWith('country:') ? eq(countries.name, location.replace('country:', '')) : eq(jobs.location, location)) : undefined,
+    location ? (location.startsWith('country:') ? eq(countries.name, location.replace('country:', '')) : eq(regions.name, location)) : undefined,
     time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
     time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
     time === '90d' ? gt(jobs.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)) : undefined,
@@ -86,7 +86,11 @@ export default async function JobsPage({
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   const totalCountResult = await safeQuery(
-    db.select({ value: count() }).from(jobs).leftJoin(countries, eq(jobs.countryId, countries.id)).where(whereClause)
+    db.select({ value: count() })
+      .from(jobs)
+      .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
+      .where(whereClause)
   );
   const totalCount = totalCountResult?.[0]?.value || 0;
 
@@ -95,9 +99,11 @@ export default async function JobsPage({
       .select({
         job: jobs,
         country: countries.name,
+        region: regions.name,
       })
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
       .where(whereClause)
       .orderBy(desc(jobs.createdAt))
       .limit(PAGE_SIZE)
@@ -109,9 +115,10 @@ export default async function JobsPage({
     db.selectDistinct({ name: jobs.companyName }).from(jobs).where(activeCondition)
   );
   const uniqueLocationsData = await safeQuery(
-    db.selectDistinct({ name: jobs.location, country: countries.name })
+    db.selectDistinct({ name: regions.name, country: countries.name })
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
       .where(activeCondition)
   );
 
@@ -332,7 +339,7 @@ export default async function JobsPage({
             </div>
           </div>
           <div className={layout === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-3"}>
-            {data.map(({ job, country }) => (
+            {data.map(({ job, country, region }) => (
               <JobCard
                 key={job.id}
               id={job.id}
@@ -340,7 +347,7 @@ export default async function JobsPage({
               companyName={job.companyName}
               description={job.description}
               requirements={job.requirements}
-              location={job.location}
+              location={region || null}
               country={country || 'Africa'}
               jobType={job.jobType ?? 'full_time'}
               sourceUrl={job.sourceUrl}

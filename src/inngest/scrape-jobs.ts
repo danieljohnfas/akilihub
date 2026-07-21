@@ -22,7 +22,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
         companyName: job.companyName,
         description: job.description,
         requirements: job.requirements,
-        location: job.location,
+        regionId: job.regionId,
         countryId,
         jobType: job.jobType,
         sourceUrl: job.sourceUrl,

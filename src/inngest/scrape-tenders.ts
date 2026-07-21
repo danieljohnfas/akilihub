@@ -4,6 +4,7 @@ import { db } from "@/lib/db/client";
 import { tenders } from "@/lib/db/schema/tenders";
 import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
+import { normalizeLocationAndGetRegionId } from "@/lib/ai/location";
 import {
   ScraplingStrategy,
   FirecrawlStrategy,
@@ -97,6 +98,7 @@ export async function saveTenderResults(
   let inserted = 0;
   for (const t of items) {
     try {
+      const regionId = await normalizeLocationAndGetRegionId(t.contractingAuthority);
       await db
         .insert(tenders)
         .values({
@@ -107,6 +109,7 @@ export async function saveTenderResults(
           deadline: t.deadline ? new Date(t.deadline) : new Date(Date.now() + 14 * 86400000),
           sourceUrl: t.sourceUrl,
           countryId,
+          regionId,
           status: "open",
         })
         .onConflictDoNothing();
@@ -138,6 +141,7 @@ export async function saveBroadResults(
           deadline: t.deadline ?? new Date(Date.now() + 14 * 86400000),
           sourceUrl: t.sourceUrl,
           countryId,
+          regionId: t.regionId ?? null,
           status: "open",
         })
         .onConflictDoNothing();

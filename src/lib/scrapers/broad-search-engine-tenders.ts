@@ -1,4 +1,5 @@
 import { generateObjectWithFallback } from '../ai/router';
+import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { searchGoogle } from './broad-search-engine';
@@ -9,6 +10,7 @@ export interface BroadTenderResource {
   description: string | null;
   contractingAuthority: string;
   category: 'goods' | 'works' | 'services' | 'consultancy';
+  regionId: string | null;
   budget: number | null;
   currency: string;
   deadline: Date | null;
@@ -53,6 +55,7 @@ Rules:
           description: z.string().nullable(),
           contractingAuthority: z.string().min(2),
           category: z.enum(['goods', 'works', 'services', 'consultancy']),
+          location: z.string().nullable().describe("Raw location string if mentioned, else null"),
           budgetNumber: z.number().nullable().describe("Numeric budget if specified, else null"),
           currency: z.string().default('USD'),
           sourceUrl: z.string(),
@@ -62,22 +65,41 @@ Rules:
       prompt,
     });
 
-    return object.tenders.map((tender: {
+    const rawTenders = object.tenders.map((tender: {
       referenceNo: string; title: string; description: string | null;
       contractingAuthority: string; category: BroadTenderResource['category'];
-      budgetNumber: number | null; currency: string; sourceUrl: string; deadlineIsoString: string | null;
+      location: string | null; budgetNumber: number | null; currency: string; sourceUrl: string; deadlineIsoString: string | null;
     }) => ({
       referenceNo: tender.referenceNo,
       title: tender.title,
       description: tender.description,
       contractingAuthority: tender.contractingAuthority,
       category: tender.category,
+      location: tender.location,
       budget: tender.budgetNumber,
       currency: tender.currency,
       sourceUrl: tender.sourceUrl || sourceUrl,
       deadline: tender.deadlineIsoString ? new Date(tender.deadlineIsoString) : null,
       pdfLinks,
     }));
+
+    const normalizedTenders = await Promise.all(
+      rawTenders.map(async (tender: any) => {
+        let regionId = null;
+        if (tender.location) {
+           regionId = await normalizeLocationAndGetRegionId(tender.location);
+        } else if (tender.contractingAuthority) {
+           regionId = await normalizeLocationAndGetRegionId(tender.contractingAuthority);
+        }
+        
+        return {
+          ...tender,
+          regionId
+        };
+      })
+    );
+
+    return normalizedTenders;
   } catch (err) {
     console.error(`[extractTendersWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
     return [];

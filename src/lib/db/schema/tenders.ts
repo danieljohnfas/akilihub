@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, uuid, numeric, integer, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
-import { countries } from './shared';
+import { countries, regions } from './shared';
 import { sql } from 'drizzle-orm';
 
 export const tenderStatusEnum = pgEnum('tender_status', ['open', 'closed', 'awarded', 'cancelled']);
@@ -18,6 +18,7 @@ export const tenders = pgTable('tenders', {
   description: text('description'),
   contractingAuthority: text('contracting_authority').notNull(),
   countryId: uuid('country_id').notNull().references(() => countries.id),
+  regionId: uuid('region_id').references(() => regions.id),
   sectorId: uuid('sector_id').references(() => tenderSectors.id),
   category: tenderCategoryEnum('category').default('services'),
   status: tenderStatusEnum('status').notNull().default('open'),
@@ -33,6 +34,7 @@ export const tenders = pgTable('tenders', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [
   index('tenders_country_idx').on(table.countryId),
+  index('tenders_region_idx').on(table.regionId),
   index('tenders_status_idx').on(table.status),
   index('tenders_deadline_idx').on(table.deadline),
   index('tenders_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
