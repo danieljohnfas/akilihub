@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { tenders, tenderSectors } from '@/lib/db/schema/tenders';
 import { jobs } from '@/lib/db/schema/jobs';
-import { countries } from '@/lib/db/schema/shared';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { JobCard } from '@/components/jobs/JobCard';
@@ -64,7 +64,15 @@ export default async function CountryPage({ params }: Props) {
 
   // Fetch recent jobs
   const recentJobs = await safeQuery(
-    db.select().from(jobs).where(eq(jobs.countryId, dbCountry.id)).orderBy(desc(jobs.postedDate)).limit(6)
+    db.select({
+      job: jobs,
+      region: regions.name
+    })
+    .from(jobs)
+    .leftJoin(regions, eq(jobs.regionId, regions.id))
+    .where(eq(jobs.countryId, dbCountry.id))
+    .orderBy(desc(jobs.postedDate))
+    .limit(6)
   );
   
   const jobsCountResult = await safeQuery(
@@ -187,7 +195,7 @@ export default async function CountryPage({ params }: Props) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recentJobs.map((job) => (
+            {recentJobs.map(({ job, region }) => (
               <JobCard
                 key={job.id}
                 id={job.id}
@@ -195,7 +203,7 @@ export default async function CountryPage({ params }: Props) {
                 companyName={job.companyName}
                 description={job.description}
                 requirements={job.requirements}
-                location={job.location}
+                location={region}
                 country={dbCountry.name}
                 jobType={job.jobType ?? 'full_time'}
                 sourceUrl={job.sourceUrl}

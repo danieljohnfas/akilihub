@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { db, safeQuery } from '@/lib/db/client';
 import { users, userAlerts, bookmarks } from '@/lib/db/schema/users';
-import { countries } from '@/lib/db/schema/shared';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { eq, and, desc } from 'drizzle-orm';
@@ -42,10 +42,12 @@ export default async function AccountPage() {
       bookmark: bookmarks,
       job: jobs,
       tender: tenders,
+      region: regions.name,
     })
     .from(bookmarks)
     .where(eq(bookmarks.userId, user.id))
     .leftJoin(jobs, and(eq(bookmarks.itemId, jobs.id), eq(bookmarks.itemType, 'job')))
+    .leftJoin(regions, eq(jobs.regionId, regions.id))
     .leftJoin(tenders, and(eq(bookmarks.itemId, tenders.id), eq(bookmarks.itemType, 'tender')))
     .orderBy(desc(bookmarks.createdAt))
   );
@@ -158,7 +160,7 @@ export default async function AccountPage() {
                           companyName={job.companyName}
                           description={job.description}
                           requirements={job.requirements}
-                          location={job.location}
+                          location={region}
                           country={allCountries.find(c => c.id === job.countryId)?.name || 'Africa'}
                           jobType={job.jobType ?? 'full_time'}
                           sourceUrl={job.sourceUrl}

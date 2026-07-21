@@ -2,7 +2,7 @@ import { db, safeQuery } from '@/lib/db/client';
 import { tenders } from '@/lib/db/schema/tenders';
 import { jobs } from '@/lib/db/schema/jobs';
 import { salarySubmissions, employers } from '@/lib/db/schema/salaries';
-import { countries } from '@/lib/db/schema/shared';
+import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, desc, ilike } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { JobCard } from '@/components/jobs/JobCard';
@@ -42,10 +42,12 @@ export default async function CompanyPage({ params }: Props) {
   const companyJobs = await safeQuery(
     db.select({
       job: jobs,
-      country: countries.name
+      country: countries.name,
+      region: regions.name
     })
     .from(jobs)
     .leftJoin(countries, eq(jobs.countryId, countries.id))
+    .leftJoin(regions, eq(jobs.regionId, regions.id))
     .where(ilike(jobs.companyName, searchTerm))
     .orderBy(desc(jobs.postedDate))
     .limit(10)
@@ -145,7 +147,7 @@ export default async function CompanyPage({ params }: Props) {
             <h2 className="text-2xl font-bold tracking-tight">Jobs & Vacancies</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {companyJobs.map(({ job, country }) => (
+            {companyJobs.map(({ job, country, region }) => (
               <JobCard
                 key={job.id}
                 id={job.id}
@@ -153,7 +155,7 @@ export default async function CompanyPage({ params }: Props) {
                 companyName={job.companyName}
                 description={job.description}
                 requirements={job.requirements}
-                location={job.location}
+                location={region}
                 country={country || 'Unknown'}
                 jobType={job.jobType ?? 'full_time'}
                 sourceUrl={job.sourceUrl}
