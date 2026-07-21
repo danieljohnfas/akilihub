@@ -11,6 +11,7 @@ export interface BroadJobResource {
   regionId: string | null;
   jobType: 'full_time' | 'part_time' | 'contract' | 'internship' | 'remote';
   sourceUrl: string;
+  postedDate: Date | null;
   deadline: Date | null;
   salaryMin: number | null;
   salaryMax: number | null;
@@ -123,7 +124,8 @@ Rules:
 - For 'requirements': Qualifications, experience needed. Use empty string if none.
 - For 'location': City or region (e.g., "Nairobi"). Use empty string if none.
 - For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.
-- For 'deadlineIsoString': ISO 8601 date if found, otherwise empty string.
+- For 'postedDateIsoString': ISO 8601 date when the job was posted if found, otherwise empty string.
+- For 'deadlineIsoString': ISO 8601 deadline date if found, otherwise empty string.
 - For 'salaryMin': Minimum salary as a plain number (no currency symbol) if stated, otherwise 0.
 - For 'salaryMax': Maximum salary as a plain number if stated, otherwise 0. If only one figure is given, use it for both min and max.
 - For 'salaryCurrency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "USD"). Infer from context or country if not explicit. Use empty string if salary is completely absent.
@@ -141,6 +143,7 @@ Rules:
           location: z.string(),
           jobType: z.enum(['full_time', 'part_time', 'contract', 'internship', 'remote']),
           sourceUrl: z.string(),
+          postedDateIsoString: z.string(),
           deadlineIsoString: z.string(),
           salaryMin: z.number().default(0),
           salaryMax: z.number().default(0),
@@ -153,16 +156,22 @@ Rules:
     const rawJobs = object.jobs.map((job: {
       title: string; companyName: string; description: string; requirements: string;
       location: string; jobType: BroadJobResource['jobType']; sourceUrl: string;
-      deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string;
+      postedDateIsoString: string; deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string;
     }) => {
-      let parsedDate = null;
+      let parsedPosted = null;
+      if (job.postedDateIsoString && job.postedDateIsoString.trim()) {
+        const d = new Date(job.postedDateIsoString);
+        if (!isNaN(d.getTime())) parsedPosted = d;
+      }
+      let parsedDeadline = null;
       if (job.deadlineIsoString && job.deadlineIsoString.trim()) {
         const d = new Date(job.deadlineIsoString);
-        if (!isNaN(d.getTime())) parsedDate = d;
+        if (!isNaN(d.getTime())) parsedDeadline = d;
       }
       return {
         ...job,
-        parsedDate
+        parsedPosted,
+        parsedDeadline
       };
     });
 
@@ -177,7 +186,8 @@ Rules:
           regionId: regionId,
           jobType: job.jobType,
           sourceUrl: job.sourceUrl || sourceUrl,
-          deadline: job.parsedDate,
+          postedDate: job.parsedPosted,
+          deadline: job.parsedDeadline,
           salaryMin: job.salaryMin > 0 ? job.salaryMin : null,
           salaryMax: job.salaryMax > 0 ? job.salaryMax : null,
           salaryCurrency: job.salaryCurrency?.trim() || null,

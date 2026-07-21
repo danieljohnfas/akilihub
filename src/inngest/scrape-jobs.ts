@@ -26,7 +26,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
         countryId,
         jobType: job.jobType,
         sourceUrl: job.sourceUrl,
-        postedDate: new Date(),
+        postedDate: job.postedDate || new Date(),
         deadline: job.deadline,
         isActive: true,
       }).onConflictDoNothing();
