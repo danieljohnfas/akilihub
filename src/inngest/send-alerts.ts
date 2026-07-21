@@ -77,8 +77,7 @@ export const sendTenderAlertsJob = inngest.createFunction(
 );
 
 export const sendDailyDigestJob = inngest.createFunction(
-  { id: "send-daily-digest" },
-  { cron: "0 8 * * *" }, // Run at 8:00 AM daily
+  { id: "send-daily-digest", triggers: [{ cron: "0 8 * * *" }] }, // Run at 8:00 AM daily
   async ({ step }) => {
     // 1. Fetch active users subscribed to daily digests
     const subscribers = await step.run("fetch-subscribers", async () => {
@@ -149,8 +148,7 @@ export const sendDailyDigestJob = inngest.createFunction(
 );
 
 export const sendWeeklyNewsletterJob = inngest.createFunction(
-  { id: "send-weekly-newsletter" },
-  { cron: "0 9 * * 1" }, // Run at 9:00 AM on Mondays
+  { id: "send-weekly-newsletter", triggers: [{ cron: "0 9 * * 1" }] }, // Run at 9:00 AM on Mondays
   async ({ step }) => {
     // 1. Fetch all active users
     const allUsers = await step.run("fetch-all-users", async () => {
