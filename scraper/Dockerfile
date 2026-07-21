@@ -1,16 +1,26 @@
 # ─── Scrapling Sidecar — Dockerfile ───────────────────────────────────────────
-# Extends the official Scrapling image which ships with Playwright browsers
-# pre-installed (Chromium). This avoids the slow `playwright install` step.
-#
-# Port: 8001  (8000 is already taken by the Crawl4AI service)
+# Extends the official python image and installs playwright/camoufox manually
+# Port: 7860
 # ──────────────────────────────────────────────────────────────────────────────
-FROM d4vinci/scrapling:latest
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install FastAPI + Uvicorn on top of the base image
+# Install OS dependencies for playwright
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Playwright browsers and dependencies (Chromium for Scrapling)
+RUN playwright install --with-deps chromium
+
+# Fetch Camoufox browser binaries
+RUN python -m camoufox fetch
 
 COPY . .
 
