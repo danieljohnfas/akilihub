@@ -1,4 +1,4 @@
-import { Building2, MapPin, Briefcase, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Building2, MapPin, Briefcase, CheckCircle2, AlertCircle, UserCircle2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
@@ -75,6 +75,11 @@ export function SalaryCard({
         <div className="flex items-center gap-2">
           <Briefcase className="w-4 h-4 shrink-0" />
           <span className="capitalize">{employmentType.replace('_', ' ')}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <UserCircle2 className="w-4 h-4 shrink-0" />
+          <span>Source: Anonymous Contributor</span>
         </div>
 
         <div className="mt-4 pt-4 border-t border-white/5">
