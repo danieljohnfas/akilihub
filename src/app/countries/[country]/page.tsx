@@ -209,6 +209,7 @@ export default async function CountryPage({ params }: Props) {
                 sourceUrl={job.sourceUrl}
                 postedDate={job.postedDate}
                 deadline={job.deadline}
+                createdAt={job.createdAt}
                 layout="grid"
               />
             ))}
