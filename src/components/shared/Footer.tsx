@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Logo } from '@/components/shared/Logo';
-import { Twitter, Linkedin, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -19,10 +20,10 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <Link href="https://twitter.com/akilibrain" target="_blank" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all">
-              <Twitter className="w-4 h-4" />
+              <Icon icon="mdi:twitter" className="w-4 h-4 text-white" />
             </Link>
             <Link href="https://linkedin.com/company/akilibrain" target="_blank" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all">
-              <Linkedin className="w-4 h-4" />
+              <Icon icon="mdi:linkedin" className="w-4 h-4 text-white" />
             </Link>
           </div>
           <p className="text-xs text-muted-foreground/50 border-t border-white/5 pt-4 mt-2">
