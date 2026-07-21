@@ -279,7 +279,7 @@ async function processSalaryUrl(
         const html = await fetchHtml(url);
         if (!html) return 0;
         const text = htmlToText(html, url);
-        const extracted = await extractSalariesWithAI(text, countryName, url);
+        const extracted = await extractSalariesWithAI(text, url);
         let saved = 0;
         for (const sal of extracted) {
           const ok = await dbInsertWithRetry(() =>
