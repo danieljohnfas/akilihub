@@ -103,7 +103,7 @@ export const sendDailyDigestJob = inngest.createFunction(
           id: t.id, title: t.title, subtitle: t.contractingAuthority || "Unknown Authority", url: `https://akilibrain.com/tenders/${t.id}`
         })),
         jobs: latestJobs.map(j => ({
-          id: j.id, title: j.title, subtitle: j.company || "Unknown Company", url: `https://akilibrain.com/jobs/${j.id}`
+          id: j.id, title: j.title, subtitle: j.companyName || "Unknown Company", url: `https://akilibrain.com/jobs/${j.id}`
         }))
       };
     });
@@ -169,7 +169,7 @@ export const sendWeeklyNewsletterJob = inngest.createFunction(
           id: t.id, title: t.title, subtitle: `Budget: ${t.budget || "N/A"}`, url: `https://akilibrain.com/tenders/${t.id}`
         })),
         jobs: topJobs.map(j => ({
-          id: j.id, title: j.title, subtitle: j.company || "Unknown Company", url: `https://akilibrain.com/jobs/${j.id}`
+          id: j.id, title: j.title, subtitle: j.companyName || "Unknown Company", url: `https://akilibrain.com/jobs/${j.id}`
         }))
       };
     });
