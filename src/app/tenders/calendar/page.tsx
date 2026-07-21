@@ -5,7 +5,7 @@ import { gte, eq, asc } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { Calendar as CalendarIcon, Clock, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { format, isSameDay } from 'date-fns';
 
 export const metadata = {
@@ -45,11 +45,12 @@ export default async function TendersCalendarPage() {
   return (
     <div className="container py-8 max-w-5xl mx-auto space-y-8">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" asChild className="hover:bg-white/10 rounded-full h-10 w-10 shrink-0">
-          <Link href="/tenders">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
+        <Link 
+          href="/tenders"
+          className={buttonVariants({ variant: "ghost", size: "icon", className: "hover:bg-white/10 rounded-full h-10 w-10 shrink-0" })}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
             <CalendarIcon className="h-8 w-8 text-primary" />

@@ -115,11 +115,11 @@ export function TenderCard({
         <div className="flex items-center gap-2">
           {documentUrl && (
             <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="relative z-20 h-8 gap-1.5 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white">
-                  <FileText className="w-3.5 h-3.5 text-blue-400" />
-                  <span className="text-xs">PDF</span>
-                </Button>
+              <DialogTrigger 
+                className={buttonVariants({ variant: "outline", size: "sm", className: "relative z-20 h-8 gap-1.5 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white" })}
+              >
+                <FileText className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-xs">PDF</span>
               </DialogTrigger>
               <DialogContent className="max-w-4xl w-[90vw] h-[85vh] p-0 gap-0 overflow-hidden bg-black/95 border-white/10">
                 <DialogHeader className="p-4 border-b border-white/10 bg-black/40 backdrop-blur-md absolute top-0 left-0 right-0 z-10">
@@ -136,11 +136,14 @@ export function TenderCard({
                     <div className="flex flex-col items-center justify-center h-full gap-4 text-black p-8">
                       <FileText className="w-12 h-12 text-muted-foreground" />
                       <p>Your browser doesn't support embedded PDFs.</p>
-                      <Button asChild variant="outline" className="border-black/20 hover:bg-black/5 text-black">
-                        <Link href={documentUrl} target="_blank" rel="noopener noreferrer">
-                          Download PDF
-                        </Link>
-                      </Button>
+                      <Link 
+                        href={documentUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={buttonVariants({ variant: "outline", className: "border-black/20 hover:bg-black/5 text-black" })}
+                      >
+                        Download PDF
+                      </Link>
                     </div>
                   </object>
                 </div>

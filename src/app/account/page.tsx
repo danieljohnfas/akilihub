@@ -175,13 +175,12 @@ export default async function AccountPage() {
                           key={bookmark.id}
                           id={tender.id}
                           title={tender.title}
-                          buyerName={tender.buyerName}
-                          description={tender.description}
-                          location={tender.location}
+                          referenceNo={tender.referenceNo}
+                          contractingAuthority={tender.contractingAuthority}
                           country={allCountries.find(c => c.id === tender.countryId)?.name || 'Africa'}
-                          tenderType={tender.tenderType ?? 'works'}
-                          sourceUrl={tender.sourceUrl}
-                          postedDate={tender.postedDate}
+                          status={tender.status}
+                          budget={tender.budget}
+                          currency={tender.currency}
                           deadline={tender.deadline}
                           documentUrl={tender.documentUrl}
                         />

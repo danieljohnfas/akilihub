@@ -7,9 +7,9 @@ import { eq, desc, ilike } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { JobCard } from '@/components/jobs/JobCard';
 import { SalaryCard } from '@/components/salaries/SalaryCard';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Building2, MapPin, Search } from 'lucide-react';
+import { ArrowRight, Building2, MapPin, Search, Briefcase } from 'lucide-react';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { notFound } from 'next/navigation';
@@ -87,9 +87,9 @@ export default async function CompanyPage({ params }: Props) {
         <p className="text-muted-foreground max-w-md mb-6">
           We couldn't find any jobs, tenders, or salary data for "{decodedName}".
         </p>
-        <Button asChild>
-          <Link href="/">Return Home</Link>
-        </Button>
+        <Link href="/" className={buttonVariants({ variant: "default" })}>
+          Return Home
+        </Link>
       </div>
     );
   }

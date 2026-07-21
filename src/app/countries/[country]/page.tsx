@@ -5,7 +5,7 @@ import { countries } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { JobCard } from '@/components/jobs/JobCard';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, MapPin, Building2, Briefcase } from 'lucide-react';
@@ -123,11 +123,12 @@ export default async function CountryPage({ params }: Props) {
             <h2 className="text-3xl font-bold tracking-tight mb-2">Latest Tenders</h2>
             <p className="text-muted-foreground">Recently published procurement notices in {dbCountry.name}.</p>
           </div>
-          <Button asChild variant="outline" className="hidden sm:flex">
-            <Link href={`/tenders?country=${encodeURIComponent(dbCountry.name)}`}>
-              View All Tenders <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
+          <Link 
+            href={`/tenders?country=${encodeURIComponent(dbCountry.name)}`}
+            className={buttonVariants({ variant: "outline", className: "hidden sm:flex" })}
+          >
+            View All Tenders <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
         </div>
         
         {recentTenders.length === 0 ? (
@@ -156,11 +157,12 @@ export default async function CountryPage({ params }: Props) {
         )}
         
         <div className="sm:hidden mt-4">
-          <Button asChild variant="outline" className="w-full">
-            <Link href={`/tenders?country=${encodeURIComponent(dbCountry.name)}`}>
-              View All Tenders <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
+          <Link 
+            href={`/tenders?country=${encodeURIComponent(dbCountry.name)}`}
+            className={buttonVariants({ variant: "outline", className: "w-full" })}
+          >
+            View All Tenders <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
         </div>
       </section>
 
@@ -171,11 +173,12 @@ export default async function CountryPage({ params }: Props) {
             <h2 className="text-3xl font-bold tracking-tight mb-2">Latest Jobs</h2>
             <p className="text-muted-foreground">Recent career opportunities across various sectors in {dbCountry.name}.</p>
           </div>
-          <Button asChild variant="outline" className="hidden sm:flex">
-            <Link href={`/jobs?country=${encodeURIComponent(dbCountry.name)}`}>
-              View All Jobs <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
+          <Link 
+            href={`/jobs?country=${encodeURIComponent(dbCountry.name)}`}
+            className={buttonVariants({ variant: "outline", className: "hidden sm:flex" })}
+          >
+            View All Jobs <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
         </div>
         
         {recentJobs.length === 0 ? (
@@ -205,11 +208,12 @@ export default async function CountryPage({ params }: Props) {
         )}
         
         <div className="sm:hidden mt-4">
-          <Button asChild variant="outline" className="w-full">
-            <Link href={`/jobs?country=${encodeURIComponent(dbCountry.name)}`}>
-              View All Jobs <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
+          <Link 
+            href={`/jobs?country=${encodeURIComponent(dbCountry.name)}`}
+            className={buttonVariants({ variant: "outline", className: "w-full" })}
+          >
+            View All Jobs <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
         </div>
       </section>
     </div>
