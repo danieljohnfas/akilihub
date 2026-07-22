@@ -41,7 +41,15 @@ class KeyPool {
       k => k.coolUntil <= now && (!structuredOnly || k.supportsStructured)
     );
     if (available.length === 0) return null;
-    return available.sort((a, b) => a.lastUsed - b.lastUsed)[0];
+    
+    // Sort by lastUsed to get the least recently used key
+    const selectedKey = available.sort((a, b) => a.lastUsed - b.lastUsed)[0];
+    
+    // Update lastUsed immediately so concurrent requests round-robin across available keys
+    // instead of dog-piling the exact same key.
+    selectedKey.lastUsed = Date.now();
+    
+    return selectedKey;
   }
 
   /** Synchronous success mark — updates in-memory state only. */
@@ -69,13 +77,22 @@ class KeyPool {
     this._persistAsync(id).catch(() => {});
   }
 
+  private _dbDepsPromise: Promise<any> | null = null;
+
   /** Attempts to write telemetry to DB, silently ignoring any errors. */
   private async _persistAsync(id: string): Promise<void> {
     try {
       // Dynamic import so the DB client isn't loaded at all in edge/script contexts
       // that don't need it. Also prevents circular dependency issues.
-      const { db } = await import('../db/client');
-      const { aiTelemetry } = await import('../db/schema/ai');
+      // Cache the promise to prevent Node.js module loader deadlocks during concurrent imports.
+      if (!this._dbDepsPromise) {
+        this._dbDepsPromise = Promise.all([
+          import('../db/client'),
+          import('../db/schema/ai')
+        ]);
+      }
+      
+      const [{ db }, { aiTelemetry }] = await this._dbDepsPromise;
       const key = this.keys.get(id);
       if (!key) return;
       await db.insert(aiTelemetry).values({
