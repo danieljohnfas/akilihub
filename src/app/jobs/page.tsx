@@ -318,7 +318,7 @@ export default async function JobsPage({
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
           {page > 1 && (
             <Link
-              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&layout=${layout}&page=${page - 1}`}
+              href={`/jobs?q=${q || ''}&type=${type || ''}&company=${company || ''}&country=${country || ''}&time=${time || ''}&layout=${layout || 'grid'}&page=${page - 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
@@ -327,7 +327,7 @@ export default async function JobsPage({
           <span className="text-sm text-muted-foreground">Page {page}</span>
           {data.length === PAGE_SIZE && (
             <Link
-              href={`/jobs?q=${q}&type=${type}&company=${company}&location=${location}&time=${time}&layout=${layout}&page=${page + 1}`}
+              href={`/jobs?q=${q || ''}&type=${type || ''}&company=${company || ''}&country=${country || ''}&time=${time || ''}&layout=${layout || 'grid'}&page=${page + 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →
