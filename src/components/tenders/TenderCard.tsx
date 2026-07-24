@@ -14,6 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import { isGeneratedSlug } from '@/lib/utils';
+
 export interface TenderCardProps {
   id: string;
   title: string;
@@ -51,9 +53,15 @@ export function TenderCard({
     <Card className="group hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col">
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start gap-4 mb-2">
-          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
-            {referenceNo}
-          </Badge>
+          {!isGeneratedSlug(referenceNo) ? (
+            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+              {referenceNo}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+              Tender Notice
+            </Badge>
+          )}
           <div className="flex items-center gap-2">
             {isUrgent && (
               <Badge variant="destructive" className="animate-pulse shadow-md shadow-red-500/20">

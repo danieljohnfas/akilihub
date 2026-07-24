@@ -11,6 +11,7 @@ import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildTenderSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { isGeneratedSlug } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -119,9 +120,15 @@ export default async function TenderDetailPage({
       {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            {tender.referenceNo}
-          </Badge>
+          {!isGeneratedSlug(tender.referenceNo) ? (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              {tender.referenceNo}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              Tender Notice
+            </Badge>
+          )}
           <Badge 
             variant={tender.status === 'open' && !isExpired ? 'default' : 'secondary'}
             className={tender.status === 'open' && !isExpired ? 'bg-emerald-500/20 text-emerald-400' : ''}
