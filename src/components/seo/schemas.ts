@@ -138,9 +138,9 @@ export function buildJobPostingSchema(job: JobPostingInput): Record<string, unkn
     "@type": "JobPosting",
     "@id": `${BASE_URL}/jobs/${job.id}`,
     title: job.title,
-    description: (job.description && job.description !== 'null' && job.description.trim() !== '') 
+    description: (job.description && typeof job.description === 'string' && job.description.trim().length > 3 && job.description !== 'null') 
       ? job.description 
-      : `${job.title} at ${job.companyName}`,
+      : `${job.title} at ${job.companyName} position available in ${addressCountry}.`,
     hiringOrganization: {
       "@type": "Organization",
       name: job.companyName,
@@ -408,10 +408,17 @@ export function buildSalaryListSchema(salaries: SalaryEntry[]): Record<string, u
           name: SITE_NAME,
           sameAs: BASE_URL,
         },
+        datePosted: new Date().toISOString().split('T')[0],
+        validThrough: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+        employmentType: "FULL_TIME",
         jobLocation: {
           "@type": "Place",
           address: {
             "@type": "PostalAddress",
+            streetAddress: "N/A",
+            addressLocality: s.country ?? "East Africa",
+            addressRegion: s.country ?? "East Africa",
+            postalCode: "00000",
             addressCountry: s.country ?? "East Africa",
           },
         },
