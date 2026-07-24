@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { EmptyStateLottie } from '@/components/ui/empty-state-lottie';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { parseGlobalSearchParams } from '@/lib/filters';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 
 export const dynamic = 'force-dynamic';
@@ -54,18 +55,12 @@ export const metadata: Metadata = {
 const PAGE_SIZE = 30;
 
 export default async function JobsPage({
-  searchParams,
+  searchParams: rawParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string; company?: string; location?: string; time?: string; layout?: string; page?: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await searchParams;
-  const q = params.q || '';
-  const type = params.type === 'all' ? '' : (params.type || '');
-  const company = params.company === 'all' ? '' : (params.company || '');
-  const location = params.location === 'all' ? '' : (params.location || '');
-  const time = params.time === 'all' ? '' : (params.time || '');
-  const layout = params.layout === 'list' ? 'list' : 'grid';
-  const page = Math.max(1, parseInt(params.page || '1', 10));
+  const { q, type, company, country, time, layout, page } = parseGlobalSearchParams(await rawParams);
+  
   const offset = (page - 1) * PAGE_SIZE;
 
   const activeCondition = and(
@@ -73,16 +68,16 @@ export default async function JobsPage({
     or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
   );
 
-  const getConditions = (exclude?: 'q' | 'type' | 'company' | 'location' | 'time') => {
+  const getConditions = (exclude?: 'q' | 'type' | 'company' | 'country' | 'time') => {
     return [
       activeCondition,
       exclude !== 'q' && q ? ilike(jobs.title, `%${q}%`) : undefined,
       exclude !== 'type' && type ? eq(jobs.jobType, type as never) : undefined,
       exclude !== 'company' && company ? eq(jobs.companyName, company) : undefined,
-      exclude !== 'location' && location ? (location.startsWith('country:') ? eq(countries.name, location.replace('country:', '')) : eq(regions.name, location)) : undefined,
+      exclude !== 'country' && country ? (country.startsWith('country:') ? eq(countries.name, country.replace('country:', '')) : eq(regions.name, country)) : undefined,
+      exclude !== 'time' && time === '24h' ? gt(jobs.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)) : undefined,
       exclude !== 'time' && time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
       exclude !== 'time' && time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
-      exclude !== 'time' && time === '90d' ? gt(jobs.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)) : undefined,
     ].filter(Boolean);
   };
 
@@ -133,7 +128,7 @@ export default async function JobsPage({
       .where(compConds.length > 0 ? and(...compConds) : undefined)
   );
   
-  const locConds = getConditions('location');
+  const locConds = getConditions('country');
   const uniqueLocationsData = await safeQuery(
     db.selectDistinct({ name: regions.name, country: countries.name })
       .from(jobs)
@@ -159,7 +154,7 @@ export default async function JobsPage({
   }
   const sortedCountries = Object.keys(locationsByCountry).sort();
 
-  const hasFilters = q || type || company || location;
+  const hasFilters = q || type || company || country;
 
   const itemListSchema = buildItemListSchema(
     'Jobs & Careers in East Africa',
@@ -220,7 +215,7 @@ export default async function JobsPage({
             defaultValue: 'all',
           },
           {
-            id: 'location',
+            id: 'country',
             type: 'select',
             label: 'Location',
             icon: <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
@@ -280,14 +275,14 @@ export default async function JobsPage({
           <div className="flex justify-end mb-2">
             <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-lg">
               <Link
-                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'grid' }).toString()}`}
+                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(country ? { country } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'grid' }).toString()}`}
                 className={`p-1.5 rounded-md transition-colors ${layout === 'grid' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                 title="Grid View"
               >
                 <LayoutGrid className="w-4 h-4" />
               </Link>
               <Link
-                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'list' }).toString()}`}
+                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(country ? { country } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'list' }).toString()}`}
                 className={`p-1.5 rounded-md transition-colors ${layout === 'list' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                 title="List View"
               >

@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { parseGlobalSearchParams } from '@/lib/filters';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 
@@ -54,21 +55,17 @@ export const metadata: Metadata = {
 const PAGE_SIZE = 20;
 
 export default async function TendersPage({
-  searchParams,
+  searchParams: rawParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; sector?: string; page?: string; country?: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await searchParams;
-  const q = params.q || '';
-  const status = params.status || 'open';
-  const countryParam = params.country === 'all' ? '' : (params.country || '');
-  const page = Math.max(1, parseInt(params.page || '1', 10));
+  const { q, status = 'open', country, page } = parseGlobalSearchParams(await rawParams);
   const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(tenders.title, `%${q}%`) : undefined,
     status ? eq(tenders.status, status as never) : undefined,
-    countryParam ? eq(countries.name, countryParam) : undefined,
+    country ? eq(countries.name, country) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -149,7 +146,7 @@ export default async function TendersPage({
     }
   ];
 
-  const hasFilters = q || status !== 'open' || countryParam;
+  const hasFilters = q || status !== 'open' || country;
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
@@ -226,7 +223,7 @@ export default async function TendersPage({
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
           {page > 1 && (
             <Link
-              href={`/tenders?q=${q}&status=${status}&country=${countryParam}&page=${page - 1}`}
+              href={`/tenders?q=${q}&status=${status}&country=${country || ''}&page=${page - 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
@@ -235,7 +232,7 @@ export default async function TendersPage({
           <span className="text-sm text-muted-foreground">Page {page}</span>
           {data.length === PAGE_SIZE && (
             <Link
-              href={`/tenders?q=${q}&status=${status}&country=${countryParam}&page=${page + 1}`}
+              href={`/tenders?q=${q}&status=${status}&country=${country || ''}&page=${page + 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →

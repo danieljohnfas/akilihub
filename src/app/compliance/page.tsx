@@ -8,6 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { parseGlobalSearchParams } from '@/lib/filters';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { Search, SlidersHorizontal, Inbox, Building2, BookOpen } from 'lucide-react';
@@ -52,17 +53,15 @@ export const metadata: Metadata = {
 };
 
 export default async function CompliancePage({
-  searchParams,
+  searchParams: rawParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await searchParams;
-  const q = params.q || '';
-  const status = params.status || 'active';
+  const { q, status = 'active' } = parseGlobalSearchParams(await rawParams);
   
   const conditions = [
     q ? ilike(businesses.name, `%${q}%`) : undefined,
-    status && status !== 'all' ? eq(businesses.status, status) : undefined,
+    status ? eq(businesses.status, status) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

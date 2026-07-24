@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildSalaryListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { parseGlobalSearchParams } from '@/lib/filters';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 
 import type { Metadata } from 'next';
@@ -48,17 +49,15 @@ export const metadata: Metadata = {
 };
 
 export default async function SalariesPage({
-  searchParams,
+  searchParams: rawParams,
 }: {
-  searchParams: Promise<{ q?: string; level?: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await searchParams;
-  const q = params.q || '';
-  const level = params.level || 'all';
+  const { q, level } = parseGlobalSearchParams(await rawParams);
   
   const conditions = [
     q ? ilike(salarySubmissions.jobTitle, `%${q}%`) : undefined,
-    level && level !== 'all' ? eq(salarySubmissions.experienceLevel, level as never) : undefined,
+    level ? eq(salarySubmissions.experienceLevel, level as never) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
