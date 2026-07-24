@@ -1,10 +1,11 @@
-import { inngest } from "./client";
-import { generateObjectWithFallback } from "@/lib/ai/router";
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 import { db } from "@/lib/db/client";
 import { guides } from "@/lib/db/schema/guides";
-import { z } from "zod";
+import { generateObjectWithFallback } from "@/lib/ai/router";
 import { searchGoogle } from "@/lib/scrapers/broad-search-engine";
-import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { eq, inArray } from "drizzle-orm";
 
 const TROPICS = [
   // Health Data & Systems
@@ -76,20 +77,36 @@ const GuideContentSchema = z.object({
   readingTimeMinutes: z.number().int(),
 });
 
-export const generateWeeklyGuidesJob = inngest.createFunction(
-  { id: "generate-weekly-guides", name: "Generate Weekly Editorial Guides", triggers: [{ cron: "0 8 * * 1" }] }, // Every Monday at 8:00 AM UTC
-  async ({ step }) => {
-    // 1. Pick a random topic to cover this week
-    const topic = TROPICS[Math.floor(Math.random() * TROPICS.length)];
+async function main() {
+  while (true) {
+    // 1. Current count Check
+    const currentCount = await db.select({ id: guides.id }).from(guides);
+    if (currentCount.length >= 50) {
+      console.log(`Successfully reached ${currentCount.length} guides. Stopping!`);
+      break;
+    }
 
-    // 2. Search for recent news on this topic
-    const searchResults = await step.run("search-news", async () => {
-      const urls = await searchGoogle(topic, 5);
-      return urls;
-    });
+    // 2. Find which topics we have already covered
+    const existingGuides = await db.select({ trendTopic: guides.trendTopic }).from(guides);
+    const coveredTopics = new Set(existingGuides.map(g => g.trendTopic));
 
-    // 3. Generate the guide
-    const guideData = await step.run("generate-guide-content", async () => {
+    // 3. Find remaining topics
+    const remainingTopics = TROPICS.filter(t => !coveredTopics.has(t));
+    if (remainingTopics.length === 0) {
+       console.log("No remaining topics but count is < 50. This shouldn't happen unless TROPICS length < 50.");
+       break;
+    }
+
+    console.log(`\n===========================================`);
+    const topic = remainingTopics[0];
+    console.log(`Generating Guide: "${topic}"`);
+    console.log(`Current Count: ${currentCount.length} / 50`);
+    
+    try {
+      console.log(`[1/3] Searching Google for recent context...`);
+      const searchResults = await searchGoogle(topic, 5);
+      
+      console.log(`[2/3] Generating content with AI Router...`);
       const prompt = `You are the lead editor for AkiliBrain, East Africa's Professional Intelligence Platform.
 Your audience consists of professionals, contractors, health workers, and developers in Kenya, Tanzania, Uganda, Rwanda, and Ethiopia.
 Write a deep-dive, professional guide/article about the following topic: "${topic}".
@@ -106,17 +123,15 @@ Return the response strictly adhering to the JSON schema. Ensure the HTML conten
         maxTokens: 3000,
       });
 
-      return result.object;
-    });
+      const guideData = result.object;
 
-    // 4. Upsert to DB
-    await step.run("upsert-guide", async () => {
+      console.log(`[3/3] Upserting into database: ${guideData.slug}`);
       await db.insert(guides).values({
         slug: guideData.slug,
         title: guideData.title,
         summary: guideData.summary,
         contentHtml: guideData.contentHtml,
-        category: guideData.category,
+        category: guideData.category as any,
         trendTopic: topic,
         keywords: guideData.keywords,
         readingTimeMinutes: guideData.readingTimeMinutes,
@@ -127,15 +142,28 @@ Return the response strictly adhering to the JSON schema. Ensure the HTML conten
           title: guideData.title,
           summary: guideData.summary,
           contentHtml: guideData.contentHtml,
-          category: guideData.category,
+          category: guideData.category as any,
           trendTopic: topic,
           keywords: guideData.keywords,
           readingTimeMinutes: guideData.readingTimeMinutes,
           updatedAt: new Date(),
         }
       });
-    });
-
-    return { message: `Successfully generated and saved guide for topic: ${topic}` };
+      
+      console.log(`Guide saved successfully.`);
+      
+      // Delay to avoid AI rate limits
+      await new Promise(res => setTimeout(res, 5000));
+      
+    } catch (e) {
+      console.error(`Failed to generate guide for "${topic}":`, e);
+      console.log(`Waiting 30 seconds before retrying the same/next topic...`);
+      await new Promise(res => setTimeout(res, 30000));
+    }
   }
-);
+  
+  console.log(`\nFinished script.`);
+  process.exit(0);
+}
+
+main().catch(console.error);

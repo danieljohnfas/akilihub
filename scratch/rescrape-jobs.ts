@@ -6,7 +6,7 @@ import { eq, or, isNull } from 'drizzle-orm';
 import { fetchHtml, htmlToTextEnriched } from '@/lib/scrapers/compliance-base';
 import { extractJobsWithAI } from '@/lib/scrapers/broad-search-engine';
 
-async function processJob(job: any) {
+async function processJob(job: any): Promise<boolean> {
   try {
     console.log(`\nRescraping: ${job.title} (${job.id})`);
     console.log(`URL: ${job.sourceUrl}`);
@@ -14,13 +14,13 @@ async function processJob(job: any) {
     const html = await fetchHtml(job.sourceUrl);
     if (!html) {
       console.warn(`Failed to fetch HTML for ${job.id}`);
-      return;
+      return false;
     }
 
     const { text } = await htmlToTextEnriched(html, job.sourceUrl);
     if (!text) {
       console.warn(`Failed to extract text for ${job.id}`);
-      return;
+      return false;
     }
 
     // AI Extraction
@@ -43,11 +43,14 @@ async function processJob(job: any) {
         .where(eq(jobs.id, job.id));
       
       console.log(`Updated ${job.id} successfully.`);
+      return true; // Success!
     } else {
       console.warn(`AI extraction found 0 jobs for ${job.id}`);
+      return false;
     }
   } catch (error) {
     console.error(`Error processing job ${job.id}:`, error);
+    return false;
   }
 }
 
@@ -61,7 +64,7 @@ async function main() {
     createdAt: jobs.createdAt
   }).from(jobs);
 
-  const jobsToFix = allJobs.filter(j => {
+  let jobsToFix = allJobs.filter(j => {
     if (!j.postedDate || !j.deadline) return true;
     if (j.postedDate && j.createdAt) {
       const diffMs = Math.abs(j.postedDate.getTime() - j.createdAt.getTime());
@@ -70,20 +73,52 @@ async function main() {
     return false;
   });
 
-  console.log(`Found ${jobsToFix.length} jobs to rescrape.`);
+  const maxPasses = 5;
+  let pass = 1;
 
-  // Process sequentially to avoid overwhelming the LLM API or scraping targets
-  // Wait, I will just process a slice of 10 for demonstration and safety, but the user said "all".
-  // Let's do batches of 5 with Promise.all for speed.
-  const limit = 5;
-  for (let i = 0; i < jobsToFix.length; i += limit) {
-    const batch = jobsToFix.slice(i, i + limit);
-    await Promise.all(batch.map(j => processJob(j)));
-    // Delay to be polite
-    await new Promise(res => setTimeout(res, 3000));
+  while (jobsToFix.length > 0 && pass <= maxPasses) {
+    console.log(`\n===========================================`);
+    console.log(`--- PASS ${pass} of ${maxPasses} ---`);
+    console.log(`Found ${jobsToFix.length} jobs to rescrape.`);
+    console.log(`===========================================\n`);
+
+    const failedJobs: any[] = [];
+    const limit = 5;
+
+    for (let i = 0; i < jobsToFix.length; i += limit) {
+      const batch = jobsToFix.slice(i, i + limit);
+      
+      const results = await Promise.all(batch.map(j => processJob(j)));
+      
+      // Collect the ones that failed
+      for (let j = 0; j < results.length; j++) {
+        if (!results[j]) {
+          failedJobs.push(batch[j]);
+        }
+      }
+      
+      // Delay to be polite and avoid rate limits
+      await new Promise(res => setTimeout(res, 5000));
+    }
+
+    jobsToFix = failedJobs;
+    
+    if (jobsToFix.length > 0) {
+      console.log(`\nPass ${pass} finished. ${jobsToFix.length} jobs failed.`);
+      pass++;
+      if (pass <= maxPasses) {
+        console.log(`Waiting 30 seconds before next pass to let AI limiters cool down...\n`);
+        await new Promise(res => setTimeout(res, 30000));
+      }
+    }
   }
 
-  console.log('Finished rescraping.');
+  if (jobsToFix.length > 0) {
+    console.log(`\nFinished all ${maxPasses} passes. ${jobsToFix.length} jobs could not be resolved (likely dead URLs or permanent AI extraction failures).`);
+  } else {
+    console.log(`\nSuccessfully rescraped and updated all jobs!`);
+  }
+  
   process.exit(0);
 }
 

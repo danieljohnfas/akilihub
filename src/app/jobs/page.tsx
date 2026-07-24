@@ -3,6 +3,7 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and, or, isNull, gt, count } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
+import { JobFilters } from './JobFilters';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -72,17 +73,20 @@ export default async function JobsPage({
     or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
   );
 
-  const conditions = [
-    activeCondition,
-    q ? ilike(jobs.title, `%${q}%`) : undefined,
-    type ? eq(jobs.jobType, type as never) : undefined,
-    company ? eq(jobs.companyName, company) : undefined,
-    location ? (location.startsWith('country:') ? eq(countries.name, location.replace('country:', '')) : eq(regions.name, location)) : undefined,
-    time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
-    time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
-    time === '90d' ? gt(jobs.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)) : undefined,
-  ].filter(Boolean);
+  const getConditions = (exclude?: 'q' | 'type' | 'company' | 'location' | 'time') => {
+    return [
+      activeCondition,
+      exclude !== 'q' && q ? ilike(jobs.title, `%${q}%`) : undefined,
+      exclude !== 'type' && type ? eq(jobs.jobType, type as never) : undefined,
+      exclude !== 'company' && company ? eq(jobs.companyName, company) : undefined,
+      exclude !== 'location' && location ? (location.startsWith('country:') ? eq(countries.name, location.replace('country:', '')) : eq(regions.name, location)) : undefined,
+      exclude !== 'time' && time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
+      exclude !== 'time' && time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
+      exclude !== 'time' && time === '90d' ? gt(jobs.createdAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)) : undefined,
+    ].filter(Boolean);
+  };
 
+  const conditions = getConditions();
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   const totalCountResult = await safeQuery(
@@ -110,18 +114,35 @@ export default async function JobsPage({
       .offset(offset)
   );
 
-  // Fetch unique companies and locations for the dropdowns
-  const uniqueCompaniesData = await safeQuery(
-    db.selectDistinct({ name: jobs.companyName }).from(jobs).where(activeCondition)
+  // Fetch unique titles, companies and locations for the dropdowns
+  const titleConds = getConditions('q');
+  const uniqueTitlesData = await safeQuery(
+    db.selectDistinct({ title: jobs.title })
+      .from(jobs)
+      .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
+      .where(titleConds.length > 0 ? and(...titleConds) : undefined)
   );
+
+  const compConds = getConditions('company');
+  const uniqueCompaniesData = await safeQuery(
+    db.selectDistinct({ name: jobs.companyName })
+      .from(jobs)
+      .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
+      .where(compConds.length > 0 ? and(...compConds) : undefined)
+  );
+  
+  const locConds = getConditions('location');
   const uniqueLocationsData = await safeQuery(
     db.selectDistinct({ name: regions.name, country: countries.name })
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
       .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(activeCondition)
+      .where(locConds.length > 0 ? and(...locConds) : undefined)
   );
 
+  const uniqueTitles = uniqueTitlesData.map(t => t.title).filter((t): t is string => Boolean(t)).sort();
   const uniqueCompanies = uniqueCompaniesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
   
   const locationsByCountry = uniqueLocationsData.reduce((acc, curr) => {
@@ -137,15 +158,6 @@ export default async function JobsPage({
     locationsByCountry[country].sort();
   }
   const sortedCountries = Object.keys(locationsByCountry).sort();
-
-  const jobTypes = [
-    { value: '', label: 'All Types' },
-    { value: 'full_time', label: 'Full Time' },
-    { value: 'part_time', label: 'Part Time' },
-    { value: 'contract', label: 'Contract' },
-    { value: 'internship', label: 'Internship' },
-    { value: 'remote', label: 'Remote' },
-  ];
 
   const hasFilters = q || type || company || location;
 
@@ -187,120 +199,18 @@ export default async function JobsPage({
         </div>
       </div>
 
-      {/* Filter Panel */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-white/5 mb-4">
-          <Filter className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Filter & Search</h2>
-        </div>
-        
-        <form className="flex flex-col md:flex-row gap-4 items-end" action="/jobs" method="GET">
-          {type && <input type="hidden" name="type" value={type} />}
-          {layout === 'list' && <input type="hidden" name="layout" value="list" />}
-          
-          <div className="space-y-1.5 flex-1 w-full">
-            <label className="text-xs text-muted-foreground font-medium pl-1">Job Title / Keyword</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                name="q"
-                placeholder="Software engineer..."
-                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
-                defaultValue={q}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5 flex-1 w-full">
-            <label className="text-xs text-muted-foreground font-medium pl-1">Who is recruiting?</label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Select name="company" defaultValue={company || 'all'}>
-                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 pl-9">
-                  <SelectValue placeholder="All Companies" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Companies</SelectItem>
-                  {uniqueCompanies.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5 flex-1 w-full">
-            <label className="text-xs text-muted-foreground font-medium pl-1">Location</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Select name="location" defaultValue={location || 'all'}>
-                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 pl-9">
-                  <SelectValue placeholder="All Locations" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {sortedCountries.map(country => (
-                    <SelectGroup key={country}>
-                      <SelectLabel className="text-white font-semibold">{country}</SelectLabel>
-                      <SelectItem value={`country:${country}`} className="text-primary font-medium pl-6">All {country}</SelectItem>
-                      {locationsByCountry[country].map(l => (
-                        <SelectItem key={l} value={l} className="pl-6">{l}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5 flex-[0.8] w-full">
-            <label className="text-xs text-muted-foreground font-medium pl-1">Posted Within</label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Select name="time" defaultValue={time || 'all'}>
-                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 pl-9">
-                  <SelectValue placeholder="Any time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any time</SelectItem>
-                  <SelectItem value="7d">Last 7 days</SelectItem>
-                  <SelectItem value="30d">Last 30 days</SelectItem>
-                  <SelectItem value="90d">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button type="submit" className="w-full md:w-auto h-10 px-8">
-            Filter Results
-          </Button>
-        </form>
-
-        {/* Job Type Pills inside the filter panel for cohesion */}
-        <div className="pt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {jobTypes.map(({ value, label }) => (
-            <Link
-              key={value}
-              href={`/jobs?${new URLSearchParams({
-                ...(q ? { q } : {}),
-                ...(company ? { company } : {}),
-                ...(location ? { location } : {}),
-                ...(time ? { time } : {}),
-                ...(layout === 'list' ? { layout } : {}),
-                ...(value ? { type: value } : {}),
-              }).toString()}`}
-            >
-              <Button
-                variant={type === value || (!type && value === '') ? 'default' : 'secondary'}
-                size="sm"
-                className="rounded-full whitespace-nowrap h-8 text-xs bg-black/20"
-              >
-                {label}
-              </Button>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <JobFilters
+        q={q}
+        type={type}
+        company={company}
+        location={location}
+        time={time}
+        layout={layout}
+        uniqueTitles={uniqueTitles}
+        uniqueCompanies={uniqueCompanies}
+        sortedCountries={sortedCountries}
+        locationsByCountry={locationsByCountry}
+      />
 
       {/* Grid */}
       {data.length === 0 ? (
