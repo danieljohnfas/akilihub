@@ -35,10 +35,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!data.length) return { title: 'Job Not Found' };
 
   const job = data[0];
-  const title = `${job.title} at ${job.companyName} | AkiliBrain Jobs`;
+  const companyStr = (!job.companyName || job.companyName.toLowerCase() === 'unknown') ? '' : ` at ${job.companyName}`;
+  const title = `${job.title}${companyStr} | Jobs`;
   const desc = job.description 
     ? (job.description.slice(0, 150) + (job.description.length > 150 ? '...' : ''))
-    : `Apply for the ${job.title} position at ${job.companyName} in ${job.region || job.country || 'East Africa'}.`;
+    : `Apply for the ${job.title} position${companyStr} in ${job.region || job.country || 'East Africa'}.`;
 
   const url = `https://akilibrain.com/jobs/${resolvedParams.id}`;
 

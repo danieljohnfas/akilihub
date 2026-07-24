@@ -121,6 +121,7 @@ ${text.substring(0, 12000)}
 
 Rules:
 - Extract any real job postings found in the text. Be comprehensive.
+- For 'companyName': DO NOT use the name of job boards or aggregators (e.g. Ajiriwa, BrighterMonday, Unjobs) as the company name. You MUST find the actual hiring organization or company. If completely unknown, return 'Unknown'.
 - For 'description': Include scope of work, duties and responsibilities.
 - For 'requirements': Qualifications, experience needed. Use empty string if none.
 - For 'location': City or region (e.g., "Nairobi"). Use empty string if none.
