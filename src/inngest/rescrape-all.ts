@@ -49,8 +49,8 @@ export const rescrapeJobsJob = inngest.createFunction(
                 jobType: bestMatch.jobType || job.jobType,
                 postedDate: bestMatch.postedDate || job.postedDate,
                 deadline: bestMatch.deadline || job.deadline,
-                salaryMin: bestMatch.salaryMin || job.salaryMin,
-                salaryMax: bestMatch.salaryMax || job.salaryMax,
+                salaryMin: bestMatch.salaryMin ? bestMatch.salaryMin.toString() : job.salaryMin,
+                salaryMax: bestMatch.salaryMax ? bestMatch.salaryMax.toString() : job.salaryMax,
                 salaryCurrency: bestMatch.salaryCurrency || job.salaryCurrency,
                 sourceUrl: bestMatch.sourceUrl || job.sourceUrl,
                 updatedAt: new Date()
@@ -108,7 +108,7 @@ export const rescrapeTendersJob = inngest.createFunction(
                 requirements: bestMatch.requirements || tender.requirements,
                 publishedAt: bestMatch.publishedAt || tender.publishedAt,
                 deadline: bestMatch.deadline || tender.deadline,
-                estimatedValue: bestMatch.estimatedValue || tender.estimatedValue,
+                budget: bestMatch.budget ? bestMatch.budget.toString() : tender.budget,
                 sourceUrl: bestMatch.sourceUrl || tender.sourceUrl,
                 updatedAt: new Date()
               }).where(eq(tenders.id, tender.id));
