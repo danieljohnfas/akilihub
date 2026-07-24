@@ -3,7 +3,7 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and, or, isNull, gt, count } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
-import { JobFilters } from './JobFilters';
+import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -199,17 +199,63 @@ export default async function JobsPage({
         </div>
       </div>
 
-      <JobFilters
-        q={q}
-        type={type}
-        company={company}
-        location={location}
-        time={time}
-        layout={layout}
-        uniqueTitles={uniqueTitles}
-        uniqueCompanies={uniqueCompanies}
-        sortedCountries={sortedCountries}
-        locationsByCountry={locationsByCountry}
+      <GlobalFilterBar
+        filters={[
+          {
+            id: 'q',
+            type: 'search',
+            label: 'Job Title / Keyword',
+            placeholder: 'Software engineer...',
+            datalist: uniqueTitles,
+          },
+          {
+            id: 'company',
+            type: 'select',
+            label: 'Who is recruiting?',
+            icon: Building2,
+            options: [
+              { value: 'all', label: 'All Companies' },
+              ...uniqueCompanies.map(c => ({ value: c, label: c })),
+            ],
+            defaultValue: 'all',
+          },
+          {
+            id: 'location',
+            type: 'select',
+            label: 'Location',
+            icon: MapPin,
+            options: [
+              { value: 'all', label: 'Everywhere' },
+              ...sortedCountries.map(c => ({ value: c, label: c })),
+            ],
+            defaultValue: 'all',
+          },
+          {
+            id: 'type',
+            type: 'select',
+            label: 'Job Type',
+            options: [
+              { value: 'all', label: 'All Types' },
+              { value: 'full_time', label: 'Full Time' },
+              { value: 'part_time', label: 'Part Time' },
+              { value: 'contract', label: 'Contract' },
+              { value: 'internship', label: 'Internship' },
+              { value: 'remote', label: 'Remote' },
+            ],
+            defaultValue: 'all',
+          },
+          {
+            id: 'time',
+            type: 'pills',
+            options: [
+              { value: 'all', label: 'Any time' },
+              { value: '24h', label: 'Past 24 hours' },
+              { value: '7d', label: 'Past week' },
+              { value: '30d', label: 'Past month' },
+            ],
+            defaultValue: 'all',
+          }
+        ]}
       />
 
       {/* Grid */}

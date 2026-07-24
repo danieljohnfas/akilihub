@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildSalaryListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 
 import type { Metadata } from 'next';
 
@@ -92,6 +93,27 @@ export default async function SalariesPage({
     { name: 'Salary Database', url: 'https://akilibrain.com/salaries' },
   ]);
 
+  const salaryFilters: FilterConfig[] = [
+    {
+      id: 'q',
+      type: 'search',
+      label: 'Search Job Titles',
+      placeholder: 'Search job titles...',
+    },
+    {
+      id: 'level',
+      type: 'pills',
+      options: [
+        { value: 'all', label: 'All Levels' },
+        { value: 'entry', label: 'Entry' },
+        { value: 'mid', label: 'Mid' },
+        { value: 'senior', label: 'Senior' },
+        { value: 'executive', label: 'Executive' },
+      ],
+      defaultValue: 'all'
+    }
+  ];
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
       {data.length > 0 && <JsonLd schema={salarySchema} />}
@@ -104,39 +126,11 @@ export default async function SalariesPage({
             Explore transparent salary data for public and private sector roles across the continent.
           </p>
         </div>
-        
-        <form className="w-full max-w-lg flex items-center justify-center gap-2" action="/salaries" method="GET">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              name="q"
-              placeholder="Search job titles..." 
-              className="pl-9 bg-white/5 border-white/10 focus-visible:ring-primary/50"
-              defaultValue={q}
-            />
-            {level && level !== 'all' && <input type="hidden" name="level" value={level} />}
-          </div>
-          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10 mr-2">
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-          <SubmitSalaryModal countries={allCountries} />
-        </form>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {['all', 'entry', 'mid', 'senior', 'executive'].map((l) => (
-          <Link key={l} href={`/salaries?${new URLSearchParams({ ...(q ? { q } : {}), ...(l !== 'all' ? { level: l } : {}) }).toString()}`}>
-            <Button
-              variant={level === l || (l === 'all' && !level) ? 'default' : 'secondary'}
-              size="sm"
-              className="rounded-full capitalize"
-            >
-              {l}
-            </Button>
-          </Link>
-        ))}
-      </div>
+      <GlobalFilterBar filters={salaryFilters}>
+        <SubmitSalaryModal countries={allCountries} />
+      </GlobalFilterBar>
 
       {/* Disclaimer Banner */}
       <div className="flex items-start gap-3 px-4 py-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-sm text-amber-300/80">

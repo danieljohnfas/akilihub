@@ -8,6 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { Search, SlidersHorizontal, Inbox, Building2, BookOpen } from 'lucide-react';
 import Link from 'next/link';
@@ -89,6 +90,26 @@ export default async function CompliancePage({
     .orderBy(desc(complianceRequirements.createdAt))
     .limit(50));
 
+  const complianceFilters: FilterConfig[] = [
+    {
+      id: 'q',
+      type: 'search',
+      label: 'Search Companies',
+      placeholder: 'Search companies by name...',
+    },
+    {
+      id: 'status',
+      type: 'pills',
+      options: [
+        { value: 'all', label: 'All' },
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+        { value: 'suspended', label: 'Suspended' },
+      ],
+      defaultValue: 'active'
+    }
+  ];
+
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
       {/* Header & Search */}
@@ -99,23 +120,9 @@ export default async function CompliancePage({
             Search registered companies and verify compliance status across African jurisdictions.
           </p>
         </div>
-        
-        <form className="w-full max-w-md flex items-center gap-2" action="/compliance" method="GET">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              name="q"
-              placeholder="Search companies by name..." 
-              className="pl-9 bg-white/5 border-white/10 focus-visible:ring-primary/50"
-              defaultValue={q}
-            />
-            {status && status !== 'all' && <input type="hidden" name="status" value={status} />}
-          </div>
-          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10">
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </form>
       </div>
+
+      <GlobalFilterBar filters={complianceFilters} />
 
       <Tabs defaultValue="resources" className="w-full">
         <TabsList className="mb-6 bg-white/5 border border-white/10">

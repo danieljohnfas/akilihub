@@ -12,6 +12,7 @@ import { redirect } from 'next/navigation';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,6 +119,36 @@ export default async function TendersPage({
     { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
   ]);
 
+  const tenderFilters: FilterConfig[] = [
+    {
+      id: 'q',
+      type: 'search',
+      label: 'Search Keywords',
+      placeholder: 'Search tenders...',
+    },
+    {
+      id: 'country',
+      type: 'select',
+      label: 'Country',
+      options: [
+        { value: 'all', label: 'All Countries' },
+        ...uniqueCountriesList.map(c => ({ value: c, label: c }))
+      ]
+    },
+    {
+      id: 'status',
+      type: 'pills',
+      options: [
+        { value: 'all', label: 'All' },
+        { value: 'open', label: 'Open' },
+        { value: 'closed', label: 'Closed' },
+        { value: 'awarded', label: 'Awarded' },
+        { value: 'cancelled', label: 'Cancelled' },
+      ],
+      defaultValue: 'open'
+    }
+  ];
+
   const hasFilters = q || status !== 'open' || countryParam;
 
   return (
@@ -139,71 +170,18 @@ export default async function TendersPage({
         </div>
       </div>
 
-      {/* Filter Panel */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
-        <form className="flex flex-col md:flex-row gap-4 items-end" action="/tenders" method="GET">
-          {status && <input type="hidden" name="status" value={status} />}
-          
-          <div className="space-y-1.5 flex-1 w-full">
-            <label className="text-xs text-muted-foreground font-medium pl-1">Search Keywords</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                name="q"
-                placeholder="Search tenders..."
-                className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50"
-                defaultValue={q}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5 flex-1 w-full md:max-w-xs">
-            <label className="text-xs text-muted-foreground font-medium pl-1">Country</label>
-            <div className="relative">
-              <Select name="country" defaultValue={countryParam || 'all'}>
-                <SelectTrigger className="w-full h-10 bg-black/20 border-white/10 px-3 py-2 text-sm text-foreground">
-                  <SelectValue placeholder="All Countries" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Countries</SelectItem>
-                  {uniqueCountriesList.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10 mr-2">
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-          <Link 
-            href="/tenders/calendar"
-            className={buttonVariants({ variant: "outline", className: "shrink-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300" })}
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Deadline Calendar
-          </Link>
-
-          <Button type="submit" className="w-full md:w-auto h-10 px-8">
-            Filter Results
-          </Button>
-        </form>
-
-        <div className="pt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {['all', 'open', 'closed', 'awarded', 'cancelled'].map((s) => (
-            <Link key={s} href={`/tenders?${new URLSearchParams({ ...(q ? { q } : {}), ...(countryParam ? { country: countryParam } : {}), ...(s !== 'all' ? { status: s } : {}) }).toString()}`}>
-              <Button
-                variant={status === s || (s === 'all' && !status) ? 'default' : 'secondary'}
-                size="sm"
-                className="rounded-full whitespace-nowrap h-8 text-xs bg-black/20"
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </Button>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <GlobalFilterBar filters={tenderFilters}>
+        <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10 hidden md:flex">
+          <SlidersHorizontal className="h-4 w-4" />
+        </Button>
+        <Link 
+          href="/tenders/calendar"
+          className={buttonVariants({ variant: "outline", className: "shrink-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300" })}
+        >
+          <Calendar className="h-4 w-4 mr-2" />
+          Deadline Calendar
+        </Link>
+      </GlobalFilterBar>
 
       {/* Grid */}
       {data.length === 0 ? (
