@@ -103,12 +103,13 @@ export const rescrapeTendersJob = inngest.createFunction(
 
               await db.update(tenders).set({
                 title: bestMatch.title,
-                referenceNumber: bestMatch.referenceNumber || tender.referenceNumber,
-                scope: bestMatch.scope || tender.scope,
-                requirements: bestMatch.requirements || tender.requirements,
-                publishedAt: bestMatch.publishedAt || tender.publishedAt,
+                referenceNo: bestMatch.referenceNo || tender.referenceNo,
+                description: bestMatch.description || tender.description,
+                contractingAuthority: bestMatch.contractingAuthority || tender.contractingAuthority,
+                category: bestMatch.category || tender.category,
                 deadline: bestMatch.deadline || tender.deadline,
                 budget: bestMatch.budget ? bestMatch.budget.toString() : tender.budget,
+                currency: bestMatch.currency || tender.currency,
                 sourceUrl: bestMatch.sourceUrl || tender.sourceUrl,
                 updatedAt: new Date()
               }).where(eq(tenders.id, tender.id));
