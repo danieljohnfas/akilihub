@@ -2,7 +2,7 @@ import { inngest } from "./client";
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
 import { tenders } from "@/lib/db/schema/tenders";
-import { companyCompliance } from "@/lib/db/schema/compliance";
+import { complianceRequirements } from "@/lib/db/schema/compliance";
 import { fetchHtml, htmlToTextEnriched } from "@/lib/scrapers/compliance-base";
 import { extractJobsWithAI } from "@/lib/scrapers/broad-search-engine";
 import { extractTendersWithAI } from "@/lib/scrapers/broad-search-engine-tenders";
@@ -139,9 +139,9 @@ export const rescrapeComplianceJob = inngest.createFunction(
   async ({ step }) => {
     return await step.run("execute-rescrape-compliance", async () => {
       const oldestCompliance = await db.select()
-        .from(companyCompliance)
-        .where(isNotNull(companyCompliance.sourceUrl))
-        .orderBy(asc(companyCompliance.updatedAt))
+        .from(complianceRequirements)
+        .where(isNotNull(complianceRequirements.sourceUrl))
+        .orderBy(asc(complianceRequirements.updatedAt))
         .limit(5);
 
       let updatedCount = 0;
@@ -158,16 +158,16 @@ export const rescrapeComplianceJob = inngest.createFunction(
             if (extracted && extracted.length > 0) {
               const bestMatch = extracted[0]; 
               
-              await db.update(companyCompliance).set({
-                registrationNumber: bestMatch.registrationNumber || comp.registrationNumber,
-                registrationDate: bestMatch.registrationDate || comp.registrationDate,
-                taxId: bestMatch.taxId || comp.taxId,
-                status: bestMatch.status || comp.status,
-                entityType: bestMatch.entityType || comp.entityType,
+              await db.update(complianceRequirements).set({
+                title: bestMatch.title || comp.title,
+                description: bestMatch.description || comp.description,
+                category: bestMatch.category || comp.category,
+                issuingAuthority: bestMatch.issuingAuthority || comp.issuingAuthority,
+                resourceType: bestMatch.resourceType || comp.resourceType,
                 sourceUrl: bestMatch.sourceUrl || comp.sourceUrl,
                 updatedAt: new Date(),
                 lastVerifiedAt: new Date(),
-              }).where(eq(companyCompliance.id, comp.id));
+              }).where(eq(complianceRequirements.id, comp.id));
               updatedCount++;
               continue;
             }
@@ -175,13 +175,13 @@ export const rescrapeComplianceJob = inngest.createFunction(
         } catch (e: any) {
           if (e.code === '23505') {
             console.log(`[rescrape-compliance] Duplicate origin URL found for compliance ${comp.id}. Deleting duplicate aggregator record.`);
-            await db.delete(companyCompliance).where(eq(companyCompliance.id, comp.id));
+            await db.delete(complianceRequirements).where(eq(complianceRequirements.id, comp.id));
             continue;
           }
           console.error(`Error rescraping compliance ${comp.id}:`, e);
         }
 
-        await db.update(companyCompliance).set({ updatedAt: new Date() }).where(eq(companyCompliance.id, comp.id));
+        await db.update(complianceRequirements).set({ updatedAt: new Date() }).where(eq(complianceRequirements.id, comp.id));
       }
 
       return { message: `Rescraped and refreshed ${updatedCount} out of ${oldestCompliance.length} compliance records.` };
