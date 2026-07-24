@@ -22,6 +22,7 @@ export interface BroadJobResource {
 const BLOCKED_DOMAINS = [
   'linkedin.com', 'glassdoor.com', 'indeed.com', 'fuzu.com',
   'brightermonday.co.ke', 'myjobmag.com', 'jobwebkenya.com',
+  'unjobs.org'
 ];
 
 // ── DuckDuckGo search via Python sidecar (free, no API key) ───────────────────
