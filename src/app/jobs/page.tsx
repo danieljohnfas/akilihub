@@ -212,7 +212,7 @@ export default async function JobsPage({
             id: 'company',
             type: 'select',
             label: 'Who is recruiting?',
-            icon: Building2,
+            icon: <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
             options: [
               { value: 'all', label: 'All Companies' },
               ...uniqueCompanies.map(c => ({ value: c, label: c })),
@@ -223,7 +223,7 @@ export default async function JobsPage({
             id: 'location',
             type: 'select',
             label: 'Location',
-            icon: MapPin,
+            icon: <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
             options: [
               { value: 'all', label: 'Everywhere' },
               ...sortedCountries.map(c => ({ value: c, label: c })),

@@ -3,7 +3,7 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, SlidersHorizontal, LucideIcon } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
@@ -19,7 +19,7 @@ export interface FilterConfig {
   type: FilterType;
   label?: string; // For selects/search
   placeholder?: string;
-  icon?: LucideIcon;
+  icon?: React.ReactNode;
   options?: FilterOption[]; // For select and pills
   datalist?: string[]; // For search autocomplete
   defaultValue?: string; // E.g., 'all'
@@ -70,7 +70,7 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
             <label className="text-xs text-muted-foreground font-medium pl-1">{searchFilter.label || 'Search'}</label>
             <div className="relative">
               {searchFilter.icon ? (
-                <searchFilter.icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                searchFilter.icon
               ) : (
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               )}
@@ -104,7 +104,7 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
             {filter.label && <label className="text-xs text-muted-foreground font-medium pl-1">{filter.label}</label>}
             <div className="relative">
               {filter.icon && (
-                 <filter.icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                 filter.icon
               )}
               <Select 
                 value={searchParams.get(filter.id) || filter.defaultValue || 'all'} 
