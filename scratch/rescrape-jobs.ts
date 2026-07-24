@@ -5,6 +5,45 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { eq, or, isNull } from 'drizzle-orm';
 import { fetchHtml, htmlToTextEnriched } from '@/lib/scrapers/compliance-base';
 import { extractJobsWithAI } from '@/lib/scrapers/broad-search-engine';
+import fs from 'fs';
+import path from 'path';
+
+const STATE_FILE = path.join(process.cwd(), 'scratch', 'rescraped-ids.json');
+
+function loadRescrapedIds(): Set<string> {
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      const data = fs.readFileSync(STATE_FILE, 'utf-8');
+      return new Set(JSON.parse(data));
+    }
+  } catch (e) {
+    console.error("Failed to load state file:", e);
+  }
+  return new Set();
+}
+
+function saveRescrapedIds(ids: Set<string>) {
+  try {
+    fs.writeFileSync(STATE_FILE, JSON.stringify(Array.from(ids), null, 2));
+  } catch (e) {
+    console.error("Failed to save state file:", e);
+  }
+}
+
+// Simple Levenshtein or inclusion match for safety
+function isTitleMatch(original: string, extracted: string): boolean {
+  const o = original.toLowerCase();
+  const e = extracted.toLowerCase();
+  if (o.includes(e) || e.includes(o)) return true;
+  // Check if at least 50% of words match
+  const oWords = o.split(/\W+/).filter(w => w.length > 2);
+  const eWords = e.split(/\W+/).filter(w => w.length > 2);
+  let matchCount = 0;
+  for (const w of oWords) {
+    if (eWords.includes(w)) matchCount++;
+  }
+  return matchCount > 0 && (matchCount / oWords.length >= 0.5 || matchCount / eWords.length >= 0.5);
+}
 
 async function processJob(job: any): Promise<boolean> {
   try {
@@ -27,8 +66,14 @@ async function processJob(job: any): Promise<boolean> {
     const extracted = await extractJobsWithAI(text, job.sourceUrl);
     
     if (extracted && extracted.length > 0) {
-      // Find the closest matching job title or just take the first one
-      const bestMatch = extracted[0]; // Assuming single job per page usually
+      // Find the best matching job title
+      let bestMatch = extracted[0];
+      for (const ex of extracted) {
+        if (isTitleMatch(job.title, ex.title)) {
+          bestMatch = ex;
+          break;
+        }
+      }
       
       const newPosted = bestMatch.postedDate || null;
       const newDeadline = bestMatch.deadline || null;
@@ -64,12 +109,15 @@ async function main() {
     createdAt: jobs.createdAt
   }).from(jobs);
 
+  const rescrapedIds = loadRescrapedIds();
+
   let jobsToFix = allJobs.filter(j => {
+    // Skip if already rescraped
+    if (rescrapedIds.has(j.id)) return false;
+    
+    // Rescrape if missing dates
     if (!j.postedDate || !j.deadline) return true;
-    if (j.postedDate && j.createdAt) {
-      const diffMs = Math.abs(j.postedDate.getTime() - j.createdAt.getTime());
-      return diffMs < 5 * 60 * 1000;
-    }
+    
     return false;
   });
 
@@ -90,12 +138,18 @@ async function main() {
       
       const results = await Promise.all(batch.map(j => processJob(j)));
       
-      // Collect the ones that failed
+      // Collect the ones that failed, save success/failure state
       for (let j = 0; j < results.length; j++) {
+        const jobId = batch[j].id;
         if (!results[j]) {
           failedJobs.push(batch[j]);
+        } else {
+          rescrapedIds.add(jobId);
         }
       }
+      
+      // Save state every batch
+      saveRescrapedIds(rescrapedIds);
       
       // Delay to be polite and avoid rate limits
       await new Promise(res => setTimeout(res, 5000));
@@ -110,7 +164,17 @@ async function main() {
         console.log(`Waiting 30 seconds before next pass to let AI limiters cool down...\n`);
         await new Promise(res => setTimeout(res, 30000));
       }
+    } else {
+      break;
     }
+  }
+
+  // Record permanent failures
+  if (jobsToFix.length > 0) {
+    for (const job of jobsToFix) {
+      rescrapedIds.add(job.id);
+    }
+    saveRescrapedIds(rescrapedIds);
   }
 
   if (jobsToFix.length > 0) {

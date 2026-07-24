@@ -62,6 +62,9 @@ import { checkDataStatusJob } from "@/inngest/check-data-status";
 import { salaryConsensusVerificationJob } from "@/inngest/salary-consensus";
 import { generateWeeklyGuidesJob } from "@/inngest/generate-guides";
 
+// Rescrape
+import { rescrapeJobsJob, rescrapeTendersJob, rescrapeComplianceJob } from "@/inngest/rescrape-all";
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
@@ -127,6 +130,11 @@ export const { GET, POST, PUT } = serve({
 
     // Weekly AI editorial guides generation (Monday 08:00 UTC)
     generateWeeklyGuidesJob,
+
+    // Continuous deep rescraping
+    rescrapeJobsJob,
+    rescrapeTendersJob,
+    rescrapeComplianceJob,
   ],
 });
 
