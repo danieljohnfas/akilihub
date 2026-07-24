@@ -109,50 +109,17 @@ export default async function JobsPage({
       .offset(offset)
   );
 
-  // Fetch unique titles, companies and locations for the dropdowns
   const titleConds = getConditions('q');
-  const uniqueTitlesData = await safeQuery(
-    db.selectDistinct({ title: jobs.title })
-      .from(jobs)
-      .leftJoin(countries, eq(jobs.countryId, countries.id))
-      .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(titleConds.length > 0 ? and(...titleConds) : undefined)
-  );
-
+  
   const compConds = getConditions('company');
-  const uniqueCompaniesData = await safeQuery(
-    db.selectDistinct({ name: jobs.companyName })
-      .from(jobs)
-      .leftJoin(countries, eq(jobs.countryId, countries.id))
-      .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(compConds.length > 0 ? and(...compConds) : undefined)
-  );
-  
-  const locConds = getConditions('country');
-  const uniqueLocationsData = await safeQuery(
-    db.selectDistinct({ name: regions.name, country: countries.name })
-      .from(jobs)
-      .leftJoin(countries, eq(jobs.countryId, countries.id))
-      .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(locConds.length > 0 ? and(...locConds) : undefined)
-  );
 
-  const uniqueTitles = uniqueTitlesData.map(t => t.title).filter((t): t is string => Boolean(t)).sort();
-  const uniqueCompanies = uniqueCompaniesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+  const locConds = getConditions('country');
   
-  const locationsByCountry = uniqueLocationsData.reduce((acc, curr) => {
-    const country = curr.country || 'Other';
-    if (!acc[country]) acc[country] = [];
-    if (curr.name) {
-      acc[country].push(curr.name);
-    }
-    return acc;
-  }, {} as Record<string, string[]>);
+  const countriesData = await safeQuery(db.select({ name: countries.name }).from(countries));
+  const sortedCountries = countriesData.map(c => c.name).sort();
+
   
-  for (const country in locationsByCountry) {
-    locationsByCountry[country].sort();
-  }
-  const sortedCountries = Object.keys(locationsByCountry).sort();
+
 
   const hasFilters = q || type || company || country;
 
@@ -201,18 +168,13 @@ export default async function JobsPage({
             type: 'search',
             label: 'Job Title / Keyword',
             placeholder: 'Software engineer...',
-            datalist: uniqueTitles,
           },
           {
             id: 'company',
-            type: 'select',
+            type: 'search',
             label: 'Who is recruiting?',
+            placeholder: 'Company name...',
             icon: <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
-            options: [
-              { value: 'all', label: 'All Companies' },
-              ...uniqueCompanies.map(c => ({ value: c, label: c })),
-            ],
-            defaultValue: 'all',
           },
           {
             id: 'country',
