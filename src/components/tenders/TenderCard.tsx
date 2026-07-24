@@ -76,7 +76,7 @@ export function TenderCard({
             </Badge>
           </div>
         </div>
-        <h3 className="text-lg font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
           {title}
         </h3>
       </CardHeader>

@@ -47,7 +47,7 @@ export function BusinessCard({
             {status.toUpperCase()}
           </Badge>
         </div>
-        <h3 className="text-lg font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
           {name}
         </h3>
       </CardHeader>

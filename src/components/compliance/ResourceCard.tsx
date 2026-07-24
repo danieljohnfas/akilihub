@@ -49,7 +49,7 @@ export function ResourceCard({
             </Badge>
           </div>
         </div>
-        <CardTitle className="text-lg line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+        <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
           {title}
         </CardTitle>
         <CardDescription className="text-xs text-muted-foreground font-medium mt-1">

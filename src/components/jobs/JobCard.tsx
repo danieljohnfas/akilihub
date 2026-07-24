@@ -64,7 +64,7 @@ export function JobCard({
         </Link>
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold line-clamp-1 group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+            <h3 className="text-base font-semibold group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
               {title}
             </h3>
             {isExpired && <Badge variant="secondary" className="text-[10px] h-4 px-1 z-20 relative">Expired</Badge>}
@@ -117,7 +117,7 @@ export function JobCard({
             <Badge variant="secondary" className="text-xs relative z-20">Expired</Badge>
           )}
         </div>
-        <h3 className="text-lg font-semibold line-clamp-2 group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+        <h3 className="text-lg font-semibold group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
           {title}
         </h3>
       </CardHeader>
