@@ -124,6 +124,7 @@ Rules:
 - For 'requirements': Qualifications, experience needed. Use empty string if none.
 - For 'location': City or region (e.g., "Nairobi"). Use empty string if none.
 - For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.
+- For 'sourceUrl': If this page is an aggregator or job board, look for an "Apply Here", "Visit Website", or original employer link in the [LINK] sections and return the TRUE origin URL. If it's already the employer's site or no origin link exists, return the provided Source URL.
 - For 'postedDateIsoString': ISO 8601 date when the job was posted if found, otherwise empty string.
 - For 'deadlineIsoString': ISO 8601 deadline date if found, otherwise empty string.
 - For 'salaryMin': Minimum salary as a plain number (no currency symbol) if stated, otherwise 0.

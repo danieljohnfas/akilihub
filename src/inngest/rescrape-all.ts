@@ -52,13 +52,19 @@ export const rescrapeJobsJob = inngest.createFunction(
                 salaryMin: bestMatch.salaryMin || job.salaryMin,
                 salaryMax: bestMatch.salaryMax || job.salaryMax,
                 salaryCurrency: bestMatch.salaryCurrency || job.salaryCurrency,
+                sourceUrl: bestMatch.sourceUrl || job.sourceUrl,
                 updatedAt: new Date()
               }).where(eq(jobs.id, job.id));
               updatedCount++;
               continue;
             }
           }
-        } catch (e) {
+        } catch (e: any) {
+          if (e.code === '23505') {
+            console.log(`[rescrape-jobs] Duplicate origin URL found for job ${job.id}. Deleting duplicate aggregator record.`);
+            await db.delete(jobs).where(eq(jobs.id, job.id));
+            continue;
+          }
           console.error(`Error rescraping job ${job.id}:`, e);
         }
 
@@ -103,13 +109,19 @@ export const rescrapeTendersJob = inngest.createFunction(
                 publishedAt: bestMatch.publishedAt || tender.publishedAt,
                 deadline: bestMatch.deadline || tender.deadline,
                 estimatedValue: bestMatch.estimatedValue || tender.estimatedValue,
+                sourceUrl: bestMatch.sourceUrl || tender.sourceUrl,
                 updatedAt: new Date()
               }).where(eq(tenders.id, tender.id));
               updatedCount++;
               continue;
             }
           }
-        } catch (e) {
+        } catch (e: any) {
+          if (e.code === '23505') {
+            console.log(`[rescrape-tenders] Duplicate origin URL found for tender ${tender.id}. Deleting duplicate aggregator record.`);
+            await db.delete(tenders).where(eq(tenders.id, tender.id));
+            continue;
+          }
           console.error(`Error rescraping tender ${tender.id}:`, e);
         }
 
@@ -152,6 +164,7 @@ export const rescrapeComplianceJob = inngest.createFunction(
                 taxId: bestMatch.taxId || comp.taxId,
                 status: bestMatch.status || comp.status,
                 entityType: bestMatch.entityType || comp.entityType,
+                sourceUrl: bestMatch.sourceUrl || comp.sourceUrl,
                 updatedAt: new Date(),
                 lastVerifiedAt: new Date(),
               }).where(eq(companyCompliance.id, comp.id));
@@ -159,7 +172,12 @@ export const rescrapeComplianceJob = inngest.createFunction(
               continue;
             }
           }
-        } catch (e) {
+        } catch (e: any) {
+          if (e.code === '23505') {
+            console.log(`[rescrape-compliance] Duplicate origin URL found for compliance ${comp.id}. Deleting duplicate aggregator record.`);
+            await db.delete(companyCompliance).where(eq(companyCompliance.id, comp.id));
+            continue;
+          }
           console.error(`Error rescraping compliance ${comp.id}:`, e);
         }
 

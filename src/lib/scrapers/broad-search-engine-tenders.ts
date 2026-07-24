@@ -39,7 +39,7 @@ Rules:
 - Extract any real tender, bid, or procurement postings found in the text.
 - If multiple tenders are listed, extract all of them.
 - Only extract open, active tenders.
-- Ensure the source URL is correct (use the provided Source URL unless a specific direct link is found).
+- For sourceUrl: If this page is an aggregator, look for the original purchasing authority's website link or document link in the [LINK] sections and return the TRUE origin URL. If it's already the authority's site or no origin link exists, return the provided Source URL.
 - If no tenders are found, return an empty array.
 - For referenceNo, if none is explicitly provided, use a short slugified version of the title or generate a unique looking string from the text.
 - Try to classify the category as goods, works, services, or consultancy.

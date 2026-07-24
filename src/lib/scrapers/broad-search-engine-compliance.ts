@@ -28,6 +28,7 @@ Rules:
 - For 'category': Must be one of: tax, business_registration, employment, environment, health_safety, sector_specific.
 - For 'issuingAuthority': The government body (e.g. "KRA", "TRA", "URSB").
 - For 'resourceType': Must be one of: form, calculator, guideline, notice.
+- For 'sourceUrl': Look for the direct link to the authority's website, form download link, or original source in the [LINK] sections and return the TRUE origin URL. If it's already the authority's site or no origin link exists, return the provided Source URL.
 - Extract all compliance resources found. Return empty array if none found.
 `;
 
@@ -40,6 +41,7 @@ Rules:
           category: z.enum(['tax', 'business_registration', 'employment', 'environment', 'health_safety', 'sector_specific']),
           issuingAuthority: z.string(),
           resourceType: z.enum(['form', 'calculator', 'guideline', 'notice']),
+          sourceUrl: z.string(),
         }))
       }),
       prompt,
@@ -53,7 +55,7 @@ Rules:
       category: r.category,
       issuingAuthority: r.issuingAuthority,
       resourceType: r.resourceType,
-      sourceUrl,
+      sourceUrl: r.sourceUrl || sourceUrl,
     }));
   } catch (err) {
     console.error(`[extractComplianceWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
