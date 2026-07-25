@@ -54,67 +54,25 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 20;
 
-export default async function TendersPage({
-  searchParams: rawParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const { q, status = 'open', country, page } = parseGlobalSearchParams(await rawParams);
-  const offset = (page - 1) * PAGE_SIZE;
-  
-  const conditions = [
-    q ? ilike(tenders.title, `%${q}%`) : undefined,
-    status ? eq(tenders.status, status as never) : undefined,
-    country ? eq(countries.name, country) : undefined,
-  ].filter(Boolean);
+import { Suspense } from 'react';
+import { unstable_cache } from 'next/cache';
 
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-  const totalCountResult = await safeQuery(
-    db.select({ value: count() }).from(tenders).leftJoin(countries, eq(tenders.countryId, countries.id)).where(whereClause)
-  );
-  const totalCount = totalCountResult?.[0]?.value || 0;
-
-  const data = await safeQuery(db
-    .select({
-      tender: tenders,
-      country: countries.name,
-      sector: tenderSectors.name,
-      region: regions.name,
-    })
-    .from(tenders)
-    .leftJoin(countries, eq(tenders.countryId, countries.id))
-    .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
-    .leftJoin(regions, eq(tenders.regionId, regions.id))
-    .where(whereClause)
-    .orderBy(desc(tenders.publishedAt))
-    .limit(PAGE_SIZE)
-    .offset(offset));
-
-  // Fetch unique countries for the filter dropdown
+const getUniqueCountries = unstable_cache(async () => {
   const uniqueCountriesData = await safeQuery(
     db.selectDistinct({ name: countries.name })
       .from(tenders)
       .innerJoin(countries, eq(tenders.countryId, countries.id))
   );
-  const uniqueCountriesList = uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+  return uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+}, ['tenders-unique-countries'], { revalidate: 3600 });
 
-
-  const itemListSchema = buildItemListSchema(
-    'Government Tenders in East Africa',
-    'Latest government tenders and procurement opportunities across Kenya, Tanzania, Uganda, and Rwanda.',
-    data.slice(0, 20).map(({ tender, country }, idx) => ({
-      position: idx + 1,
-      name: tender.title,
-      description: `By ${tender.contractingAuthority}${country ? ` — ${country}` : ''}. Deadline: ${tender.deadline.toDateString()}.`,
-      url: `https://akilibrain.com/tenders/${tender.id}`,
-    }))
-  );
-
-  const breadcrumbSchema = buildBreadcrumbSchema([
-    { name: 'Home', url: 'https://akilibrain.com' },
-    { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
-  ]);
+export default async function TendersPage({
+  searchParams: rawParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = parseGlobalSearchParams(await rawParams);
+  const uniqueCountriesList = await getUniqueCountries();
 
   const tenderFilters: FilterConfig[] = [
     {
@@ -146,12 +104,8 @@ export default async function TendersPage({
     }
   ];
 
-  const hasFilters = q || status !== 'open' || country;
-
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
-      {data.length > 0 && <JsonLd schema={itemListSchema} />}
-      <JsonLd schema={breadcrumbSchema} />
       {/* Header & Search */}
       <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
         <div className="space-y-4 flex flex-col items-center">
@@ -159,11 +113,6 @@ export default async function TendersPage({
           <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Discover and track government tenders and contracts from across the continent.
           </p>
-          {totalCount > 0 && (
-            <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70 mt-2">
-              Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> results
-            </div>
-          )}
         </div>
       </div>
 
@@ -181,6 +130,111 @@ export default async function TendersPage({
       </GlobalFilterBar>
 
       {/* Grid */}
+      <Suspense fallback={
+        <div className="py-24 px-4 text-center">
+          <h3 className="text-xl font-semibold mb-2 animate-pulse text-muted-foreground">Loading tenders...</h3>
+        </div>
+      }>
+        <TendersList params={params} />
+      </Suspense>
+
+      {/* Related Guides Interweave */}
+      <div className="pt-10 mt-8">
+        <RelatedGuides category="procurement" title="Procurement Insights & Guides" />
+      </div>
+
+      {/* SEO: Internal linking */}
+      <div className="border-t border-white/5 pt-10 mt-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Procurement Categories</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Open Tenders', href: '/tenders?status=open' },
+            { label: 'Awarded Contracts', href: '/tenders?status=awarded' },
+            { label: 'Closed Tenders', href: '/tenders?status=closed' },
+            { label: 'Tenders in Kenya', href: '/tenders?q=kenya' },
+            { label: 'Tenders in Tanzania', href: '/tenders?q=tanzania' },
+            { label: 'Tenders in Uganda', href: '/tenders?q=uganda' },
+            { label: 'Construction Tenders', href: '/tenders?q=construction' },
+            { label: 'ICT & Technology Tenders', href: '/tenders?q=ict' },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
+  const { q, status = 'open', country, page } = params;
+  const offset = (page - 1) * PAGE_SIZE;
+  
+  const conditions = [
+    q ? ilike(tenders.title, `%${q}%`) : undefined,
+    status ? eq(tenders.status, status as never) : undefined,
+    country ? eq(countries.name, country) : undefined,
+  ].filter(Boolean);
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const totalCountResult = await safeQuery(
+    db.select({ value: count() }).from(tenders).leftJoin(countries, eq(tenders.countryId, countries.id)).where(whereClause)
+  );
+  const totalCount = totalCountResult?.[0]?.value || 0;
+
+  const data = await safeQuery(db
+    .select({
+      tender: tenders,
+      country: countries.name,
+      sector: tenderSectors.name,
+      region: regions.name,
+    })
+    .from(tenders)
+    .leftJoin(countries, eq(tenders.countryId, countries.id))
+    .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
+    .leftJoin(regions, eq(tenders.regionId, regions.id))
+    .where(whereClause)
+    .orderBy(desc(tenders.publishedAt))
+    .limit(PAGE_SIZE)
+    .offset(offset));
+
+  const itemListSchema = buildItemListSchema(
+    'Government Tenders in East Africa',
+    'Latest government tenders and procurement opportunities across Kenya, Tanzania, Uganda, and Rwanda.',
+    data.slice(0, 20).map(({ tender, country }, idx) => ({
+      position: idx + 1,
+      name: tender.title,
+      description: `By ${tender.contractingAuthority}${country ? ` — ${country}` : ''}. Deadline: ${tender.deadline.toDateString()}.`,
+      url: `https://akilibrain.com/tenders/${tender.id}`,
+    }))
+  );
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: 'https://akilibrain.com' },
+    { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
+  ]);
+
+  const hasFilters = q || status !== 'open' || country;
+
+  return (
+    <>
+      {data.length > 0 && <JsonLd schema={itemListSchema} />}
+      <JsonLd schema={breadcrumbSchema} />
+      
+      {totalCount > 0 && (
+        <div className="flex justify-center -mt-4 mb-8">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
+            Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> results
+          </div>
+        </div>
+      )}
+
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
           <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
@@ -220,10 +274,10 @@ export default async function TendersPage({
 
       {/* Pagination */}
       {data.length > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
+        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
           {page > 1 && (
             <Link
-              href={`/tenders?q=${q}&status=${status}&country=${country || ''}&page=${page - 1}`}
+              href={`/tenders?q=${q || ''}&status=${status || ''}&country=${country || ''}&page=${page - 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
@@ -232,7 +286,7 @@ export default async function TendersPage({
           <span className="text-sm text-muted-foreground">Page {page}</span>
           {data.length === PAGE_SIZE && (
             <Link
-              href={`/tenders?q=${q}&status=${status}&country=${country || ''}&page=${page + 1}`}
+              href={`/tenders?q=${q || ''}&status=${status || ''}&country=${country || ''}&page=${page + 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →
@@ -240,36 +294,6 @@ export default async function TendersPage({
           )}
         </div>
       )}
-
-      {/* Related Guides Interweave */}
-      <div className="pt-10 mt-8">
-        <RelatedGuides category="procurement" title="Procurement Insights & Guides" />
-      </div>
-
-      {/* SEO: Internal linking */}
-      <div className="border-t border-white/5 pt-10 mt-4">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Procurement Categories</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {[
-            { label: 'Open Tenders', href: '/tenders?status=open' },
-            { label: 'Awarded Contracts', href: '/tenders?status=awarded' },
-            { label: 'Closed Tenders', href: '/tenders?status=closed' },
-            { label: 'Tenders in Kenya', href: '/tenders?q=kenya' },
-            { label: 'Tenders in Tanzania', href: '/tenders?q=tanzania' },
-            { label: 'Tenders in Uganda', href: '/tenders?q=uganda' },
-            { label: 'Construction Tenders', href: '/tenders?q=construction' },
-            { label: 'ICT & Technology Tenders', href: '/tenders?q=ict' },
-          ].map(({ label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10"
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }

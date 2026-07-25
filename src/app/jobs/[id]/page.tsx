@@ -7,6 +7,7 @@ import { Calendar, Building2, MapPin, ExternalLink, ArrowLeft, Clock, Briefcase 
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
+import { cn, appendTrackingTag } from '@/lib/utils';
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -247,13 +248,13 @@ export default async function JobDetailPage({
             <div className="pt-6 space-y-3">
               {job.sourceUrl && (
                 <a 
-                  href={job.sourceUrl} 
+                  href={`/api/out?url=${encodeURIComponent(job.sourceUrl)}&type=job&id=${job.id}`} 
                   target="_blank" 
-                  rel="noopener noreferrer" 
-                  className={buttonVariants({ className: "w-full" })}
+                  rel="noopener noreferrer"
+                  className={cn(buttonVariants({ size: "lg", className: "w-full md:w-auto h-12 px-8 text-base font-semibold shadow-lg shadow-primary/20" }))}
                 >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Apply / Original Source
+                  Apply for this position
+                  <ExternalLink className="w-5 h-5 ml-2" />
                 </a>
               )}
             </div>

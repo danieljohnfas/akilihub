@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { Calendar, Building2, MapPin, Briefcase, ExternalLink } from 'lucide-react';
+import { Calendar, Building2, MapPin, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { BookmarkButton } from '@/components/shared/BookmarkButton';
 import { ShareButton } from '@/components/shared/ShareButton';
+import { appendTrackingTag } from '@/lib/utils';
 
 export interface JobCardProps {
   id: string;

@@ -29,6 +29,7 @@ export const jobs = pgTable('jobs', {
   index('jobs_region_idx').on(table.regionId),
   index('jobs_deadline_idx').on(table.deadline),
   index('jobs_active_idx').on(table.isActive),
+  index('jobs_created_at_idx').on(table.createdAt),
   index('jobs_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
 ]);
 

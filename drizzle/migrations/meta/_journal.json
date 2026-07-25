@@ -71,6 +71,13 @@
       "when": 1784615335135,
       "tag": "0009_tough_molecule_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784944732346,
+      "tag": "0010_chilly_kulan_gath",
+      "breakpoints": true
     }
   ]
 }

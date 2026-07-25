@@ -38,4 +38,5 @@ export const salarySubmissions = pgTable('salary_submissions', {
   index('salary_country_idx').on(table.countryId),
   index('salary_category_idx').on(table.jobCategoryId),
   index('salary_level_idx').on(table.experienceLevel),
+  index('salary_submitted_at_idx').on(table.submittedAt),
 ]);

@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { FileText, Calculator, FileWarning, ExternalLink, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { appendTrackingTag } from '@/lib/utils';
 
 interface ResourceCardProps {
+  id: string;
   title: string;
   description: string;
   resourceType: 'form' | 'calculator' | 'guideline' | 'notice';
@@ -23,6 +25,7 @@ const typeConfig = {
 };
 
 export function ResourceCard({
+  id,
   title,
   description,
   resourceType,
@@ -71,15 +74,15 @@ export function ResourceCard({
           </span>
         </div>
         {sourceUrl && (
-          <Link 
-            href={sourceUrl} 
+          <a 
+            href={`/api/out?url=${encodeURIComponent(sourceUrl)}&type=compliance_resource&id=${id}`} 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 gap-1.5 hover:bg-white/10"
           >
             Access Tool
             <ExternalLink className="w-3 h-3" />
-          </Link>
+          </a>
         )}
       </CardFooter>
     </Card>

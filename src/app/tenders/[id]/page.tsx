@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildTenderSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
-import { isGeneratedSlug } from '@/lib/utils';
+import { isGeneratedSlug, appendTrackingTag } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -225,7 +225,7 @@ export default async function TenderDetailPage({
             <div className="pt-6 space-y-3">
               {tender.sourceUrl && (
                 <a 
-                  href={tender.sourceUrl} 
+                  href={`/api/out?url=${encodeURIComponent(tender.sourceUrl)}&type=tender&id=${tender.id}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className={buttonVariants({ className: "w-full" })}

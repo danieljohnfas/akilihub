@@ -54,95 +54,24 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 30;
 
+import { Suspense } from 'react';
+import { unstable_cache } from 'next/cache';
+
+const getSortedCountries = unstable_cache(async () => {
+  const countriesData = await safeQuery(db.select({ name: countries.name }).from(countries));
+  return countriesData.map(c => c.name).sort();
+}, ['countries-list'], { revalidate: 3600 });
+
 export default async function JobsPage({
   searchParams: rawParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { q, type, company, country, time, layout, page } = parseGlobalSearchParams(await rawParams);
-  
-  const offset = (page - 1) * PAGE_SIZE;
-
-  const activeCondition = and(
-    eq(jobs.isActive, true),
-    or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
-  );
-
-  const getConditions = (exclude?: 'q' | 'type' | 'company' | 'country' | 'time') => {
-    return [
-      activeCondition,
-      exclude !== 'q' && q ? ilike(jobs.title, `%${q}%`) : undefined,
-      exclude !== 'type' && type ? eq(jobs.jobType, type as never) : undefined,
-      exclude !== 'company' && company ? eq(jobs.companyName, company) : undefined,
-      exclude !== 'country' && country ? (country.startsWith('country:') ? eq(countries.name, country.replace('country:', '')) : eq(regions.name, country)) : undefined,
-      exclude !== 'time' && time === '24h' ? gt(jobs.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)) : undefined,
-      exclude !== 'time' && time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
-      exclude !== 'time' && time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
-    ].filter(Boolean);
-  };
-
-  const conditions = getConditions();
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-  const totalCountResult = await safeQuery(
-    db.select({ value: count() })
-      .from(jobs)
-      .leftJoin(countries, eq(jobs.countryId, countries.id))
-      .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(whereClause)
-  );
-  const totalCount = totalCountResult?.[0]?.value || 0;
-
-  const data = await safeQuery(
-    db
-      .select({
-        job: jobs,
-        country: countries.name,
-        region: regions.name,
-      })
-      .from(jobs)
-      .leftJoin(countries, eq(jobs.countryId, countries.id))
-      .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(whereClause)
-      .orderBy(desc(jobs.createdAt))
-      .limit(PAGE_SIZE)
-      .offset(offset)
-  );
-
-  const titleConds = getConditions('q');
-  
-  const compConds = getConditions('company');
-
-  const locConds = getConditions('country');
-  
-  const countriesData = await safeQuery(db.select({ name: countries.name }).from(countries));
-  const sortedCountries = countriesData.map(c => c.name).sort();
-
-  
-
-
-  const hasFilters = q || type || company || country;
-
-  const itemListSchema = buildItemListSchema(
-    'Jobs & Careers in East Africa',
-    'Active job openings across Kenya, Tanzania, Uganda, and Rwanda.',
-    data.slice(0, 20).map(({ job, country }, idx) => ({
-      position: idx + 1,
-      name: `${job.title} at ${job.companyName}`,
-      description: job.description?.slice(0, 120) ?? undefined,
-      url: `https://akilibrain.com/jobs/${job.id}`,
-    }))
-  );
-
-  const breadcrumbSchema = buildBreadcrumbSchema([
-    { name: 'Home', url: 'https://akilibrain.com' },
-    { name: 'Jobs & Careers', url: 'https://akilibrain.com/jobs' },
-  ]);
+  const params = parseGlobalSearchParams(await rawParams);
+  const sortedCountries = await getSortedCountries();
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
-      {data.length > 0 && <JsonLd schema={itemListSchema} />}
-      <JsonLd schema={breadcrumbSchema} />
       {/* Header */}
       <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
         <div className="space-y-4 flex flex-col items-center">
@@ -153,11 +82,6 @@ export default async function JobsPage({
           <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Discover active job opportunities across East Africa, automatically sourced from across the web.
           </p>
-          {totalCount > 0 && (
-            <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70 mt-2">
-              Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> active positions
-            </div>
-          )}
         </div>
       </div>
 
@@ -216,6 +140,140 @@ export default async function JobsPage({
       />
 
       {/* Grid */}
+      <Suspense fallback={
+        <div className="py-24 px-4 text-center">
+          <h3 className="text-xl font-semibold mb-2 animate-pulse text-muted-foreground">Loading jobs...</h3>
+        </div>
+      }>
+        <JobsList params={params} />
+      </Suspense>
+
+      {/* Related Guides Interweave */}
+      <div className="pt-10 mt-8">
+        <RelatedGuides category="jobs" title="Career & Interview Insights" />
+      </div>
+
+      {/* SEO: Internal linking — crawlable category / location links */}
+      <div className="border-t border-white/5 pt-10 mt-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Popular Categories</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Full Time Jobs', href: '/jobs?type=full_time' },
+            { label: 'Remote Jobs in Africa', href: '/jobs?type=remote' },
+            { label: 'Contract Jobs', href: '/jobs?type=contract' },
+            { label: 'Internships & Graduate Jobs', href: '/jobs?type=internship' },
+            { label: 'Jobs in Kenya', href: '/jobs?location=Kenya' },
+            { label: 'Jobs in Tanzania', href: '/jobs?location=Tanzania' },
+            { label: 'Jobs in Uganda', href: '/jobs?location=Uganda' },
+            { label: 'Jobs in Rwanda', href: '/jobs?location=Rwanda' },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
+  const { q, type, company, country, time, layout, page } = params;
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const activeCondition = and(
+    eq(jobs.isActive, true),
+    or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
+  );
+
+  let countryId: string | undefined;
+  let regionId: string | undefined;
+  if (country) {
+    if (country.startsWith('country:')) {
+      const cName = country.replace('country:', '');
+      const cRes = await safeQuery(db.select({ id: countries.id }).from(countries).where(eq(countries.name, cName)).limit(1));
+      if (cRes.length > 0) countryId = cRes[0].id;
+    } else {
+      const rRes = await safeQuery(db.select({ id: regions.id }).from(regions).where(eq(regions.name, country)).limit(1));
+      if (rRes.length > 0) regionId = rRes[0].id;
+    }
+  }
+
+  const getConditions = (exclude?: 'q' | 'type' | 'company' | 'country' | 'time') => {
+    return [
+      activeCondition,
+      exclude !== 'q' && q ? ilike(jobs.title, `%${q}%`) : undefined,
+      exclude !== 'type' && type ? eq(jobs.jobType, type as never) : undefined,
+      exclude !== 'company' && company ? eq(jobs.companyName, company) : undefined,
+      exclude !== 'country' && countryId ? eq(jobs.countryId, countryId) : undefined,
+      exclude !== 'country' && regionId ? eq(jobs.regionId, regionId) : undefined,
+      exclude !== 'time' && time === '24h' ? gt(jobs.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)) : undefined,
+      exclude !== 'time' && time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
+      exclude !== 'time' && time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
+    ].filter(Boolean);
+  };
+
+  const conditions = getConditions();
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const totalCountResult = await safeQuery(
+    db.select({ value: count() })
+      .from(jobs)
+      .where(whereClause)
+  );
+  const totalCount = totalCountResult?.[0]?.value || 0;
+
+  const data = await safeQuery(
+    db
+      .select({
+        job: jobs,
+        country: countries.name,
+        region: regions.name,
+      })
+      .from(jobs)
+      .leftJoin(countries, eq(jobs.countryId, countries.id))
+      .leftJoin(regions, eq(jobs.regionId, regions.id))
+      .where(whereClause)
+      .orderBy(desc(jobs.createdAt))
+      .limit(PAGE_SIZE)
+      .offset(offset)
+  );
+
+  const hasFilters = q || type || company || country;
+
+  const itemListSchema = buildItemListSchema(
+    'Jobs & Careers in East Africa',
+    'Active job openings across Kenya, Tanzania, Uganda, and Rwanda.',
+    data.slice(0, 20).map(({ job, country }, idx) => ({
+      position: idx + 1,
+      name: `${job.title} at ${job.companyName}`,
+      description: job.description?.slice(0, 120) ?? undefined,
+      url: `https://akilibrain.com/jobs/${job.id}`,
+    }))
+  );
+
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: 'https://akilibrain.com' },
+    { name: 'Jobs & Careers', url: 'https://akilibrain.com/jobs' },
+  ]);
+
+  return (
+    <>
+      {data.length > 0 && <JsonLd schema={itemListSchema} />}
+      <JsonLd schema={breadcrumbSchema} />
+      
+      {totalCount > 0 && (
+        <div className="flex justify-center -mt-4 mb-8">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
+            Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> active positions
+          </div>
+        </div>
+      )}
+
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
           <EmptyStateLottie />
@@ -256,28 +314,28 @@ export default async function JobsPage({
             {data.map(({ job, country, region }) => (
               <JobCard
                 key={job.id}
-              id={job.id}
-              title={job.title}
-              companyName={job.companyName}
-              description={job.description}
-              requirements={job.requirements}
-              location={region || null}
-              country={country || 'Africa'}
-              jobType={job.jobType ?? 'full_time'}
-              sourceUrl={job.sourceUrl}
-              postedDate={job.postedDate}
-              deadline={job.deadline}
-              createdAt={job.createdAt}
-              layout={layout}
-            />
-          ))}
+                id={job.id}
+                title={job.title}
+                companyName={job.companyName}
+                description={job.description}
+                requirements={job.requirements}
+                location={region || null}
+                country={country || 'Africa'}
+                jobType={job.jobType ?? 'full_time'}
+                sourceUrl={job.sourceUrl}
+                postedDate={job.postedDate}
+                deadline={job.deadline}
+                createdAt={job.createdAt}
+                layout={layout}
+              />
+            ))}
           </div>
         </div>
       )}
 
       {/* Pagination */}
       {data.length > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5">
+        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
           {page > 1 && (
             <Link
               href={`/jobs?q=${q || ''}&type=${type || ''}&company=${company || ''}&country=${country || ''}&time=${time || ''}&layout=${layout || 'grid'}&page=${page - 1}`}
@@ -297,36 +355,6 @@ export default async function JobsPage({
           )}
         </div>
       )}
-
-      {/* Related Guides Interweave */}
-      <div className="pt-10 mt-8">
-        <RelatedGuides category="jobs" title="Career & Interview Insights" />
-      </div>
-
-      {/* SEO: Internal linking — crawlable category / location links */}
-      <div className="border-t border-white/5 pt-10 mt-4">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Browse Popular Categories</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {[
-            { label: 'Full Time Jobs', href: '/jobs?type=full_time' },
-            { label: 'Remote Jobs in Africa', href: '/jobs?type=remote' },
-            { label: 'Contract Jobs', href: '/jobs?type=contract' },
-            { label: 'Internships & Graduate Jobs', href: '/jobs?type=internship' },
-            { label: 'Jobs in Kenya', href: '/jobs?location=Kenya' },
-            { label: 'Jobs in Tanzania', href: '/jobs?location=Tanzania' },
-            { label: 'Jobs in Uganda', href: '/jobs?location=Uganda' },
-            { label: 'Jobs in Rwanda', href: '/jobs?location=Rwanda' },
-          ].map(({ label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10"
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
