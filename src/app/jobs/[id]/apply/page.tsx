@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, FileText, CheckCircle2, AlertCircle, Download } from 'lucide-react';
+import { Loader2, FileText, CheckCircle2, AlertCircle, Download, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -17,6 +18,19 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
   const [status, setStatus] = useState<'idle' | 'uploading' | 'evaluating' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [result, setResult] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setLoadingAuth(false);
+    };
+    checkAuth();
+  }, []);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -85,6 +99,38 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (loadingAuth) {
+    return (
+      <div className="container py-24 flex justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container py-24 max-w-xl mx-auto space-y-6 text-center">
+        <div className="flex justify-center mb-4">
+          <div className="p-4 bg-muted rounded-full">
+            <Lock className="w-10 h-10 text-muted-foreground" />
+          </div>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight">Login Required</h1>
+        <p className="text-muted-foreground text-lg">
+          Please sign in or create an account to use the AI Job Assistant and evaluate your CV.
+        </p>
+        <div className="flex items-center justify-center gap-4 pt-4">
+          <Link href={`/login?callbackUrl=/jobs/${resolvedParams.id}/apply`}>
+            <Button size="lg">Log In</Button>
+          </Link>
+          <Link href={`/signup?callbackUrl=/jobs/${resolvedParams.id}/apply`}>
+            <Button size="lg" variant="outline">Sign Up</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-12 max-w-3xl mx-auto space-y-8">

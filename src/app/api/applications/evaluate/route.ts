@@ -12,9 +12,12 @@ export async function POST(req: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    // We allow anonymous users now. sessionId can be generated or handled.
-    const userId = user ? user.id : null;
-    const sessionId = !user ? crypto.randomUUID() : null;
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = user.id;
+    const sessionId = null;
 
     const body = await req.json();
     const { jobId, cvText, cvUrl } = body;
