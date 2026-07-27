@@ -9,7 +9,7 @@ const sql = postgres(url.includes('sslmode=require') ? url : url + '?sslmode=req
 
 async function main() {
   console.log('Running raw SQL migration...');
-  const migrationPath = path.join(process.cwd(), 'drizzle/migrations/0005_ordinary_jack_murdock.sql');
+  const migrationPath = path.join(process.cwd(), 'drizzle/migrations/0011_loose_franklin_richards.sql');
   const sqlContent = fs.readFileSync(migrationPath, 'utf8');
   
   // Split by statement breakpoint
