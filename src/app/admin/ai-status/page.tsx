@@ -46,6 +46,7 @@ export default function AIStatusDashboard() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStatus();
     // Auto refresh every 2 seconds
     const interval = setInterval(fetchStatus, 2000);

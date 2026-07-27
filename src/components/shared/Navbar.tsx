@@ -42,6 +42,9 @@ export async function Navbar() {
                 <Button variant="outline">Sign In</Button>
               </Link>
             )}
+            <Link href="/pricing">
+              <Button variant="default" className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-sm shadow-primary/20">Upgrade Pro</Button>
+            </Link>
           </div>
           
           <Sheet>

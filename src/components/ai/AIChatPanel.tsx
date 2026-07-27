@@ -6,7 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ChatMessage, Message } from './ChatMessage';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import dynamic from 'next/dynamic';
+
+const DotLottieReact = dynamic(
+  () => import('@lottiefiles/dotlottie-react').then((mod) => mod.DotLottieReact),
+  { ssr: false }
+);
 import { usePathname } from 'next/navigation';
 
 const SUGGESTED_PROMPTS = [
@@ -51,6 +56,7 @@ export function AIChatPanel() {
       greeting = "Exploring public health data? I can help interpret DHIS2 statistics, find disease prevalence trends, or summarize health reports.";
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessages(prev => {
       // If the chat is empty or only contains a previous greeting, replace it
       if (prev.length === 0 || (prev.length === 1 && prev[0].id.startsWith('welcome'))) {
@@ -70,6 +76,7 @@ export function AIChatPanel() {
   // Proactive messaging based on route
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProactiveMessage(null);
       return;
     }

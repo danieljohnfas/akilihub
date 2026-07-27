@@ -146,7 +146,7 @@ export default async function AccountPage() {
               <h2 className="text-xl font-semibold">Your Saved Items</h2>
               {(!userBookmarks || userBookmarks.length === 0) ? (
                 <div className="rounded-xl border border-dashed border-white/20 p-12 text-center text-muted-foreground">
-                  You haven't saved any items yet.
+                  You haven&apos;t saved any items yet.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -279,7 +279,7 @@ export default async function AccountPage() {
               
               {alerts.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-white/20 p-12 text-center text-muted-foreground">
-                  You don't have any alerts yet. Create one above to stay updated.
+                  You don&apos;t have any alerts yet. Create one above to stay updated.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

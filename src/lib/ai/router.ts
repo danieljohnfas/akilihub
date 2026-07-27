@@ -1,8 +1,9 @@
 import { generateObject, generateText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createGoogle } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
 import { createCohere } from '@ai-sdk/cohere';
+import { createOpenAI } from '@ai-sdk/openai';
 import { keyPool } from './key-pool';
 
 // ------------------------------------------------------------------
@@ -24,8 +25,8 @@ function getEnvKeys(baseName: string): string[] {
 // Most reliable. Supports json_schema structured output natively.
 getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   // Use a fresh instance per key so each has isolated state
-  const { google: makeGoogle } = require('@ai-sdk/google');
-  const g = makeGoogle('gemini-2.5-flash', { apiKey: key });
+  const makeGoogle = createGoogle({ apiKey: key });
+  const g = makeGoogle('gemini-2.5-flash');
   keyPool.register({
     id: `google-flash-${i + 1}`,
     name: `Google Gemini Flash (${i + 1})`,
@@ -74,7 +75,6 @@ getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
 // -- MINIMAX --
 // Uses OpenAI-compatible endpoint.
 getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
-  const { createOpenAI } = require('@ai-sdk/openai');
   const minimax = createOpenAI({ 
     apiKey: key,
     baseURL: 'https://api.minimax.chat/v1',
@@ -89,7 +89,6 @@ getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
 
 // -- OPENROUTER --
 getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
-  const { createOpenAI } = require('@ai-sdk/openai');
   const openrouter = createOpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1' });
   keyPool.register({
     id: `openrouter-${i + 1}`,
@@ -101,7 +100,6 @@ getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
 
 // -- DEEPSEEK --
 getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
-  const { createOpenAI } = require('@ai-sdk/openai');
   const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com' });
   keyPool.register({
     id: `deepseek-${i + 1}`,
@@ -113,7 +111,6 @@ getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
 
 // -- SAMBANOVA --
 getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
-  const { createOpenAI } = require('@ai-sdk/openai');
   const sambanova = createOpenAI({ apiKey: key, baseURL: 'https://api.sambanova.ai/v1' });
   keyPool.register({
     id: `sambanova-${i + 1}`,
@@ -125,7 +122,6 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
 
 // -- CEREBRAS --
 getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
-  const { createOpenAI } = require('@ai-sdk/openai');
   const cerebras = createOpenAI({ apiKey: key, baseURL: 'https://api.cerebras.ai/v1' });
   keyPool.register({
     id: `cerebras-${i + 1}`,
@@ -137,7 +133,6 @@ getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
 
 // -- HYPERBOLIC --
 getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
-  const { createOpenAI } = require('@ai-sdk/openai');
   const hyperbolic = createOpenAI({ apiKey: key, baseURL: 'https://api.hyperbolic.xyz/v1' });
   keyPool.register({
     id: `hyperbolic-${i + 1}`,

@@ -15,7 +15,7 @@ export function Footer() {
             <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">AkiliBrain</h3>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            East Africa's unified professional intelligence platform.
+            East Africa&apos;s unified professional intelligence platform.
             Providing critical data for professionals across the region.
           </p>
           <div className="flex items-center gap-4">

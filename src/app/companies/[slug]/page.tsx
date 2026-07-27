@@ -87,7 +87,7 @@ export default async function CompanyPage({ params }: Props) {
         <Building2 className="w-16 h-16 text-muted-foreground mb-4 opacity-50" />
         <h1 className="text-2xl font-bold mb-2">Company Not Found</h1>
         <p className="text-muted-foreground max-w-md mb-6">
-          We couldn't find any jobs, tenders, or salary data for "{decodedName}".
+          We couldn&apos;t find any jobs, tenders, or salary data for &quot;{decodedName}&quot;.
         </p>
         <Link href="/" className={buttonVariants({ variant: "default" })}>
           Return Home

@@ -14,6 +14,9 @@ import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/sch
 import { parseGlobalSearchParams } from '@/lib/filters';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
+import { AdSlot } from '@/components/shared/AdSlot';
+import { PremiumBanner } from '@/components/shared/PremiumBanner';
+import React from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -252,22 +255,35 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map(({ tender, country, sector, region }) => (
-            <TenderCard
-              key={tender.id}
-              id={tender.id}
-              title={tender.title}
-              referenceNo={tender.referenceNo}
-              contractingAuthority={tender.contractingAuthority}
-              country={country || 'Unknown'}
-              region={region || undefined}
-              sector={sector || undefined}
-              status={tender.status}
-              deadline={tender.deadline}
-              budget={tender.budget}
-              currency={tender.currency}
-              documentUrl={tender.documentUrl}
-            />
+          {data.map(({ tender, country, sector, region }, idx) => (
+            <React.Fragment key={tender.id}>
+              <div className="col-span-1">
+                <TenderCard
+                  id={tender.id}
+                  title={tender.title}
+                  referenceNo={tender.referenceNo}
+                  contractingAuthority={tender.contractingAuthority}
+                  country={country || 'Unknown'}
+                  region={region || undefined}
+                  sector={sector || undefined}
+                  status={tender.status}
+                  deadline={tender.deadline}
+                  budget={tender.budget}
+                  currency={tender.currency}
+                  documentUrl={tender.documentUrl}
+                />
+              </div>
+              {idx === 2 && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <PremiumBanner />
+                </div>
+              )}
+              {idx === 8 && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <AdSlot slotId="tenders-feed-1" />
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
       )}
@@ -294,6 +310,58 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
           )}
         </div>
       )}
+
+      {/* SEO-rich Content Block for AdSense / Googlebot */}
+      <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
+        <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Navigating Government Procurement in East Africa</h2>
+          <p className="leading-relaxed mb-4">
+            Government tenders and public procurement contracts represent a significant opportunity for businesses of all sizes across East Africa. Governments in Kenya, Tanzania, Uganda, and Rwanda are the largest single purchasers of goods, services, and works. By participating in the procurement process, companies can secure substantial contracts, expand their operations, and contribute to national development.
+          </p>
+          <p className="leading-relaxed">
+            AkiliBrain simplifies the tender discovery process by aggregating notices from various national procurement portals, including PPRA, PPOA, and PPDA, into a single, easily searchable directory. We aim to promote transparency and give businesses equal access to lucrative public sector opportunities.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Key Requirements for Bidding</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Business Registration:</strong> Your company must be legally registered with the relevant national authority (e.g., BRS in Kenya, BRELA in Tanzania).</li>
+              <li><strong>Tax Compliance:</strong> A valid Tax Compliance Certificate (TCC) from the national revenue authority (KRA, TRA, URA, RRA) is mandatory for almost all government tenders.</li>
+              <li><strong>Special Categories (AGPO):</strong> Many countries have specific quotas for youth, women, and persons with disabilities. Ensure you have the relevant Access to Government Procurement Opportunities (AGPO) certificates if applicable.</li>
+              <li><strong>Financial Capacity:</strong> Prepare audited financial statements and bank references to prove your company&apos;s ability to execute the contract.</li>
+            </ul>
+          </div>
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">How to Succeed in Public Procurement</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Read the Document Carefully:</strong> Tenders are won and lost on compliance. Ensure you meet every single mandatory requirement listed in the tender document.</li>
+              <li><strong>Attend Pre-Bid Meetings:</strong> If a pre-bid meeting or site visit is scheduled, make sure a representative attends. It is often a mandatory requirement.</li>
+              <li><strong>Submit on Time:</strong> Government procurement systems are strict. A bid submitted even one minute late will be rejected outright.</li>
+              <li><strong>Price Competitively:</strong> While quality is important, price remains a major deciding factor in public tenders. Ensure your pricing is competitive but sustainable.</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Frequently Asked Questions (FAQ)</h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-foreground">Where do you source the tenders from?</h3>
+                <p className="text-sm mt-1">We aggregate data directly from official government procurement portals, major daily newspapers, and public institution websites to provide a comprehensive database.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Is it free to view tender documents?</h3>
+                <p className="text-sm mt-1">Yes, all basic tender details and links to the original source documents (where available electronically) are provided free of charge on our platform.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">How can I track specific tenders?</h3>
+                <p className="text-sm mt-1">You can use our advanced filtering options to narrow down by country, sector, and status. Check back frequently as new opportunities are added daily.</p>
+              </div>
+            </div>
+        </div>
+      </section>
     </>
   );
 }

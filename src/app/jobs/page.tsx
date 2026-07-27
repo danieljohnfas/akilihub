@@ -14,6 +14,9 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { parseGlobalSearchParams } from '@/lib/filters';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { AdSlot } from '@/components/shared/AdSlot';
+import { PremiumBanner } from '@/components/shared/PremiumBanner';
+import React from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -204,6 +207,8 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
   }
 
   const getConditions = (exclude?: 'q' | 'type' | 'company' | 'country' | 'time') => {
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
     return [
       activeCondition,
       exclude !== 'q' && q ? ilike(jobs.title, `%${q}%`) : undefined,
@@ -211,9 +216,9 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
       exclude !== 'company' && company ? eq(jobs.companyName, company) : undefined,
       exclude !== 'country' && countryId ? eq(jobs.countryId, countryId) : undefined,
       exclude !== 'country' && regionId ? eq(jobs.regionId, regionId) : undefined,
-      exclude !== 'time' && time === '24h' ? gt(jobs.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)) : undefined,
-      exclude !== 'time' && time === '7d' ? gt(jobs.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) : undefined,
-      exclude !== 'time' && time === '30d' ? gt(jobs.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) : undefined,
+      exclude !== 'time' && time === '24h' ? gt(jobs.createdAt, new Date(now - 24 * 60 * 60 * 1000)) : undefined,
+      exclude !== 'time' && time === '7d' ? gt(jobs.createdAt, new Date(now - 7 * 24 * 60 * 60 * 1000)) : undefined,
+      exclude !== 'time' && time === '30d' ? gt(jobs.createdAt, new Date(now - 30 * 24 * 60 * 60 * 1000)) : undefined,
     ].filter(Boolean);
   };
 
@@ -311,23 +316,34 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
             </div>
           </div>
           <div className={layout === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-3"}>
-            {data.map(({ job, country, region }) => (
-              <JobCard
-                key={job.id}
-                id={job.id}
-                title={job.title}
-                companyName={job.companyName}
-                description={job.description}
-                requirements={job.requirements}
-                location={region || null}
-                country={country || 'Africa'}
-                jobType={job.jobType ?? 'full_time'}
-                sourceUrl={job.sourceUrl}
-                postedDate={job.postedDate}
-                deadline={job.deadline}
-                createdAt={job.createdAt}
-                layout={layout}
-              />
+            {data.map(({ job, country, region }, idx) => (
+              <React.Fragment key={job.id}>
+                <JobCard
+                  id={job.id}
+                  title={job.title}
+                  companyName={job.companyName}
+                  description={job.description}
+                  requirements={job.requirements}
+                  location={region || null}
+                  country={country || 'Africa'}
+                  jobType={job.jobType ?? 'full_time'}
+                  sourceUrl={job.sourceUrl}
+                  postedDate={job.postedDate}
+                  deadline={job.deadline}
+                  createdAt={job.createdAt}
+                  layout={layout}
+                />
+                {idx === 2 && (
+                  <div className={layout === 'grid' ? "col-span-1 md:col-span-2 lg:col-span-3" : "w-full"}>
+                    <PremiumBanner />
+                  </div>
+                )}
+                {idx === 8 && (
+                  <div className={layout === 'grid' ? "col-span-1 md:col-span-2 lg:col-span-3" : "w-full"}>
+                    <AdSlot slotId="jobs-feed-1" />
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>
@@ -355,6 +371,58 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
           )}
         </div>
       )}
+
+      {/* SEO-rich Content Block for AdSense / Googlebot */}
+      <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
+        <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+          <h2 className="text-2xl font-bold text-foreground mb-4">The Ultimate Guide to Finding Jobs in East Africa</h2>
+          <p className="leading-relaxed mb-4">
+            Navigating the job market in East Africa requires a strategic approach, whether you are seeking employment in Kenya, Tanzania, Uganda, or Rwanda. The region boasts a dynamic and fast-growing economy, with emerging sectors like technology, renewable energy, and digital finance offering abundant opportunities for both seasoned professionals and recent graduates.
+          </p>
+          <p className="leading-relaxed">
+            At AkiliBrain, we aggregate verified job openings from hundreds of employers, NGOs, and government agencies to ensure you never miss an opportunity. Our goal is to connect top talent with leading organizations by providing a transparent and comprehensive job search platform tailored specifically for the East African job market.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Top Industries Hiring in 2024</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Information Technology (IT):</strong> High demand for software engineers, data analysts, and cybersecurity experts, particularly in tech hubs like Nairobi (Silicon Savannah) and Kigali.</li>
+              <li><strong>Financial Services & Fintech:</strong> Roles in mobile money, digital banking, and microfinance are rapidly expanding across the region.</li>
+              <li><strong>NGOs & Development:</strong> International organizations frequently hire specialists in public health, agriculture, and project management in Uganda and Tanzania.</li>
+              <li><strong>Renewable Energy:</strong> Opportunities in solar power, wind energy, and sustainability consulting are on the rise.</li>
+            </ul>
+          </div>
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Tips for Crafting a Winning Application</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Tailor Your CV:</strong> Ensure your resume highlights specific skills and experiences relevant to the job description. Use industry-standard keywords.</li>
+              <li><strong>Write a Compelling Cover Letter:</strong> Address the hiring manager directly and explain why you are uniquely qualified for the role.</li>
+              <li><strong>Upskill Continuously:</strong> The East African job market is highly competitive. Certifications in tech, finance, or project management can set you apart.</li>
+              <li><strong>Network:</strong> Leverage professional networks like LinkedIn and attend industry events in your city to uncover hidden job opportunities.</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Frequently Asked Questions (FAQ)</h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-foreground">Are the jobs on this platform verified?</h3>
+                <p className="text-sm mt-1">Yes, we aggregate job postings from reputable employers, official government portals, and trusted NGO career sites to ensure authenticity.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">How often is the job board updated?</h3>
+                <p className="text-sm mt-1">Our platform is updated daily with fresh listings, ensuring you have access to the latest opportunities as soon as they become available.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Can I find remote jobs here?</h3>
+                <p className="text-sm mt-1">Absolutely. You can use our &quot;Job Type&quot; filter to specifically search for remote roles that allow you to work from anywhere in East Africa or globally.</p>
+              </div>
+            </div>
+        </div>
+      </section>
     </>
   );
 }

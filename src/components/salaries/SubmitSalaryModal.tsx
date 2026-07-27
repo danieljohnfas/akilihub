@@ -202,7 +202,7 @@ export function SubmitSalaryModal({ countries }: { countries: { id: string; name
               className="bg-white/5"
             />
             <p className="text-xs text-muted-foreground">
-              Provide a non-personal work email to instantly verify your submission. We never store or display your email — it's discarded after verification.
+              Provide a non-personal work email to instantly verify your submission. We never store or display your email — it&apos;s discarded after verification.
             </p>
           </div>
 

@@ -151,7 +151,7 @@ export function TenderCard({
                   >
                     <div className="flex flex-col items-center justify-center h-full gap-4 text-black p-8">
                       <FileText className="w-12 h-12 text-muted-foreground" />
-                      <p>Your browser doesn't support embedded PDFs.</p>
+                      <p>Your browser doesn&apos;t support embedded PDFs.</p>
                       <Link 
                         href={documentUrl} 
                         target="_blank" 

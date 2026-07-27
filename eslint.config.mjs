@@ -18,6 +18,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "scraper/**",
+    "scratch/**",
+    "render_cli/**",
+    "koyeb_cli/**",
+    "scripts/**",
+    "migrate.js",
+    "push-env.js"
   ]),
 ]);
 

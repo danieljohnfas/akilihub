@@ -39,21 +39,21 @@ export async function createAlert(formData: FormData) {
     throw new Error('Not authenticated');
   }
 
-  const module = formData.get('module') as string;
+  const moduleName = formData.get('module') as string;
   const keywordsStr = formData.get('keywords') as string;
   const frequency = formData.get('frequency') as 'immediate' | 'daily' | 'weekly';
   const countryId = formData.get('countryId') as string | null;
 
   const keywords = keywordsStr.split(',').map(k => k.trim()).filter(k => k.length > 0);
 
-  if (!module || keywords.length === 0) {
+  if (!moduleName || keywords.length === 0) {
     return;
   }
 
   try {
     await db.insert(userAlerts).values({
       userId: user.id,
-      module,
+      module: moduleName,
       keywords,
       frequency,
       countryId: countryId || null,

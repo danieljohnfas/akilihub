@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { businesses, businessTypes } from '@/lib/db/schema/compliance';
 import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and } from 'drizzle-orm';
+import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { BusinessCard } from '@/components/compliance/BusinessCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -9,6 +9,9 @@ import { redirect } from 'next/navigation';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { parseGlobalSearchParams } from '@/lib/filters';
+import { AdSlot } from '@/components/shared/AdSlot';
+import { PremiumBanner } from '@/components/shared/PremiumBanner';
+import React from 'react';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { Search, SlidersHorizontal, Inbox, Building2, BookOpen } from 'lucide-react';
@@ -166,61 +169,76 @@ async function ResourcesList() {
             We are actively indexing official compliance resources, tax guidelines, and business registration forms from East African authorities. Check back soon.
           </p>
         </div>
-
-        {/* SEO-rich static content for Googlebot when DB is empty */}
-        <section className="mt-12 space-y-8 text-muted-foreground">
-          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-            <h2 className="text-xl font-bold text-foreground mb-3">East Africa Business Compliance Guidelines</h2>
-            <p className="leading-relaxed">
-              Navigating regulatory compliance and business registration in East Africa can be complex. Our compliance resource hub consolidates official forms, tax calculators, guidelines, and regulatory notices from key government bodies across Kenya, Tanzania, Uganda, and Rwanda into a single, searchable directory.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-              <h2 className="text-lg font-semibold text-foreground mb-2">Supported Authorities</h2>
-              <ul className="space-y-1 text-sm list-disc list-inside">
-                <li><strong>Kenya:</strong> KRA (Kenya Revenue Authority), BRS (Business Registration Service), NSSF, NHIF</li>
-                <li><strong>Tanzania:</strong> TRA (Tanzania Revenue Authority), BRELA (Business Registrations and Licensing Agency)</li>
-                <li><strong>Uganda:</strong> URA (Uganda Revenue Authority), URSB (Uganda Registration Services Bureau)</li>
-                <li><strong>Rwanda:</strong> RDB (Rwanda Development Board), RRA (Rwanda Revenue Authority)</li>
-              </ul>
-            </div>
-            <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-              <h2 className="text-lg font-semibold text-foreground mb-2">Available Resource Types</h2>
-              <ul className="space-y-1 text-sm list-disc list-inside">
-                <li><strong>Forms:</strong> Official PDF forms for tax returns, company registration, and annual returns.</li>
-                <li><strong>Calculators:</strong> PAYE, VAT, and corporate tax estimation tools.</li>
-                <li><strong>Guidelines:</strong> Step-by-step PDF manuals on regulatory compliance.</li>
-                <li><strong>Notices:</strong> Recent gazette notices and regulatory updates from government agencies.</li>
-              </ul>
-            </div>
-          </div>
-        </section>
       </>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {resources.map(({ resource, country }) => (
-        <ResourceCard
-          key={resource.id}
-          id={resource.id}
-          title={resource.title}
-          description={resource.description}
-          resourceType={resource.resourceType as any}
-          issuingAuthority={resource.issuingAuthority}
-          sourceUrl={resource.sourceUrl}
-          country={country || 'Unknown'}
-          lastVerifiedAt={resource.lastVerifiedAt}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {resources.map(({ resource, country }, idx) => (
+          <React.Fragment key={resource.id}>
+            <ResourceCard
+              id={resource.id}
+              title={resource.title}
+              description={resource.description}
+              resourceType={resource.resourceType as any}
+              issuingAuthority={resource.issuingAuthority}
+              sourceUrl={resource.sourceUrl}
+              country={country || 'Unknown'}
+              lastVerifiedAt={resource.lastVerifiedAt}
+            />
+            {idx === 2 && (
+              <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                <PremiumBanner />
+              </div>
+            )}
+            {idx === 8 && (
+              <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                <AdSlot slotId="compliance-resources-1" />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+      
+      {/* SEO-rich static content for Googlebot */}
+      <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
+        <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+          <h2 className="text-2xl font-bold text-foreground mb-4">East Africa Business Compliance Guidelines</h2>
+          <p className="leading-relaxed">
+            Navigating regulatory compliance and business registration in East Africa can be complex. Our compliance resource hub consolidates official forms, tax calculators, guidelines, and regulatory notices from key government bodies across Kenya, Tanzania, Uganda, and Rwanda into a single, searchable directory.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Supported Authorities</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Kenya:</strong> KRA (Kenya Revenue Authority), BRS (Business Registration Service), NSSF, NHIF</li>
+              <li><strong>Tanzania:</strong> TRA (Tanzania Revenue Authority), BRELA (Business Registrations and Licensing Agency)</li>
+              <li><strong>Uganda:</strong> URA (Uganda Revenue Authority), URSB (Uganda Registration Services Bureau)</li>
+              <li><strong>Rwanda:</strong> RDB (Rwanda Development Board), RRA (Rwanda Revenue Authority)</li>
+            </ul>
+          </div>
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Available Resource Types</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Forms:</strong> Official PDF forms for tax returns, company registration, and annual returns.</li>
+              <li><strong>Calculators:</strong> PAYE, VAT, and corporate tax estimation tools.</li>
+              <li><strong>Guidelines:</strong> Step-by-step PDF manuals on regulatory compliance.</li>
+              <li><strong>Notices:</strong> Recent gazette notices and regulatory updates from government agencies.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
 async function BusinessesList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
-  const { q, status = 'active' } = params;
+  const { q, status = 'active', page } = params;
+  const PAGE_SIZE = 30;
+  const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(businesses.name, `%${q}%`) : undefined,
@@ -228,6 +246,13 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const totalCountResult = await safeQuery(
+    db.select({ value: count() })
+      .from(businesses)
+      .where(whereClause)
+  );
+  const totalCount = totalCountResult?.[0]?.value || 0;
 
   const data = await safeQuery(db
     .select({
@@ -240,7 +265,8 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
     .leftJoin(businessTypes, eq(businesses.typeId, businessTypes.id))
     .where(whereClause)
     .orderBy(desc(businesses.createdAt))
-    .limit(20));
+    .limit(PAGE_SIZE)
+    .offset(offset));
 
   return (
     <>
@@ -258,6 +284,14 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
         ))}
       </div>
 
+      {totalCount > 0 && (
+        <div className="flex justify-center mt-4 mb-6">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
+            Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> businesses
+          </div>
+        </div>
+      )}
+
       {data.length === 0 ? (
         <>
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
@@ -274,53 +308,88 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
               </Link>
             )}
           </div>
-
-          <section className="mt-12 space-y-8 text-muted-foreground">
-            <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-              <h2 className="text-xl font-bold text-foreground mb-3">Verify Company Registration Status in East Africa</h2>
-              <p className="leading-relaxed">
-                Due diligence is a critical step before entering into any business agreement, partnership, or employment contract. The AkiliBrain Business Search tool allows you to instantly verify the registration status, legal entity type, and directorship of companies registered in Kenya, Tanzania, Uganda, and Rwanda by querying data directly from official national registries.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-                <h2 className="text-lg font-semibold text-foreground mb-2">Why Verify Business Registration?</h2>
-                <ul className="space-y-1 text-sm list-disc list-inside">
-                  <li><strong>Prevent Fraud:</strong> Ensure you are dealing with a legally recognized corporate entity.</li>
-                  <li><strong>Procurement Compliance:</strong> Verify the legitimacy of vendors and suppliers before awarding contracts.</li>
-                  <li><strong>Employment Safety:</strong> Job seekers can confirm the legal existence of prospective employers.</li>
-                  <li><strong>Investment Due Diligence:</strong> Check the operational status (Active, Deregistered, Under Receivership) of target companies.</li>
-                </ul>
-              </div>
-              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-                <h2 className="text-lg font-semibold text-foreground mb-2">What Information Can You Find?</h2>
-                <ul className="space-y-1 text-sm list-disc list-inside">
-                  <li><strong>Registration Number:</strong> The official company registration ID (e.g., PVT-XXXXXX in Kenya).</li>
-                  <li><strong>Entity Type:</strong> Private Limited, Public Limited, Sole Proprietorship, NGO, etc.</li>
-                  <li><strong>Registration Date:</strong> The exact date the business was legally incorporated.</li>
-                  <li><strong>Current Status:</strong> Whether the company is Active, Inactive, Struck Off, or Under Liquidation.</li>
-                </ul>
-              </div>
-            </div>
-          </section>
         </>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map(({ business, country, type }) => (
-            <BusinessCard
-              key={business.id}
-              id={business.id}
-              name={business.name}
-              registrationNumber={business.registrationNumber}
-              country={country || 'Unknown'}
-              type={type || undefined}
-              status={business.status}
-              registrationDate={business.registrationDate}
-              directorsCount={business.directors?.length || 0}
-            />
+          {data.map(({ business, country, type }, idx) => (
+            <React.Fragment key={business.id}>
+              <BusinessCard
+                id={business.id}
+                name={business.name}
+                registrationNumber={business.registrationNumber}
+                country={country || 'Unknown'}
+                type={type || undefined}
+                status={business.status}
+                registrationDate={business.registrationDate}
+                directorsCount={business.directors?.length || 0}
+              />
+              {idx === 2 && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <PremiumBanner />
+                </div>
+              )}
+              {idx === 8 && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <AdSlot slotId="compliance-businesses-1" />
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
       )}
+
+      {/* Pagination */}
+      {data.length > 0 && (
+        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
+          {page > 1 && (
+            <Link
+              href={`/compliance?q=${q || ''}&status=${status || ''}&page=${page - 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              ← Previous
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">Page {page}</span>
+          {data.length === PAGE_SIZE && (
+            <Link
+              href={`/compliance?q=${q || ''}&status=${status || ''}&page=${page + 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Next →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {/* SEO-rich static content for Googlebot */}
+      <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
+        <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Verify Company Registration Status in East Africa</h2>
+          <p className="leading-relaxed">
+            Due diligence is a critical step before entering into any business agreement, partnership, or employment contract. The AkiliBrain Business Search tool allows you to instantly verify the registration status, legal entity type, and directorship of companies registered in Kenya, Tanzania, Uganda, and Rwanda by querying data directly from official national registries.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Why Verify Business Registration?</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Prevent Fraud:</strong> Ensure you are dealing with a legally recognized corporate entity.</li>
+              <li><strong>Procurement Compliance:</strong> Verify the legitimacy of vendors and suppliers before awarding contracts.</li>
+              <li><strong>Employment Safety:</strong> Job seekers can confirm the legal existence of prospective employers.</li>
+              <li><strong>Investment Due Diligence:</strong> Check the operational status (Active, Deregistered, Under Receivership) of target companies.</li>
+            </ul>
+          </div>
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">What Information Can You Find?</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Registration Number:</strong> The official company registration ID (e.g., PVT-XXXXXX in Kenya).</li>
+              <li><strong>Entity Type:</strong> Private Limited, Public Limited, Sole Proprietorship, NGO, etc.</li>
+              <li><strong>Registration Date:</strong> The exact date the business was legally incorporated.</li>
+              <li><strong>Current Status:</strong> Whether the company is Active, Inactive, Struck Off, or Under Liquidation.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

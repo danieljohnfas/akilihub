@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { salarySubmissions, employers } from '@/lib/db/schema/salaries';
 import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and } from 'drizzle-orm';
+import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { SalaryCard } from '@/components/salaries/SalaryCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { buildSalaryListSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { parseGlobalSearchParams } from '@/lib/filters';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
+import { PremiumBanner } from '@/components/shared/PremiumBanner';
+import { AdSlot } from '@/components/shared/AdSlot';
 
 import type { Metadata } from 'next';
 
@@ -148,7 +150,9 @@ export default async function SalariesPage({
 }
 
 async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
-  const { q, level } = params;
+  const { q, level, page } = params;
+  const PAGE_SIZE = 30;
+  const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(salarySubmissions.jobTitle, `%${q}%`) : undefined,
@@ -156,6 +160,13 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const totalCountResult = await safeQuery(
+    db.select({ value: count() })
+      .from(salarySubmissions)
+      .where(whereClause)
+  );
+  const totalCount = totalCountResult?.[0]?.value || 0;
 
   const data = await safeQuery(db
     .select({
@@ -168,7 +179,8 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
     .innerJoin(countries, eq(salarySubmissions.countryId, countries.id))
     .where(whereClause)
     .orderBy(desc(salarySubmissions.submittedAt))
-    .limit(20));
+    .limit(PAGE_SIZE)
+    .offset(offset));
 
   const salarySchema = buildSalaryListSchema(
     data.slice(0, 20).map(({ salary, country }) => ({
@@ -190,6 +202,14 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
       {data.length > 0 && <JsonLd schema={salarySchema} />}
       <JsonLd schema={breadcrumbSchema} />
       
+      {totalCount > 0 && (
+        <div className="flex justify-center -mt-4 mb-8">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
+            Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> salary records
+          </div>
+        </div>
+      )}
+
       {data.length === 0 ? (
         <>
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
@@ -206,58 +226,88 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
               </Link>
             )}
           </div>
-
-          {/* SEO-rich static content for Googlebot when DB is empty */}
-          <section className="mt-12 space-y-8 text-muted-foreground">
-            <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-              <h2 className="text-xl font-bold text-foreground mb-3">About the AkiliBrain Salary Database</h2>
-              <p className="leading-relaxed">
-                The AkiliBrain Salary Database provides transparent, verified compensation data for professionals across Kenya, Tanzania, Uganda, Rwanda, and the wider African market. We aim to empower job seekers and employers with accurate insights into base salaries, bonuses, and equity compensation across various industries.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-                <h2 className="text-lg font-semibold text-foreground mb-2">Why Salary Transparency Matters</h2>
-                <ul className="space-y-1 text-sm list-disc list-inside">
-                  <li>Empowers candidates during salary negotiations</li>
-                  <li>Helps employers benchmark their compensation packages</li>
-                  <li>Reduces the gender pay gap by exposing disparities</li>
-                  <li>Highlights regional pay differences across East Africa</li>
-                  <li>Tracks compensation trends for in-demand roles (e.g., Software Engineering)</li>
-                </ul>
-              </div>
-              <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-                <h2 className="text-lg font-semibold text-foreground mb-2">How We Collect Data</h2>
-                <ul className="space-y-1 text-sm list-disc list-inside">
-                  <li><strong>Anonymous Submissions:</strong> Professionals securely share their compensation details.</li>
-                  <li><strong>Verification:</strong> We cross-reference submissions with market averages and employer data.</li>
-                  <li><strong>Aggregated Insights:</strong> Data is anonymized and aggregated to protect individual privacy.</li>
-                  <li><strong>Market Research:</strong> We analyze publicly available data and partner with recruitment agencies.</li>
-                </ul>
-              </div>
-            </div>
-          </section>
         </>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map(({ salary, employer, country }) => (
-            <SalaryCard
-              key={salary.id}
-              id={salary.id}
-              jobTitle={salary.jobTitle}
-              employerName={employer?.name}
-              sector={employer?.sector || undefined}
-              country={country || 'Unknown'}
-              experienceLevel={salary.experienceLevel}
-              employmentType={salary.employmentType}
-              grossMonthlySalary={Number(salary.grossMonthlySalary)}
-              currency={salary.currency}
-              isVerified={salary.isVerified}
-              submittedAt={salary.submittedAt}
-            />
-          ))}
+        <>
+          <div className="mb-6">
+            <PremiumBanner />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="col-span-1">
+              <AdSlot slotId="salaries-sidebar-1" />
+            </div>
+            {data.map(({ salary, employer, country }) => (
+              <SalaryCard
+                key={salary.id}
+                id={salary.id}
+                jobTitle={salary.jobTitle}
+                employerName={employer?.name}
+                sector={employer?.sector || undefined}
+                country={country || 'Unknown'}
+                experienceLevel={salary.experienceLevel}
+                employmentType={salary.employmentType}
+                grossMonthlySalary={Number(salary.grossMonthlySalary)}
+                currency={salary.currency}
+                isVerified={salary.isVerified}
+                submittedAt={salary.submittedAt}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Pagination */}
+      {data.length > 0 && (
+        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
+          {page > 1 && (
+            <Link
+              href={`/salaries?q=${q || ''}&level=${level || ''}&page=${page - 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              ← Previous
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">Page {page}</span>
+          {data.length === PAGE_SIZE && (
+            <Link
+              href={`/salaries?q=${q || ''}&level=${level || ''}&page=${page + 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Next →
+            </Link>
+          )}
         </div>
       )}
+
+      {/* SEO-rich Content Block for AdSense / Googlebot */}
+      <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
+        <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+          <h2 className="text-2xl font-bold text-foreground mb-3">About the AkiliBrain Salary Database</h2>
+          <p className="leading-relaxed">
+            The AkiliBrain Salary Database provides transparent, verified compensation data for professionals across Kenya, Tanzania, Uganda, Rwanda, and the wider African market. We aim to empower job seekers and employers with accurate insights into base salaries, bonuses, and equity compensation across various industries. By providing a clear picture of market rates, we help democratize the negotiation process.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">Why Salary Transparency Matters</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Empowers candidates:</strong> Walk into your next interview knowing exactly what your skills are worth.</li>
+              <li><strong>Helps employers:</strong> Benchmark your compensation packages to attract and retain top talent.</li>
+              <li><strong>Reduces the gender pay gap:</strong> Exposing disparities is the first step toward correcting them.</li>
+              <li><strong>Highlights regional differences:</strong> Understand how pay scales vary between Nairobi, Dar es Salaam, and Kigali.</li>
+            </ul>
+          </div>
+          <div className="border border-white/10 rounded-xl p-6 bg-white/5">
+            <h2 className="text-xl font-semibold text-foreground mb-3">How We Collect Data</h2>
+            <ul className="space-y-2 text-sm list-disc list-inside">
+              <li><strong>Anonymous Submissions:</strong> Professionals securely share their compensation details.</li>
+              <li><strong>Verification:</strong> We cross-reference submissions with market averages and employer data.</li>
+              <li><strong>Aggregated Insights:</strong> Data is anonymized and aggregated to protect individual privacy.</li>
+              <li><strong>Market Research:</strong> We analyze publicly available data and partner with recruitment agencies.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
