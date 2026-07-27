@@ -82,6 +82,7 @@ export const metadata: Metadata = {
 };
 
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 export default function RootLayout({
   children,
@@ -108,12 +109,14 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Navbar />
-            <main className="min-h-screen">
-              {children}
-            </main>
-            <Footer />
-            <AIChatPanel />
+            <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'dummy'}>
+              <Navbar />
+              <main className="min-h-screen">
+                {children}
+              </main>
+              <Footer />
+              <AIChatPanel />
+            </GoogleOAuthProvider>
           </ThemeProvider>
         </PostHogProvider>
       </body>

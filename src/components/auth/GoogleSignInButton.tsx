@@ -1,18 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Icon } from '@iconify/react';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { AlertCircle } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
-export default function GoogleSignInButton({ isSignUp = false }: { isSignUp?: boolean }) {
+function GoogleSignInButtonInner({ isSignUp = false }: { isSignUp?: boolean }) {
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleSignIn = async () => {
+  const handleCredentialResponse = async (response: any) => {
     try {
-      setIsLoading(true);
       setError(null);
       
       const supabase = createBrowserClient(
@@ -20,45 +20,54 @@ export default function GoogleSignInButton({ isSignUp = false }: { isSignUp?: bo
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
-      const { error: authError } = await supabase.auth.signInWithOAuth({
+      if (!response.credential) {
+        throw new Error('No credential received from Google');
+      }
+
+      const { data, error: authError } = await supabase.auth.signInWithIdToken({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
+        token: response.credential,
       });
 
       if (authError) {
         setError(authError.message);
+        return;
       }
+
+      const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+      router.push(callbackUrl);
+      router.refresh();
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 flex flex-col items-center">
       {error && (
-        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-md text-sm flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" />
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-md text-sm flex items-center gap-2 w-full">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <p>{error}</p>
         </div>
       )}
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={handleSignIn}
-        disabled={isLoading}
-        className="w-full flex items-center gap-2 bg-white/5 border-white/10 hover:bg-white/10"
-      >
-        <Icon icon="flat-color-icons:google" className="w-5 h-5" />
-        {isLoading ? 'Connecting...' : (isSignUp ? 'Sign up with Google' : 'Continue with Google')}
-      </Button>
+      <div className="w-full flex justify-center">
+        <GoogleLogin
+          onSuccess={handleCredentialResponse}
+          onError={() => setError('Google Login Failed')}
+          useOneTap
+          theme="outline"
+          shape="rectangular"
+          text={isSignUp ? "signup_with" : "signin_with"}
+        />
+      </div>
     </div>
+  );
+}
+
+export default function GoogleSignInButton({ isSignUp = false }: { isSignUp?: boolean }) {
+  return (
+    <Suspense fallback={<div className="h-10 bg-muted animate-pulse rounded-md w-full" />}>
+      <GoogleSignInButtonInner isSignUp={isSignUp} />
+    </Suspense>
   );
 }
