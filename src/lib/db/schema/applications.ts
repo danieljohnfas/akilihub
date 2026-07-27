@@ -6,7 +6,8 @@ export const applicationStatusEnum = pgEnum('application_status', ['pending', 'r
 
 export const jobApplications = pgTable('job_applications', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  sessionId: text('session_id'), // For anonymous users
   jobId: uuid('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
   cvUrl: text('cv_url'), // Supabase Storage URL or path
   cvText: text('cv_text'), // Extracted raw text from CV

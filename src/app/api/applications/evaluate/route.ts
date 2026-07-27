@@ -12,9 +12,9 @@ export async function POST(req: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // We allow anonymous users now. sessionId can be generated or handled.
+    const userId = user ? user.id : null;
+    const sessionId = !user ? crypto.randomUUID() : null;
 
     const body = await req.json();
     const { jobId, cvText, cvUrl } = body;
@@ -51,7 +51,8 @@ Provide a match score (0-100), detailed feedback on why, and a tailored cover le
 
     // Insert to DB
     const insertedApp = await db.insert(jobApplications).values({
-      userId: user.id,
+      userId: userId,
+      sessionId: sessionId,
       jobId: job.id,
       cvUrl: cvUrl,
       cvText: cvText,
