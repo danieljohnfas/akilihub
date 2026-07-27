@@ -78,6 +78,13 @@
       "when": 1784944732346,
       "tag": "0010_chilly_kulan_gath",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785133787864,
+      "tag": "0011_loose_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

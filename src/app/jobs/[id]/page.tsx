@@ -251,12 +251,18 @@ export default async function JobDetailPage({
                   href={`/api/out?url=${encodeURIComponent(job.sourceUrl)}&type=job&id=${job.id}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={cn(buttonVariants({ size: "lg", className: "w-full md:w-auto h-12 px-8 text-base font-semibold shadow-lg shadow-primary/20" }))}
+                  className={cn(buttonVariants({ size: "lg", variant: "outline", className: "w-full md:w-auto h-12 px-8 text-base font-semibold" }))}
                 >
-                  Apply for this position
+                  External Apply
                   <ExternalLink className="w-5 h-5 ml-2" />
                 </a>
               )}
+              <Link
+                href={`/jobs/${job.id}/apply`}
+                className={cn(buttonVariants({ size: "lg", className: "w-full md:w-auto h-12 px-8 text-base font-semibold shadow-lg shadow-primary/20" }))}
+              >
+                Apply with AI Assistant
+              </Link>
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ import * as aiSchema from './schema/ai';
 import * as guidesSchema from './schema/guides';
 import * as documentsSchema from './schema/documents';
 import * as analyticsSchema from './schema/analytics';
+import * as applicationsSchema from './schema/applications';
 
 const schema = {
   ...sharedSchema,
@@ -28,6 +29,7 @@ const schema = {
   ...guidesSchema,
   ...documentsSchema,
   ...analyticsSchema,
+  ...applicationsSchema,
 };
 
 
