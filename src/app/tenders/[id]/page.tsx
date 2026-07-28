@@ -172,13 +172,6 @@ export default async function TenderDetailPage({
                 {tender.publishedAt ? format(tender.publishedAt, 'PPP') : 'N/A'}
               </p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
-              <p className="text-sm text-muted-foreground mb-1">Last Updated</p>
-              <p className="font-medium flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                {format(tender.updatedAt, 'PPP')}
-              </p>
-            </div>
           </section>
         </div>
 

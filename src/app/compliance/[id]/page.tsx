@@ -159,13 +159,6 @@ export default async function BusinessDetailPage({
                 {business.registrationDate ? format(business.registrationDate, 'PPP') : 'Unknown'}
               </p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
-              <p className="text-sm text-muted-foreground mb-1">Data Last Updated</p>
-              <p className="font-medium flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                {format(business.updatedAt, 'PPP')}
-              </p>
-            </div>
           </section>
         </div>
 
