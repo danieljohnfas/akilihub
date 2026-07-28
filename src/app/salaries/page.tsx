@@ -5,7 +5,7 @@ import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { SalaryCard } from '@/components/salaries/SalaryCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, Banknote } from 'lucide-react';
+import { Search, SlidersHorizontal, Banknote, MapPin, Building2 } from 'lucide-react';
 import { SubmitSalaryModal } from '@/components/salaries/SubmitSalaryModal';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
@@ -69,14 +69,32 @@ export default async function SalariesPage({
     {
       id: 'q',
       type: 'search',
-      label: 'Search Job Titles',
+      label: 'Role / Title',
       placeholder: 'Search job titles...',
+    },
+    {
+      id: 'company',
+      type: 'search',
+      label: 'Employer',
+      placeholder: 'Company name...',
+      icon: <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
+    },
+    {
+      id: 'country',
+      type: 'select',
+      label: 'Location',
+      icon: <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
+      options: [
+        { value: 'all', label: 'All Locations' },
+        ...allCountries.map(c => ({ value: c.name, label: c.name }))
+      ],
+      defaultValue: 'all'
     },
     {
       id: 'level',
       type: 'pills',
       options: [
-        { value: 'all', label: 'All Levels' },
+        { value: 'all', label: 'All Seniority' },
         { value: 'entry', label: 'Entry' },
         { value: 'mid', label: 'Mid' },
         { value: 'senior', label: 'Senior' },

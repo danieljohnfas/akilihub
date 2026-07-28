@@ -14,7 +14,7 @@ import { PremiumBanner } from '@/components/shared/PremiumBanner';
 import React from 'react';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
-import { Search, SlidersHorizontal, Inbox, Building2, BookOpen } from 'lucide-react';
+import { Search, SlidersHorizontal, Inbox, Building2, BookOpen, MapPin, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { complianceRequirements } from '@/lib/db/schema/compliance';
 import { ResourceCard } from '@/components/compliance/ResourceCard';
@@ -56,6 +56,16 @@ export const metadata: Metadata = {
 };
 
 import { Suspense } from 'react';
+import { unstable_cache } from 'next/cache';
+
+const getUniqueCountries = unstable_cache(async () => {
+  const uniqueCountriesData = await safeQuery(
+    db.selectDistinct({ name: countries.name })
+      .from(businesses)
+      .innerJoin(countries, eq(businesses.countryId, countries.id))
+  );
+  return uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+}, ['compliance-unique-countries'], { revalidate: 3600 });
 
 export default async function CompliancePage({
   searchParams: rawParams,
@@ -64,23 +74,50 @@ export default async function CompliancePage({
 }) {
   const params = parseGlobalSearchParams(await rawParams);
 
+  const uniqueCountriesList = await getUniqueCountries();
+
   const complianceFilters: FilterConfig[] = [
     {
       id: 'q',
       type: 'search',
-      label: 'Search Companies',
-      placeholder: 'Search companies by name...',
+      label: 'Search Registry',
+      placeholder: 'Search companies & resources...',
+    },
+    {
+      id: 'country',
+      type: 'select',
+      label: 'Location',
+      icon: <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
+      options: [
+        { value: 'all', label: 'All Locations' },
+        ...uniqueCountriesList.map(c => ({ value: c, label: c }))
+      ],
+      defaultValue: 'all'
+    },
+    {
+      id: 'type',
+      type: 'select',
+      label: 'Resource Type',
+      icon: <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
+      options: [
+        { value: 'all', label: 'All Types' },
+        { value: 'form', label: 'Forms' },
+        { value: 'calculator', label: 'Calculators' },
+        { value: 'guideline', label: 'Guidelines' },
+        { value: 'notice', label: 'Notices' },
+      ],
+      defaultValue: 'all'
     },
     {
       id: 'status',
       type: 'pills',
       options: [
-        { value: 'all', label: 'All' },
+        { value: 'all', label: 'All Statuses' },
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
         { value: 'suspended', label: 'Suspended' },
       ],
-      defaultValue: 'active'
+      defaultValue: 'all'
     }
   ];
 

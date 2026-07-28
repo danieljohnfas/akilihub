@@ -118,6 +118,7 @@ export default async function JobsPage({
             id: 'type',
             type: 'select',
             label: 'Job Type',
+            icon: <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
             options: [
               { value: 'all', label: 'All Types' },
               { value: 'full_time', label: 'Full Time' },

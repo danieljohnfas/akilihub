@@ -15,6 +15,8 @@ import { keyPool } from './key-pool';
 // Matches exactly baseName or baseName_<digits> to avoid picking up unrelated
 // env vars that share the same prefix (e.g. GROQ_API_KEYSTONE).
 function getEnvKeys(baseName: string): string[] {
+  // FAST-FAIL: We only want Google and Mistral for now to bypass SDK validation crashes
+  if (!baseName.includes('GOOGLE') && !baseName.includes('MISTRAL')) return [];
   const keys: string[] = [];
   const pattern = new RegExp(`^${baseName}(?:_\\d+)?$`);
   for (const [key, value] of Object.entries(process.env)) {
@@ -201,8 +203,8 @@ export async function generateObjectWithFallback<T = unknown>(
         (generateObject as any)({
           ...params,
           model: activeKey.model,
-          // Use json mode for Groq (doesn't support json_schema)
-          ...(activeKey.id.startsWith('groq-') ? { mode: 'json' } : {}),
+          // Use json mode for everything except Google/Mistral to prevent json_schema crashes
+          ...(!activeKey.id.startsWith('google-') && !activeKey.id.startsWith('mistral-') ? { mode: 'json' } : {}),
         }),
         AI_TIMEOUT_MS,
         activeKey.name,

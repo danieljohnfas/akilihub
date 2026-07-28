@@ -5,7 +5,7 @@ import { eq, desc, ilike, and } from 'drizzle-orm';
 import { HealthCard } from '@/components/health/HealthCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, Activity } from 'lucide-react';
+import { Search, SlidersHorizontal, Activity, MapPin, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildDatasetSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
@@ -47,6 +47,18 @@ export const metadata: Metadata = {
   },
 };
 
+import { Suspense } from 'react';
+import { unstable_cache } from 'next/cache';
+
+const getUniqueCountries = unstable_cache(async () => {
+  const uniqueCountriesData = await safeQuery(
+    db.selectDistinct({ name: countries.name })
+      .from(healthDataPoints)
+      .innerJoin(countries, eq(healthDataPoints.countryId, countries.id))
+  );
+  return uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+}, ['health-unique-countries'], { revalidate: 3600 });
+
 export default async function HealthPage({
   searchParams: rawParams,
 }: {
@@ -55,6 +67,10 @@ export default async function HealthPage({
   const params = parseGlobalSearchParams(await rawParams);
   const q = params.q || '';
   const category = params.category || 'all';
+  const country = params.country || 'all';
+  const source = params.source || 'all';
+  
+  const uniqueCountriesList = await getUniqueCountries();
   
   const conditions = [
     q ? ilike(healthIndicators.name, `%${q}%`) : undefined,
@@ -117,10 +133,34 @@ export default async function HealthPage({
             placeholder: 'Search indicators...',
           },
           {
+            id: 'country',
+            type: 'select',
+            label: 'Location',
+            icon: <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
+            options: [
+              { value: 'all', label: 'All Locations' },
+              ...uniqueCountriesList.map(c => ({ value: c, label: c }))
+            ],
+            defaultValue: 'all'
+          },
+          {
+            id: 'source',
+            type: 'select',
+            label: 'Data Source',
+            icon: <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
+            options: [
+              { value: 'all', label: 'All Sources' },
+              { value: 'dhis2', label: 'DHIS2' },
+              { value: 'who', label: 'WHO' },
+              { value: 'national', label: 'National Ministry' },
+            ],
+            defaultValue: 'all'
+          },
+          {
             id: 'category',
             type: 'pills',
             options: [
-              { value: 'all', label: 'All' },
+              { value: 'all', label: 'All Categories' },
               { value: 'maternal', label: 'Maternal' },
               { value: 'child', label: 'Child' },
               { value: 'infectious', label: 'Infectious' },

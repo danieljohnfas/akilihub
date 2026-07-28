@@ -37,6 +37,7 @@ export const salarySubmissions = pgTable('salary_submissions', {
   isAnonymous: boolean('is_anonymous').notNull().default(true),
   isVerified: boolean('is_verified').notNull().default(false),
   submittedAt: timestamp('submitted_at').notNull().defaultNow(),
+  sourceUrl: text('source_url'),
 }, (table) => [
   index('salary_country_idx').on(table.countryId),
   index('salary_category_idx').on(table.jobCategoryId),

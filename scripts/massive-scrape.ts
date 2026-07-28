@@ -326,6 +326,7 @@ async function main() {
                     employmentType: s.employmentType || 'full_time',
                     experienceLevel: s.experienceLevel || 'mid',
                     submittedAt: new Date(),
+                    sourceUrl: s.sourceUrl, // Captured from AI extraction
                 }).onConflictDoNothing();
             }
         },

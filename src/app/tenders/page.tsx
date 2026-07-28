@@ -5,7 +5,7 @@ import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, ArrowRight, Calendar, Building, FileText, Globe, Inbox } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowRight, Calendar, Building, Building2, MapPin, FileText, Globe, Inbox } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -85,13 +85,22 @@ export default async function TendersPage({
       placeholder: 'Search tenders...',
     },
     {
+      id: 'organization',
+      type: 'search',
+      label: 'Organization / Issuer',
+      placeholder: 'Organization name...',
+      icon: <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
+    },
+    {
       id: 'country',
       type: 'select',
-      label: 'Country',
+      label: 'Location',
+      icon: <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />,
       options: [
-        { value: 'all', label: 'All Countries' },
+        { value: 'all', label: 'All Locations' },
         ...uniqueCountriesList.map(c => ({ value: c, label: c }))
-      ]
+      ],
+      defaultValue: 'all'
     },
     {
       id: 'status',
