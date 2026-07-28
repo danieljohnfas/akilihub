@@ -33,6 +33,7 @@ export default async function TendersCalendarPage() {
   const groupedByDay: Record<string, typeof upcomingTenders> = {};
   
   upcomingTenders.forEach(item => {
+    if (!item.tender.deadline) return; // Skip if no deadline (though the gte query usually filters these out)
     const dayKey = format(item.tender.deadline, 'yyyy-MM-dd');
     if (!groupedByDay[dayKey]) {
       groupedByDay[dayKey] = [];

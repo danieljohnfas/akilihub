@@ -17,7 +17,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
   let inserted = 0;
   for (const job of discovered) {
     try {
-      await db.insert(jobs).values({
+      const rows = await db.insert(jobs).values({
         title: job.title,
         companyName: job.companyName,
         description: job.description,
@@ -27,16 +27,18 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
         jobType: job.jobType,
         sourceUrl: job.sourceUrl,
         postedDate: job.postedDate || new Date(),
-        deadline: job.deadline,
+        deadline: job.deadline ?? null, // null is honest; don't fabricate a +14d deadline
         isActive: true,
-      }).onConflictDoNothing();
-      inserted++;
+      }).onConflictDoNothing().returning({ id: jobs.id });
+      // Only count rows that were actually inserted (not skipped by onConflictDoNothing)
+      if (rows.length > 0) inserted++;
     } catch (e) {
       console.error(`Failed to insert job: ${job.title}`, e);
     }
   }
   return inserted;
 }
+
 
 function makeJobScraper(
   id: string,

@@ -25,11 +25,9 @@ export const tenders = pgTable('tenders', {
   budget: numeric('budget', { precision: 18, scale: 2 }),
   currency: text('currency').default('USD'),
   publishedAt: timestamp('published_at'),
-  deadline: timestamp('deadline').notNull(),
+  deadline: timestamp('deadline'),  // null = deadline not published yet
   sourceUrl: text('source_url').notNull().unique(),
   documentUrl: text('document_url'),
-  extractedText: text('extracted_text'), // OCR text from Stirling PDF
-  searchVector: text('search_vector'), // For FTS
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [

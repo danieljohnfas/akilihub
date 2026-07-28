@@ -100,7 +100,8 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
             keyword: z.string().describe('Keyword to search for in job titles or descriptions (e.g. "software", "Nairobi", "driver")'),
           }),
           execute: async ({ keyword }: { keyword: string }) => {
-            console.log(`[AI Tool] Searching jobs for: ${keyword}`);
+            const safeKeyword = keyword.trim().substring(0, 100);
+            console.log(`[AI Tool] Searching jobs for: ${safeKeyword}`);
             const found = await db.select({
               title: jobs.title,
               company: jobs.companyName,
@@ -112,7 +113,7 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
             .from(jobs)
             .leftJoin(countries, eq(jobs.countryId, countries.id))
             .leftJoin(regions, eq(jobs.regionId, regions.id))
-            .where(or(ilike(jobs.title, `%${keyword}%`), ilike(jobs.description, `%${keyword}%`)))
+            .where(or(ilike(jobs.title, `%${safeKeyword}%`), ilike(jobs.description, `%${safeKeyword}%`)))
             .orderBy(desc(jobs.postedDate))
             .limit(10);
             return JSON.stringify(found);
@@ -124,7 +125,8 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
             keyword: z.string().describe('Keyword to search for in tender titles or descriptions (e.g. "construction", "computers", "Dodoma")'),
           }),
           execute: async ({ keyword }: { keyword: string }) => {
-            console.log(`[AI Tool] Searching tenders for: ${keyword}`);
+            const safeKeyword = keyword.trim().substring(0, 100);
+            console.log(`[AI Tool] Searching tenders for: ${safeKeyword}`);
             const found = await db.select({
               title: tenders.title,
               authority: tenders.contractingAuthority,
@@ -133,7 +135,7 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
               deadline: tenders.deadline
             })
             .from(tenders)
-            .where(or(ilike(tenders.title, `%${keyword}%`), ilike(tenders.description, `%${keyword}%`)))
+            .where(or(ilike(tenders.title, `%${safeKeyword}%`), ilike(tenders.description, `%${safeKeyword}%`)))
             .orderBy(desc(tenders.publishedAt))
             .limit(10);
             return JSON.stringify(found);
@@ -145,14 +147,15 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
             keyword: z.string().describe('Name of the company or registration number'),
           }),
           execute: async ({ keyword }: { keyword: string }) => {
-            console.log(`[AI Tool] Searching businesses for: ${keyword}`);
+            const safeKeyword = keyword.trim().substring(0, 100);
+            console.log(`[AI Tool] Searching businesses for: ${safeKeyword}`);
             const found = await db.select({
               name: businesses.name,
               regNumber: businesses.registrationNumber,
               status: businesses.status,
             })
             .from(businesses)
-            .where(ilike(businesses.name, `%${keyword}%`))
+            .where(ilike(businesses.name, `%${safeKeyword}%`))
             .limit(10);
             return JSON.stringify(found);
           }

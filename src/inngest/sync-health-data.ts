@@ -152,41 +152,43 @@ export const syncHealthDataJob = inngest.createFunction(
       console.log(`[sync-health-data] Upserted ${INDICATORS.length} indicator definitions.`);
     });
 
-    let totalPoints = 0;
-
     // 2. Fetch from WHO GHO for all EAC countries
-    await step.run("fetch-who-data", async () => {
+    // Fix: return totalPoints from the step so it isn't lost on replay/retry.
+    // Fix: pre-fetch country and indicator ID maps to avoid N×M DB queries.
+    const whoPoints = await step.run("fetch-who-data", async () => {
+      // Pre-fetch all country IDs in a single query (no filter = all countries)
+      const countryRows = await db
+        .select({ id: countries.id, code: countries.code })
+        .from(countries);
+      const countryMap = new Map(countryRows.map(r => [r.code, r.id]));
+
+      // Pre-fetch all indicator IDs in a single query
+      const indRows = await db
+        .select({ id: healthIndicators.id, code: healthIndicators.code })
+        .from(healthIndicators);
+      const indicatorMap = new Map(indRows.map(r => [r.code, r.id]));
+
+      let points = 0;
+
       for (const countryCode of EAC_COUNTRIES) {
         const whoCountry = WHO_COUNTRY_MAP[countryCode];
-
-        // Resolve country DB id
-        const countryRow = await db
-          .select({ id: countries.id })
-          .from(countries)
-          .where(eq(countries.code, countryCode))
-          .limit(1);
-        if (!countryRow.length) continue;
-        const countryId = countryRow[0].id;
+        const countryId = countryMap.get(countryCode);
+        if (!countryId) continue;
 
         for (const indicator of INDICATORS) {
           const whoCode = WHO_INDICATOR_MAP[indicator.code];
           if (!whoCode) continue;
 
+          const indicatorId = indicatorMap.get(indicator.code);
+          if (!indicatorId) continue;
+
           const point = await fetchWHOIndicator(indicator.code, whoCode, whoCountry);
           if (!point) continue;
-
-          // Get indicator DB id
-          const indRow = await db
-            .select({ id: healthIndicators.id })
-            .from(healthIndicators)
-            .where(eq(healthIndicators.code, indicator.code))
-            .limit(1);
-          if (!indRow.length) continue;
 
           await db
             .insert(healthDataPoints)
             .values({
-              indicatorId: indRow[0].id,
+              indicatorId,
               countryId,
               value: String(point.value),
               year: point.year,
@@ -194,14 +196,23 @@ export const syncHealthDataJob = inngest.createFunction(
             })
             .onConflictDoNothing();
 
-          totalPoints++;
+          points++;
         }
       }
-      console.log(`[sync-health-data] WHO GHO: inserted/found ${totalPoints} data points.`);
+      console.log(`[sync-health-data] WHO GHO: inserted/updated ${points} data points.`);
+      return points;
     });
 
     // 3. Fetch from Tanzania DHIS2 (if credentials are set)
-    await step.run("fetch-dhis2-data", async () => {
+    const dhis2Points = await step.run("fetch-dhis2-data", async () => {
+      // Pre-fetch indicator IDs for DHIS2 step as well
+      const indRows = await db
+        .select({ id: healthIndicators.id, code: healthIndicators.code })
+        .from(healthIndicators);
+      const indicatorMap = new Map(indRows.map(r => [r.code, r.id]));
+
+      let points = 0;
+
       for (const config of DHIS2_COUNTRIES) {
         if (!config.baseUrl) continue;
 
@@ -214,6 +225,9 @@ export const syncHealthDataJob = inngest.createFunction(
         const countryId = countryRow[0].id;
 
         for (const indicator of INDICATORS) {
+          const indicatorId = indicatorMap.get(indicator.code);
+          if (!indicatorId) continue;
+
           const point = await fetchDHIS2Indicator(
             indicator.dhis2Id ?? indicator.code,
             config.baseUrl,
@@ -222,17 +236,10 @@ export const syncHealthDataJob = inngest.createFunction(
           );
           if (!point) continue;
 
-          const indRow = await db
-            .select({ id: healthIndicators.id })
-            .from(healthIndicators)
-            .where(eq(healthIndicators.code, indicator.code))
-            .limit(1);
-          if (!indRow.length) continue;
-
           await db
             .insert(healthDataPoints)
             .values({
-              indicatorId: indRow[0].id,
+              indicatorId,
               countryId,
               value: String(point.value),
               year: point.year,
@@ -241,12 +248,15 @@ export const syncHealthDataJob = inngest.createFunction(
             })
             .onConflictDoNothing();
 
-          totalPoints++;
+          points++;
         }
 
         console.log(`[sync-health-data] DHIS2 ${config.name}: processed.`);
       }
+      return points;
     });
+
+    const totalPoints = whoPoints + dhis2Points;
 
     return {
       message: `Health data sync complete. Processed ${totalPoints} data points across ${EAC_COUNTRIES.length} countries.`,

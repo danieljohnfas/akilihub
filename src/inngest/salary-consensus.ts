@@ -21,7 +21,18 @@ export const salaryConsensusVerificationJob = inngest.createFunction(
     const verifiedCount = await step.run("find-and-verify-consensus-clusters", async () => {
       // Find clusters: same job_title (case-insensitive) + country + experience level
       // with >= 3 unverified submissions
-      const clusters = await db.execute(sql`
+
+      interface ClusterRow {
+        normalized_title: string;
+        country_id: string;
+        experience_level: string;
+        submission_count: string; // postgres count returns string
+        median_salary: string;    // PERCENTILE_CONT returns numeric as string
+        ids: string[];
+        salaries: string[];
+      }
+
+      const rawClusters = await db.execute(sql`
         SELECT
           LOWER(job_title) AS normalized_title,
           country_id,
@@ -36,9 +47,12 @@ export const salaryConsensusVerificationJob = inngest.createFunction(
         HAVING COUNT(*) >= 3
       `);
 
+      // With the postgres-js driver, db.execute() returns rows directly as an array
+      const clusters = rawClusters as unknown as ClusterRow[];
+
       let totalVerified = 0;
 
-      for (const cluster of clusters as any[]) {
+      for (const cluster of clusters) {
         const median = Number(cluster.median_salary);
         const lowerBound = median * 0.7;  // -30%
         const upperBound = median * 1.3;  // +30%

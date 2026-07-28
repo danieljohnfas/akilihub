@@ -87,7 +87,7 @@ export default async function TenderDetailPage({
   }
 
   const { tender, country, sector } = data[0];
-  const isExpired = tender.deadline < new Date();
+  const isExpired = tender.deadline ? tender.deadline < new Date() : false;
 
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-8">
@@ -213,13 +213,22 @@ export default async function TenderDetailPage({
 
             <div className="space-y-1 pt-4 border-t border-white/10">
               <p className="text-sm text-muted-foreground">Deadline</p>
-              <p className={`font-semibold flex items-center gap-2 text-lg ${isExpired ? 'text-destructive/80' : 'text-amber-400'}`}>
-                <Calendar className="w-5 h-5 shrink-0" />
-                {format(tender.deadline, 'PPP')}
-              </p>
-              <p className="text-xs text-muted-foreground pl-7">
-                {format(tender.deadline, 'p')}
-              </p>
+              {tender.deadline ? (
+                <>
+                  <p className={`font-semibold flex items-center gap-2 text-lg ${isExpired ? 'text-destructive/80' : 'text-amber-400'}`}>
+                    <Calendar className="w-5 h-5 shrink-0" />
+                    {format(tender.deadline, 'PPP')}
+                  </p>
+                  <p className="text-xs text-muted-foreground pl-7">
+                    {format(tender.deadline, 'p')}
+                  </p>
+                </>
+              ) : (
+                <p className="font-semibold flex items-center gap-2 text-lg text-muted-foreground">
+                  <Calendar className="w-5 h-5 shrink-0" />
+                  Not specified
+                </p>
+              )}
             </div>
 
             <div className="pt-6 space-y-3">

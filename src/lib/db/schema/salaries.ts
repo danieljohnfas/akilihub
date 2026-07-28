@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric, integer, boolean, index, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, numeric, integer, boolean, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
 import { countries } from './shared';
 
 export const experienceLevelEnum = pgEnum('experience_level', ['entry', 'mid', 'senior', 'executive']);
@@ -17,7 +17,10 @@ export const employers = pgTable('employers', {
   sector: text('sector'), // e.g. 'NGO', 'Government', 'Private'
   countryId: uuid('country_id').references(() => countries.id),
   isVerified: boolean('is_verified').notNull().default(false),
-});
+}, (table) => [
+  // Prevent duplicate employer entries per country
+  uniqueIndex('employers_name_country_idx').on(table.name, table.countryId),
+]);
 
 export const salarySubmissions = pgTable('salary_submissions', {
   id: uuid('id').primaryKey().defaultRandom(),

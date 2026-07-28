@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, integer, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { countries } from './shared';
 
@@ -27,7 +27,6 @@ export const businesses = pgTable('businesses', {
   registrationDate: timestamp('registration_date'),
   directors: text('directors').array(),
   address: text('address'),
-  searchVector: text('search_vector'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -40,7 +39,7 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   businessTypeId: uuid('business_type_id').references(() => businessTypes.id),
   category: complianceCategoryEnum('category').notNull(),
   issuingAuthority: text('issuing_authority').notNull(),
-  renewalPeriodDays: text('renewal_period_days'),
+  renewalPeriodDays: integer('renewal_period_days'), // Number of days between renewals
   estimatedCost: text('estimated_cost'),
   requiredDocuments: text('required_documents').array(),
   sourceUrl: text('source_url'),

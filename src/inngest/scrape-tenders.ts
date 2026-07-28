@@ -99,21 +99,24 @@ export async function saveTenderResults(
   for (const t of items) {
     try {
       const regionId = await normalizeLocationAndGetRegionId(t.contractingAuthority);
-      await db
+      const rows = await db
         .insert(tenders)
         .values({
           referenceNo: t.referenceNo,
           title: t.title,
           description: t.description ?? null,
           contractingAuthority: t.contractingAuthority,
-          deadline: t.deadline ? new Date(t.deadline) : new Date(Date.now() + 14 * 86400000),
+          // Use null when no deadline found; don't fabricate a +14d deadline
+          deadline: t.deadline ? new Date(t.deadline) : null,
           sourceUrl: t.sourceUrl,
           countryId,
           regionId,
           status: "open",
         })
-        .onConflictDoNothing();
-      inserted++;
+        .onConflictDoNothing()
+        .returning({ id: tenders.id });
+      // Only count rows that were actually inserted
+      if (rows.length > 0) inserted++;
     } catch (e) {
       console.error(`[scrape-tenders] Failed to insert: ${t.referenceNo}`, e);
     }
@@ -128,7 +131,7 @@ export async function saveBroadResults(
   let inserted = 0;
   for (const t of items) {
     try {
-      await db
+      const rows = await db
         .insert(tenders)
         .values({
           referenceNo: t.referenceNo,
@@ -138,14 +141,17 @@ export async function saveBroadResults(
           category: t.category,
           budget: t.budget?.toString() ?? null,
           currency: t.currency,
-          deadline: t.deadline ?? new Date(Date.now() + 14 * 86400000),
+          // Use null when no deadline found; don't fabricate a +14d deadline
+          deadline: t.deadline ?? null,
           sourceUrl: t.sourceUrl,
           countryId,
           regionId: t.regionId ?? null,
           status: "open",
         })
-        .onConflictDoNothing();
-      inserted++;
+        .onConflictDoNothing()
+        .returning({ id: tenders.id });
+      // Only count rows that were actually inserted
+      if (rows.length > 0) inserted++;
     } catch (e) {
       console.error(`[scrape-tenders] Broad insert failed: ${t.referenceNo}`, e);
     }

@@ -213,7 +213,7 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
     data.slice(0, 20).map(({ tender, country }, idx) => ({
       position: idx + 1,
       name: tender.title,
-      description: `By ${tender.contractingAuthority}${country ? ` — ${country}` : ''}. Deadline: ${tender.deadline.toDateString()}.`,
+      description: `By ${tender.contractingAuthority}${country ? ` — ${country}` : ''}.${tender.deadline ? ` Deadline: ${tender.deadline.toDateString()}.` : ''}`,
       url: `https://akilibrain.com/tenders/${tender.id}`,
     }))
   );

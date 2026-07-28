@@ -1,4 +1,5 @@
-import { generateObject, generateText } from 'ai';
+import { generateObject, generateText, type GenerateObjectResult } from 'ai';
+import type { ZodType } from 'zod';
 import { createGoogle } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
@@ -11,10 +12,13 @@ import { keyPool } from './key-pool';
 // ------------------------------------------------------------------
 
 // Helper: extract all env vars starting with baseName (supports _2, _3, etc.)
+// Matches exactly baseName or baseName_<digits> to avoid picking up unrelated
+// env vars that share the same prefix (e.g. GROQ_API_KEYSTONE).
 function getEnvKeys(baseName: string): string[] {
   const keys: string[] = [];
+  const pattern = new RegExp(`^${baseName}(?:_\\d+)?$`);
   for (const [key, value] of Object.entries(process.env)) {
-    if (key.startsWith(baseName) && value && value.trim() !== '') {
+    if (pattern.test(key) && value && value.trim() !== '') {
       keys.push(value.trim());
     }
   }
@@ -171,7 +175,9 @@ function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Pro
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function generateObjectWithFallback(params: Record<string, any>) {
+export async function generateObjectWithFallback<T = unknown>(
+  params: Record<string, any> & { schema?: ZodType<T> }
+): Promise<GenerateObjectResult<T>> {
   if (keyPool.getAvailableCount() === 0) {
     throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
   }
@@ -203,7 +209,7 @@ export async function generateObjectWithFallback(params: Record<string, any>) {
       );
 
       keyPool.markSuccess(activeKey.id);
-      return result;
+      return result as GenerateObjectResult<T>;
 
     } catch (error: unknown) {
       const err = error as Error & { name?: string };
@@ -221,7 +227,7 @@ export async function generateObjectWithFallback(params: Record<string, any>) {
   }
 
   console.error('[AI Router] All fallback attempts exhausted.');
-  return {} as any;
+  throw lastError ?? new Error('[AI Router] All fallback attempts exhausted with no specific error.');
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

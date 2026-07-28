@@ -20,7 +20,7 @@ export async function normalizeLocationAndGetRegionId(rawLocation: string | null
   try {
     const prompt = `You are a geographical normalization AI.
 Analyze the following raw location string extracted from a job or tender posting in East Africa.
-Determine the most likely ISO 3166-1 alpha-2 country code (KE, TZ, UG, RW) and the top-level administrative region (e.g. County in Kenya, Region in Tanzania).
+Determine the most likely ISO 3166-1 alpha-2 country code (KE, TZ, UG, RW, ET, CD) and the top-level administrative region (e.g. County in Kenya, Region in Tanzania, State in Ethiopia, Province in DRC).
 If the location is "Remote" or cannot be mapped to a specific region, leave regionName null.
 If the country cannot be determined, guess based on context or leave countryCode null.
 
@@ -29,8 +29,8 @@ Raw Location: "${rawLocation}"
 
     const { object } = await generateObjectWithFallback({
       schema: z.object({
-        countryCode: z.enum(['KE', 'TZ', 'UG', 'RW']).nullable(),
-        regionName: z.string().nullable().describe("The official name of the top-level region (e.g., 'Nairobi', 'Dar es Salaam', 'Kigali'). Do not include suffixes like 'County' or 'Region'."),
+        countryCode: z.enum(['KE', 'TZ', 'UG', 'RW', 'ET', 'CD']).nullable(),
+        regionName: z.string().nullable().describe("The official name of the top-level region (e.g., 'Nairobi', 'Dar es Salaam', 'Kigali', 'Addis Ababa', 'Kinshasa'). Do not include suffixes like 'County' or 'Region'."),
       }),
       prompt,
     });

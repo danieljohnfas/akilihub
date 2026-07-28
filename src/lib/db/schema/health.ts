@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric, integer, index, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, numeric, integer, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
 import { countries } from './shared';
 
 export const healthIndicators = pgTable('health_indicators', {
@@ -23,4 +23,6 @@ export const healthDataPoints = pgTable('health_data_points', {
 }, (table) => [
   index('health_indicator_country_idx').on(table.indicatorId, table.countryId),
   index('health_year_idx').on(table.year),
+  // Required for onConflictDoNothing to work — prevents duplicate data points
+  uniqueIndex('health_data_unique_idx').on(table.indicatorId, table.countryId, table.year),
 ]);

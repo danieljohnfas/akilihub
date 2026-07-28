@@ -1,5 +1,4 @@
-import { config } from 'dotenv';
-config({ path: '.env.local' });
+
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as sharedSchema from './schema/shared';
@@ -49,9 +48,8 @@ try {
 }
 
 const conn = globalForDb.conn ?? postgres(connectionString, {
-  // Supabase pooler requires SSL. Always enforce it regardless of NODE_ENV
-  // to match Vercel's serverless environment.
-  ssl: 'require',
+  // Supabase pooler requires SSL in production. Allow plain TCP locally (Docker).
+  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
   // Serverless functions must use max: 1 to avoid overwhelming PgBouncer
   max: 1,
   idle_timeout: 20,

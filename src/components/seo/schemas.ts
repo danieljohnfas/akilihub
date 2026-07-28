@@ -209,7 +209,7 @@ interface TenderInput {
   country: string | null;
   sector: string | null;
   status: string;
-  deadline: Date;
+  deadline: Date | null;
   publishedAt: Date | null;
   budget: string | null;
   currency: string | null;

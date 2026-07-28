@@ -6,7 +6,7 @@ import { z } from "zod";
 import { searchGoogle } from "@/lib/scrapers/broad-search-engine";
 import { eq } from "drizzle-orm";
 
-const TROPICS = [
+const TOPICS = [
   // Health Data & Systems
   "Tanzania health data trends DHIS2",
   "Digital health implementations in Kenyan public hospitals",
@@ -80,7 +80,7 @@ export const generateWeeklyGuidesJob = inngest.createFunction(
   { id: "generate-weekly-guides", name: "Generate Weekly Editorial Guides", triggers: [{ cron: "0 8 * * 1" }] }, // Every Monday at 8:00 AM UTC
   async ({ step }) => {
     // 1. Pick a random topic to cover this week
-    const topic = TROPICS[Math.floor(Math.random() * TROPICS.length)];
+    const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
 
     // 2. Search for recent news on this topic
     const searchResults = await step.run("search-news", async () => {

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, pgEnum, uniqueIndex } from 'drizzle-orm/pg-core';
 import { countries, regions } from './shared';
 
 export const alertFrequencyEnum = pgEnum('alert_frequency', ['immediate', 'daily', 'weekly']);
@@ -26,7 +26,10 @@ export const userAlerts = pgTable('user_alerts', {
   isActive: boolean('is_active').notNull().default(true),
   lastSentAt: timestamp('last_sent_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+}, (table) => [
+  // Prevent duplicate alerts: one alert per (user, module, country) combination
+  uniqueIndex('user_alerts_unique_idx').on(table.userId, table.module, table.countryId),
+]);
 
 export const bookmarkItemTypeEnum = pgEnum('bookmark_item_type', ['job', 'tender', 'guide']);
 
@@ -36,4 +39,7 @@ export const bookmarks = pgTable('bookmarks', {
   itemType: bookmarkItemTypeEnum('item_type').notNull(),
   itemId: uuid('item_id').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+}, (table) => [
+  // Prevent duplicate bookmarks for the same item
+  uniqueIndex('bookmarks_unique_idx').on(table.userId, table.itemType, table.itemId),
+]);

@@ -19,7 +19,10 @@ function chunkArray<T>(array: T[], size: number): T[][] {
   return result;
 }
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "danieljohnfassanga@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+if (!ADMIN_EMAIL) {
+  console.warn('[send-alerts] ADMIN_EMAIL env var is not set. Alert emails will be skipped.');
+}
 
 export const sendTenderAlertsJob = inngest.createFunction(
   { id: "send-tender-alerts", triggers: [{ event: "tenders.new" }] },
@@ -43,7 +46,7 @@ export const sendTenderAlertsJob = inngest.createFunction(
     });
 
     await step.run("send-email-alerts", async () => {
-      if (!process.env.RESEND_API_KEY) return { skipped: true };
+      if (!process.env.RESEND_API_KEY || !ADMIN_EMAIL) return { skipped: true };
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       const formattedTenders = recentTenders.map(t => ({
@@ -65,7 +68,7 @@ export const sendTenderAlertsJob = inngest.createFunction(
 
       await resend.emails.send({
         from: "AkiliBrain Alerts <alerts@akilibrain.com>",
-        to: [ADMIN_EMAIL],
+        to: [ADMIN_EMAIL!],
         subject: `[AkiliBrain] ${count} new tenders from ${source}`,
         html: htmlOutput,
       });
@@ -88,7 +91,7 @@ export const sendDailyDigestJob = inngest.createFunction(
         
       // For now, in unverified domain mode, we only send to Admin.
       // But we simulate the logic for production readiness.
-      return activeAlerts.filter(a => a.users && a.users.email === ADMIN_EMAIL);
+      return activeAlerts.filter(a => a.users && ADMIN_EMAIL && a.users.email === ADMIN_EMAIL);
     });
 
     if (subscribers.length === 0) return { skipped: true, reason: "No subscribers" };
@@ -135,8 +138,7 @@ export const sendDailyDigestJob = inngest.createFunction(
       
       const chunks = chunkArray(emailPayloads, 100);
       for (const chunk of chunks) {
-        // @ts-ignore - Resend batch API accepts array of email objects
-        await resend.batch.send(chunk);
+        await (resend.batch as { send: (emails: typeof chunk) => Promise<unknown> }).send(chunk);
         // Rate limit: 2 per second max, safe delay
         await new Promise(r => setTimeout(r, 1000));
       }
@@ -153,8 +155,8 @@ export const sendWeeklyNewsletterJob = inngest.createFunction(
     // 1. Fetch all active users
     const allUsers = await step.run("fetch-all-users", async () => {
       const rows = await db.select().from(users);
-      // Filter for unverified domain test mode
-      return rows.filter(u => u.email === ADMIN_EMAIL);
+      // Filter for unverified domain test mode — only send to admin
+      return ADMIN_EMAIL ? rows.filter(u => u.email === ADMIN_EMAIL) : [];
     });
 
     if (allUsers.length === 0) return { skipped: true, reason: "No users" };
@@ -201,8 +203,7 @@ export const sendWeeklyNewsletterJob = inngest.createFunction(
       
       const chunks = chunkArray(emailPayloads, 100);
       for (const chunk of chunks) {
-        // @ts-ignore
-        await resend.batch.send(chunk);
+        await (resend.batch as { send: (emails: typeof chunk) => Promise<unknown> }).send(chunk);
         await new Promise(r => setTimeout(r, 1000));
       }
       return { batches: chunks.length, total: emailPayloads.length };

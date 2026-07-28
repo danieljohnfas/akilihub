@@ -224,11 +224,11 @@ export async function discoverJobs(query: string, maxPages: number = 5): Promise
     if (!html) continue;
 
     const { text } = await htmlToTextEnriched(html, url);
-    const jobs = await extractJobsWithAI(text, url);
+    const extractedJobs = await extractJobsWithAI(text, url);
 
-    if (jobs.length > 0) {
-      console.log(`[discoverJobs] Extracted ${jobs.length} jobs from ${url}`);
-      allJobs.push(...jobs);
+    if (extractedJobs.length > 0) {
+      console.log(`[discoverJobs] Extracted ${extractedJobs.length} jobs from ${url}`);
+      allJobs.push(...extractedJobs);
     }
 
     pagesProcessed++;

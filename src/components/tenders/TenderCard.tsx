@@ -25,7 +25,7 @@ export interface TenderCardProps {
   region?: string;
   sector?: string;
   status: 'open' | 'closed' | 'awarded' | 'cancelled';
-  deadline: Date;
+  deadline: Date | null;
   budget?: string | null;
   currency?: string | null;
   documentUrl?: string | null;
@@ -45,9 +45,9 @@ export function TenderCard({
   currency,
   documentUrl,
 }: TenderCardProps) {
-  const isExpired = deadline < new Date();
-  const daysRemaining = differenceInDays(deadline, new Date());
-  const isUrgent = daysRemaining >= 0 && daysRemaining <= 3 && status === 'open';
+  const isExpired = deadline ? deadline < new Date() : false;
+  const daysRemaining = deadline ? differenceInDays(deadline, new Date()) : null;
+  const isUrgent = daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 3 && status === 'open';
   
   return (
     <Card className="group hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col">
@@ -121,7 +121,7 @@ export function TenderCard({
         <div className="flex items-center gap-2 text-xs font-medium text-white/60">
           <Calendar className="w-3.5 h-3.5" />
           <span className={isExpired ? 'text-destructive/80' : 'text-amber-400/90'}>
-            Due {formatDistanceToNow(deadline, { addSuffix: true })}
+            {deadline ? `Due ${formatDistanceToNow(deadline, { addSuffix: true })}` : 'No deadline specified'}
           </span>
         </div>
         <Link 

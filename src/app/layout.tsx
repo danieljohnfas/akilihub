@@ -8,7 +8,8 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { buildOrganizationSchema, buildWebSiteSchema } from "@/components/seo/schemas";
 import { ClarityAnalytics } from "@/components/analytics/Clarity";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 const inter = Inter({ subsets: ["latin"] });
 
 const BASE_URL = "https://akilibrain.com";
@@ -81,8 +82,7 @@ export const metadata: Metadata = {
   },
 };
 
-import { PostHogProvider } from "@/components/providers/PostHogProvider";
-import { GoogleOAuthProvider } from '@react-oauth/google';
+
 
 export default function RootLayout({
   children,

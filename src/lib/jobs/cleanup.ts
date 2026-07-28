@@ -1,5 +1,8 @@
-import { config } from 'dotenv';
-config({ path: '.env.local' });
+/**
+ * @deprecated This standalone script duplicates the logic in src/inngest/enforce-freshness.ts.
+ * Prefer triggering the Inngest job for scheduled cleanup. Keep this only as a manual
+ * escape-hatch (e.g. `npx ts-node src/lib/jobs/cleanup.ts`) when Inngest is unavailable.
+ */
 import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
