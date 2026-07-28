@@ -113,7 +113,7 @@ export async function searchGoogle(query: string, numResults: number = 20): Prom
 export async function extractJobsWithAI(text: string, sourceUrl: string): Promise<BroadJobResource[]> {
   if (!text || text.length < 50) return [];
 
-  const prompt = `You are a specialized AI assistant that extracts job postings from raw website text.
+    const prompt = `You are a specialized AI assistant that extracts job postings from raw website text.
 Source URL: ${sourceUrl}
 
 Scraped content:
@@ -122,7 +122,7 @@ ${text.substring(0, 12000)}
 Rules:
 - Extract any real job postings found in the text. Be comprehensive.
 - For 'companyName': DO NOT use the name of job boards or aggregators (e.g. Ajiriwa, BrighterMonday, Unjobs) as the company name. You MUST find the actual hiring organization or company. If completely unknown, return 'Unknown'.
-- For 'description': Include scope of work, duties and responsibilities.
+- For 'description': Extract the FULL job description, including all scope of work, duties, and responsibilities. Do NOT summarize or omit paragraphs. Preserve the detailed text.
 - For 'requirements': Qualifications, experience needed. Use empty string if none.
 - For 'location': City or region (e.g., "Nairobi"). Use empty string if none.
 - For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.

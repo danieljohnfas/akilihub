@@ -21,6 +21,31 @@ async function getCountryId(code: string): Promise<string> {
     return (res as any)[0]?.id as string;
 }
 
+/**
+ * Infer the ISO country code from a URL's TLD / subdomain / known domain.
+ * Falls back to 'KE' if unknown.
+ */
+function inferCountryFromUrl(url: string): string {
+    try {
+        const hostname = new URL(url).hostname.toLowerCase();
+        if (hostname.includes('.ug') || hostname.includes('uganda'))  return 'UG';
+        if (hostname.includes('.tz') || hostname.includes('tanzania')) return 'TZ';
+        if (hostname.includes('.rw') || hostname.includes('rwanda'))  return 'RW';
+        if (hostname.includes('.et') || hostname.includes('ethiopia')) return 'ET';
+        if (hostname.includes('.cd') || hostname.includes('congo'))  return 'CD';
+        if (hostname.includes('.ke') || hostname.includes('kenya'))  return 'KE';
+    } catch { /* ignore invalid URLs */ }
+    return 'KE'; // fallback
+}
+
+/**
+ * Normalize job board URLs that have employer-facing vs jobseeker-facing paths.
+ * e.g. greatugandajobs.com/employers/job-detail/ → /jobs/job-detail/
+ */
+function normalizeApplyUrl(url: string): string {
+    return url.replace(/\/employers\/job-detail\//gi, '/jobs/job-detail/');
+}
+
 async function getCategoryId(_name: string): Promise<string | undefined> {
     const res = await db.execute(sql`SELECT id FROM job_categories LIMIT 1`);
     return (res as any)[0]?.id as string | undefined;
@@ -146,9 +171,12 @@ async function scrapeModule(
                 if (!html) return;
                 // Pass pdfLinks through to extractFn so modules can enrich themselves
                 const { text, pdfLinks } = await htmlToTextEnriched(html, url);
+                // Infer country from the URL domain — avoids blanket KE default
+                const inferredCode = inferCountryFromUrl(url);
+                const inferredCountryId = await getCountryId(inferredCode);
                 const extracted = await extractFn(text, url, pdfLinks);
                 if (extracted && extracted.length > 0) {
-                    await saveFn(extracted, countryId);
+                    await saveFn(extracted, inferredCountryId || countryId);
                     successCount += extracted.length;
                 }
             } catch {
@@ -173,7 +201,27 @@ async function main() {
     results.jobs = await scrapeModule(
         'jobs', QUERIES.jobs, jobs,
         (text, url, _pdfLinks) => extractJobsWithAI(text, url),
-        async (data, _cid) => { await saveJobs(data, 'KE'); },
+        async (data, cid) => {
+            for (const job of data) {
+                // Normalize any employer-path URLs (e.g. greatugandajobs.com/employers/ → /jobs/)
+                const cleanUrl = normalizeApplyUrl(job.sourceUrl || '');
+                const inferredCode = inferCountryFromUrl(cleanUrl);
+                const resolvedCountryId = (await getCountryId(inferredCode)) || cid;
+                await db.insert(jobs).values({
+                    title: job.title,
+                    companyName: job.companyName,
+                    description: job.description,
+                    requirements: job.requirements,
+                    regionId: job.regionId || null,
+                    countryId: resolvedCountryId,
+                    jobType: job.jobType,
+                    sourceUrl: cleanUrl,
+                    postedDate: job.postedDate || new Date(),
+                    deadline: job.deadline ?? null,
+                    isActive: true,
+                }).onConflictDoNothing();
+            }
+        },
     );
 
     // ── Tenders ───────────────────────────────────────────────────────────────
