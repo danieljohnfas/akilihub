@@ -196,10 +196,9 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
   let countryId: string | undefined;
   let regionId: string | undefined;
   if (country) {
-    if (country.startsWith('country:')) {
-      const cName = country.replace('country:', '');
-      const cRes = await safeQuery(db.select({ id: countries.id }).from(countries).where(eq(countries.name, cName)).limit(1));
-      if (cRes.length > 0) countryId = cRes[0].id;
+    const cRes = await safeQuery(db.select({ id: countries.id }).from(countries).where(eq(countries.name, country)).limit(1));
+    if (cRes.length > 0) {
+      countryId = cRes[0].id;
     } else {
       const rRes = await safeQuery(db.select({ id: regions.id }).from(regions).where(eq(regions.name, country)).limit(1));
       if (rRes.length > 0) regionId = rRes[0].id;
