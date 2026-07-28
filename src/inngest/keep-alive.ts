@@ -9,8 +9,11 @@ import { sql } from "drizzle-orm";
  * Runs every hour and simply executes a lightweight SQL `SELECT 1` query.
  */
 export const keepDatabaseAliveJob = inngest.createFunction(
-  { id: "keep-database-alive" },
-  { cron: "0 * * * *" }, // Run at the top of every hour
+  { 
+    id: "keep-database-alive",
+    name: "Keep Database Alive",
+    triggers: [{ cron: "0 * * * *" }] // Run at the top of every hour
+  },
   async ({ step }) => {
     const result = await step.run("ping-database", async () => {
       try {
