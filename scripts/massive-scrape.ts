@@ -10,8 +10,8 @@ import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { complianceRequirements } from '@/lib/db/schema/compliance';
-import { healthDataPoints } from '@/lib/db/schema/health';
-import { salarySubmissions } from '@/lib/db/schema/salaries';
+import { healthDataPoints, healthIndicators } from '@/lib/db/schema/health';
+import { salarySubmissions, employers } from '@/lib/db/schema/salaries';
 import { eq, sql } from 'drizzle-orm';
 import { fetchHtml, htmlToTextEnriched } from '@/lib/scrapers/compliance-base';
 import { BroadTenderResource } from '@/lib/scrapers/broad-search-engine-tenders';
@@ -131,12 +131,12 @@ async function main() {
         for (const c of data) {
             await db.insert(complianceRequirements).values({
                 title: c.title,
-                summary: c.summary,
+                description: c.summary + (c.penaltyDetails ? '\n\nPenalties: ' + c.penaltyDetails : ''),
                 countryId: cid,
                 sourceUrl: c.sourceUrl,
                 category: c.category,
-                penaltyDetails: c.penaltyDetails,
-                lastUpdated: new Date()
+                issuingAuthority: 'Various',
+                lastVerifiedAt: new Date()
             }).onConflictDoNothing();
         }
     });
@@ -144,9 +144,18 @@ async function main() {
     // Health
     results.health = await scrapeModule('health', QUERIES.health, healthDataPoints, extractHealthWithAI, async (data, cid) => {
         for (const h of data) {
+            let indRes = await db.insert(healthIndicators).values({
+                code: h.indicatorCode || `GENERIC-${Math.random().toString(36).substring(7)}`,
+                name: h.indicatorName || 'Unknown Indicator'
+            }).onConflictDoUpdate({
+                target: healthIndicators.code,
+                set: { name: h.indicatorName || 'Unknown Indicator' }
+            }).returning({ id: healthIndicators.id });
+            
+            if (indRes.length === 0) continue;
+            
             await db.insert(healthDataPoints).values({
-                indicatorCode: h.indicatorCode || 'GENERIC',
-                indicatorName: h.indicatorName,
+                indicatorId: indRes[0].id,
                 countryId: cid,
                 value: String(h.value),
                 year: h.year || new Date().getFullYear(),
@@ -159,15 +168,25 @@ async function main() {
     results.salaries = await scrapeModule('salaries', QUERIES.salaries, salarySubmissions, extractSalariesWithAI, async (data, cid) => {
         const catId = await getCategoryId('General');
         for (const s of data) {
+            let empRes = await db.insert(employers).values({
+                name: s.employerName || 'Unknown Employer',
+                countryId: cid
+            }).onConflictDoUpdate({
+                target: [employers.name, employers.countryId],
+                set: { name: s.employerName || 'Unknown Employer' }
+            }).returning({ id: employers.id });
+            
+            if (empRes.length === 0) continue;
+            
             await db.insert(salarySubmissions).values({
                 jobTitle: s.jobTitle,
-                employerName: s.employerName,
+                employerId: empRes[0].id,
                 countryId: cid,
                 jobCategoryId: catId,
-                grossMonthlySalary: s.grossMonthlySalary.toString(),
-                currency: s.currency,
-                employmentType: s.employmentType,
-                experienceLevel: s.experienceLevel,
+                grossMonthlySalary: String(s.grossMonthlySalary),
+                currency: s.currency || 'USD',
+                employmentType: s.employmentType || 'full_time',
+                experienceLevel: s.experienceLevel || 'mid',
                 submittedAt: new Date()
             }).onConflictDoNothing();
         }
