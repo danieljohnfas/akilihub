@@ -9,6 +9,8 @@ import { Search, SlidersHorizontal, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildDatasetSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
+import { parseGlobalSearchParams } from '@/lib/filters';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,11 +48,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HealthPage({
-  searchParams,
+  searchParams: rawParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await searchParams;
+  const params = parseGlobalSearchParams(await rawParams);
   const q = params.q || '';
   const category = params.category || 'all';
   
@@ -96,7 +98,7 @@ export default async function HealthPage({
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
       <JsonLd schema={datasetSchema} />
       <JsonLd schema={breadcrumbSchema} />
-      {/* Header & Search */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/10 pb-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Public Health Data</h1>
@@ -104,38 +106,30 @@ export default async function HealthPage({
             Track key health indicators, disease statistics, and outbreaks across jurisdictions.
           </p>
         </div>
-        
-        <form className="w-full md:w-auto flex items-center gap-2" action="/health" method="GET">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              name="q"
-              placeholder="Search indicators..." 
-              className="pl-9 bg-white/5 border-white/10 focus-visible:ring-primary/50"
-              defaultValue={q}
-            />
-            {category && category !== 'all' && <input type="hidden" name="category" value={category} />}
-          </div>
-          <Button variant="outline" size="icon" type="button" className="shrink-0 bg-white/5 border-white/10">
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </form>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {['all', 'maternal', 'child', 'infectious', 'mortality'].map((c) => (
-          <Link key={c} href={`/health?${new URLSearchParams({ ...(q ? { q } : {}), ...(c !== 'all' ? { category: c } : {}) }).toString()}`}>
-            <Button
-              variant={category === c || (c === 'all' && !category) ? 'default' : 'secondary'}
-              size="sm"
-              className="rounded-full"
-            >
-              {c.charAt(0).toUpperCase() + c.slice(1)}
-            </Button>
-          </Link>
-        ))}
-      </div>
+      <GlobalFilterBar
+        filters={[
+          {
+            id: 'q',
+            type: 'search',
+            label: 'Search Indicators',
+            placeholder: 'Search indicators...',
+          },
+          {
+            id: 'category',
+            type: 'pills',
+            options: [
+              { value: 'all', label: 'All' },
+              { value: 'maternal', label: 'Maternal' },
+              { value: 'child', label: 'Child' },
+              { value: 'infectious', label: 'Infectious' },
+              { value: 'mortality', label: 'Mortality' },
+            ],
+            defaultValue: 'all',
+          },
+        ]}
+      />
 
       {/* Grid */}
       {data.length === 0 ? (

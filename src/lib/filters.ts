@@ -4,6 +4,7 @@ export interface GlobalSearchParams {
   status?: string; // Tenders (open/closed) & Compliance (active/inactive)
   type?: string; // Jobs (full-time, part-time)
   level?: string; // Salaries (entry, mid, senior)
+  category?: string; // Health (maternal, child, infectious)
   company?: string; // Jobs
   time?: string; // Jobs
   layout?: 'grid' | 'list'; // View mode (grid/list)
@@ -24,6 +25,7 @@ export function parseGlobalSearchParams(
     status: getParam(searchParams.status),
     type: getParam(searchParams.type),
     level: getParam(searchParams.level),
+    category: getParam(searchParams.category),
     company: getParam(searchParams.company),
     time: getParam(searchParams.time),
     layout: (getParam(searchParams.layout) === 'list' ? 'list' : 'grid'),

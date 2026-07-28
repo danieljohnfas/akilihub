@@ -52,9 +52,9 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
   };
 
   // Group filters by type
-  const searchFilter = filters.find(f => f.type === 'search');
+  const searchFilters = filters.filter(f => f.type === 'search');
   const selectFilters = filters.filter(f => f.type === 'select');
-  const pillFilters = filters.find(f => f.type === 'pills');
+  const pillFilters = filters.filter(f => f.type === 'pills');
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
@@ -64,39 +64,39 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
       </div>
       
       <div className="flex flex-col md:flex-row gap-4 items-end">
-        {/* Search Input */}
-        {searchFilter && (
-          <div className="space-y-1.5 flex-1 w-full">
-            <label className="text-xs text-muted-foreground font-medium pl-1">{searchFilter.label || 'Search'}</label>
+        {/* Search Inputs */}
+        {searchFilters.map(filter => (
+          <div key={filter.id} className="space-y-1.5 flex-1 w-full">
+            <label className="text-xs text-muted-foreground font-medium pl-1">{filter.label || 'Search'}</label>
             <div className="relative">
-              {searchFilter.icon ? (
-                searchFilter.icon
+              {filter.icon ? (
+                filter.icon
               ) : (
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               )}
               <Input
-                name={searchFilter.id}
-                list={searchFilter.datalist ? `${searchFilter.id}-datalist` : undefined}
-                placeholder={searchFilter.placeholder || "Search..."}
+                name={filter.id}
+                list={filter.datalist ? `${filter.id}-datalist` : undefined}
+                placeholder={filter.placeholder || "Search..."}
                 className="pl-9 bg-black/20 border-white/10 focus-visible:ring-primary/50 h-10"
-                defaultValue={searchParams.get(searchFilter.id) || ''}
+                defaultValue={searchParams.get(filter.id) || ''}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    updateFilters(searchFilter.id, e.currentTarget.value);
+                    updateFilters(filter.id, e.currentTarget.value);
                   }
                 }}
-                onBlur={(e) => updateFilters(searchFilter.id, e.target.value)}
+                onBlur={(e) => updateFilters(filter.id, e.target.value)}
               />
-              {searchFilter.datalist && (
-                <datalist id={`${searchFilter.id}-datalist`}>
-                  {searchFilter.datalist.map(t => (
+              {filter.datalist && (
+                <datalist id={`${filter.id}-datalist`}>
+                  {filter.datalist.map(t => (
                     <option key={t} value={t} />
                   ))}
                 </datalist>
               )}
             </div>
           </div>
-        )}
+        ))}
 
         {/* Select Dropdowns */}
         {selectFilters.map(filter => (
@@ -132,32 +132,38 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
       </div>
 
       {/* Pill Filters */}
-      {pillFilters && pillFilters.options && (
-        <div className="pt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {pillFilters.options.map(opt => {
-            const isActive = searchParams.get(pillFilters.id) === opt.value || (!searchParams.get(pillFilters.id) && opt.value === (pillFilters.defaultValue || 'all'));
-            
-            const currentParams = new URLSearchParams(searchParams.toString());
-            if (opt.value && opt.value !== 'all') {
-              currentParams.set(pillFilters.id, opt.value);
-            } else {
-              currentParams.delete(pillFilters.id);
-            }
-            currentParams.delete('page');
-            const href = `${pathname}?${currentParams.toString()}`;
+      {pillFilters.length > 0 && (
+        <div className="pt-2 flex flex-col gap-3">
+          {pillFilters.map(filter => (
+            filter.options && (
+              <div key={filter.id} className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {filter.options.map(opt => {
+                  const isActive = searchParams.get(filter.id) === opt.value || (!searchParams.get(filter.id) && opt.value === (filter.defaultValue || 'all'));
+                  
+                  const currentParams = new URLSearchParams(searchParams.toString());
+                  if (opt.value && opt.value !== 'all') {
+                    currentParams.set(filter.id, opt.value);
+                  } else {
+                    currentParams.delete(filter.id);
+                  }
+                  currentParams.delete('page');
+                  const href = `${pathname}?${currentParams.toString()}`;
 
-            return (
-              <Link key={opt.value} href={href}>
-                <Button
-                  variant={isActive ? 'default' : 'secondary'}
-                  size="sm"
-                  className="rounded-full whitespace-nowrap h-8 text-xs bg-black/20"
-                >
-                  {opt.label}
-                </Button>
-              </Link>
-            );
-          })}
+                  return (
+                    <Link key={opt.value} href={href}>
+                      <Button
+                        variant={isActive ? 'default' : 'secondary'}
+                        size="sm"
+                        className="rounded-full whitespace-nowrap h-8 text-xs bg-black/20"
+                      >
+                        {opt.label}
+                      </Button>
+                    </Link>
+                  );
+                })}
+              </div>
+            )
+          ))}
         </div>
       )}
     </div>
