@@ -2,7 +2,7 @@ import { searchGoogle } from '@/lib/scrapers/broad-search-engine';
 import { extractJobsWithAI } from '@/lib/scrapers/broad-search-engine';
 import { extractTendersWithAI } from '@/lib/scrapers/broad-search-engine-tenders';
 import { extractComplianceWithAI } from '@/lib/scrapers/broad-search-engine-compliance';
-import { extractHealthDataWithAI } from '@/lib/scrapers/broad-search-engine-health';
+import { extractHealthWithAI } from '@/lib/scrapers/broad-search-engine-health';
 import { extractSalariesWithAI } from '@/lib/scrapers/broad-search-engine-salaries';
 
 import { saveJobs } from '@/inngest/scrape-jobs';
@@ -142,7 +142,7 @@ async function main() {
     });
 
     // Health
-    results.health = await scrapeModule('health', QUERIES.health, healthDataPoints, extractHealthDataWithAI, async (data, cid) => {
+    results.health = await scrapeModule('health', QUERIES.health, healthDataPoints, extractHealthWithAI, async (data, cid) => {
         for (const h of data) {
             await db.insert(healthDataPoints).values({
                 indicatorCode: h.indicatorCode || 'GENERIC',
