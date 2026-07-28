@@ -7,6 +7,8 @@ export interface GlobalSearchParams {
   category?: string; // Health (maternal, child, infectious)
   company?: string; // Jobs
   time?: string; // Jobs
+  source?: string; // Health
+  organization?: string; // Tenders
   layout?: 'grid' | 'list'; // View mode (grid/list)
   page: number; // Parsed to integer, defaults to 1
 }
@@ -28,6 +30,8 @@ export function parseGlobalSearchParams(
     category: getParam(searchParams.category),
     company: getParam(searchParams.company),
     time: getParam(searchParams.time),
+    source: getParam(searchParams.source),
+    organization: getParam(searchParams.organization),
     layout: (getParam(searchParams.layout) === 'list' ? 'list' : 'grid'),
     page: typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) || 1 : 1,
   };
