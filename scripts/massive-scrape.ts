@@ -116,12 +116,12 @@ async function main() {
             await db.insert(tenders).values({
                 title: t.title,
                 description: t.description,
-                buyerName: t.buyerName,
+                contractingAuthority: t.buyerName,
                 countryId: cid,
                 sourceUrl: t.sourceUrl,
                 publishedAt: t.publishedDate || new Date(),
                 deadline: t.deadlineDate,
-                referenceNumber: t.referenceNumber || 'UNKNOWN'
+                referenceNo: t.referenceNumber || 'UNKNOWN'
             }).onConflictDoNothing();
         }
     });
