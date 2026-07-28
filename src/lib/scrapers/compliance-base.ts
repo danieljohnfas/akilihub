@@ -163,10 +163,10 @@ export async function htmlToTextEnriched(
     pdfLinks = extractPdfLinksFromHtml(html, baseUrl);
   }
 
-  // Optimize: Actually read the contents of the first 2 PDFs found
+  // Optimize: Actually read the contents of the first 5 PDFs found
   if (pdfLinks.length > 0) {
-    console.log(`[pdf-extract] Attempting to parse text from ${Math.min(pdfLinks.length, 2)} PDF(s) for ${baseUrl}`);
-    for (const link of pdfLinks.slice(0, 2)) {
+    console.log(`[pdf-extract] Attempting to parse text from ${Math.min(pdfLinks.length, 5)} PDF(s) for ${baseUrl}`);
+    for (const link of pdfLinks.slice(0, 5)) {
       try {
         const doc = await downloadDocument(link);
         if (doc && doc.buffer) {
@@ -268,6 +268,58 @@ export function extractPdfLinksFromHtml(html: string, baseUrl: string): string[]
   });
 
   return links;
+}
+
+/**
+ * Fetch a PDF, DOCX, DOC, or XLSX from a direct URL and extract its plain text.
+ *
+ * Primary:  Python sidecar /extract_document (pdfminer + python-docx — best quality)
+ * Fallback: JS-side pdf-parse (PDFs only)
+ *
+ * Returns empty string if parsing fails.
+ */
+export async function fetchAndParseDocument(url: string): Promise<string> {
+  const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
+
+  // 1. Try sidecar (handles PDF, DOCX, DOC, XLSX)
+  try {
+    const res = await fetch(`${sidecarUrl}/extract_document`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, max_chars: 40000 }),
+      signal: AbortSignal.timeout(60_000),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.text && data.text.length > 50) {
+        console.log(`[fetchAndParseDocument:sidecar] ${data.file_type} → ${data.text.length} chars from ${url}`);
+        return data.text as string;
+      }
+    }
+  } catch {
+    // Sidecar unavailable — fall through to JS fallback
+  }
+
+  // 2. JS fallback: pdf-parse (PDFs only)
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('.pdf')) {
+    try {
+      const doc = await downloadDocument(url);
+      if (doc) {
+        const text = await parsePdf(doc.buffer);
+        if (text && text.length > 50) {
+          console.log(`[fetchAndParseDocument:js-fallback] pdf → ${text.length} chars from ${url}`);
+          return text;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  console.warn(`[fetchAndParseDocument] Could not extract text from ${url}`);
+  return '';
 }
 
 /**

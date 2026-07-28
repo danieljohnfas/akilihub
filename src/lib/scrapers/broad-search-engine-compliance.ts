@@ -1,6 +1,6 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
-import { fetchHtml, htmlToTextEnriched } from './compliance-base';
+import { fetchHtml, htmlToTextEnriched, fetchAndParseDocument } from './compliance-base';
 import { searchGoogle } from './broad-search-engine';
 
 export interface BroadComplianceResource {
@@ -12,14 +12,32 @@ export interface BroadComplianceResource {
   sourceUrl: string;
 }
 
-export async function extractComplianceWithAI(text: string, sourceUrl: string): Promise<BroadComplianceResource[]> {
+export async function extractComplianceWithAI(
+  text: string,
+  sourceUrl: string,
+  pdfLinks: string[] = [],
+): Promise<BroadComplianceResource[]> {
   if (!text || text.length < 50) return [];
+
+  // Enrich text with content from linked PDF/DOCX documents (up to 3)
+  let enrichedText = text;
+  for (const pdfUrl of pdfLinks.slice(0, 3)) {
+    try {
+      const docText = await fetchAndParseDocument(pdfUrl);
+      if (docText && docText.length > 50) {
+        enrichedText += `\n\n--- DOCUMENT CONTENT (${pdfUrl}) ---\n${docText.substring(0, 8000)}`;
+        console.log(`[extractComplianceWithAI] Enriched with ${docText.length} chars from ${pdfUrl}`);
+      }
+    } catch {
+      // ignore failed doc reads
+    }
+  }
 
   const prompt = `You are a specialized AI assistant that extracts business compliance, tax, and registration information from raw website text.
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 12000)}
+${enrichedText.substring(0, 15000)}
 
 Rules:
 - Extract any compliance requirements, official forms, guidelines, or regulatory notices found in the text. Be comprehensive.
@@ -78,8 +96,8 @@ export async function discoverCompliance(query: string, maxPages: number = 3): P
     const html = await fetchHtml(url);
     if (!html) continue;
 
-    const { text } = await htmlToTextEnriched(html, url);
-    const resources = await extractComplianceWithAI(text, url);
+    const { text, pdfLinks } = await htmlToTextEnriched(html, url);
+    const resources = await extractComplianceWithAI(text, url, pdfLinks);
 
     if (resources.length > 0) {
       console.log(`[discoverCompliance] Extracted ${resources.length} resources from ${url}`);

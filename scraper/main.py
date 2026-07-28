@@ -203,6 +203,22 @@ class Crawl4AiResponse(BaseModel):
     error: str | None = None
 
 
+# ── /extract_document models ──────────────────────────────────────────────────
+class ExtractDocumentRequest(BaseModel):
+    url: str
+    max_chars: int = 50_000
+
+
+class ExtractDocumentResponse(BaseModel):
+    success: bool
+    url: str
+    text: str
+    file_type: str   # "pdf", "docx", "doc", "xlsx", "other"
+    size_bytes: int
+    duration_ms: int
+    error: str | None = None
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
@@ -553,6 +569,137 @@ async def crawl4ai_extract(req: Crawl4AiRequest):
             url=req.url,
             tenders=[],
             count=0,
+            duration_ms=int((time.monotonic() - start) * 1000),
+            error=str(exc),
+        )
+
+
+# ── /extract_document  (direct PDF/DOCX URL → plain text) ────────────────────
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+
+@app.post("/extract_document", response_model=ExtractDocumentResponse)
+async def extract_document(req: ExtractDocumentRequest):
+    """
+    Download a PDF, DOCX, DOC, XLSX or plain text file from `url` and return
+    its extracted text.  Useful for reading government tender notices,
+    compliance forms, and health reports that are attached as documents.
+    """
+    start = time.monotonic()
+    logger.info("ExtractDocument request: url=%s", req.url)
+
+    lower_url = req.url.lower().split("?")[0]
+    if ".pdf" in lower_url:
+        file_type = "pdf"
+    elif ".docx" in lower_url:
+        file_type = "docx"
+    elif ".doc" in lower_url:
+        file_type = "doc"
+    elif ".xlsx" in lower_url or ".xls" in lower_url:
+        file_type = "xlsx"
+    else:
+        file_type = "other"
+
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=60.0) as client:
+            resp = await client.get(
+                req.url,
+                headers={
+                    "User-Agent": BROWSER_UA,
+                    "Accept": "application/pdf,application/octet-stream,*/*",
+                },
+            )
+        if resp.status_code != 200:
+            raise ValueError(f"HTTP {resp.status_code} fetching {req.url}")
+
+        raw_bytes = resp.content
+        size_bytes = len(raw_bytes)
+        text = ""
+
+        if file_type == "pdf":
+            # Use pdfminer.six for reliable text extraction
+            import io
+            from pdfminer.high_level import extract_text as pdfminer_extract
+            try:
+                text = pdfminer_extract(io.BytesIO(raw_bytes)) or ""
+            except Exception as pdf_exc:
+                logger.warning("pdfminer failed for %s: %s", req.url, pdf_exc)
+                text = ""
+
+        elif file_type in ("docx",):
+            import io
+            from docx import Document
+            try:
+                doc = Document(io.BytesIO(raw_bytes))
+                text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+                # Also extract tables
+                for table in doc.tables:
+                    for row in table.rows:
+                        text += "\n" + "\t".join(cell.text for cell in row.cells)
+            except Exception as docx_exc:
+                logger.warning("python-docx failed for %s: %s", req.url, docx_exc)
+                text = ""
+
+        elif file_type == "doc":
+            # Legacy .doc — attempt UTF-8 decode, fall back to latin-1
+            try:
+                text = raw_bytes.decode("utf-8", errors="ignore")
+            except Exception:
+                text = raw_bytes.decode("latin-1", errors="ignore")
+
+        elif file_type == "xlsx":
+            import io
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), read_only=True, data_only=True)
+                rows: list[str] = []
+                for ws in wb.worksheets:
+                    for row in ws.iter_rows(values_only=True):
+                        row_text = "\t".join(str(c) for c in row if c is not None)
+                        if row_text.strip():
+                            rows.append(row_text)
+                text = "\n".join(rows)
+            except Exception as xl_exc:
+                logger.warning("openpyxl failed for %s: %s", req.url, xl_exc)
+                text = ""
+        else:
+            # Try plain text decode
+            try:
+                text = raw_bytes.decode("utf-8", errors="ignore")
+            except Exception:
+                text = ""
+
+        # Clean up and cap
+        text = text.strip()
+        if len(text) > req.max_chars:
+            text = text[: req.max_chars]
+
+        duration = int((time.monotonic() - start) * 1000)
+        logger.info(
+            "ExtractDocument done: %s → %d chars in %dms",
+            file_type, len(text), duration,
+        )
+
+        return ExtractDocumentResponse(
+            success=True,
+            url=req.url,
+            text=text,
+            file_type=file_type,
+            size_bytes=size_bytes,
+            duration_ms=duration,
+        )
+
+    except Exception as exc:
+        logger.error("ExtractDocument failed for %s: %s", req.url, exc, exc_info=True)
+        return ExtractDocumentResponse(
+            success=False,
+            url=req.url,
+            text="",
+            file_type=file_type,
+            size_bytes=0,
             duration_ms=int((time.monotonic() - start) * 1000),
             error=str(exc),
         )

@@ -1,6 +1,6 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
-import { fetchHtml, htmlToTextEnriched } from './compliance-base';
+import { fetchHtml, htmlToTextEnriched, fetchAndParseDocument } from './compliance-base';
 import { searchGoogle } from './broad-search-engine';
 
 export interface BroadHealthResource {
@@ -13,14 +13,32 @@ export interface BroadHealthResource {
   sourceUrl: string;
 }
 
-export async function extractHealthWithAI(text: string, sourceUrl: string): Promise<BroadHealthResource[]> {
+export async function extractHealthWithAI(
+  text: string,
+  sourceUrl: string,
+  pdfLinks: string[] = [],
+): Promise<BroadHealthResource[]> {
   if (!text || text.length < 50) return [];
+
+  // Enrich with PDF/DOCX document text (health reports, bulletins, WHO docs)
+  let enrichedText = text;
+  for (const pdfUrl of pdfLinks.slice(0, 3)) {
+    try {
+      const docText = await fetchAndParseDocument(pdfUrl);
+      if (docText && docText.length > 50) {
+        enrichedText += `\n\n--- HEALTH DOCUMENT (${pdfUrl}) ---\n${docText.substring(0, 8000)}`;
+        console.log(`[extractHealthWithAI] Enriched with ${docText.length} chars from ${pdfUrl}`);
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   const prompt = `You are a specialized AI assistant that extracts public health data and statistics from raw website text.
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 12000)}
+${enrichedText.substring(0, 15000)}
 
 Rules:
 - Extract any health indicators, statistics, or metrics found in the text. Be comprehensive.
@@ -83,8 +101,8 @@ export async function discoverHealth(query: string, maxPages: number = 3): Promi
     const html = await fetchHtml(url);
     if (!html) continue;
 
-    const { text } = await htmlToTextEnriched(html, url);
-    const data = await extractHealthWithAI(text, url);
+    const { text, pdfLinks } = await htmlToTextEnriched(html, url);
+    const data = await extractHealthWithAI(text, url, pdfLinks);
 
     if (data.length > 0) {
       console.log(`[discoverHealth] Extracted ${data.length} health data points from ${url}`);
