@@ -66,12 +66,12 @@ const homeFAQSchema = buildFAQSchema([
   {
     question: 'What is AkiliBrain?',
     answer:
-      "AkiliBrain is East Africa's professional intelligence platform that aggregates government tenders, job openings, business compliance requirements, public health data, and salary benchmarks for Kenya, Tanzania, Uganda, Rwanda, and Ethiopia — all in one place.",
+      "AkiliBrain is East Africa's professional intelligence platform that aggregates government tenders, job openings, business compliance requirements, public health data, and salary benchmarks for Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider East & Central African region — all in one place.",
   },
   {
     question: 'Where can I find government tenders in Kenya?',
     answer:
-      'AkiliBrain lists all open government tenders from Kenya, Tanzania, Uganda, and Rwanda. Visit akilibrain.com/tenders to browse and filter by status, sector, or keyword.',
+      'AkiliBrain lists open government tenders across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC. Visit akilibrain.com/tenders to browse and filter by country, status, sector, or keyword.',
   },
   {
     question: 'Does AkiliBrain list jobs in East Africa?',

@@ -25,14 +25,16 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Jobs & Careers in East Africa',
   description:
-    'Browse thousands of job openings and career opportunities across East Africa — Kenya, Tanzania, Uganda, and Rwanda. Full-time, part-time, remote, and internship roles updated daily.',
+    'Browse thousands of job openings and career opportunities across East Africa — Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region. Full-time, part-time, remote, and internship roles updated daily.',
   keywords: [
     'jobs Kenya',
     'careers East Africa',
-    'job vacancies Kenya 2024',
+    'job vacancies East Africa',
     'jobs Tanzania',
     'jobs Uganda',
     'jobs Rwanda',
+    'jobs Ethiopia',
+    'jobs DRC',
     'remote jobs Africa',
     'internships East Africa',
     'graduate jobs Kenya',
@@ -41,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Jobs & Careers in East Africa',
     description:
-      'Discover thousands of active job openings across Kenya, Tanzania, Uganda, and Rwanda. Updated daily from across the web.',
+      'Discover thousands of active job openings across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region. Updated daily from across the web.',
     url: 'https://akilibrain.com/jobs',
     type: 'website',
   },
@@ -252,7 +254,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
 
   const itemListSchema = buildItemListSchema(
     'Jobs & Careers in East Africa',
-    'Active job openings across Kenya, Tanzania, Uganda, and Rwanda.',
+    'Active job openings across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region.',
     data.slice(0, 20).map(({ job, country }, idx) => ({
       position: idx + 1,
       name: `${job.title} at ${job.companyName}`,
@@ -377,7 +379,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
         <div className="border border-white/10 rounded-xl p-6 bg-white/5">
           <h2 className="text-2xl font-bold text-foreground mb-4">The Ultimate Guide to Finding Jobs in East Africa</h2>
           <p className="leading-relaxed mb-4">
-            Navigating the job market in East Africa requires a strategic approach, whether you are seeking employment in Kenya, Tanzania, Uganda, or Rwanda. The region boasts a dynamic and fast-growing economy, with emerging sectors like technology, renewable energy, and digital finance offering abundant opportunities for both seasoned professionals and recent graduates.
+            Navigating the job market in East Africa requires a strategic approach, whether you are seeking employment in Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, or neighboring countries. The region boasts a dynamic and fast-growing economy, with emerging sectors like technology, renewable energy, and digital finance offering abundant opportunities for both seasoned professionals and recent graduates.
           </p>
           <p className="leading-relaxed">
             At AkiliBrain, we aggregate verified job openings from hundreds of employers, NGOs, and government agencies to ensure you never miss an opportunity. Our goal is to connect top talent with leading organizations by providing a transparent and comprehensive job search platform tailored specifically for the East African job market.

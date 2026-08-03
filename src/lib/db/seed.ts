@@ -16,12 +16,15 @@ async function seed() {
   // 1. Countries
   console.log('  → Seeding countries...');
   const insertedCountries = await db.insert(countries).values([
-    { name: 'Kenya', code: 'KE' },
-    { name: 'Tanzania', code: 'TZ' },
-    { name: 'Uganda', code: 'UG' },
-    { name: 'Rwanda', code: 'RW' },
-    { name: 'Ethiopia', code: 'ET' },
-    { name: 'Congo DRC', code: 'CD' },
+    { name: 'Kenya', code: 'KE', currency: 'KES', phoneCode: '+254', flagEmoji: '🇰🇪' },
+    { name: 'Tanzania', code: 'TZ', currency: 'TZS', phoneCode: '+255', flagEmoji: '🇹🇿' },
+    { name: 'Uganda', code: 'UG', currency: 'UGX', phoneCode: '+256', flagEmoji: '🇺🇬' },
+    { name: 'Rwanda', code: 'RW', currency: 'RWF', phoneCode: '+250', flagEmoji: '🇷🇼' },
+    { name: 'Ethiopia', code: 'ET', currency: 'ETB', phoneCode: '+251', flagEmoji: '🇪🇹' },
+    { name: 'Democratic Republic of the Congo', code: 'CD', currency: 'CDF', phoneCode: '+243', flagEmoji: '🇨🇩' },
+    { name: 'Burundi', code: 'BI', currency: 'BIF', phoneCode: '+257', flagEmoji: '🇧🇮' },
+    { name: 'South Sudan', code: 'SS', currency: 'SSP', phoneCode: '+211', flagEmoji: '🇸🇸' },
+    { name: 'Somalia', code: 'SO', currency: 'SOS', phoneCode: '+252', flagEmoji: '🇸🇴' },
   ]).onConflictDoNothing().returning();
   console.log(`     Seeded ${insertedCountries.length} countries`);
 

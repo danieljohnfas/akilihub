@@ -361,7 +361,7 @@ export function buildDatasetSchema(opts: {
       geo: {
         "@type": "GeoShape",
         name: "East Africa",
-        description: "Kenya, Tanzania, Uganda, Rwanda, Ethiopia",
+        description: "Kenya, Tanzania, Uganda, Rwanda, Ethiopia, Democratic Republic of the Congo, Burundi, South Sudan, Somalia",
       },
     },
   };
@@ -394,7 +394,7 @@ export function buildSalaryListSchema(salaries: SalaryEntry[]): Record<string, u
     "@type": "ItemList",
     name: "Salary Data — East Africa",
     description:
-      "Crowdsourced compensation benchmarks for professional roles across Kenya, Tanzania, Uganda, and Rwanda.",
+      "Crowdsourced compensation benchmarks for professional roles across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider African market.",
     numberOfItems: salaries.length,
     itemListElement: salaries.map((s, idx) => ({
       "@type": "ListItem",

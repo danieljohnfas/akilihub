@@ -74,7 +74,7 @@ const modules = [
     bg: 'bg-rose-400/10',
     title: 'Developer API',
     description:
-      'Programmatic access to tenders, jobs, compliance requirements, and health indicators for Kenya, Tanzania, Uganda, Rwanda, and Ethiopia. Build your own products on top of the same real-time data.',
+      'Programmatic access to tenders, jobs, compliance requirements, and health indicators across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region. Build your own products on top of the same real-time data.',
     sources: 'All first-party AkiliBrain data pipelines',
   },
 ];
@@ -136,7 +136,7 @@ export default function AboutPage() {
             level of accessibility. AkiliBrain exists to change that. Our
             mission is simple: aggregate every piece of publicly available
             professional intelligence across Kenya, Tanzania, Uganda, Rwanda,
-            and Ethiopia into a single, searchable, always-fresh platform —
+            Ethiopia, DRC, and the wider region into a single, searchable, always-fresh platform —
             and make it free to access.
           </p>
           <p className="text-muted-foreground leading-relaxed">
@@ -158,10 +158,21 @@ export default function AboutPage() {
             manually checking government tender portals, hunting for
             salary data, and piecing together compliance requirements from
             outdated PDFs. The insight was straightforward: all this data is
-            technically public — it just isn&apos;t accessible.
+            already public, but nobody has built the unified, modern pipeline
+            it deserves.
           </p>
           <p className="text-muted-foreground leading-relaxed">
-            The founding team brings deep experience in East African
+            What started as a set of internal scraping scripts for tracking
+            healthcare tenders and DHIS2 reporting has grown into a full-scale
+            platform serving thousands of users across East Africa every month.
+          </p>
+        </section>
+
+        {/* The Team / Background */}
+        <section className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
+          <h2 className="text-2xl font-bold">Our Background</h2>
+          <p className="text-muted-foreground leading-relaxed">
+            AkiliBrain was built by engineers with deep roots in East African
             public-sector data infrastructure. With over 11 years working in
             Tanzanian health information systems — implementing DHIS2,
             working with HL7 FHIR standards, and delivering health data
@@ -180,7 +191,7 @@ export default function AboutPage() {
               { label: 'DHIS2 & Health Information Systems', detail: '11+ years Tanzania national & district health data' },
               { label: 'HL7 FHIR & Health Interoperability', detail: 'Standards-based health data exchange' },
               { label: 'Government Procurement Frameworks', detail: 'EA procurement law, PPRA/PPOA/PPDA regulations' },
-              { label: 'East African Regulatory Environments', detail: 'Company law, tax compliance, licensing across 5 countries' },
+              { label: 'East African Regulatory Environments', detail: 'Company law, tax compliance, licensing across East & Central African jurisdictions' },
               { label: 'Data Pipeline Engineering', detail: 'ETL, data quality, real-time aggregation at scale' },
               { label: 'Public Health Analytics', detail: 'WHO indicators, disease burden, health-system performance' },
             ].map(({ label, detail }) => (

@@ -25,7 +25,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Business Registry & Compliance',
   description:
-    'Search and verify registered businesses across East Africa. Access compliance requirements, permits, and licensing guides for Kenya, Tanzania, Uganda, and Rwanda.',
+    'Search and verify registered businesses across East Africa. Access compliance requirements, permits, and licensing guides for Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region.',
   keywords: [
     'business registry Kenya',
     'company search East Africa',
@@ -37,11 +37,12 @@ export const metadata: Metadata = {
     'BRELA Tanzania',
     'URSB Uganda',
     'RDB Rwanda',
+    'DGI DRC',
   ],
   openGraph: {
     title: 'Business Registry & Compliance',
     description:
-      'Search registered companies and verify compliance across African jurisdictions — Kenya, Tanzania, Uganda, Rwanda.',
+      'Search registered companies and verify compliance across African jurisdictions — Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and more.',
     url: 'https://akilibrain.com/compliance',
     type: 'website',
   },
@@ -244,7 +245,7 @@ async function ResourcesList() {
         <div className="border border-white/10 rounded-xl p-6 bg-white/5">
           <h2 className="text-2xl font-bold text-foreground mb-4">East Africa Business Compliance Guidelines</h2>
           <p className="leading-relaxed">
-            Navigating regulatory compliance and business registration in East Africa can be complex. Our compliance resource hub consolidates official forms, tax calculators, guidelines, and regulatory notices from key government bodies across Kenya, Tanzania, Uganda, and Rwanda into a single, searchable directory.
+            Navigating regulatory compliance and business registration in East Africa can be complex. Our compliance resource hub consolidates official forms, tax calculators, guidelines, and regulatory notices from key government bodies across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC into a single, searchable directory.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -403,7 +404,7 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
         <div className="border border-white/10 rounded-xl p-6 bg-white/5">
           <h2 className="text-2xl font-bold text-foreground mb-4">Verify Company Registration Status in East Africa</h2>
           <p className="leading-relaxed">
-            Due diligence is a critical step before entering into any business agreement, partnership, or employment contract. The AkiliBrain Business Search tool allows you to instantly verify the registration status, legal entity type, and directorship of companies registered in Kenya, Tanzania, Uganda, and Rwanda by querying data directly from official national registries.
+            Due diligence is a critical step before entering into any business agreement, partnership, or employment contract. The AkiliBrain Business Search tool allows you to instantly verify the registration status, legal entity type, and directorship of companies registered in Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC by querying data directly from official national registries.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

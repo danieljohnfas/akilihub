@@ -21,22 +21,25 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Salary Database East Africa',
   description:
-    'Explore transparent, crowdsourced salary data for public and private sector roles across Kenya, Tanzania, Uganda, and Rwanda. Negotiate better compensation with real market data.',
+    'Explore transparent, crowdsourced salary data for public and private sector roles across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region. Negotiate better compensation with real market data.',
   keywords: [
-    'salary Kenya 2024',
+    'salary Kenya',
     'salary database East Africa',
     'average salary Kenya',
     'software engineer salary Kenya',
-    'government salary Kenya',
+    'government salary East Africa',
     'salary comparison Africa',
     'compensation data Tanzania',
     'pay scale Uganda',
+    'salary Rwanda',
+    'salary Ethiopia',
+    'salary DRC',
     'salary negotiation Africa',
   ],
   openGraph: {
     title: 'Salary Database East Africa',
     description:
-      'Crowdsourced compensation data for public and private sector roles across Kenya, Tanzania, Uganda, and Rwanda.',
+      'Crowdsourced compensation data for public and private sector roles across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider African market.',
     url: 'https://akilibrain.com/salaries',
     type: 'website',
   },
@@ -317,7 +320,7 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
         <div className="border border-white/10 rounded-xl p-6 bg-white/5">
           <h2 className="text-2xl font-bold text-foreground mb-3">About the AkiliBrain Salary Database</h2>
           <p className="leading-relaxed">
-            The AkiliBrain Salary Database provides transparent, verified compensation data for professionals across Kenya, Tanzania, Uganda, Rwanda, and the wider African market. We aim to empower job seekers and employers with accurate insights into base salaries, bonuses, and equity compensation across various industries. By providing a clear picture of market rates, we help democratize the negotiation process.
+            The AkiliBrain Salary Database provides transparent, verified compensation data for professionals across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider African market. We aim to empower job seekers and employers with accurate insights into base salaries, bonuses, and equity compensation across various industries. By providing a clear picture of market rates, we help democratize the negotiation process.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

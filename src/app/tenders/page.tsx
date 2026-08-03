@@ -25,7 +25,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Government Tenders in East Africa',
   description:
-    'Browse the latest government tenders, procurement opportunities, and contracts across Kenya, Tanzania, Uganda, Rwanda, and wider Africa. Updated hourly.',
+    'Browse the latest government tenders, procurement opportunities, and contracts across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and wider Africa. Updated hourly.',
   keywords: [
     'government tenders Kenya',
     'tenders East Africa',
@@ -34,6 +34,8 @@ export const metadata: Metadata = {
     'Tanzania tenders',
     'Uganda procurement',
     'Rwanda tenders',
+    'Ethiopia tenders',
+    'DRC tenders',
     'open tenders Africa',
     'PPRA tenders',
     'PPB tenders',
@@ -41,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Government Tenders in East Africa',
     description:
-      'Browse the latest government tenders and procurement opportunities across East Africa — Kenya, Tanzania, Uganda, and Rwanda.',
+      'Browse the latest government tenders and procurement opportunities across East Africa — Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region.',
     url: 'https://akilibrain.com/tenders',
     type: 'website',
   },
@@ -219,7 +221,7 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
 
   const itemListSchema = buildItemListSchema(
     'Government Tenders in East Africa',
-    'Latest government tenders and procurement opportunities across Kenya, Tanzania, Uganda, and Rwanda.',
+    'Latest government tenders and procurement opportunities across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region.',
     data.slice(0, 20).map(({ tender, country }, idx) => ({
       position: idx + 1,
       name: tender.title,
@@ -337,7 +339,7 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
         <div className="border border-white/10 rounded-xl p-6 bg-white/5">
           <h2 className="text-2xl font-bold text-foreground mb-4">Navigating Government Procurement in East Africa</h2>
           <p className="leading-relaxed mb-4">
-            Government tenders and public procurement contracts represent a significant opportunity for businesses of all sizes across East Africa. Governments in Kenya, Tanzania, Uganda, and Rwanda are the largest single purchasers of goods, services, and works. By participating in the procurement process, companies can secure substantial contracts, expand their operations, and contribute to national development.
+            Government tenders and public procurement contracts represent a significant opportunity for businesses of all sizes across East Africa. Governments in Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC are the largest single purchasers of goods, services, and works. By participating in the procurement process, companies can secure substantial contracts, expand their operations, and contribute to national development.
           </p>
           <p className="leading-relaxed">
             AkiliBrain simplifies the tender discovery process by aggregating notices from various national procurement portals, including PPRA, PPOA, and PPDA, into a single, easily searchable directory. We aim to promote transparency and give businesses equal access to lucrative public sector opportunities.

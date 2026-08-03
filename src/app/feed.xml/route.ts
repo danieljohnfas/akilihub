@@ -111,7 +111,7 @@ export async function GET() {
   <channel>
     <title>AkiliBrain — East Africa Intelligence Feed</title>
     <link>${BASE_URL}</link>
-    <description>Latest government tenders and job opportunities across East Africa — Kenya, Tanzania, Uganda, and Rwanda.</description>
+    <description>Latest government tenders and job opportunities across East Africa — Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region.</description>
     <language>en-ke</language>
     <lastBuildDate>${now.toUTCString()}</lastBuildDate>
     <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml"/>
