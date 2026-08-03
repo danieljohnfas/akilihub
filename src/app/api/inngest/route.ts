@@ -81,6 +81,9 @@ import { keepDatabaseAliveJob } from "@/inngest/keep-alive";
 // Rescrape
 import { rescrapeJobsJob, rescrapeTendersJob, rescrapeComplianceJob } from "@/inngest/rescrape-all";
 
+// Data quality: daily shallow-record enrichment
+import { enrichShallowDataJob } from "@/inngest/enrich-shallow-data";
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
@@ -169,6 +172,9 @@ export const { GET, POST, PUT } = serve({
     rescrapeJobsJob,
     rescrapeTendersJob,
     rescrapeComplianceJob,
+
+    // Daily shallow-record enrichment (11:30 UTC — after all scrapers finish)
+    enrichShallowDataJob,
   ],
 });
 
