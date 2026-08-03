@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { businesses, businessTypes } from '@/lib/db/schema/compliance';
 import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, count } from 'drizzle-orm';
+import { eq, desc, ilike, and, count, isNull, not } from 'drizzle-orm';
 import { BusinessCard } from '@/components/compliance/BusinessCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -171,7 +171,7 @@ export default async function CompliancePage({
               subtitle="Fetching regulatory guidelines, tax calculators, and business registration requirements." 
             />
           }>
-            <ResourcesList />
+            <ResourcesList params={params} />
           </Suspense>
         </TabsContent>
 
@@ -195,16 +195,60 @@ export default async function CompliancePage({
   );
 }
 
-async function ResourcesList() {
-  const resources = await safeQuery(db
+async function ResourcesList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
+  const { q, country, type, page } = params;
+  const PAGE_SIZE = 30;
+  const offset = (page - 1) * PAGE_SIZE;
+
+  // Build WHERE conditions — all filters are optional
+  const conditions = [
+    q       ? ilike(complianceRequirements.title, `%${q}%`)           : undefined,
+    type && type !== 'all' ? eq(complianceRequirements.resourceType, type as any) : undefined,
+  ].filter(Boolean) as any[];
+
+  // Country filter: join countries table and match by name
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Build the base query with optional country join filter
+  const baseQuery = db
     .select({
       resource: complianceRequirements,
       country: countries.name,
     })
     .from(complianceRequirements)
+    .leftJoin(countries, eq(complianceRequirements.countryId, countries.id));
+
+  // Apply country filter at join level if needed
+  const countQuery = db
+    .select({ value: count() })
+    .from(complianceRequirements)
     .leftJoin(countries, eq(complianceRequirements.countryId, countries.id))
-    .orderBy(desc(complianceRequirements.createdAt))
-    .limit(50));
+    .where(
+      and(
+        whereClause,
+        country && country !== 'all' ? ilike(countries.name, `%${country}%`) : undefined,
+        eq(complianceRequirements.isActive, true),
+      )
+    );
+
+  const [totalCountResult, resources] = await Promise.all([
+    safeQuery(countQuery),
+    safeQuery(
+      baseQuery
+        .where(
+          and(
+            whereClause,
+            country && country !== 'all' ? ilike(countries.name, `%${country}%`) : undefined,
+            eq(complianceRequirements.isActive, true),
+          )
+        )
+        .orderBy(desc(complianceRequirements.createdAt))
+        .limit(PAGE_SIZE)
+        .offset(offset)
+    ),
+  ]);
+
+  const totalCount = totalCountResult?.[0]?.value ?? 0;
 
   if (resources.length === 0) {
     return (
@@ -224,8 +268,15 @@ async function ResourcesList() {
 
   return (
     <>
+      {totalCount > 0 && (
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
+            Showing <span className="text-white mx-1">{resources.length}</span> of <span className="text-white mx-1">{totalCount}</span> resources
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {resources.map(({ resource, country }, idx) => (
+        {resources.map(({ resource, country: countryName }, idx) => (
           <React.Fragment key={resource.id}>
             <ResourceCard
               id={resource.id}
@@ -234,7 +285,7 @@ async function ResourcesList() {
               resourceType={resource.resourceType as any}
               issuingAuthority={resource.issuingAuthority}
               sourceUrl={resource.sourceUrl}
-              country={country || 'Unknown'}
+              country={countryName || 'Unknown'}
               lastVerifiedAt={resource.lastVerifiedAt}
             />
             {idx === 2 && (
@@ -250,6 +301,29 @@ async function ResourcesList() {
           </React.Fragment>
         ))}
       </div>
+
+      {/* Pagination */}
+      {resources.length > 0 && (
+        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
+          {page > 1 && (
+            <Link
+              href={`/compliance?q=${q || ''}&country=${country || ''}&type=${type || ''}&page=${page - 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              ← Previous
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">Page {page}</span>
+          {resources.length === PAGE_SIZE && (
+            <Link
+              href={`/compliance?q=${q || ''}&country=${country || ''}&type=${type || ''}&page=${page + 1}`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Next →
+            </Link>
+          )}
+        </div>
+      )}
       
       {/* SEO-rich static content for Googlebot */}
       <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
@@ -285,13 +359,15 @@ async function ResourcesList() {
 }
 
 async function BusinessesList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
-  const { q, status = 'active', page } = params;
+  const { q, status = 'active', country, type, page } = params;
   const PAGE_SIZE = 30;
   const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(businesses.name, `%${q}%`) : undefined,
-    status ? eq(businesses.status, status) : undefined,
+    status && status !== 'all' ? eq(businesses.status, status) : undefined,
+    country && country !== 'all' ? ilike(countries.name, `%${country}%`) : undefined,
+    type && type !== 'all' ? ilike(businessTypes.name, `%${type}%`) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -299,6 +375,8 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
   const totalCountResult = await safeQuery(
     db.select({ value: count() })
       .from(businesses)
+      .leftJoin(countries, eq(businesses.countryId, countries.id))
+      .leftJoin(businessTypes, eq(businesses.typeId, businessTypes.id))
       .where(whereClause)
   );
   const totalCount = totalCountResult?.[0]?.value || 0;
@@ -321,10 +399,16 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
     <>
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {['all', 'active', 'inactive', 'deregistered'].map((s) => (
-          <Link key={s} href={`/compliance?${new URLSearchParams({ ...(q ? { q } : {}), ...(s !== 'all' ? { status: s } : {}) }).toString()}`}>
+          <Link key={s} href={`/compliance?${new URLSearchParams({ 
+            ...(q ? { q } : {}), 
+            ...(s !== 'all' ? { status: s } : {}),
+            ...(country && country !== 'all' ? { country } : {}),
+            ...(type && type !== 'all' ? { type } : {})
+          }).toString()}`}>
             <Button
               variant={status === s || (s === 'all' && !status) ? 'default' : 'secondary'}
               size="sm"
+
               className="rounded-full"
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -392,7 +476,7 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
           {page > 1 && (
             <Link
-              href={`/compliance?q=${q || ''}&status=${status || ''}&page=${page - 1}`}
+              href={`/compliance?q=${q || ''}&status=${status || ''}&country=${country || ''}&type=${type || ''}&page=${page - 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
@@ -401,7 +485,7 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
           <span className="text-sm text-muted-foreground">Page {page}</span>
           {data.length === PAGE_SIZE && (
             <Link
-              href={`/compliance?q=${q || ''}&status=${status || ''}&page=${page + 1}`}
+              href={`/compliance?q=${q || ''}&status=${status || ''}&country=${country || ''}&type=${type || ''}&page=${page + 1}`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →
