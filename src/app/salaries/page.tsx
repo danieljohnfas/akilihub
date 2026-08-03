@@ -168,13 +168,15 @@ export default async function SalariesPage({
 }
 
 async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
-  const { q, level, page } = params;
+  const { q, company, country, level, page } = params;
   const PAGE_SIZE = 30;
   const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(salarySubmissions.jobTitle, `%${q}%`) : undefined,
-    level ? eq(salarySubmissions.experienceLevel, level as never) : undefined,
+    level && level !== 'all' ? eq(salarySubmissions.experienceLevel, level as never) : undefined,
+    company ? ilike(employers.name, `%${company}%`) : undefined,
+    country && country !== 'all' ? ilike(countries.name, `%${country}%`) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -182,6 +184,8 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
   const totalCountResult = await safeQuery(
     db.select({ value: count() })
       .from(salarySubmissions)
+      .leftJoin(employers, eq(salarySubmissions.employerId, employers.id))
+      .leftJoin(countries, eq(salarySubmissions.countryId, countries.id))
       .where(whereClause)
   );
   const totalCount = totalCountResult?.[0]?.value || 0;
@@ -194,7 +198,7 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
     })
     .from(salarySubmissions)
     .leftJoin(employers, eq(salarySubmissions.employerId, employers.id))
-    .innerJoin(countries, eq(salarySubmissions.countryId, countries.id))
+    .leftJoin(countries, eq(salarySubmissions.countryId, countries.id))
     .where(whereClause)
     .orderBy(desc(salarySubmissions.submittedAt))
     .limit(PAGE_SIZE)
@@ -214,6 +218,17 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
     { name: 'Home', url: 'https://akilibrain.com' },
     { name: 'Salary Database', url: 'https://akilibrain.com/salaries' },
   ]);
+
+  const getPageUrl = (newPage: number) => {
+    const sp = new URLSearchParams();
+    if (q) sp.set('q', q);
+    if (company) sp.set('company', company);
+    if (country && country !== 'all') sp.set('country', country);
+    if (level && level !== 'all') sp.set('level', level);
+    if (newPage > 1) sp.set('page', newPage.toString());
+    const qs = sp.toString();
+    return `/salaries${qs ? `?${qs}` : ''}`;
+  };
 
   return (
     <>
@@ -238,7 +253,7 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
             <p className="text-muted-foreground max-w-md">
               We are actively crowdsourcing and verifying salary data across East Africa to build the most comprehensive compensation database. Check back soon.
             </p>
-            {(q || (level && level !== 'all')) && (
+            {(q || company || (country && country !== 'all') || (level && level !== 'all')) && (
               <Link href="/salaries" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
                 Clear all filters
               </Link>
@@ -279,16 +294,16 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
           {page > 1 && (
             <Link
-              href={`/salaries?q=${q || ''}&level=${level || ''}&page=${page - 1}`}
+              href={getPageUrl(page - 1)}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
             </Link>
           )}
           <span className="text-sm text-muted-foreground">Page {page}</span>
-          {data.length === PAGE_SIZE && (
+          {offset + data.length < totalCount && (
             <Link
-              href={`/salaries?q=${q || ''}&level=${level || ''}&page=${page + 1}`}
+              href={getPageUrl(page + 1)}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →

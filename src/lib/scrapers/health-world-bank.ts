@@ -121,22 +121,24 @@ async function upsertHealthPoints(
   indicator: { code: string; name: string; category: string; unit: string },
   points: Array<{ iso2: string; year: number; value: number; source: string }>
 ): Promise<number> {
-  // Ensure indicator exists
-  let [dbIndicator] = await db
-    .select({ id: healthIndicators.id })
-    .from(healthIndicators)
-    .where(eq(healthIndicators.code, indicator.code))
-    .limit(1);
-
-  if (!dbIndicator) {
-    const [newInd] = await db.insert(healthIndicators).values({
+  // Upsert indicator — always update name/category/unit in case they were missing
+  const [dbIndicator] = await db
+    .insert(healthIndicators)
+    .values({
       code: indicator.code,
       name: indicator.name,
       category: indicator.category,
       unit: indicator.unit,
-    }).returning({ id: healthIndicators.id });
-    dbIndicator = newInd;
-  }
+    })
+    .onConflictDoUpdate({
+      target: healthIndicators.code,
+      set: {
+        name: indicator.name,
+        category: indicator.category,
+        unit: indicator.unit,
+      },
+    })
+    .returning({ id: healthIndicators.id });
 
   // Load country IDs
   const countryRows = await db.select({ id: countries.id, code: countries.code }).from(countries);
@@ -158,7 +160,14 @@ async function upsertHealthPoints(
   const inserted = await db
     .insert(healthDataPoints)
     .values(dbPoints)
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: [healthDataPoints.indicatorId, healthDataPoints.countryId, healthDataPoints.year],
+      set: {
+        value: healthDataPoints.value,
+        source: healthDataPoints.source,
+        period: healthDataPoints.period,
+      },
+    })
     .returning({ id: healthDataPoints.id });
 
   console.log(`[Health] Upserted ${inserted.length} data points for ${indicator.name}`);

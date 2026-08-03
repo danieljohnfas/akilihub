@@ -4,6 +4,7 @@ config({ path: '.env.local' });
 import { generateObjectWithFallback } from "../src/lib/ai/router";
 import { db } from "../src/lib/db/client";
 import { guides } from "../src/lib/db/schema/guides";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { searchGoogle } from "../src/lib/scrapers/broad-search-engine";
 
@@ -61,6 +62,13 @@ async function runSeed() {
     console.log(`\n[${i + 1}/${subset.length}] Generating guide for: "${topic}"...`);
 
     try {
+      // 0. Check if already exists
+      const existing = await db.select({ id: guides.id }).from(guides).where(eq(guides.trendTopic, topic)).limit(1);
+      if (existing.length > 0) {
+        console.log(`  -> ⏭️ Guide already exists, skipping.`);
+        continue;
+      }
+
       // 1. Search for context
       console.log(`  -> Searching Google for context...`);
       const searchResults = await searchGoogle(topic, 3);

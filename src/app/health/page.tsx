@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { healthDataPoints, healthIndicators } from '@/lib/db/schema/health';
 import { countries } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and } from 'drizzle-orm';
+import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { HealthCard } from '@/components/health/HealthCard';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -69,15 +69,29 @@ export default async function HealthPage({
   const category = params.category || 'all';
   const country = params.country || 'all';
   const source = params.source || 'all';
+  const page = params.page || 1;
+  const PAGE_SIZE = 24;
+  const offset = (page - 1) * PAGE_SIZE;
   
   const uniqueCountriesList = await getUniqueCountries();
   
   const conditions = [
     q ? ilike(healthIndicators.name, `%${q}%`) : undefined,
     category && category !== 'all' ? eq(healthIndicators.category, category) : undefined,
+    country && country !== 'all' ? ilike(countries.name, `%${country}%`) : undefined,
+    source && source !== 'all' ? ilike(healthDataPoints.source, `%${source}%`) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const totalCountResult = await safeQuery(
+    db.select({ value: count() })
+      .from(healthDataPoints)
+      .innerJoin(healthIndicators, eq(healthDataPoints.indicatorId, healthIndicators.id))
+      .innerJoin(countries, eq(healthDataPoints.countryId, countries.id))
+      .where(whereClause)
+  );
+  const totalCount = totalCountResult?.[0]?.value || 0;
 
   const data = await safeQuery(db
     .select({
@@ -90,18 +104,19 @@ export default async function HealthPage({
     .innerJoin(countries, eq(healthDataPoints.countryId, countries.id))
     .where(whereClause)
     .orderBy(desc(healthDataPoints.year), desc(healthDataPoints.createdAt))
-    .limit(20));
+    .limit(PAGE_SIZE)
+    .offset(offset));
 
   const datasetSchema = buildDatasetSchema({
     name: 'East Africa Public Health Indicators',
     description:
-      'Aggregated public health data points including maternal health, child health, infectious disease, and mortality statistics across Kenya, Tanzania, Uganda, Rwanda, and Ethiopia. Sourced from DHIS2 and national health ministries.',
+      'Aggregated public health data points including maternal health, child health, infectious disease, and mortality statistics across Kenya, Tanzania, Uganda, Rwanda, and Ethiopia. Sourced from DHIS2, WHO, and World Bank.',
     url: 'https://akilibrain.com/health',
     keywords: [
       'public health Africa', 'DHIS2', 'health indicators East Africa',
       'maternal health', 'child health', 'disease surveillance',
     ],
-    creator: 'DHIS2 / National Health Ministries',
+    creator: 'DHIS2 / WHO / World Bank / National Health Ministries',
     dateModified: new Date().toISOString().split('T')[0],
   });
 
@@ -109,6 +124,17 @@ export default async function HealthPage({
     { name: 'Home', url: 'https://akilibrain.com' },
     { name: 'Public Health Data Explorer', url: 'https://akilibrain.com/health' },
   ]);
+
+  const getPageUrl = (newPage: number) => {
+    const sp = new URLSearchParams();
+    if (q) sp.set('q', q);
+    if (category && category !== 'all') sp.set('category', category);
+    if (country && country !== 'all') sp.set('country', country);
+    if (source && source !== 'all') sp.set('source', source);
+    if (newPage > 1) sp.set('page', newPage.toString());
+    const qs = sp.toString();
+    return `/health${qs ? `?${qs}` : ''}`;
+  };
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
@@ -119,7 +145,7 @@ export default async function HealthPage({
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Public Health Data</h1>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Track key health indicators, disease statistics, and outbreaks across jurisdictions.
+            Track key health indicators, disease statistics, and health outcomes across Africa.
           </p>
         </div>
       </div>
@@ -152,6 +178,7 @@ export default async function HealthPage({
               { value: 'all', label: 'All Sources' },
               { value: 'dhis2', label: 'DHIS2' },
               { value: 'who', label: 'WHO' },
+              { value: 'world bank', label: 'World Bank' },
               { value: 'national', label: 'National Ministry' },
             ],
             defaultValue: 'all'
@@ -171,6 +198,14 @@ export default async function HealthPage({
         ]}
       />
 
+      {totalCount > 0 && (
+        <div className="flex justify-center -mt-4 mb-8">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
+            Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> health data records
+          </div>
+        </div>
+      )}
+
       {/* Grid */}
       {data.length === 0 ? (
         <>
@@ -180,9 +215,9 @@ export default async function HealthPage({
             </div>
             <h3 className="text-xl font-semibold mb-2">Health data coming soon</h3>
             <p className="text-muted-foreground max-w-md">
-              We are actively importing public health indicators from DHIS2, WHO AFRO, and national health ministries across East Africa. Check back soon.
+              We are actively importing public health indicators from DHIS2, WHO AFRO, World Bank, and national health ministries across East Africa. Check back soon.
             </p>
-            {(q || (category && category !== 'all')) && (
+            {(q || (category && category !== 'all') || (country && country !== 'all') || (source && source !== 'all')) && (
               <Link href="/health" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
                 Clear all filters
               </Link>
@@ -194,7 +229,7 @@ export default async function HealthPage({
             <div className="border border-white/10 rounded-xl p-6 bg-white/5">
               <h2 className="text-xl font-bold text-foreground mb-3">About the Public Health Data Explorer</h2>
               <p className="leading-relaxed">
-                AkiliBrain&apos;s Health Data module aggregates public health statistics from <strong>DHIS2</strong> (District Health Information Software), the <strong>WHO Africa Regional Office (WHO AFRO)</strong>, and official national health ministries across Kenya, Tanzania, Uganda, Rwanda, and Ethiopia. Our goal is to make East Africa&apos;s public health data accessible, searchable, and comparable in one place.
+                AkiliBrain&apos;s Health Data module aggregates public health statistics from <strong>DHIS2</strong> (District Health Information Software), the <strong>World Health Organization (WHO)</strong>, the <strong>World Bank</strong>, and official national health ministries across Kenya, Tanzania, Uganda, Rwanda, and the DRC. Our goal is to make Africa&apos;s public health data accessible, searchable, and comparable in one place.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -218,30 +253,53 @@ export default async function HealthPage({
                   <li><strong>Tanzania:</strong> DHIS2 Tanzania — MoHCDGEC</li>
                   <li><strong>Uganda:</strong> DHIS2 Uganda — Ministry of Health</li>
                   <li><strong>Rwanda:</strong> DHIS2 Rwanda — Ministry of Health</li>
-                  <li><strong>Ethiopia:</strong> DHIS2 Ethiopia — Federal Ministry of Health</li>
-                  <li><strong>Regional:</strong> WHO AFRO Open Health Data</li>
+                  <li><strong>DRC:</strong> Ministry of Public Health / WHO</li>
+                  <li><strong>Global:</strong> WHO Global Health Observatory &amp; World Bank</li>
                 </ul>
               </div>
             </div>
           </section>
         </>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map(({ dataPoint, indicator, country }) => (
-            <HealthCard
-              key={dataPoint.id}
-              id={dataPoint.id}
-              indicatorName={indicator.name}
-              category={indicator.category || 'General'}
-              country={country || 'Unknown'}
-              value={Number(dataPoint.value)}
-              unit={indicator.unit || ''}
-              year={dataPoint.year}
-              source={dataPoint.source || 'DHIS2'}
-              updatedAt={dataPoint.createdAt}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {data.map(({ dataPoint, indicator, country }) => (
+              <HealthCard
+                key={dataPoint.id}
+                id={dataPoint.id}
+                indicatorName={indicator.name}
+                category={indicator.category || 'General'}
+                country={country || 'Unknown'}
+                value={Number(dataPoint.value)}
+                unit={indicator.unit || ''}
+                year={dataPoint.year}
+                source={dataPoint.source || 'DHIS2'}
+                updatedAt={dataPoint.createdAt}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
+            {page > 1 && (
+              <Link
+                href={getPageUrl(page - 1)}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                ← Previous
+              </Link>
+            )}
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            {offset + data.length < totalCount && (
+              <Link
+                href={getPageUrl(page + 1)}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                Next →
+              </Link>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

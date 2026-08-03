@@ -64,3 +64,6 @@ scratch-test-db.js
 # scripts with embedded secrets
 scripts/push-secrets.ps1
 scripts/push-vercel-env.ps1
+
+supabase/.temp/
+

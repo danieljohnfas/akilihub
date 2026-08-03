@@ -24,7 +24,7 @@ export default async function TendersCalendarPage() {
       country: countries.name
     })
     .from(tenders)
-    .innerJoin(countries, eq(tenders.countryId, countries.id))
+    .leftJoin(countries, eq(tenders.countryId, countries.id))
     .where(gte(tenders.deadline, today))
     .orderBy(asc(tenders.deadline))
   );

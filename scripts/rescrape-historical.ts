@@ -1,4 +1,3 @@
-
 import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
@@ -12,6 +11,13 @@ import { extractHealthWithAI } from '@/lib/scrapers/broad-search-engine-health';
 import { eq, isNotNull } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
+
+process.on('uncaughtException', (err) => {
+    console.error('Caught exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 async function getUrls(table: any, column: any): Promise<string[]> {
     const rows = await db.selectDistinct({ url: column }).from(table).where(isNotNull(column));
@@ -66,26 +72,27 @@ async function main() {
     console.log('Starting Massive Historical Rescrape...');
     const results: Record<string, number> = {};
 
-    // 1. JOBS
-    const jobUrls = await getUrls(jobs, jobs.sourceUrl);
-    results.jobs = await rescrapeModule(
-        'jobs', jobUrls, jobs, jobs.sourceUrl,
-        (text, url, _pdfLinks) => extractJobsWithAI(text, url),
-        async (data, url) => {
-            const job = data[0]; // Take the primary job extracted from the page
-            await db.update(jobs).set({
-                title: job.title,
-                description: job.description, // FULL description from new AI prompt
-                requirements: job.requirements,
-                jobType: job.jobType,
-                postedDate: job.postedDate || new Date(),
-                deadline: job.deadline ?? null,
-                salaryMin: job.salaryMin ? String(job.salaryMin) : null,
-                salaryMax: job.salaryMax ? String(job.salaryMax) : null,
-                updatedAt: new Date()
-            }).where(eq(jobs.sourceUrl, url));
-        }
-    );
+    // 1. JOBS (COMPLETED)
+    // const jobUrls = await getUrls(jobs, jobs.sourceUrl);
+    // results.jobs = await rescrapeModule(
+    //     'jobs', jobUrls, jobs, jobs.sourceUrl,
+    //     (text, url, _pdfLinks) => extractJobsWithAI(text, url),
+    //     async (data, url) => {
+    //         const job = data[0]; // Take the primary job extracted from the page
+    //         await db.update(jobs).set({
+    //             title: job.title,
+    //             description: job.description, // FULL description from new AI prompt
+    //             requirements: job.requirements,
+    //             jobType: job.jobType,
+    //             postedDate: job.postedDate || new Date(),
+    //             deadline: job.deadline ?? null,
+    //             salaryMin: job.salaryMin ? String(job.salaryMin) : null,
+    //             salaryMax: job.salaryMax ? String(job.salaryMax) : null,
+    //             updatedAt: new Date()
+    //         }).where(eq(jobs.sourceUrl, url));
+    //     }
+    // );
+    results.jobs = 981; // Hardcoded from completed run
 
     // 2. TENDERS
     const tenderUrls = await getUrls(tenders, tenders.sourceUrl);

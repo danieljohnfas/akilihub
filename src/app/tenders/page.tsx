@@ -184,13 +184,14 @@ export default async function TendersPage({
 }
 
 async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
-  const { q, status = 'open', country, page } = params;
+  const { q, status = 'open', country, organization, page } = params;
   const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
     q ? ilike(tenders.title, `%${q}%`) : undefined,
-    status ? eq(tenders.status, status as never) : undefined,
-    country ? eq(countries.name, country) : undefined,
+    status && status !== 'all' ? eq(tenders.status, status as never) : undefined,
+    country && country !== 'all' ? eq(countries.name, country) : undefined,
+    organization ? ilike(tenders.contractingAuthority, `%${organization}%`) : undefined,
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -232,7 +233,18 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
     { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
   ]);
 
-  const hasFilters = q || status !== 'open' || country;
+  const hasFilters = q || (status && status !== 'open') || (country && country !== 'all') || organization;
+
+  const getPageUrl = (newPage: number) => {
+    const sp = new URLSearchParams();
+    if (q) sp.set('q', q);
+    if (status) sp.set('status', status);
+    if (country && country !== 'all') sp.set('country', country);
+    if (organization) sp.set('organization', organization);
+    if (newPage > 1) sp.set('page', newPage.toString());
+    const qs = sp.toString();
+    return `/tenders${qs ? `?${qs}` : ''}`;
+  };
 
   return (
     <>
@@ -302,16 +314,16 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
         <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
           {page > 1 && (
             <Link
-              href={`/tenders?q=${q || ''}&status=${status || ''}&country=${country || ''}&page=${page - 1}`}
+              href={getPageUrl(page - 1)}
               className={buttonVariants({ variant: 'outline' })}
             >
               ← Previous
             </Link>
           )}
           <span className="text-sm text-muted-foreground">Page {page}</span>
-          {data.length === PAGE_SIZE && (
+          {offset + data.length < totalCount && (
             <Link
-              href={`/tenders?q=${q || ''}&status=${status || ''}&country=${country || ''}&page=${page + 1}`}
+              href={getPageUrl(page + 1)}
               className={buttonVariants({ variant: 'outline' })}
             >
               Next →

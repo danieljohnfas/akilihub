@@ -27,18 +27,18 @@ ${text.substring(0, 12000)}
 
 Rules:
 - Extract any real salary or compensation benchmarks found in the text. Be comprehensive.
-- For 'jobTitle': The specific role or job title (e.g. "Senior Software Engineer").
+- The source may be in ANY language (English, French, Arabic, Swahili, etc.). Extract all data regardless of language.
+- For 'jobTitle': The specific role or job title. Keep it in the original language of the source (e.g. "Développeur Logiciel", "Software Engineer").
 - For 'employerName': The name of the company or organization. If generalized benchmark, use "Market Average".
-- For 'jobCategoryName': A broad category like "Engineering", "Healthcare", "Finance".
+- For 'jobCategoryName': ALWAYS use a broad English category name regardless of the source language. Use one of: "Engineering", "Healthcare", "Finance", "Education", "Legal", "Management", "Sales & Marketing", "Administration", "Construction", "Agriculture", "Hospitality", "Transport", "General".
 - For 'experienceLevel': Must be one of: entry, mid, senior, executive.
 - For 'employmentType': Must be one of: full_time, part_time, contract, consultancy.
-- For 'currency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "USD"). Infer from context if not explicit.
+- For 'currency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "CDF", "USD"). Infer from context if not explicit.
 - For 'grossMonthlySalary': The monthly gross salary as a plain number. If given annually, divide by 12.
 - For 'netMonthlySalary': The net salary if stated, otherwise 0 (will map to null).
-- For 'yearsOfExperience': Years required or possessed, otherwise 0.
+- For 'yearsOfExperience': A whole number (integer). If given as a range (e.g. 1-3 years), use the midpoint rounded to the nearest integer. If unknown, use 0.
 - Extract all salary data points found. Return empty array if none found.
 - If 'employerName' is unknown, use "Market Average".
-- If 'jobCategoryName' is unknown, use "General".
 - If 'employmentType' is unknown, use "full_time".
 - If 'currency' is unknown, use "USD".
 - If 'netMonthlySalary' is unknown, use 0.

@@ -38,7 +38,7 @@ export async function saveSalariesDb(discovered: BroadSalaryResource[], countryC
         }
       }
 
-      if (!empId || !catId) continue;
+      if (!empId) continue; // employer is required; catId can be null
 
       await db.insert(salarySubmissions).values({
         jobTitle: s.jobTitle,
@@ -50,9 +50,10 @@ export async function saveSalariesDb(discovered: BroadSalaryResource[], countryC
         currency: s.currency,
         grossMonthlySalary: s.grossMonthlySalary.toString(),
         netMonthlySalary: s.netMonthlySalary ? s.netMonthlySalary.toString() : null,
-        yearsOfExperience: s.yearsOfExperience,
+        yearsOfExperience: s.yearsOfExperience ? Math.round(s.yearsOfExperience) : null,
         isAnonymous: false,
         isVerified: true,
+        sourceUrl: s.sourceUrl || null,
       });
       insertedCount++;
     } catch (e) {
