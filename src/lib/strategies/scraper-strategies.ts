@@ -14,6 +14,9 @@ export type PortalType =
   | 'rppa_rw'
   | 'pppa_et'
   | 'armp_cd'
+  | 'armp_bi'
+  | 'mof_so'
+  | 'gpoc_ss'
   | 'tra_tz_resources'
   | 'kra_ke_resources'
   | 'brela_tz_resources';

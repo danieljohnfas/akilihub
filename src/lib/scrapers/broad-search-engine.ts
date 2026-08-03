@@ -18,27 +18,26 @@ export interface BroadJobResource {
   salaryCurrency: string | null; // ISO 4217, e.g. "KES", "TZS"
 }
 
-// ── Blocked job board domains (block heavy aggregators, prefer employer sites) ──
+// ── Blocked job board domains (block heavy aggregators / bot blockers) ──
 const BLOCKED_DOMAINS = [
   'linkedin.com', 'glassdoor.com', 'indeed.com', 'fuzu.com',
-  'brightermonday.co.ke', 'myjobmag.com', 'jobwebkenya.com',
-  'unjobs.org'
+  'brightermonday.co.ke', 'jobwebkenya.com', 'ziprecruiter.com',
+  'simplyhired.com', 'rozee.pk', 'unjobs.org'
 ];
 
 // ── DuckDuckGo search via Python sidecar (free, no API key) ───────────────────
 async function searchDDGS(query: string, numResults: number): Promise<string[]> {
-  const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
+  const sidecarUrl = (process.env.SCRAPLING_URL ?? 'http://localhost:8001').trim();
 
   try {
     const res = await fetch(`${sidecarUrl}/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, max_results: numResults, region: 'wt-wt' }),
-      signal: AbortSignal.timeout(30_000),
+      body: JSON.stringify({ query: query.trim(), max_results: numResults, region: 'wt-wt', time_limit: 'm' }),
+      signal: AbortSignal.timeout(4_000),
     });
 
     if (!res.ok) {
-      console.warn(`[searchDDGS] Sidecar /search returned ${res.status}`);
       return [];
     }
 
@@ -51,26 +50,28 @@ async function searchDDGS(query: string, numResults: number): Promise<string[]> 
 
     console.log(`[searchDDGS] DuckDuckGo returned ${urls.length} URLs for: "${query}"`);
     return urls;
-  } catch (err) {
-    console.warn(`[searchDDGS] Failed:`, (err as Error).message);
+  } catch {
     return [];
   }
 }
 
 // ── Serper.dev fallback (paid, used only when SERPER_API_KEY is set and ddgs fails) ──
 async function searchSerper(query: string, numResults: number): Promise<string[]> {
-  const apiKey = process.env.SERPER_API_KEY;
+  const apiKey = process.env.SERPER_API_KEY?.trim();
   if (!apiKey) return [];
 
   try {
+    const cleanQuery = query.replace(/\bsite:/gi, '').trim();
     const res = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: query, num: numResults }),
+      body: JSON.stringify({ q: cleanQuery, num: Math.min(Math.max(numResults, 10), 100) }),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!res.ok) {
-      console.error(`[searchSerper] API failed: ${res.statusText}`);
+      const errText = await res.text();
+      console.error(`[searchSerper] API failed: ${res.status} ${res.statusText} — ${errText}`);
       return [];
     }
 
@@ -117,12 +118,12 @@ export async function extractJobsWithAI(text: string, sourceUrl: string): Promis
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 8000)}
 
 Rules:
-- Extract any real job postings found in the text. Be comprehensive.
-- For 'companyName': DO NOT use the name of job boards or aggregators (e.g. Ajiriwa, BrighterMonday, Unjobs) as the company name. You MUST find the actual hiring organization or company. If completely unknown, return 'Unknown'.
-- For 'description': Extract the FULL job description, including all scope of work, duties, and responsibilities. Do NOT summarize or omit paragraphs. Preserve the detailed text.
+- Extract up to 15 real job postings found in the text.
+- For 'companyName': DO NOT use the name of job boards or aggregators. Find the actual hiring organization or company. If completely unknown, return 'Unknown'.
+- For 'description': Provide a clear summary of the role, duties, and responsibilities (2-4 sentences).
 - For 'requirements': Qualifications, experience needed. Use empty string if none.
 - For 'location': City or region (e.g., "Nairobi"). Use empty string if none.
 - For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.
@@ -132,14 +133,14 @@ Rules:
 - For 'salaryMin': Minimum salary as a plain number (no currency symbol) if stated, otherwise 0.
 - For 'salaryMax': Maximum salary as a plain number if stated, otherwise 0. If only one figure is given, use it for both min and max.
 - For 'salaryCurrency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "USD"). Infer from context or country if not explicit. Use empty string if salary is completely absent.
-- Extract all open positions found. Return empty array if none found.
+- Return empty array if no jobs found.
 `;
 
   try {
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         jobs: z.array(z.object({
-          title: z.string().min(3),
+          title: z.string(),
           companyName: z.string(),
           description: z.string(),
           requirements: z.string(),
@@ -179,8 +180,12 @@ Rules:
     });
 
     const normalizedJobs = await Promise.all(
-      rawJobs.map(async (job: any) => {
+      rawJobs.map(async (job: any, idx: number) => {
         const regionId = await normalizeLocationAndGetRegionId(job.location);
+        const slug = `${job.title || 'job'}-${job.companyName || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 45).replace(/^-|-$/g, '');
+        const hasSpecificUrl = job.sourceUrl && job.sourceUrl.startsWith('http') && job.sourceUrl !== sourceUrl;
+        const uniqueSourceUrl = hasSpecificUrl ? job.sourceUrl : `${sourceUrl}#${slug}-${idx + 1}`;
+
         return {
           title: job.title,
           companyName: job.companyName || 'Unknown',
@@ -188,7 +193,7 @@ Rules:
           requirements: job.requirements || null,
           regionId: regionId,
           jobType: job.jobType,
-          sourceUrl: job.sourceUrl || sourceUrl,
+          sourceUrl: uniqueSourceUrl,
           postedDate: job.parsedPosted,
           deadline: job.parsedDeadline,
           salaryMin: job.salaryMin > 0 ? job.salaryMin : null,

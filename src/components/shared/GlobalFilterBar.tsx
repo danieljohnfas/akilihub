@@ -1,10 +1,10 @@
 "use client";
 
+import React, { useTransition } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
-import Link from 'next/link';
+import { Search, Filter, Loader2, Sparkles } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export type FilterType = 'search' | 'select' | 'pills';
@@ -34,6 +34,7 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const updateFilters = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -48,7 +49,9 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
     // Always reset to page 1 when a filter changes
     params.delete('page');
     
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   };
 
   // Group filters by type
@@ -57,10 +60,23 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
   const pillFilters = filters.filter(f => f.type === 'pills');
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
-      <div className="flex items-center gap-2 pb-2 border-b border-white/5 mb-4">
-        <Filter className="w-4 h-4 text-primary" />
-        <h2 className="text-sm font-semibold">Filter & Search</h2>
+    <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4 relative overflow-hidden backdrop-blur-sm">
+      {/* Active Filtering Scanning Accent Bar */}
+      {isPending && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-emerald-400 to-indigo-500 animate-[shimmer_1s_infinite]" />
+      )}
+
+      <div className="flex items-center justify-between pb-2 border-b border-white/5 mb-4">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Filter & Search</h2>
+        </div>
+        {isPending && (
+          <div className="flex items-center gap-2 text-xs text-cyan-400 font-medium animate-pulse">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Filtering database...</span>
+          </div>
+        )}
       </div>
       
       <div className="flex flex-col md:flex-row gap-4 items-end">
@@ -139,26 +155,21 @@ export function GlobalFilterBar({ filters, children }: GlobalFilterBarProps) {
               <div key={filter.id} className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {filter.options.map(opt => {
                   const isActive = searchParams.get(filter.id) === opt.value || (!searchParams.get(filter.id) && opt.value === (filter.defaultValue || 'all'));
-                  
-                  const currentParams = new URLSearchParams(searchParams.toString());
-                  if (opt.value && opt.value !== 'all') {
-                    currentParams.set(filter.id, opt.value);
-                  } else {
-                    currentParams.delete(filter.id);
-                  }
-                  currentParams.delete('page');
-                  const href = `${pathname}?${currentParams.toString()}`;
 
                   return (
-                    <Link key={opt.value} href={href}>
-                      <Button
-                        variant={isActive ? 'default' : 'secondary'}
-                        size="sm"
-                        className="rounded-full whitespace-nowrap h-8 text-xs bg-black/20"
-                      >
-                        {opt.label}
-                      </Button>
-                    </Link>
+                    <Button
+                      key={opt.value}
+                      variant={isActive ? 'default' : 'secondary'}
+                      size="sm"
+                      onClick={() => updateFilters(filter.id, opt.value)}
+                      className={`rounded-full whitespace-nowrap h-8 text-xs transition-all ${
+                        isActive 
+                          ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30' 
+                          : 'bg-black/20 hover:bg-white/10 text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {opt.label}
+                    </Button>
                   );
                 })}
               </div>

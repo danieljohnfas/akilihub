@@ -38,20 +38,17 @@ export async function extractHealthWithAI(
 Source URL: ${sourceUrl}
 
 Scraped content:
-${enrichedText.substring(0, 15000)}
+${enrichedText.substring(0, 8000)}
 
 Rules:
-- Extract any health indicators, statistics, or metrics found in the text. Be comprehensive.
+- Extract up to 15 health indicators, statistics, or metrics found in the text.
 - For 'indicatorCode': A short code (e.g. "MMR", "U5MR"). If none, generate a short 3-4 letter acronym based on the name.
 - For 'indicatorName': The full name (e.g. "Maternal Mortality Ratio").
 - For 'unit': The unit of measurement (e.g. "per 100,000 live births", "%").
 - For 'category': Must be one of: maternal, child, infectious, general.
 - For 'value': The actual statistic or number as a float/integer.
 - For 'year': The year the data represents (e.g. 2023). If not stated, use 2024.
-- Extract all health data points found. Return empty array if none found.
-- If 'unit' is unknown, use "count".
-- If 'category' is unknown, use "general".
-- If 'year' is unknown, use 2024.
+- Return empty array if none found.
 `;
 
   try {

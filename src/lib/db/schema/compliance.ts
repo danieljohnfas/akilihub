@@ -55,3 +55,5 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   index('compliance_created_at_idx').on(table.createdAt),
   index('compliance_req_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
 ]);
+
+export { complianceRequirements as complianceResources };

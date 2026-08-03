@@ -26,3 +26,5 @@ export const healthDataPoints = pgTable('health_data_points', {
   // Required for onConflictDoNothing to work — prevents duplicate data points
   uniqueIndex('health_data_unique_idx').on(table.indicatorId, table.countryId, table.year),
 ]);
+
+export { healthDataPoints as healthData };

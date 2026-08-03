@@ -16,7 +16,8 @@ import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { AdSlot } from '@/components/shared/AdSlot';
 import { PremiumBanner } from '@/components/shared/PremiumBanner';
-import React from 'react';
+import { DataLoadingState } from '@/components/shared/DataLoadingState';
+import React, { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +60,6 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 20;
 
-import { Suspense } from 'react';
 import { unstable_cache } from 'next/cache';
 const FALLBACK_COUNTRIES = ['Burundi', 'Democratic Republic of the Congo', 'Ethiopia', 'Kenya', 'Rwanda', 'Somalia', 'South Sudan', 'Tanzania', 'Uganda'];
 
@@ -153,9 +153,10 @@ export default async function TendersPage({
 
       {/* Grid */}
       <Suspense fallback={
-        <div className="py-24 px-4 text-center">
-          <h3 className="text-xl font-semibold mb-2 animate-pulse text-muted-foreground">Loading tenders...</h3>
-        </div>
+        <DataLoadingState 
+          title="Searching Government & NGO Tenders..." 
+          subtitle="Scanning verified procurement notices across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC & East Africa." 
+        />
       }>
         <TendersList params={params} />
       </Suspense>
@@ -206,26 +207,29 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const totalCountResult = await safeQuery(
-    db.select({ value: count() }).from(tenders).leftJoin(countries, eq(tenders.countryId, countries.id)).where(whereClause)
-  );
+  const [totalCountResult, data] = await Promise.all([
+    safeQuery(
+      db.select({ value: count() }).from(tenders).leftJoin(countries, eq(tenders.countryId, countries.id)).where(whereClause)
+    ),
+    safeQuery(
+      db
+        .select({
+          tender: tenders,
+          country: countries.name,
+          sector: tenderSectors.name,
+          region: regions.name,
+        })
+        .from(tenders)
+        .leftJoin(countries, eq(tenders.countryId, countries.id))
+        .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
+        .leftJoin(regions, eq(tenders.regionId, regions.id))
+        .where(whereClause)
+        .orderBy(desc(tenders.publishedAt))
+        .limit(PAGE_SIZE)
+        .offset(offset)
+    )
+  ]);
   const totalCount = totalCountResult?.[0]?.value || 0;
-
-  const data = await safeQuery(db
-    .select({
-      tender: tenders,
-      country: countries.name,
-      sector: tenderSectors.name,
-      region: regions.name,
-    })
-    .from(tenders)
-    .leftJoin(countries, eq(tenders.countryId, countries.id))
-    .leftJoin(tenderSectors, eq(tenders.sectorId, tenderSectors.id))
-    .leftJoin(regions, eq(tenders.regionId, regions.id))
-    .where(whereClause)
-    .orderBy(desc(tenders.publishedAt))
-    .limit(PAGE_SIZE)
-    .offset(offset));
 
   const itemListSchema = buildItemListSchema(
     'Government Tenders in East Africa',

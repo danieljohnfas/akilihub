@@ -33,12 +33,12 @@ export async function extractTendersWithAI(
 Source URL: ${sourceUrl}
 ${pdfSection}
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 8000)}
 
 Rules:
-- Extract any real tender, bid, or procurement postings found in the text.
-- If multiple tenders are listed, extract all of them.
+- Extract up to 15 real tender, bid, or procurement postings found in the text.
 - Only extract open, active tenders.
+- For description: Concise summary of requirements/scope (2-4 sentences).
 - For sourceUrl: If this page is an aggregator, look for the original purchasing authority's website link or document link in the [LINK] sections and return the TRUE origin URL. If it's already the authority's site or no origin link exists, return the provided Source URL.
 - If no tenders are found, return an empty array.
 - For referenceNo, if none is explicitly provided, use a short slugified version of the title or generate a unique looking string from the text.
@@ -50,10 +50,10 @@ Rules:
     const { object } = await generateObjectWithFallback({
       schema: z.object({
         tenders: z.array(z.object({
-          referenceNo: z.string().min(3),
-          title: z.string().min(5),
+          referenceNo: z.string(),
+          title: z.string(),
           description: z.string().nullable(),
-          contractingAuthority: z.string().min(2),
+          contractingAuthority: z.string(),
           category: z.enum(['goods', 'works', 'services', 'consultancy']),
           location: z.string().nullable().describe("Raw location string if mentioned, else null"),
           budgetNumber: z.number().nullable().describe("Numeric budget if specified, else null"),
@@ -69,19 +69,28 @@ Rules:
       referenceNo: string; title: string; description: string | null;
       contractingAuthority: string; category: BroadTenderResource['category'];
       location: string | null; budgetNumber: number | null; currency: string; sourceUrl: string; deadlineIsoString: string | null;
-    }) => ({
-      referenceNo: tender.referenceNo,
-      title: tender.title,
-      description: tender.description,
-      contractingAuthority: tender.contractingAuthority,
-      category: tender.category,
-      location: tender.location,
-      budget: tender.budgetNumber,
-      currency: tender.currency,
-      sourceUrl: tender.sourceUrl || sourceUrl,
-      deadline: tender.deadlineIsoString ? new Date(tender.deadlineIsoString) : null,
-      pdfLinks,
-    }));
+    }, idx: number) => {
+      const refSlug = (tender.referenceNo || tender.title || 'tnd').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40).replace(/^-|-$/g, '');
+      const hasSpecificUrl = tender.sourceUrl && tender.sourceUrl.startsWith('http') && tender.sourceUrl !== sourceUrl;
+      const uniqueSourceUrl = hasSpecificUrl ? tender.sourceUrl : `${sourceUrl}#${refSlug}-${idx + 1}`;
+      const uniqueRefNo = (tender.referenceNo && tender.referenceNo.trim() && tender.referenceNo.toLowerCase() !== 'n/a')
+        ? tender.referenceNo
+        : `TND-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}-${idx + 1}`;
+
+      return {
+        referenceNo: uniqueRefNo,
+        title: tender.title,
+        description: tender.description,
+        contractingAuthority: tender.contractingAuthority,
+        category: tender.category,
+        location: tender.location,
+        budget: tender.budgetNumber,
+        currency: tender.currency,
+        sourceUrl: uniqueSourceUrl,
+        deadline: tender.deadlineIsoString ? new Date(tender.deadlineIsoString) : null,
+        pdfLinks,
+      };
+    });
 
     const normalizedTenders = await Promise.all(
       rawTenders.map(async (tender: any) => {

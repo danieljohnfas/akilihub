@@ -10,6 +10,7 @@ export interface KeyEntry {
   lastUsed: number;
   totalCalls: number;
   totalErrors: number;
+  priority: number;
 }
 
 /**
@@ -23,9 +24,10 @@ export interface KeyEntry {
 class KeyPool {
   private keys: Map<string, KeyEntry> = new Map();
 
-  register(entry: Omit<KeyEntry, 'coolUntil' | 'errorCount' | 'lastUsed' | 'totalCalls' | 'totalErrors'>) {
+  register(entry: Omit<KeyEntry, 'coolUntil' | 'errorCount' | 'lastUsed' | 'totalCalls' | 'totalErrors' | 'priority'> & { priority?: number }) {
     this.keys.set(entry.id, {
       ...entry,
+      priority: entry.priority ?? 10,
       coolUntil: 0,
       errorCount: 0,
       lastUsed: 0,
@@ -34,7 +36,7 @@ class KeyPool {
     });
   }
 
-  /** Synchronous — no DB roundtrip. Returns the least-recently-used available key. */
+  /** Synchronous — no DB roundtrip. Returns the highest-priority, least-recently-used available key. */
   getNextKey(structuredOnly = false): KeyEntry | null {
     const now = Date.now();
     const available = Array.from(this.keys.values()).filter(
@@ -42,8 +44,11 @@ class KeyPool {
     );
     if (available.length === 0) return null;
     
-    // Sort by lastUsed to get the least recently used key
-    const selectedKey = available.sort((a, b) => a.lastUsed - b.lastUsed)[0];
+    // Sort by priority (ascending: 1 > 2 > 3), then lastUsed (least recently used)
+    const selectedKey = available.sort((a, b) => {
+      if (a.priority !== b.priority) return a.priority - b.priority;
+      return a.lastUsed - b.lastUsed;
+    })[0];
     
     // Update lastUsed immediately so concurrent requests round-robin across available keys
     // instead of dog-piling the exact same key.
@@ -70,7 +75,7 @@ class KeyPool {
     key.errorCount++;
     key.totalErrors++;
     key.totalCalls++;
-    const backoffSec = Math.min(30 * Math.pow(2, key.errorCount - 1), 300);
+    const backoffSec = Math.min(10 * Math.pow(2, key.errorCount - 1), 60);
     key.coolUntil = Date.now() + backoffSec * 1000;
     console.warn(`[KeyPool] ${key.name} cooling for ${backoffSec}s (error #${key.errorCount})`);
     // Fire-and-forget telemetry write (doesn't block)

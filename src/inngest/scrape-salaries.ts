@@ -1,86 +1,194 @@
 import { inngest } from "./client";
 import { discoverSalaries, BroadSalaryResource } from "@/lib/scrapers/broad-search-engine-salaries";
 import { db } from "@/lib/db/client";
-import { salarySubmissions, employers, jobCategories } from "@/lib/db/schema/salaries";
+import { salarySubmissions } from "@/lib/db/schema/salaries";
 import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
 
-export async function saveSalariesDb(discovered: BroadSalaryResource[], countryCode: string): Promise<number> {
-  const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, countryCode)).limit(1);
-  const countryId = result.length > 0 ? result[0].id : null;
-  if (!countryId) return 0;
-
-  let insertedCount = 0;
-  for (const s of discovered) {
-    try {
-      // 1. Resolve Employer
-      let empId: string | null = null;
-      const empRes = await db.select({ id: employers.id }).from(employers).where(eq(employers.name, s.employerName)).limit(1);
-      if (empRes.length > 0) {
-        empId = empRes[0].id;
-      } else {
-        const newEmp = await db.insert(employers).values({ name: s.employerName, countryId }).returning({ id: employers.id });
-        if (newEmp.length > 0) empId = newEmp[0].id;
-      }
-
-      // 2. Resolve Job Category
-      let catId: string | null = null;
-      const slug = s.jobCategoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const catRes = await db.select({ id: jobCategories.id }).from(jobCategories).where(eq(jobCategories.slug, slug)).limit(1);
-      if (catRes.length > 0) {
-        catId = catRes[0].id;
-      } else {
-        const newCat = await db.insert(jobCategories).values({ name: s.jobCategoryName, slug }).onConflictDoNothing().returning({ id: jobCategories.id });
-        if (newCat.length > 0) catId = newCat[0].id;
-        else {
-          const catResRetry = await db.select({ id: jobCategories.id }).from(jobCategories).where(eq(jobCategories.slug, slug)).limit(1);
-          if (catResRetry.length > 0) catId = catResRetry[0].id;
-        }
-      }
-
-      if (!empId) continue; // employer is required; catId can be null
-
-      await db.insert(salarySubmissions).values({
-        jobTitle: s.jobTitle,
-        jobCategoryId: catId,
-        employerId: empId,
-        countryId,
-        experienceLevel: s.experienceLevel,
-        employmentType: s.employmentType,
-        currency: s.currency,
-        grossMonthlySalary: s.grossMonthlySalary.toString(),
-        netMonthlySalary: s.netMonthlySalary ? s.netMonthlySalary.toString() : null,
-        yearsOfExperience: s.yearsOfExperience ? Math.round(s.yearsOfExperience) : null,
-        isAnonymous: false,
-        isVerified: true,
-        sourceUrl: s.sourceUrl || null,
-      });
-      insertedCount++;
-    } catch (e) {
-      console.error(`Failed to insert salary: ${s.jobTitle}`, e);
-    }
-  }
-  return insertedCount;
+async function getCountryId(countryHint: string): Promise<string | null> {
+  const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, countryHint)).limit(1);
+  return result.length > 0 ? result[0].id : null;
 }
 
+export async function saveSalaries(discovered: BroadSalaryResource[], countryCode: string): Promise<number> {
+  const countryId = await getCountryId(countryCode);
+  if (!countryId) return 0;
 
+  let inserted = 0;
+  for (const item of discovered) {
+    try {
+      const rows = await db.insert(salarySubmissions).values({
+        jobTitle: item.jobTitle,
+        countryId,
+        experienceLevel: item.experienceLevel,
+        employmentType: item.employmentType,
+        currency: item.currency,
+        grossMonthlySalary: item.grossMonthlySalary.toString(),
+        netMonthlySalary: item.netMonthlySalary?.toString() || null,
+        yearsOfExperience: item.yearsOfExperience || null,
+        isAnonymous: true,
+        isVerified: true,
+        sourceUrl: item.sourceUrl || null,
+      }).onConflictDoNothing().returning({ id: salarySubmissions.id });
+      if (rows.length > 0) inserted++;
+    } catch (e) {
+      console.error(`Failed to insert salary for: ${item.jobTitle}`, e);
+    }
+  }
+  return inserted;
+}
 
-function makeSalaryScraper(id: string, name: string, cron: string, query: string, countryCode: string) {
+export { saveSalaries as saveSalariesDb };
+
+function makeSalaryScraper(
+  id: string,
+  name: string,
+  cron: string,
+  queries: string[],
+  countryCode: string
+) {
   return inngest.createFunction(
     { id, name, triggers: [{ cron }] },
     async ({ step }) => {
-      const insertedCount = await step.run("execute-salary-scraper", async () => {
-        const discovered = await discoverSalaries(query, 1);
-        return await saveSalariesDb(discovered, countryCode);
-      });
-      return { message: `Scraped and inserted ${insertedCount} salaries for ${name}.` };
+      let totalInserted = 0;
+      for (let i = 0; i < queries.length; i++) {
+        const query = queries[i];
+        const insertedCount = await step.run(`execute-salary-scraper-q${i}`, async () => {
+          // Increase maxPages from 3 to 5 for deeper salary extraction
+          const discovered = await discoverSalaries(query, 5);
+          return await saveSalaries(discovered, countryCode);
+        });
+        totalInserted += insertedCount;
+      }
+
+      return { message: `Scraped and inserted ${totalInserted} salaries for ${name}.` };
     }
   );
 }
 
-export const scrapeSalariesKenyaJob = makeSalaryScraper('scrape-salaries-kenya', '🇰🇪 Salaries Kenya', '0 7 * * *', 'average salary compensation benchmarks Kenya 2026', 'KE');
-export const scrapeSalariesTanzaniaJob = makeSalaryScraper('scrape-salaries-tanzania', '🇹🇿 Salaries Tanzania', '15 7 * * *', 'average salary compensation benchmarks Tanzania 2026', 'TZ');
-export const scrapeSalariesUgandaJob = makeSalaryScraper('scrape-salaries-uganda', '🇺🇬 Salaries Uganda', '30 7 * * *', 'average salary compensation benchmarks Uganda 2026', 'UG');
-export const scrapeSalariesRwandaJob = makeSalaryScraper('scrape-salaries-rwanda', '🇷🇼 Salaries Rwanda', '45 7 * * *', 'average salary compensation benchmarks Rwanda 2026', 'RW');
-export const scrapeSalariesEthiopiaJob = makeSalaryScraper('scrape-salaries-ethiopia', '🇪🇹 Salaries Ethiopia', '0 8 * * *', 'average salary compensation benchmarks Ethiopia 2026', 'ET');
-export const scrapeSalariesDRCJob = makeSalaryScraper('scrape-salaries-drc', '🇨🇩 Salaries DRC', '15 8 * * *', 'salaire moyen remuneration RDC Congo 2026', 'CD');
+// ── Kenya (KE) ────────────────────────────────────────────────────────
+export const scrapeSalariesKenyaJob = makeSalaryScraper(
+  "scrape-salaries-kenya", "🇰🇪 Salaries Kenya", "30 1 * * *",
+  [
+    "software engineer developer salary Kenya 2026",
+    "doctor nurse medical officer salary Kenya 2026",
+    "teacher lecturer salary Kenya TSC 2026",
+    "accountant finance manager salary Kenya 2026",
+    "NGO project officer salary Kenya 2026",
+    "government civil servant salary scale Kenya 2026",
+  ],
+  "KE"
+);
+
+// ── Tanzania (TZ) ───────────────────────────────────────────────────────
+export const scrapeSalariesTanzaniaJob = makeSalaryScraper(
+  "scrape-salaries-tanzania", "🇹🇿 Salaries Tanzania", "0 2 * * *",
+  [
+    "software developer IT salary Tanzania 2026",
+    "mshahara wa daktari nesi Tanzania 2026",
+    "mshahara wa mwalimu Tanzania 2026",
+    "accountant bank officer salary Tanzania 2026",
+    "mshahara wa mtumishi wa umma Tanzania 2026",
+    "NGO project manager salary Tanzania 2026",
+  ],
+  "TZ"
+);
+
+// ── Uganda (UG) ─────────────────────────────────────────────────────────
+export const scrapeSalariesUgandaJob = makeSalaryScraper(
+  "scrape-salaries-uganda", "🇺🇬 Salaries Uganda", "30 2 * * *",
+  [
+    "software engineer salary Kampala Uganda 2026",
+    "doctor nurse salary Uganda 2026",
+    "teacher salary Uganda 2026",
+    "finance accountant salary Uganda 2026",
+    "civil servant government salary scale Uganda 2026",
+    "NGO worker salary Uganda 2026",
+  ],
+  "UG"
+);
+
+// ── Rwanda (RW) ─────────────────────────────────────────────────────────
+export const scrapeSalariesRwandaJob = makeSalaryScraper(
+  "scrape-salaries-rwanda", "🇷🇼 Salaries Rwanda", "0 3 * * *",
+  [
+    "software engineer IT salary Rwanda 2026",
+    "doctor nurse salary Rwanda Kigali 2026",
+    "teacher salary Rwanda 2026",
+    "banker accountant salary Rwanda 2026",
+    "government employee salary scale Rwanda 2026",
+    "NGO worker salary Rwanda 2026",
+  ],
+  "RW"
+);
+
+// ── Ethiopia (ET) ───────────────────────────────────────────────────────
+export const scrapeSalariesEthiopiaJob = makeSalaryScraper(
+  "scrape-salaries-ethiopia", "🇪🇹 Salaries Ethiopia", "30 3 * * *",
+  [
+    "software developer salary Ethiopia 2026",
+    "doctor nurse health worker salary Ethiopia 2026",
+    "teacher lecturer salary Ethiopia 2026",
+    "accountant finance salary Ethiopia 2026",
+    "government civil servant salary scale Ethiopia 2026",
+    "NGO humanitarian worker salary Ethiopia 2026",
+  ],
+  "ET"
+);
+
+// ── DRC (CD) ────────────────────────────────────────────────────────────
+export const scrapeSalariesDRCJob = makeSalaryScraper(
+  "scrape-salaries-drc", "🇨🇩 Salaries DRC", "0 4 * * *",
+  [
+    "salaire développeur informaticien RDC 2026",
+    "salaire médecin infirmier RDC 2026",
+    "salaire enseignant professeur RDC 2026",
+    "salaire comptable banquier RDC Congo 2026",
+    "barème salarial fonctionnaire gouvernement RDC 2026",
+    "salaire employé ONG humanitaire RDC 2026",
+    "salaire ingénieur mines RDC Katanga 2026",
+  ],
+  "CD"
+);
+
+// ── Burundi (BI) ────────────────────────────────────────────────────────────
+export const scrapeSalariesBurundiJob = makeSalaryScraper(
+  "scrape-salaries-burundi", "🇧🇮 Salaries Burundi", "30 4 * * *",
+  [
+    "salaire développeur informatique Burundi 2026",
+    "salaire médecin infirmier Burundi 2026",
+    "salaire enseignant professeur Burundi 2026",
+    "salaire comptable banque Burundi 2026",
+    "barème salarial fonctionnaire Burundi 2026",
+    "salaire employé ONG Burundi 2026",
+  ],
+  "BI"
+);
+
+// ── Somalia (SO) ────────────────────────────────────────────────────────────
+export const scrapeSalariesSomaliaJob = makeSalaryScraper(
+  "scrape-salaries-somalia", "🇸🇴 Salaries Somalia", "0 5 * * *",
+  [
+    "software developer IT salary Somalia 2026",
+    "doctor nurse health worker salary Somalia 2026",
+    "teacher lecturer salary Somalia 2026",
+    "accountant finance salary Somalia 2026",
+    "government civil servant salary scale Somalia 2026",
+    "NGO humanitarian worker salary Somalia 2026",
+  ],
+  "SO"
+);
+
+// ── South Sudan (SS) ────────────────────────────────────────────────────────────
+export const scrapeSalariesSouthSudanJob = makeSalaryScraper(
+  "scrape-salaries-south-sudan", "🇸🇸 Salaries South Sudan", "30 5 * * *",
+  [
+    "software developer IT salary South Sudan 2026",
+    "doctor nurse health worker salary South Sudan 2026",
+    "teacher lecturer salary South Sudan 2026",
+    "accountant finance salary South Sudan 2026",
+    "government civil servant salary scale South Sudan 2026",
+    "NGO humanitarian worker salary South Sudan 2026",
+  ],
+  "SS"
+);

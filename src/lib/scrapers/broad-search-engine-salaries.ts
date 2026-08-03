@@ -23,10 +23,10 @@ export async function extractSalariesWithAI(text: string, sourceUrl: string): Pr
 Source URL: ${sourceUrl}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 8000)}
 
 Rules:
-- Extract any real salary or compensation benchmarks found in the text. Be comprehensive.
+- Extract up to 20 real salary or compensation benchmarks found in the text.
 - The source may be in ANY language (English, French, Arabic, Swahili, etc.). Extract all data regardless of language.
 - For 'jobTitle': The specific role or job title. Keep it in the original language of the source (e.g. "Développeur Logiciel", "Software Engineer").
 - For 'employerName': The name of the company or organization. If generalized benchmark, use "Market Average".
@@ -37,12 +37,7 @@ Rules:
 - For 'grossMonthlySalary': The monthly gross salary as a plain number. If given annually, divide by 12.
 - For 'netMonthlySalary': The net salary if stated, otherwise 0 (will map to null).
 - For 'yearsOfExperience': A whole number (integer). If given as a range (e.g. 1-3 years), use the midpoint rounded to the nearest integer. If unknown, use 0.
-- Extract all salary data points found. Return empty array if none found.
-- If 'employerName' is unknown, use "Market Average".
-- If 'employmentType' is unknown, use "full_time".
-- If 'currency' is unknown, use "USD".
-- If 'netMonthlySalary' is unknown, use 0.
-- If 'yearsOfExperience' is unknown, use 0.
+- Return empty array if none found.
 `;
 
   try {

@@ -15,7 +15,7 @@ import {
 import { StrategyEngine } from "@/lib/strategies/engine";
 
 // ── Portal definitions ────────────────────────────────────────────────────────
-// Each portal has a direct URL to scrape + a broad-search query as final fallback.
+// Each portal has a direct URL to scrape + broad-search queries as final fallback.
 const PORTALS: Array<{
   id: string;
   name: string;
@@ -23,17 +23,8 @@ const PORTALS: Array<{
   countryCode: string;
   portalType: PortalType;
   url: string;
-  broadSearchQuery: string;
+  broadSearchQueries: string[];
 }> = [
-  {
-    id: "scrape-tenders-tanzania",
-    name: "🇹🇿 Tenders Tanzania",
-    cron: "0 0 * * *",
-    countryCode: "TZ",
-    portalType: "ppra_tz",
-    url: "https://www.ppra.go.tz/tenders",
-    broadSearchQuery: "government tenders Tanzania 2026",
-  },
   {
     id: "scrape-tenders-kenya",
     name: "🇰🇪 Tenders Kenya",
@@ -41,7 +32,29 @@ const PORTALS: Array<{
     countryCode: "KE",
     portalType: "ppoa_ke",
     url: "https://tenders.go.ke/tenders/open",
-    broadSearchQuery: "government tenders Kenya 2026",
+    broadSearchQueries: [
+      "government tenders Kenya 2026",
+      "NGO tenders Kenya 2026",
+      "site:reliefweb.int tenders Kenya 2026",
+      "UNOPS procurement Kenya",
+      "World Bank tenders Kenya",
+      "site:ungm.org Kenya"
+    ],
+  },
+  {
+    id: "scrape-tenders-tanzania",
+    name: "🇹🇿 Tenders Tanzania",
+    cron: "0 0 * * *",
+    countryCode: "TZ",
+    portalType: "ppra_tz",
+    url: "https://www.ppra.go.tz/tenders",
+    broadSearchQueries: [
+      "government tenders Tanzania 2026",
+      "NGO tenders Tanzania 2026",
+      "site:reliefweb.int tenders Tanzania 2026",
+      "UNOPS procurement Tanzania",
+      "site:ungm.org Tanzania"
+    ],
   },
   {
     id: "scrape-tenders-uganda",
@@ -50,7 +63,13 @@ const PORTALS: Array<{
     countryCode: "UG",
     portalType: "ppda_ug",
     url: "https://gpp.ppda.go.ug/public/bid-invitations",
-    broadSearchQuery: "government tenders Uganda 2026",
+    broadSearchQueries: [
+      "government tenders Uganda 2026",
+      "NGO tenders Uganda 2026",
+      "site:reliefweb.int tenders Uganda 2026",
+      "UNOPS procurement Uganda",
+      "site:ungm.org Uganda"
+    ],
   },
   {
     id: "scrape-tenders-rwanda",
@@ -59,7 +78,13 @@ const PORTALS: Array<{
     countryCode: "RW",
     portalType: "rppa_rw",
     url: "https://www.rppa.gov.rw/index.php?id=33",
-    broadSearchQuery: "government tenders Rwanda 2026",
+    broadSearchQueries: [
+      "government tenders Rwanda 2026",
+      "NGO tenders Rwanda 2026",
+      "site:reliefweb.int tenders Rwanda 2026",
+      "UNOPS procurement Rwanda",
+      "appels d'offres Rwanda 2026"
+    ],
   },
   {
     id: "scrape-tenders-ethiopia",
@@ -68,7 +93,13 @@ const PORTALS: Array<{
     countryCode: "ET",
     portalType: "pppa_et",
     url: "https://www.pppa.gov.et/index.php/procurement-opportunities",
-    broadSearchQuery: "government tenders Ethiopia 2026",
+    broadSearchQueries: [
+      "government tenders Ethiopia 2026",
+      "NGO tenders Ethiopia 2026",
+      "site:reliefweb.int tenders Ethiopia 2026",
+      "UNOPS procurement Ethiopia",
+      "site:ungm.org Ethiopia"
+    ],
   },
   {
     id: "scrape-tenders-congo-drc",
@@ -77,7 +108,58 @@ const PORTALS: Array<{
     countryCode: "CD",
     portalType: "armp_cd",
     url: "https://www.armp.cd/index.php/appels-doffres",
-    broadSearchQuery: "government tenders Congo DRC 2026",
+    broadSearchQueries: [
+      "government tenders Congo DRC 2026",
+      "appels d'offres gouvernement RDC 2026",
+      "appels d'offres ONG RDC Congo 2026",
+      "site:reliefweb.int tenders DRC",
+      "UNOPS procurement DRC"
+    ],
+  },
+  {
+    id: "scrape-tenders-burundi",
+    name: "🇧🇮 Tenders Burundi",
+    cron: "0 3 * * *",
+    countryCode: "BI",
+    portalType: "armp_bi",
+    url: "https://www.armp.bi/appels-offres",
+    broadSearchQueries: [
+      "government tenders Burundi 2026",
+      "appels d'offres gouvernement Burundi 2026",
+      "appels d'offres ONG Burundi 2026",
+      "site:reliefweb.int tenders Burundi",
+      "UNOPS procurement Burundi"
+    ],
+  },
+  {
+    id: "scrape-tenders-somalia",
+    name: "🇸🇴 Tenders Somalia",
+    cron: "30 3 * * *",
+    countryCode: "SO",
+    portalType: "mof_so",
+    url: "https://mof.gov.so/tenders",
+    broadSearchQueries: [
+      "government tenders Somalia 2026",
+      "NGO tenders Somalia 2026",
+      "site:reliefweb.int tenders Somalia 2026",
+      "UNOPS procurement Somalia",
+      "site:ungm.org Somalia"
+    ],
+  },
+  {
+    id: "scrape-tenders-south-sudan",
+    name: "🇸🇸 Tenders South Sudan",
+    cron: "0 4 * * *",
+    countryCode: "SS",
+    portalType: "gpoc_ss",
+    url: "https://www.mofep-grss.org/procurement/",
+    broadSearchQueries: [
+      "government tenders South Sudan 2026",
+      "NGO tenders South Sudan 2026",
+      "site:reliefweb.int tenders South Sudan 2026",
+      "UNOPS procurement South Sudan",
+      "site:ungm.org South Sudan"
+    ],
   },
 ];
 
@@ -182,6 +264,8 @@ function makePortalJob(portal: (typeof PORTALS)[number]) {
           return 0;
         }
 
+        let totalInserted = 0;
+
         // 1. Try the strategy cascade (Scrapling → Firecrawl → Crawlee)
         const engine = buildStrategyEngine();
         try {
@@ -192,17 +276,24 @@ function makePortalJob(portal: (typeof PORTALS)[number]) {
 
           if (result.length > 0) {
             console.log(`[${portal.id}] ${strategyUsed} returned ${result.length} tenders.`);
-            return await saveTenderResults(result, countryId);
+            const saved = await saveTenderResults(result, countryId);
+            totalInserted += saved;
+          } else {
+            console.log(`[${portal.id}] Strategy cascade returned 0 results — falling back to broad search.`);
           }
-
-          console.log(`[${portal.id}] Strategy cascade returned 0 results — falling back to broad search.`);
         } catch (err) {
           console.warn(`[${portal.id}] All strategies failed: ${(err as Error).message}. Falling back to broad search.`);
         }
 
         // 2. Final fallback: broad Google search + Gemini extraction (no portal URL needed)
-        const discovered = await discoverTenders(portal.broadSearchQuery, 5);
-        return await saveBroadResults(discovered, countryId);
+        // We will loop through the array of queries.
+        for (const query of portal.broadSearchQueries) {
+          const discovered = await discoverTenders(query, 5);
+          const saved = await saveBroadResults(discovered, countryId);
+          totalInserted += saved;
+        }
+
+        return totalInserted;
       });
 
       if (insertedCount > 0) {
@@ -220,9 +311,12 @@ function makePortalJob(portal: (typeof PORTALS)[number]) {
 }
 
 // ── Exports ───────────────────────────────────────────────────────────────────
-export const scrapePPRATanzaniaJob = makePortalJob(PORTALS[0]);
-export const scrapePPRAKenyaJob    = makePortalJob(PORTALS[1]);
+export const scrapePPRAKenyaJob    = makePortalJob(PORTALS[0]);
+export const scrapePPRATanzaniaJob = makePortalJob(PORTALS[1]);
 export const scrapePPDAUgandaJob   = makePortalJob(PORTALS[2]);
 export const scrapeRPPARwandaJob   = makePortalJob(PORTALS[3]);
 export const scrapePPPAEthiopiaJob = makePortalJob(PORTALS[4]);
 export const scrapeARMPCongoDRCJob = makePortalJob(PORTALS[5]);
+export const scrapeARMPBurundiJob  = makePortalJob(PORTALS[6]);
+export const scrapeMOFSomaliaJob   = makePortalJob(PORTALS[7]);
+export const scrapeGPOCSouthSudanJob = makePortalJob(PORTALS[8]);

@@ -16,7 +16,8 @@ import { parseGlobalSearchParams } from '@/lib/filters';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { AdSlot } from '@/components/shared/AdSlot';
 import { PremiumBanner } from '@/components/shared/PremiumBanner';
-import React from 'react';
+import { DataLoadingState } from '@/components/shared/DataLoadingState';
+import React, { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +60,6 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 30;
 
-import { Suspense } from 'react';
 import { unstable_cache } from 'next/cache';
 const FALLBACK_COUNTRIES = ['Burundi', 'Democratic Republic of the Congo', 'Ethiopia', 'Kenya', 'Rwanda', 'Somalia', 'South Sudan', 'Tanzania', 'Uganda'];
 
@@ -155,9 +155,10 @@ export default async function JobsPage({
 
       {/* Grid */}
       <Suspense fallback={
-        <div className="py-24 px-4 text-center">
-          <h3 className="text-xl font-semibold mb-2 animate-pulse text-muted-foreground">Loading jobs...</h3>
-        </div>
+        <DataLoadingState 
+          title="Searching Regional Opportunities..." 
+          subtitle="Scanning verified job openings across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC & East Africa." 
+        />
       }>
         <JobsList params={params} />
       </Suspense>
@@ -235,28 +236,29 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
   const conditions = getConditions();
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const totalCountResult = await safeQuery(
-    db.select({ value: count() })
-      .from(jobs)
-      .where(whereClause)
-  );
+  const [totalCountResult, data] = await Promise.all([
+    safeQuery(
+      db.select({ value: count() })
+        .from(jobs)
+        .where(whereClause)
+    ),
+    safeQuery(
+      db
+        .select({
+          job: jobs,
+          country: countries.name,
+          region: regions.name,
+        })
+        .from(jobs)
+        .leftJoin(countries, eq(jobs.countryId, countries.id))
+        .leftJoin(regions, eq(jobs.regionId, regions.id))
+        .where(whereClause)
+        .orderBy(desc(jobs.createdAt))
+        .limit(PAGE_SIZE)
+        .offset(offset)
+    )
+  ]);
   const totalCount = totalCountResult?.[0]?.value || 0;
-
-  const data = await safeQuery(
-    db
-      .select({
-        job: jobs,
-        country: countries.name,
-        region: regions.name,
-      })
-      .from(jobs)
-      .leftJoin(countries, eq(jobs.countryId, countries.id))
-      .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(whereClause)
-      .orderBy(desc(jobs.createdAt))
-      .limit(PAGE_SIZE)
-      .offset(offset)
-  );
 
   const hasFilters = q || type || company || country;
 

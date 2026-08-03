@@ -15,8 +15,6 @@ import { keyPool } from './key-pool';
 // Matches exactly baseName or baseName_<digits> to avoid picking up unrelated
 // env vars that share the same prefix (e.g. GROQ_API_KEYSTONE).
 function getEnvKeys(baseName: string): string[] {
-  // FAST-FAIL: We only want Google and Mistral for now to bypass SDK validation crashes
-  if (!baseName.includes('GOOGLE') && !baseName.includes('MISTRAL')) return [];
   const keys: string[] = [];
   const pattern = new RegExp(`^${baseName}(?:_\\d+)?$`);
   for (const [key, value] of Object.entries(process.env)) {
@@ -27,35 +25,8 @@ function getEnvKeys(baseName: string): string[] {
   return keys;
 }
 
-// -- GOOGLE (Gemini) --
-// Most reliable. Supports json_schema structured output natively.
-getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
-  // Use a fresh instance per key so each has isolated state
-  const makeGoogle = createGoogle({ apiKey: key });
-  const g = makeGoogle('gemini-2.5-flash');
-  keyPool.register({
-    id: `google-flash-${i + 1}`,
-    name: `Google Gemini Flash (${i + 1})`,
-    model: g,
-    supportsStructured: true,
-  });
-});
-
-// -- GROQ --
-// Supports structured output via 'json' mode on llama-3.3-70b-versatile.
-// Note: does NOT support json_schema mode — use mode: 'json' when calling.
-getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
-  const groq = createGroq({ apiKey: key });
-  keyPool.register({
-    id: `groq-llama33-${i + 1}`,
-    name: `Groq LLaMA 3.3 70B (${i + 1})`,
-    model: groq('llama-3.3-70b-versatile'),
-    supportsStructured: true,
-  });
-});
-
 // -- MISTRAL --
-// Supports json_schema structured output.
+// Extremely fast (~1.5s) and natively supports json_schema structured output.
 getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
   const mistral = createMistral({ apiKey: key });
   keyPool.register({
@@ -63,11 +34,11 @@ getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
     name: `Mistral Small (${i + 1})`,
     model: mistral('mistral-small-latest'),
     supportsStructured: true,
+    priority: 1,
   });
 });
 
-// -- COHERE --
-// Command R+ supports json_schema structured output.
+// -- COHERE (Command R+) --
 getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
   const cohere = createCohere({ apiKey: key });
   keyPool.register({
@@ -75,78 +46,23 @@ getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
     name: `Cohere Command R+ (${i + 1})`,
     model: cohere('command-r-plus-08-2024'),
     supportsStructured: true,
+    priority: 2,
   });
 });
 
-// -- MINIMAX --
-// Uses OpenAI-compatible endpoint.
-getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
-  const minimax = createOpenAI({ 
-    apiKey: key,
-    baseURL: 'https://api.minimax.chat/v1',
-  });
+// -- GOOGLE (Gemini 2.0 Flash) --
+getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
+  const makeGoogle = createGoogle({ apiKey: key });
   keyPool.register({
-    id: `minimax-m3-${i + 1}`,
-    name: `Minimax M3 (${i + 1})`,
-    model: minimax('MiniMax-Text-01'), // or abab6.5s-chat depending on user's exact M3 mapping
-    supportsStructured: true, // Uses OpenAI structured output wrapper
-  });
-});
-
-// -- OPENROUTER --
-getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
-  const openrouter = createOpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1' });
-  keyPool.register({
-    id: `openrouter-${i + 1}`,
-    name: `OpenRouter (${i + 1})`,
-    model: openrouter('meta-llama/llama-3.3-70b-instruct'),
+    id: `google-flash-${i + 1}`,
+    name: `Google Gemini Flash (${i + 1})`,
+    model: makeGoogle('gemini-2.0-flash'),
     supportsStructured: true,
+    priority: 3,
   });
 });
 
-// -- DEEPSEEK --
-getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
-  const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com' });
-  keyPool.register({
-    id: `deepseek-${i + 1}`,
-    name: `DeepSeek Chat (${i + 1})`,
-    model: deepseek('deepseek-v4-flash'),
-    supportsStructured: true,
-  });
-});
-
-// -- SAMBANOVA --
-getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
-  const sambanova = createOpenAI({ apiKey: key, baseURL: 'https://api.sambanova.ai/v1' });
-  keyPool.register({
-    id: `sambanova-${i + 1}`,
-    name: `SambaNova Llama3.1 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
-    supportsStructured: true,
-  });
-});
-
-// -- CEREBRAS --
-getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
-  const cerebras = createOpenAI({ apiKey: key, baseURL: 'https://api.cerebras.ai/v1' });
-  keyPool.register({
-    id: `cerebras-${i + 1}`,
-    name: `Cerebras Llama3.1 70B (${i + 1})`,
-    model: cerebras('gemma-4-31b'),
-    supportsStructured: true,
-  });
-});
-
-// -- HYPERBOLIC --
-getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
-  const hyperbolic = createOpenAI({ apiKey: key, baseURL: 'https://api.hyperbolic.xyz/v1' });
-  keyPool.register({
-    id: `hyperbolic-${i + 1}`,
-    name: `Hyperbolic Llama3.1 70B (${i + 1})`,
-    model: hyperbolic('meta-llama/Llama-3.3-70B-Instruct'),
-    supportsStructured: true,
-  });
-});
+// (Removed dead providers: Minimax, OpenRouter, DeepSeek, SambaNova, Cerebras, Hyperbolic)
 
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
@@ -158,8 +74,8 @@ if (keyPool.size === 0) {
 // 2. GENERATION WITH FALLBACK
 // ------------------------------------------------------------------
 
-const MAX_RETRIES = 3;
-const AI_TIMEOUT_MS = 45_000; // 45s per attempt
+const MAX_RETRIES = 4;
+const AI_TIMEOUT_MS = 45_000; // 45s per attempt to allow full structured JSON completion
 
 /**
  * Wraps a promise with a hard timeout.
@@ -203,8 +119,8 @@ export async function generateObjectWithFallback<T = unknown>(
         (generateObject as any)({
           ...params,
           model: activeKey.model,
-          // Use json mode for everything except Google/Mistral to prevent json_schema crashes
-          ...(!activeKey.id.startsWith('google-') && !activeKey.id.startsWith('mistral-') ? { mode: 'json' } : {}),
+          // Use json mode for models that do not natively support json_schema
+          ...(!activeKey.id.startsWith('google-') && !activeKey.id.startsWith('mistral-') && !activeKey.id.startsWith('cohere-') ? { mode: 'json' } : {}),
         }),
         AI_TIMEOUT_MS,
         activeKey.name,
@@ -216,12 +132,9 @@ export async function generateObjectWithFallback<T = unknown>(
     } catch (error: unknown) {
       const err = error as Error & { name?: string };
       console.warn(`[AI Router] ${activeKey.name} failed (attempt ${attempt}): ${err.message?.slice(0, 120)}`);
-      lastError = error;
-
-      // Schema/validation errors are unrecoverable — don't burn the key
-      if (err.name === 'TypeValidationError' || err.name === 'JSONParseError') {
-        keyPool.markSuccess(activeKey.id); // key is fine, schema is the problem
-        throw error;
+      // If schema/validation fails or no object generated, let the next model try
+      if (err.name === 'TypeValidationError' || err.name === 'JSONParseError' || err.message?.includes('No object generated')) {
+        continue;
       }
 
       keyPool.markFailed(activeKey.id);

@@ -11,7 +11,8 @@ import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/sch
 import { parseGlobalSearchParams } from '@/lib/filters';
 import { AdSlot } from '@/components/shared/AdSlot';
 import { PremiumBanner } from '@/components/shared/PremiumBanner';
-import React from 'react';
+import { DataLoadingState } from '@/components/shared/DataLoadingState';
+import React, { Suspense } from 'react';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { Search, SlidersHorizontal, Inbox, Building2, BookOpen, MapPin, FileText } from 'lucide-react';
@@ -59,7 +60,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { Suspense } from 'react';
 import { unstable_cache } from 'next/cache';
 
 const getUniqueCountries = unstable_cache(async () => {
@@ -166,9 +166,10 @@ export default async function CompliancePage({
             ))}
           </div>
           <Suspense fallback={
-            <div className="py-24 px-4 text-center">
-              <h3 className="text-xl font-semibold mb-2 animate-pulse text-muted-foreground">Loading resources...</h3>
-            </div>
+            <DataLoadingState 
+              title="Loading Compliance Resources..." 
+              subtitle="Fetching regulatory guidelines, tax calculators, and business registration requirements." 
+            />
           }>
             <ResourcesList />
           </Suspense>
@@ -176,9 +177,10 @@ export default async function CompliancePage({
 
         <TabsContent value="businesses" className="space-y-6">
           <Suspense fallback={
-            <div className="py-24 px-4 text-center">
-              <h3 className="text-xl font-semibold mb-2 animate-pulse text-muted-foreground">Loading businesses...</h3>
-            </div>
+            <DataLoadingState 
+              title="Searching Registered Entities..." 
+              subtitle="Scanning official enterprise registries across East Africa." 
+            />
           }>
             <BusinessesList params={params} />
           </Suspense>

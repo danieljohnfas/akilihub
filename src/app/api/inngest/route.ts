@@ -11,6 +11,9 @@ import {
   scrapeRPPARwandaJob,
   scrapePPPAEthiopiaJob,
   scrapeARMPCongoDRCJob,
+  scrapeARMPBurundiJob,
+  scrapeMOFSomaliaJob,
+  scrapeGPOCSouthSudanJob,
 } from "@/inngest/scrape-tenders";
 
 // Compliance (now daily, broad search)
@@ -21,6 +24,9 @@ import {
   scrapeComplianceRwandaJob,
   scrapeComplianceEthiopiaJob,
   scrapeComplianceDRCJob,
+  scrapeComplianceBurundiJob,
+  scrapeComplianceSomaliaJob,
+  scrapeComplianceSouthSudanJob,
 } from "@/inngest/scrape-compliance";
 
 // Jobs (new daily automation)
@@ -31,6 +37,9 @@ import {
   scrapeJobsRwandaJob,
   scrapeJobsEthiopiaJob,
   scrapeJobsDRCJob,
+  scrapeJobsBurundiJob,
+  scrapeJobsSomaliaJob,
+  scrapeJobsSouthSudanJob,
 } from "@/inngest/scrape-jobs";
 
 // Salaries
@@ -41,6 +50,9 @@ import {
   scrapeSalariesRwandaJob,
   scrapeSalariesEthiopiaJob,
   scrapeSalariesDRCJob,
+  scrapeSalariesBurundiJob,
+  scrapeSalariesSomaliaJob,
+  scrapeSalariesSouthSudanJob,
 } from "@/inngest/scrape-salaries";
 
 // Health
@@ -51,6 +63,9 @@ import {
   scrapeHealthRwandaJob,
   scrapeHealthEthiopiaJob,
   scrapeHealthDRCJob,
+  scrapeHealthBurundiJob,
+  scrapeHealthSomaliaJob,
+  scrapeHealthSouthSudanJob,
 } from "@/inngest/scrape-health";
 
 // Alerts and monitoring
@@ -76,6 +91,9 @@ export const { GET, POST, PUT } = serve({
     scrapeRPPARwandaJob,
     scrapePPPAEthiopiaJob,
     scrapeARMPCongoDRCJob,
+    scrapeARMPBurundiJob,
+    scrapeMOFSomaliaJob,
+    scrapeGPOCSouthSudanJob,
 
     // Compliance – 6-country daily broad search
     scrapeComplianceKenyaJob,
@@ -84,6 +102,9 @@ export const { GET, POST, PUT } = serve({
     scrapeComplianceRwandaJob,
     scrapeComplianceEthiopiaJob,
     scrapeComplianceDRCJob,
+    scrapeComplianceBurundiJob,
+    scrapeComplianceSomaliaJob,
+    scrapeComplianceSouthSudanJob,
 
     // Jobs – 6-country daily broad search
     scrapeJobsKenyaJob,
@@ -92,6 +113,9 @@ export const { GET, POST, PUT } = serve({
     scrapeJobsRwandaJob,
     scrapeJobsEthiopiaJob,
     scrapeJobsDRCJob,
+    scrapeJobsBurundiJob,
+    scrapeJobsSomaliaJob,
+    scrapeJobsSouthSudanJob,
     
     // Salaries
     scrapeSalariesKenyaJob,
@@ -100,6 +124,9 @@ export const { GET, POST, PUT } = serve({
     scrapeSalariesRwandaJob,
     scrapeSalariesEthiopiaJob,
     scrapeSalariesDRCJob,
+    scrapeSalariesBurundiJob,
+    scrapeSalariesSomaliaJob,
+    scrapeSalariesSouthSudanJob,
 
     // Health
     scrapeHealthKenyaJob,
@@ -108,6 +135,9 @@ export const { GET, POST, PUT } = serve({
     scrapeHealthRwandaJob,
     scrapeHealthEthiopiaJob,
     scrapeHealthDRCJob,
+    scrapeHealthBurundiJob,
+    scrapeHealthSomaliaJob,
+    scrapeHealthSouthSudanJob,
 
     // Tender new-record alerts (event-driven)
     sendTenderAlertsJob,

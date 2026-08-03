@@ -50,10 +50,9 @@ try {
 const conn = globalForDb.conn ?? postgres(connectionString, {
   // Supabase pooler requires SSL in production. Allow plain TCP locally (Docker).
   ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
-  // Serverless functions must use max: 1 to avoid overwhelming PgBouncer
-  max: 1,
-  idle_timeout: 5,
-  connect_timeout: 4, // 4 seconds max to prevent exceeding Vercel 10s function invocation limits
+  max: 10,
+  idle_timeout: 10,
+  connect_timeout: 8,
   prepare: false, // pgBouncer does not support prepared statements
 });
 
@@ -67,7 +66,7 @@ export type DB = typeof db;
  * Returns the result on success, or [] on failure/timeout.
  * This prevents a slow DB cold start or connection queue from triggering a Vercel 504 timeout.
  */
-export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 4500): Promise<T> {
+export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 9000): Promise<T> {
   let timeoutId: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs);

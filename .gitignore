@@ -44,6 +44,7 @@ next-env.d.ts
 .ai-pool-state.json
 scraper-progress.json
 storage/
+scratch/
 
 # downloaded CLI binaries & zips (never commit these)
 koyeb.zip

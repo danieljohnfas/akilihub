@@ -49,6 +49,27 @@
     "authority": "td:nth-child(3), .entity",
     "deadline":  "td:nth-child(4), .date"
   },
+  "armp_bi": {
+    "row":       "table tr:not(:first-child), .tender-item",
+    "ref":       "td:first-child",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:last-child"
+  },
+  "mof_so": {
+    "row":       "table tr:not(:first-child), .tender-item",
+    "ref":       "td:first-child",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:last-child"
+  },
+  "gpoc_ss": {
+    "row":       "table tr:not(:first-child), .tender-item",
+    "ref":       "td:first-child",
+    "title":     "td:nth-child(2)",
+    "authority": "td:nth-child(3)",
+    "deadline":  "td:last-child"
+  },
   "_fallback": {
     "row":       "table tr:not(:first-child)",
     "ref":       "td:first-child",

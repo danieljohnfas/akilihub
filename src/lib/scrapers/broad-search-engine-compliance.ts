@@ -37,17 +37,17 @@ export async function extractComplianceWithAI(
 Source URL: ${sourceUrl}
 
 Scraped content:
-${enrichedText.substring(0, 15000)}
+${enrichedText.substring(0, 8000)}
 
 Rules:
-- Extract any compliance requirements, official forms, guidelines, or regulatory notices found in the text. Be comprehensive.
+- Extract up to 10 compliance requirements, official forms, guidelines, or regulatory notices found in the text.
 - For 'title': The name of the compliance requirement or form (e.g. "VAT Registration", "PAYE Form").
-- For 'description': A brief explanation of what it is and who needs it.
+- For 'description': A brief explanation of what it is and who needs it (2-3 sentences).
 - For 'category': Must be one of: tax, business_registration, employment, environment, health_safety, sector_specific.
 - For 'issuingAuthority': The government body (e.g. "KRA", "TRA", "URSB").
 - For 'resourceType': Must be one of: form, calculator, guideline, notice.
 - For 'sourceUrl': Look for the direct link to the authority's website, form download link, or original source in the [LINK] sections and return the TRUE origin URL. If it's already the authority's site or no origin link exists, return the provided Source URL.
-- Extract all compliance resources found. Return empty array if none found.
+- Return empty array if none found.
 `;
 
   try {

@@ -15,6 +15,8 @@ import { parseGlobalSearchParams } from '@/lib/filters';
 import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
 import { PremiumBanner } from '@/components/shared/PremiumBanner';
 import { AdSlot } from '@/components/shared/AdSlot';
+import { DataLoadingState } from '@/components/shared/DataLoadingState';
+import React, { Suspense } from 'react';
 
 import type { Metadata } from 'next';
 
@@ -56,7 +58,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { Suspense } from 'react';
 import { unstable_cache } from 'next/cache';
 
 const getAllCountries = unstable_cache(async () => {
@@ -144,9 +145,10 @@ export default async function SalariesPage({
 
       {/* Grid */}
       <Suspense fallback={
-        <div className="py-24 px-4 text-center">
-          <h3 className="text-xl font-semibold mb-2 animate-pulse text-muted-foreground">Loading salary data...</h3>
-        </div>
+        <DataLoadingState 
+          title="Searching Regional Salary Benchmarks..." 
+          subtitle="Comparing anonymous and verified compensation submissions across East Africa." 
+        />
       }>
         <SalariesList params={params} />
       </Suspense>

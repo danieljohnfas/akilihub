@@ -24,21 +24,21 @@ async function sleep(ms: number) {
 async function fetchWithRetry(
   url: string,
   options: RequestInit,
-  maxRetries = 3,
-  baseDelayMs = 500,
+  maxRetries = 2,
+  baseDelayMs = 300,
 ): Promise<Response | null> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const res = await fetch(url, options);
       if (res.ok) return res;
-      console.log(`[fetchWithRetry] ${url} → ${res.status} (attempt ${attempt + 1}/${maxRetries})`);
-    } catch (err) {
-      console.log(`[fetchWithRetry] ${url} error (attempt ${attempt + 1}/${maxRetries}):`, (err as Error).message);
+      if (res.status === 401 || res.status === 403 || res.status === 404 || res.status === 410) {
+        return null; // Don't retry unrecoverable HTTP status codes
+      }
+    } catch {
+      // network/timeout error, proceed to retry
     }
-    // Exponential backoff with jitter: base * 2^attempt + random(0..base)
     if (attempt < maxRetries - 1) {
-      const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * baseDelayMs;
-      await sleep(delay);
+      await sleep(baseDelayMs * Math.pow(2, attempt));
     }
   }
   return null;
@@ -64,7 +64,7 @@ async function extractTextViaSidecar(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(5_000),
     });
 
     if (!res.ok) return null;
@@ -81,61 +81,48 @@ async function extractTextViaSidecar(
 /**
  * Fetches HTML from a URL.
  * Priority:
- *   1. Scrapling Python Sidecar (stealth Chromium — best for Cloudflare sites)
- *   2. Plain HTTP with rotating user-agents + exponential backoff
+ *   1. Plain HTTP with rotating desktop user-agents (fastest: 300-800ms)
+ *   2. Scrapling Python Sidecar for Cloudflare protected sites
  */
 export async function fetchHtml(url: string): Promise<string | null> {
   const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
 
-  // 1. Try Scrapling Sidecar
-  try {
-    const res = await fetch(`${sidecarUrl}/fetch_html`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, use_stealth: true }),
-      signal: AbortSignal.timeout(90_000), // Chromium takes time to start
-    });
+  // 1. Direct plain HTTP with desktop user-agent
+  const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+  const res = await fetchWithRetry(url, {
+    headers: {
+      'User-Agent': ua,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Connection': 'keep-alive',
+    },
+    signal: AbortSignal.timeout(6_000),
+  });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.html && data.html.length > 500) {
-        console.log(`[fetchHtml:Sidecar] Got ${data.html.length} bytes from ${url}`);
-        return data.html;
-      } else if (!data.robots_allowed) {
-        console.warn(`[fetchHtml:Sidecar] robots.txt disallows scraping: ${url}`);
-        return null;
-      }
+  if (res) {
+    const html = await res.text();
+    if (html && html.length > 300) {
+      return html;
     }
-  } catch (err) {
-    console.warn(`[fetchHtml:Sidecar] Unreachable or failed, falling back to plain HTTP:`, (err as Error).message);
   }
 
-  // 2. Fallback: plain HTTP with exponential backoff across multiple UAs
-  for (const ua of USER_AGENTS) {
-    const res = await fetchWithRetry(url, {
-      headers: {
-        'User-Agent': ua,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Cache-Control': 'max-age=0',
-      },
-      signal: AbortSignal.timeout(30_000),
+  // 2. Fallback to Sidecar
+  try {
+    const sidecarRes = await fetch(`${sidecarUrl}/fetch_html`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, use_stealth: false }),
+      signal: AbortSignal.timeout(5_000),
     });
 
-    if (res) {
-      const html = await res.text();
-      if (html && html.length > 500) {
-        console.log(`[fetchHtml:Fallback] Got ${html.length} bytes from ${url}`);
-        return html;
+    if (sidecarRes.ok) {
+      const data = await sidecarRes.json();
+      if (data.success && data.html && data.html.length > 300) {
+        return data.html;
       }
     }
+  } catch {
+    // Sidecar offline or timed out
   }
 
   return null;
@@ -154,20 +141,9 @@ export async function htmlToTextEnriched(
   html: string,
   baseUrl: string,
 ): Promise<{ text: string; pdfLinks: string[] }> {
-  let text = '';
-  let pdfLinks: string[] = [];
-
-  // Try sidecar trafilatura extraction first (best quality)
-  const sidecarResult = await extractTextViaSidecar(baseUrl, html);
-  if (sidecarResult) {
-    console.log(`[htmlToText:trafilatura] ${sidecarResult.text.length} chars, ${sidecarResult.pdfLinks.length} PDF links`);
-    text = sidecarResult.text;
-    pdfLinks = sidecarResult.pdfLinks;
-  } else {
-    // Fallback: local Cheerio extraction
-    text = htmlToText(html, baseUrl);
-    pdfLinks = extractPdfLinksFromHtml(html, baseUrl);
-  }
+  // Fast, instant local Cheerio parsing
+  let text = htmlToText(html, baseUrl);
+  const pdfLinks = extractPdfLinksFromHtml(html, baseUrl);
 
   // Optimize: Actually read the contents of the first 5 PDFs found
   if (pdfLinks.length > 0) {
