@@ -3,42 +3,94 @@ import { discoverJobs, BroadJobResource } from "@/lib/scrapers/broad-search-engi
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
 import { countries } from "@/lib/db/schema/shared";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 
+// ── Thresholds ────────────────────────────────────────────────────────────────
+const JOB_TARGET = 200; // Minimum new inserts before we skip second pass
+
+// ── Country lookup ────────────────────────────────────────────────────────────
 async function getCountryId(countryHint: string): Promise<string | null> {
   const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, countryHint)).limit(1);
   return result.length > 0 ? result[0].id : null;
 }
 
+// ── Batch-insert save (fast path) ─────────────────────────────────────────────
+// Uses batch insert for efficiency (from mass-scrape learnings), falls back
+// to per-item insert on conflict-key violations.
 export async function saveJobs(discovered: BroadJobResource[], countryCode: string): Promise<number> {
   const countryId = await getCountryId(countryCode);
   if (!countryId) return 0;
 
-  let inserted = 0;
-  for (const job of discovered) {
-    try {
-      const rows = await db.insert(jobs).values({
-        title: job.title,
-        companyName: job.companyName,
-        description: job.description,
-        requirements: job.requirements,
-        regionId: job.regionId,
-        countryId,
-        jobType: job.jobType,
-        sourceUrl: job.sourceUrl,
-        postedDate: job.postedDate || new Date(),
-        deadline: job.deadline ?? null,
-        isActive: true,
-      }).onConflictDoNothing().returning({ id: jobs.id });
-      if (rows.length > 0) inserted++;
-    } catch (e) {
-      console.error(`Failed to insert job: ${job.title}`, e);
+  if (discovered.length === 0) return 0;
+
+  // Attempt batch insert first (10-30x faster than one-by-one)
+  try {
+    const values = discovered.map(job => ({
+      title: job.title,
+      companyName: job.companyName || 'Unknown',
+      description: job.description || 'No description',
+      requirements: job.requirements,
+      regionId: job.regionId,
+      countryId,
+      jobType: job.jobType,
+      sourceUrl: job.sourceUrl,
+      postedDate: job.postedDate || new Date(),
+      deadline: job.deadline ?? null,
+      salaryMin: job.salaryMin?.toString() ?? null,
+      salaryMax: job.salaryMax?.toString() ?? null,
+      salaryCurrency: job.salaryCurrency ?? null,
+      isActive: true,
+    }));
+    const rows = await db.insert(jobs).values(values).onConflictDoNothing().returning({ id: jobs.id });
+    return rows.length;
+  } catch {
+    // Batch failed (e.g. unique constraint on one item): fall back to per-item
+    let inserted = 0;
+    for (const job of discovered) {
+      try {
+        const rows = await db.insert(jobs).values({
+          title: job.title,
+          companyName: job.companyName || 'Unknown',
+          description: job.description || 'No description',
+          requirements: job.requirements,
+          regionId: job.regionId,
+          countryId,
+          jobType: job.jobType,
+          sourceUrl: job.sourceUrl,
+          postedDate: job.postedDate || new Date(),
+          deadline: job.deadline ?? null,
+          salaryMin: job.salaryMin?.toString() ?? null,
+          salaryMax: job.salaryMax?.toString() ?? null,
+          salaryCurrency: job.salaryCurrency ?? null,
+          isActive: true,
+        }).onConflictDoNothing().returning({ id: jobs.id });
+        if (rows.length > 0) inserted++;
+      } catch (e) {
+        console.error(`[scrape-jobs] Failed to insert job: ${job.title}`, e);
+      }
     }
+    return inserted;
   }
-  return inserted;
 }
 
+// ── Run all queries for a country, returns total inserted ─────────────────────
+async function runQueriesForCountry(queries: string[], countryCode: string, label: string): Promise<number> {
+  let total = 0;
+  for (let i = 0; i < queries.length; i++) {
+    const query = queries[i];
+    try {
+      const discovered = await discoverJobs(query, 5);
+      const inserted = await saveJobs(discovered, countryCode);
+      total += inserted;
+      console.log(`[${label}] q${i}: "${query}" → +${inserted} (running: ${total})`);
+    } catch (e) {
+      console.error(`[${label}] q${i} failed: ${(e as Error).message}`);
+    }
+  }
+  return total;
+}
 
+// ── Job factory with retry logic ──────────────────────────────────────────────
 function makeJobScraper(
   id: string,
   name: string,
@@ -49,17 +101,28 @@ function makeJobScraper(
   return inngest.createFunction(
     { id, name, triggers: [{ cron }] },
     async ({ step }) => {
-      let totalInserted = 0;
-      for (let i = 0; i < queries.length; i++) {
-        const query = queries[i];
-        const insertedCount = await step.run(`execute-job-scraper-q${i}`, async () => {
-          const discovered = await discoverJobs(query, 5);
-          return await saveJobs(discovered, countryCode);
+      // Pass 1 — run all queries
+      const pass1 = await step.run(`execute-job-scraper-pass1`, async () => {
+        return await runQueriesForCountry(queries, countryCode, `${id}-p1`);
+      });
+
+      let totalInserted = pass1;
+
+      // Pass 2 — only if we fell short of the target (retry on under-performance)
+      if (pass1 < JOB_TARGET) {
+        console.log(`[${id}] Pass 1 yielded ${pass1} — under target ${JOB_TARGET}. Running second pass...`);
+        const pass2 = await step.run(`execute-job-scraper-pass2`, async () => {
+          return await runQueriesForCountry(queries, countryCode, `${id}-p2`);
         });
-        totalInserted += insertedCount;
+        totalInserted += pass2;
+        console.log(`[${id}] Pass 2 added ${pass2}. Grand total: ${totalInserted}`);
       }
 
-      return { message: `Scraped and inserted ${totalInserted} jobs for ${name}.` };
+      return {
+        message: `Scraped and inserted ${totalInserted} jobs for ${name}.`,
+        totalInserted,
+        hitTarget: totalInserted >= JOB_TARGET,
+      };
     }
   );
 }
@@ -80,6 +143,7 @@ export const scrapeJobsKenyaJob = makeJobScraper(
     "UN UNICEF WHO jobs Kenya 2026",
     "government jobs Kenya PSC 2026",
     "teaching education lecturer jobs Kenya 2026",
+    "humanitarian jobs Kenya 2026",           // ← from mass-scrape
   ],
   "KE"
 );
@@ -133,6 +197,7 @@ export const scrapeJobsRwandaJob = makeJobScraper(
     "health medical jobs Rwanda 2026",
     "UN WFP UNHCR jobs Rwanda 2026",
     "engineering infrastructure jobs Rwanda 2026",
+    "government public sector jobs Rwanda 2026",  // ← from mass-scrape
   ],
   "RW"
 );
@@ -188,6 +253,7 @@ export const scrapeJobsBurundiJob = makeJobScraper(
     "santé médecin emploi Burundi 2026",
     "NGO jobs Burundi humanitarian 2026",
     "emplois finances comptabilité Burundi 2026",
+    "jobs vacancies Burundi English 2026",   // ← from mass-scrape
   ],
   "BI"
 );
@@ -206,6 +272,7 @@ export const scrapeJobsSomaliaJob = makeJobScraper(
     "health medical jobs Somalia WHO 2026",
     "site:ngojobsinafrica.com Somalia",
     "AMISOM peacekeeping jobs Somalia 2026",
+    "international NGO Somalia Mogadishu hiring 2026",  // ← from mass-scrape
   ],
   "SO"
 );
@@ -223,6 +290,7 @@ export const scrapeJobsSouthSudanJob = makeJobScraper(
     "jobs vacancies Juba 2026",
     "site:ngojobsinafrica.com South Sudan",
     "MSF IRC jobs South Sudan 2026",
+    "South Sudan international organization jobs 2026",  // ← from mass-scrape
   ],
   "SS"
 );

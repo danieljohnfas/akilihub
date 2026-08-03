@@ -1,7 +1,7 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
-import { searchGoogle } from './broad-search-engine';
+import { searchGoogle, SCRAPING_GUIDELINES } from './broad-search-engine';
 
 export interface BroadSalaryResource {
   jobTitle: string;
@@ -22,22 +22,31 @@ export async function extractSalariesWithAI(text: string, sourceUrl: string): Pr
   const prompt = `You are a specialized AI assistant that extracts salary and compensation data from raw website text.
 Source URL: ${sourceUrl}
 
-Scraped content:
-${text.substring(0, 8000)}
+${SCRAPING_GUIDELINES}
 
-Rules:
-- Extract up to 20 real salary or compensation benchmarks found in the text.
-- The source may be in ANY language (English, French, Arabic, Swahili, etc.). Extract all data regardless of language.
-- For 'jobTitle': The specific role or job title. Keep it in the original language of the source (e.g. "Développeur Logiciel", "Software Engineer").
-- For 'employerName': The name of the company or organization. If generalized benchmark, use "Market Average".
-- For 'jobCategoryName': ALWAYS use a broad English category name regardless of the source language. Use one of: "Engineering", "Healthcare", "Finance", "Education", "Legal", "Management", "Sales & Marketing", "Administration", "Construction", "Agriculture", "Hospitality", "Transport", "General".
-- For 'experienceLevel': Must be one of: entry, mid, senior, executive.
+Scraped content:
+${text.substring(0, 12000)}
+
+SALARY-SPECIFIC EXTRACTION RULES:
+- Extract up to 20 real salary or compensation benchmarks. Extract ALL salary data points visible.
+- The source may be in ANY language. Extract all data regardless of language.
+- For 'jobTitle': The specific role. Keep in the original language of the source.
+- For 'employerName': The company or organization name. If a generalized benchmark or survey,
+  use "Market Average" or the survey name (e.g. "Salary Survey 2026").
+- For 'jobCategoryName': ALWAYS use a broad English category regardless of source language:
+  "Engineering", "Healthcare", "Finance", "Education", "Legal", "Management",
+  "Sales & Marketing", "Administration", "Construction", "Agriculture",
+  "Hospitality", "Transport", "Technology", "General".
+- For 'experienceLevel': Must be one of: entry (0-2 yrs), mid (3-6 yrs), senior (7-12 yrs),
+  executive (12+ yrs or director/C-suite). Infer from context ("junior", "senior", "head of").
 - For 'employmentType': Must be one of: full_time, part_time, contract, consultancy.
-- For 'currency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "CDF", "USD"). Infer from context if not explicit.
-- For 'grossMonthlySalary': The monthly gross salary as a plain number. If given annually, divide by 12.
-- For 'netMonthlySalary': The net salary if stated, otherwise 0 (will map to null).
-- For 'yearsOfExperience': A whole number (integer). If given as a range (e.g. 1-3 years), use the midpoint rounded to the nearest integer. If unknown, use 0.
-- Return empty array if none found.
+- For 'currency': ISO 4217 (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "CDF", "SOS", "SSP", "USD").
+  INFER from context — a salary in Kenya is almost certainly KES, Tanzania is TZS, etc.
+- For 'grossMonthlySalary': Monthly gross as a plain number. If stated annually, divide by 12.
+  If given as a range (e.g. 50,000-80,000), use the MIDPOINT.
+- For 'netMonthlySalary': Net/take-home salary if stated, otherwise 0 (maps to null).
+- For 'yearsOfExperience': Integer. If a range (1-3 yrs), use the midpoint rounded. If unknown, use 0.
+- Return empty array if no salary data found.
 `;
 
   try {
@@ -78,9 +87,9 @@ Rules:
   }
 }
 
-export async function discoverSalaries(query: string, maxPages: number = 3): Promise<BroadSalaryResource[]> {
+export async function discoverSalaries(query: string, maxPages: number = 5): Promise<BroadSalaryResource[]> {
   console.log(`[discoverSalaries] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 10);
+  const urls = await searchGoogle(query, 20);
   console.log(`[discoverSalaries] Found ${urls.length} viable URLs to scrape.`);
 
   const allSalaries: BroadSalaryResource[] = [];

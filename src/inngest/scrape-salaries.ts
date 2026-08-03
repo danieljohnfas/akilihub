@@ -5,6 +5,8 @@ import { salarySubmissions } from "@/lib/db/schema/salaries";
 import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
 
+const SALARY_TARGET = 20; // Second pass if below this threshold
+
 async function getCountryId(countryHint: string): Promise<string | null> {
   const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, countryHint)).limit(1);
   return result.length > 0 ? result[0].id : null;
@@ -40,6 +42,22 @@ export async function saveSalaries(discovered: BroadSalaryResource[], countryCod
 
 export { saveSalaries as saveSalariesDb };
 
+// ── Run all queries for a country ─────────────────────────────────────────────
+async function runSalaryQueries(queries: string[], countryCode: string, label: string): Promise<number> {
+  let total = 0;
+  for (let i = 0; i < queries.length; i++) {
+    try {
+      const discovered = await discoverSalaries(queries[i], 5);
+      const inserted = await saveSalaries(discovered, countryCode);
+      total += inserted;
+      console.log(`[${label}] q${i}: "${queries[i]}" → +${inserted} (running: ${total})`);
+    } catch (e) {
+      console.error(`[${label}] q${i} failed: ${(e as Error).message}`);
+    }
+  }
+  return total;
+}
+
 function makeSalaryScraper(
   id: string,
   name: string,
@@ -50,18 +68,22 @@ function makeSalaryScraper(
   return inngest.createFunction(
     { id, name, triggers: [{ cron }] },
     async ({ step }) => {
-      let totalInserted = 0;
-      for (let i = 0; i < queries.length; i++) {
-        const query = queries[i];
-        const insertedCount = await step.run(`execute-salary-scraper-q${i}`, async () => {
-          // Increase maxPages from 3 to 5 for deeper salary extraction
-          const discovered = await discoverSalaries(query, 5);
-          return await saveSalaries(discovered, countryCode);
+      const pass1 = await step.run(`execute-salary-scraper-pass1`, async () => {
+        return await runSalaryQueries(queries, countryCode, `${id}-p1`);
+      });
+
+      let totalInserted = pass1;
+
+      // Second pass if under target — same queries, new results possible daily
+      if (pass1 < SALARY_TARGET) {
+        console.log(`[${id}] Pass 1 yielded ${pass1} — under target ${SALARY_TARGET}. Running second pass...`);
+        const pass2 = await step.run(`execute-salary-scraper-pass2`, async () => {
+          return await runSalaryQueries(queries, countryCode, `${id}-p2`);
         });
-        totalInserted += insertedCount;
+        totalInserted += pass2;
       }
 
-      return { message: `Scraped and inserted ${totalInserted} salaries for ${name}.` };
+      return { message: `Scraped and inserted ${totalInserted} salaries for ${name}.`, totalInserted };
     }
   );
 }
@@ -76,6 +98,8 @@ export const scrapeSalariesKenyaJob = makeSalaryScraper(
     "accountant finance manager salary Kenya 2026",
     "NGO project officer salary Kenya 2026",
     "government civil servant salary scale Kenya 2026",
+    // ← from mass-scrape
+    "humanitarian worker salary Kenya 2026",
   ],
   "KE"
 );
@@ -90,6 +114,8 @@ export const scrapeSalariesTanzaniaJob = makeSalaryScraper(
     "accountant bank officer salary Tanzania 2026",
     "mshahara wa mtumishi wa umma Tanzania 2026",
     "NGO project manager salary Tanzania 2026",
+    // ← from mass-scrape
+    "finance accounting ajira mshahara Tanzania 2026",
   ],
   "TZ"
 );
@@ -161,6 +187,8 @@ export const scrapeSalariesBurundiJob = makeSalaryScraper(
     "salaire comptable banque Burundi 2026",
     "barème salarial fonctionnaire Burundi 2026",
     "salaire employé ONG Burundi 2026",
+    // ← from mass-scrape
+    "barème salarial Burundi 2026",
   ],
   "BI"
 );

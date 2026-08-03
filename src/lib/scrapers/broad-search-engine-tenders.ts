@@ -2,7 +2,7 @@ import { generateObjectWithFallback } from '../ai/router';
 import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
-import { searchGoogle } from './broad-search-engine';
+import { searchGoogle, SCRAPING_GUIDELINES } from './broad-search-engine';
 
 export interface BroadTenderResource {
   referenceNo: string;
@@ -32,18 +32,27 @@ export async function extractTendersWithAI(
   const prompt = `You are a specialized AI assistant that extracts government tender (procurement) opportunities from raw website text.
 Source URL: ${sourceUrl}
 ${pdfSection}
-Scraped content:
-${text.substring(0, 8000)}
+${SCRAPING_GUIDELINES}
 
-Rules:
-- Extract up to 15 real tender, bid, or procurement postings found in the text.
-- Only extract open, active tenders.
-- For description: Concise summary of requirements/scope (2-4 sentences).
-- For sourceUrl: If this page is an aggregator, look for the original purchasing authority's website link or document link in the [LINK] sections and return the TRUE origin URL. If it's already the authority's site or no origin link exists, return the provided Source URL.
-- If no tenders are found, return an empty array.
-- For referenceNo, if none is explicitly provided, use a short slugified version of the title or generate a unique looking string from the text.
-- Try to classify the category as goods, works, services, or consultancy.
-- If PDF attachment links are listed above, include the most relevant one as the documentUrl in description or note it.
+Scraped content:
+${text.substring(0, 12000)}
+
+TENDER-SPECIFIC EXTRACTION RULES:
+- Extract up to 15 real tender, bid, or procurement postings found in the text. Extract ALL visible, not just the first.
+- Only extract open, active tenders. Skip anything marked closed, awarded, or cancelled.
+- For 'description': Provide a FULL scope of work including: what goods/services are required, the
+  procurement objective, any technical specifications mentioned, and eligibility criteria (3-5 sentences).
+- For 'contractingAuthority': The exact name of the procuring entity (ministry, agency, NGO, UN body).
+- For 'sourceUrl': If this page is an aggregator, look for the original purchasing authority's website
+  link or tender document link in the [LINK] sections and return the TRUE origin URL.
+- For 'referenceNo': Use the official tender/bid reference number. If none is explicitly provided,
+  generate a short slug from the title (e.g. "SUPPLY-MEDICAL-KE-001").
+- For 'category': Classify as goods, works, services, or consultancy using the full description.
+- For 'deadlineIsoString': Closing/submission date in ISO 8601 format. Look for: "deadline",
+  "closing date", "submission date", "date limite de soumission", "tarehe ya kufunga".
+- For 'budgetNumber': Contract value or estimated budget as a plain number. Null if not stated.
+- If PDF attachment links are listed above, include the most relevant document link in description.
+- Return empty array if no active tenders are found.
 `;
 
   try {
@@ -117,7 +126,7 @@ Rules:
 
 export async function discoverTenders(query: string, maxPages: number = 5): Promise<BroadTenderResource[]> {
   console.log(`[discoverTenders] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 20);
+  const urls = await searchGoogle(query, 25);
   console.log(`[discoverTenders] Found ${urls.length} viable URLs to scrape.`);
 
   const allTenders: BroadTenderResource[] = [];

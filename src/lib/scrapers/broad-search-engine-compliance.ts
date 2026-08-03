@@ -1,7 +1,7 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched, fetchAndParseDocument } from './compliance-base';
-import { searchGoogle } from './broad-search-engine';
+import { searchGoogle, SCRAPING_GUIDELINES } from './broad-search-engine';
 
 export interface BroadComplianceResource {
   title: string;
@@ -36,17 +36,26 @@ export async function extractComplianceWithAI(
   const prompt = `You are a specialized AI assistant that extracts business compliance, tax, and registration information from raw website text.
 Source URL: ${sourceUrl}
 
-Scraped content:
-${enrichedText.substring(0, 8000)}
+${SCRAPING_GUIDELINES}
 
-Rules:
-- Extract up to 10 compliance requirements, official forms, guidelines, or regulatory notices found in the text.
-- For 'title': The name of the compliance requirement or form (e.g. "VAT Registration", "PAYE Form").
-- For 'description': A brief explanation of what it is and who needs it (2-3 sentences).
-- For 'category': Must be one of: tax, business_registration, employment, environment, health_safety, sector_specific.
-- For 'issuingAuthority': The government body (e.g. "KRA", "TRA", "URSB").
+Scraped content:
+${enrichedText.substring(0, 12000)}
+
+COMPLIANCE-SPECIFIC EXTRACTION RULES:
+- Extract up to 10 compliance requirements, official forms, guidelines, or regulatory notices.
+  Extract ALL compliance items visible, not just the most prominent.
+- For 'title': The exact name of the compliance requirement or form (e.g. "VAT Registration",
+  "PAYE Form P10", "Formulaire CNSS"). Keep in original language.
+- For 'description': A FULL explanation (3-4 sentences) covering: what it is, who must comply,
+  the filing/submission deadline or frequency, penalties for non-compliance if stated, and any
+  fees involved. This should be comprehensive enough for a business owner to understand their obligation.
+- For 'category': Must be one of: tax, business_registration, employment, environment,
+  health_safety, sector_specific.
+- For 'issuingAuthority': The exact government body or agency (e.g. "KRA", "TRA", "URSB",
+  "RDB", "OBR", "DGI"). Do not abbreviate unknown agencies — spell out the full name.
 - For 'resourceType': Must be one of: form, calculator, guideline, notice.
-- For 'sourceUrl': Look for the direct link to the authority's website, form download link, or original source in the [LINK] sections and return the TRUE origin URL. If it's already the authority's site or no origin link exists, return the provided Source URL.
+- For 'sourceUrl': Look for the direct link to the authority's website, form download link,
+  or original source in the [LINK] sections and return the TRUE origin URL.
 - Return empty array if none found.
 `;
 
@@ -83,7 +92,7 @@ Rules:
 
 export async function discoverCompliance(query: string, maxPages: number = 3): Promise<BroadComplianceResource[]> {
   console.log(`[discoverCompliance] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 10);
+  const urls = await searchGoogle(query, 20);
   console.log(`[discoverCompliance] Found ${urls.length} viable URLs to scrape.`);
 
   const allResources: BroadComplianceResource[] = [];

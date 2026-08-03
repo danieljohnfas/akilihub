@@ -5,6 +5,8 @@ import { healthIndicators, healthDataPoints } from "@/lib/db/schema/health";
 import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
 
+const HEALTH_TARGET = 5; // Second pass if below this threshold
+
 async function getCountryId(countryHint: string): Promise<string | null> {
   const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, countryHint)).limit(1);
   return result.length > 0 ? result[0].id : null;
@@ -48,6 +50,22 @@ export async function saveHealthData(discovered: BroadHealthResource[], countryC
 
 export { saveHealthData as saveHealthDb };
 
+// ── Run all queries for a country ─────────────────────────────────────────────
+async function runHealthQueries(queries: string[], countryCode: string, label: string): Promise<number> {
+  let total = 0;
+  for (let i = 0; i < queries.length; i++) {
+    try {
+      const discovered = await discoverHealth(queries[i], 5);
+      const inserted = await saveHealthData(discovered, countryCode);
+      total += inserted;
+      console.log(`[${label}] q${i}: "${queries[i]}" → +${inserted} (running: ${total})`);
+    } catch (e) {
+      console.error(`[${label}] q${i} failed: ${(e as Error).message}`);
+    }
+  }
+  return total;
+}
+
 function makeHealthScraper(
   id: string,
   name: string,
@@ -58,18 +76,21 @@ function makeHealthScraper(
   return inngest.createFunction(
     { id, name, triggers: [{ cron }] },
     async ({ step }) => {
-      let totalInserted = 0;
-      for (let i = 0; i < queries.length; i++) {
-        const query = queries[i];
-        const insertedCount = await step.run(`execute-health-scraper-q${i}`, async () => {
-          // Increase maxPages from 3 to 5
-          const discovered = await discoverHealth(query, 5);
-          return await saveHealthData(discovered, countryCode);
+      const pass1 = await step.run(`execute-health-scraper-pass1`, async () => {
+        return await runHealthQueries(queries, countryCode, `${id}-p1`);
+      });
+
+      let totalInserted = pass1;
+
+      if (pass1 < HEALTH_TARGET) {
+        console.log(`[${id}] Pass 1 yielded ${pass1} — under target ${HEALTH_TARGET}. Running second pass...`);
+        const pass2 = await step.run(`execute-health-scraper-pass2`, async () => {
+          return await runHealthQueries(queries, countryCode, `${id}-p2`);
         });
-        totalInserted += insertedCount;
+        totalInserted += pass2;
       }
 
-      return { message: `Scraped and inserted ${totalInserted} health data points for ${name}.` };
+      return { message: `Scraped and inserted ${totalInserted} health data points for ${name}.`, totalInserted };
     }
   );
 }

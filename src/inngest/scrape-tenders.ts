@@ -266,7 +266,8 @@ function makePortalJob(portal: (typeof PORTALS)[number]) {
 
         let totalInserted = 0;
 
-        // 1. Try the strategy cascade (Scrapling → Firecrawl → Crawlee)
+        // ── Step 1: Portal-direct scraping (Scrapling → Firecrawl → Crawl4AI) ──
+        // High-quality official procurement portals — structured, verified tenders.
         const engine = buildStrategyEngine();
         try {
           const { result, strategyUsed } = await engine.executeWithFallback({
@@ -274,23 +275,28 @@ function makePortalJob(portal: (typeof PORTALS)[number]) {
             portalType: portal.portalType,
           });
 
+          console.log(`[${portal.id}] ${strategyUsed} returned ${result.length} portal tenders.`);
           if (result.length > 0) {
-            console.log(`[${portal.id}] ${strategyUsed} returned ${result.length} tenders.`);
             const saved = await saveTenderResults(result, countryId);
             totalInserted += saved;
-          } else {
-            console.log(`[${portal.id}] Strategy cascade returned 0 results — falling back to broad search.`);
+            console.log(`[${portal.id}] Portal save: +${saved} (running: ${totalInserted})`);
           }
         } catch (err) {
-          console.warn(`[${portal.id}] All strategies failed: ${(err as Error).message}. Falling back to broad search.`);
+          console.warn(`[${portal.id}] Portal strategies failed: ${(err as Error).message} — continuing to broad search.`);
         }
 
-        // 2. Final fallback: broad Google search + Gemini extraction (no portal URL needed)
-        // We will loop through the array of queries.
+        // ── Step 2: Broad web search — ALWAYS runs regardless of portal result ──
+        // Catches NGO tenders, UNOPS, World Bank, ReliefWeb, etc. that official
+        // portals don't list. This is the gap the manual mass-scrape identified.
         for (const query of portal.broadSearchQueries) {
-          const discovered = await discoverTenders(query, 5);
-          const saved = await saveBroadResults(discovered, countryId);
-          totalInserted += saved;
+          try {
+            const discovered = await discoverTenders(query, 5);
+            const saved = await saveBroadResults(discovered, countryId);
+            totalInserted += saved;
+            console.log(`[${portal.id}] Broad "${query}" → +${saved} (running: ${totalInserted})`);
+          } catch (err) {
+            console.warn(`[${portal.id}] Broad query failed: "${query}" — ${(err as Error).message}`);
+          }
         }
 
         return totalInserted;

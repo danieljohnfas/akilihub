@@ -1,7 +1,7 @@
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched, fetchAndParseDocument } from './compliance-base';
-import { searchGoogle } from './broad-search-engine';
+import { searchGoogle, SCRAPING_GUIDELINES } from './broad-search-engine';
 
 export interface BroadHealthResource {
   indicatorCode: string;
@@ -37,18 +37,27 @@ export async function extractHealthWithAI(
   const prompt = `You are a specialized AI assistant that extracts public health data and statistics from raw website text.
 Source URL: ${sourceUrl}
 
-Scraped content:
-${enrichedText.substring(0, 8000)}
+${SCRAPING_GUIDELINES}
 
-Rules:
-- Extract up to 15 health indicators, statistics, or metrics found in the text.
-- For 'indicatorCode': A short code (e.g. "MMR", "U5MR"). If none, generate a short 3-4 letter acronym based on the name.
-- For 'indicatorName': The full name (e.g. "Maternal Mortality Ratio").
-- For 'unit': The unit of measurement (e.g. "per 100,000 live births", "%").
+Scraped content:
+${enrichedText.substring(0, 12000)}
+
+HEALTH DATA EXTRACTION RULES:
+- Extract up to 20 health indicators, statistics, or metrics. Extract ALL data points visible,
+  including those in tables, lists, charts descriptions, and footnotes.
+- For 'indicatorCode': A short standardized code (e.g. "MMR", "U5MR", "ANC4", "HIV_PREV").
+  Use WHO standard codes where applicable. If none, generate a 3-5 letter acronym from the name.
+- For 'indicatorName': The FULL official name of the indicator
+  (e.g. "Maternal Mortality Ratio", "Under-5 Mortality Rate", "HIV Prevalence").
+- For 'unit': The precise unit of measurement (e.g. "per 100,000 live births", "%",
+  "per 1,000 live births", "cases per 100,000 population"). Be specific, not generic.
 - For 'category': Must be one of: maternal, child, infectious, general.
-- For 'value': The actual statistic or number as a float/integer.
-- For 'year': The year the data represents (e.g. 2023). If not stated, use 2024.
-- Return empty array if none found.
+  Examples: maternal mortality/ANC → maternal; u5/neonatal → child; HIV/malaria/TB → infectious.
+- For 'value': The actual numeric statistic. Extract exact values from tables/text.
+  Do NOT average or estimate. If a range is given (e.g. 120-180), use the midpoint.
+- For 'year': The year the data represents. Look for publication year, survey year (DHS, MICS),
+  or reporting period. If not stated, use the most recent plausible year (2023 or 2024).
+- Return empty array if no health statistics or indicators are found.
 `;
 
   try {
@@ -83,9 +92,9 @@ Rules:
   }
 }
 
-export async function discoverHealth(query: string, maxPages: number = 3): Promise<BroadHealthResource[]> {
+export async function discoverHealth(query: string, maxPages: number = 5): Promise<BroadHealthResource[]> {
   console.log(`[discoverHealth] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 10);
+  const urls = await searchGoogle(query, 20);
   console.log(`[discoverHealth] Found ${urls.length} viable URLs to scrape.`);
 
   const allData: BroadHealthResource[] = [];
