@@ -4,7 +4,7 @@ import { eq, and } from 'drizzle-orm';
 
 // In-memory cache for regions to avoid thousands of DB lookups
 const regionCache = new Map<string, string>(); // "countryCode:regionName" -> regionId
-let cachedCountries: { id: string; code: string }[] | null = null;
+const cachedCountries: { id: string; code: string }[] | null = null;
 
 const COMMON_REGIONS: Record<string, string> = {
   nairobi: 'Nairobi',

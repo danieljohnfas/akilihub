@@ -92,7 +92,7 @@ function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Pro
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function generateObjectWithFallback<T = unknown>(
   params: Record<string, any> & { schema?: ZodType<T> }
 ): Promise<GenerateObjectResult<T>> {
@@ -100,7 +100,7 @@ export async function generateObjectWithFallback<T = unknown>(
     throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
   }
 
-  let lastError: unknown = null;
+  const lastError: unknown = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     let activeKey = keyPool.getNextKey(true);
@@ -114,7 +114,7 @@ export async function generateObjectWithFallback<T = unknown>(
     console.log(`[AI Router] [Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const result = await withHardTimeout(
         (generateObject as any)({
           ...params,
@@ -145,7 +145,7 @@ export async function generateObjectWithFallback<T = unknown>(
   throw lastError ?? new Error('[AI Router] All fallback attempts exhausted with no specific error.');
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function generateTextWithFallback(params: Record<string, any>) {
   if (keyPool.getAvailableCount() === 0) {
     throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
@@ -161,7 +161,7 @@ export async function generateTextWithFallback(params: Record<string, any>) {
     console.log(`[AI Router] [Text][Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const result = await withHardTimeout(
         (generateText as any)({ ...params, model: activeKey.model }),
         AI_TIMEOUT_MS,
