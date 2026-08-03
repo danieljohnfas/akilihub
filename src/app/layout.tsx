@@ -63,7 +63,10 @@ export const metadata: Metadata = {
     site: "@akilibrain",
   },
   alternates: {
-    canonical: BASE_URL,
+    // Do NOT set a global canonical here — Next.js auto-generates the correct
+    // per-page canonical from metadataBase + the current route path.
+    // A hardcoded canonical here would point ALL pages (including /jobs/123)
+    // to the homepage, causing Google to de-index detail pages.
     types: {
       'application/rss+xml': `${BASE_URL}/feed.xml`,
     },
