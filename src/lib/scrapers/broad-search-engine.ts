@@ -34,7 +34,7 @@ async function searchDDGS(query: string, numResults: number): Promise<string[]> 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: query.trim(), max_results: numResults, region: 'wt-wt', time_limit: 'm' }),
-      signal: AbortSignal.timeout(4_000),
+      signal: AbortSignal.timeout(12_000), // 12s — enough time for Render cold start
     });
 
     if (!res.ok) {
@@ -61,11 +61,10 @@ async function searchSerper(query: string, numResults: number): Promise<string[]
   if (!apiKey) return [];
 
   try {
-    const cleanQuery = query.replace(/\bsite:/gi, '').trim();
     const res = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: cleanQuery, num: Math.min(Math.max(numResults, 10), 100) }),
+      body: JSON.stringify({ q: query, num: Math.min(Math.max(numResults, 10), 100) }),
       signal: AbortSignal.timeout(15_000),
     });
 
@@ -89,20 +88,26 @@ async function searchSerper(query: string, numResults: number): Promise<string[]
 
 /**
  * Searches for relevant URLs.
- * Primary:  DuckDuckGo via Python sidecar (FREE — no API key needed)
- * Fallback: Serper.dev (only if SERPER_API_KEY is set and ddgs returns 0 results)
+ *
+ * Priority order (designed for Vercel + Render sidecar architecture):
+ *   1. Serper.dev  — always available, instant, used when SERPER_API_KEY is set
+ *   2. DuckDuckGo via Python sidecar — free but requires sidecar to be warm
+ *
+ * Rationale: SERPER_API_KEY is set in Vercel Production + Preview. The sidecar
+ * (Render free tier) cold-starts in 30-60s, but the old timeout was only 4s.
+ * This was silently killing tenders and compliance scrapers for 12+ days.
  */
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
-  // Always try DuckDuckGo first (free)
-  const ddgsUrls = await searchDDGS(query, numResults);
-  if (ddgsUrls.length > 0) return ddgsUrls;
-
-  // Serper fallback (only if key is available)
+  // 1. Try Serper first — it's instant and always available when key is set
   if (process.env.SERPER_API_KEY) {
-    console.log(`[searchGoogle] DuckDuckGo returned 0 results — falling back to Serper`);
     const serperUrls = await searchSerper(query, numResults);
     if (serperUrls.length > 0) return serperUrls;
+    console.warn(`[searchGoogle] Serper returned 0 results — trying DuckDuckGo sidecar`);
   }
+
+  // 2. DuckDuckGo via sidecar (free fallback)
+  const ddgsUrls = await searchDDGS(query, numResults);
+  if (ddgsUrls.length > 0) return ddgsUrls;
 
   console.warn(`[searchGoogle] All search engines returned 0 results for: "${query}"`);
   return [];
