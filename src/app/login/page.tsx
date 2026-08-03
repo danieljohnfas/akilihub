@@ -10,6 +10,7 @@ import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 export const metadata = {
   title: 'Login - AkiliBrain',
   description: 'Log in to your AkiliBrain account to access personalized alerts and settings.',
+  robots: { index: false, follow: false },
 };
 
 export default async function LoginPage({

@@ -10,7 +10,9 @@ import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 export const metadata = {
   title: 'Sign Up - AkiliBrain',
   description: 'Create an AkiliBrain account to set up alerts for tenders and jobs.',
+  robots: { index: false, follow: false },
 };
+
 
 export default async function SignupPage({
   searchParams,
