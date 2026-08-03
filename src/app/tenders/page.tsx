@@ -61,6 +61,7 @@ const PAGE_SIZE = 20;
 
 import { Suspense } from 'react';
 import { unstable_cache } from 'next/cache';
+const FALLBACK_COUNTRIES = ['Burundi', 'Democratic Republic of the Congo', 'Ethiopia', 'Kenya', 'Rwanda', 'Somalia', 'South Sudan', 'Tanzania', 'Uganda'];
 
 const getUniqueCountries = unstable_cache(async () => {
   const uniqueCountriesData = await safeQuery(
@@ -68,7 +69,8 @@ const getUniqueCountries = unstable_cache(async () => {
       .from(tenders)
       .innerJoin(countries, eq(tenders.countryId, countries.id))
   );
-  return uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+  const list = uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
+  return list.length > 0 ? list : FALLBACK_COUNTRIES;
 }, ['tenders-unique-countries'], { revalidate: 3600 });
 
 export default async function TendersPage({

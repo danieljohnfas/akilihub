@@ -61,10 +61,12 @@ const PAGE_SIZE = 30;
 
 import { Suspense } from 'react';
 import { unstable_cache } from 'next/cache';
+const FALLBACK_COUNTRIES = ['Burundi', 'Democratic Republic of the Congo', 'Ethiopia', 'Kenya', 'Rwanda', 'Somalia', 'South Sudan', 'Tanzania', 'Uganda'];
 
 const getSortedCountries = unstable_cache(async () => {
   const countriesData = await safeQuery(db.select({ name: countries.name }).from(countries));
-  return countriesData.map(c => c.name).sort();
+  const list = countriesData.map(c => c.name).sort();
+  return list.length > 0 ? list : FALLBACK_COUNTRIES;
 }, ['countries-list'], { revalidate: 3600 });
 
 export default async function JobsPage({

@@ -52,8 +52,8 @@ const conn = globalForDb.conn ?? postgres(connectionString, {
   ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
   // Serverless functions must use max: 1 to avoid overwhelming PgBouncer
   max: 1,
-  idle_timeout: 20,
-  connect_timeout: 30,
+  idle_timeout: 5,
+  connect_timeout: 4, // 4 seconds max to prevent exceeding Vercel 10s function invocation limits
   prepare: false, // pgBouncer does not support prepared statements
 });
 
@@ -63,16 +63,24 @@ export const db = drizzle(conn, { schema });
 export type DB = typeof db;
 
 /**
- * safeQuery - wraps a db query promise in a try/catch.
- * Returns the result on success, or [] on failure.
- * This prevents a DB misconfiguration from crashing the entire page with a 500.
+ * safeQuery - wraps a db query promise in a try/catch and race-timeout.
+ * Returns the result on success, or [] on failure/timeout.
+ * This prevents a slow DB cold start or connection queue from triggering a Vercel 504 timeout.
  */
-export async function safeQuery<T extends unknown[]>(query: Promise<T>): Promise<T> {
+export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 4500): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
   try {
-    return await query;
+    const result = await Promise.race([query, timeoutPromise]);
+    return result;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[DB Error] safeQuery caught:', message);
     return [] as unknown as T;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
