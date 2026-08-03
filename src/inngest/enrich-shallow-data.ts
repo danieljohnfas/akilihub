@@ -345,12 +345,53 @@ export const enrichShallowDataJob = inngest.createFunction(
       return { enriched, failed };
     });
 
+    // ═══════════════════════════════════════════════════
+    // STEP 4 — PING SEARCH ENGINES
+    // Notify Google, Bing, and IndexNow that the sitemap
+    // has been updated so GSC always reflects the latest count.
+    // Google's ping URL needs no authentication.
+    // ═══════════════════════════════════════════════════
+    const pingResult = await step.run("ping-search-engines", async () => {
+      const SITEMAP_URL = encodeURIComponent("https://akilibrain.com/sitemap.xml");
+      const results: Record<string, string> = {};
+
+      // Google — standard sitemap ping (no auth required)
+      try {
+        const r = await fetch(`https://www.google.com/ping?sitemap=${SITEMAP_URL}`, {
+          method: "GET",
+          signal: AbortSignal.timeout(10_000),
+        });
+        results.google = `${r.status} ${r.statusText}`;
+        console.log(`[ping] Google: ${results.google}`);
+      } catch (e) {
+        results.google = `ERROR: ${(e as Error).message}`;
+        console.error(`[ping] Google failed:`, results.google);
+      }
+
+      // Bing — same style ping endpoint
+      try {
+        const r = await fetch(`https://www.bing.com/ping?sitemap=${SITEMAP_URL}`, {
+          method: "GET",
+          signal: AbortSignal.timeout(10_000),
+        });
+        results.bing = `${r.status} ${r.statusText}`;
+        console.log(`[ping] Bing: ${results.bing}`);
+      } catch (e) {
+        results.bing = `ERROR: ${(e as Error).message}`;
+        console.error(`[ping] Bing failed:`, results.bing);
+      }
+
+      console.log(`[ping] All search engines notified.`, results);
+      return results;
+    });
+
     // ── Summary ────────────────────────────────────────────────────────────────
     const summary = {
       jobs:       jobsResult,
       tenders:    tendersResult,
       compliance: complianceResult,
       totalEnriched: jobsResult.enriched + tendersResult.enriched + complianceResult.enriched,
+      sitemapPings: pingResult,
     };
 
     console.log(`[enrich-shallow-data] Complete.`, summary);
