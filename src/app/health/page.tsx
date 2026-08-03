@@ -19,7 +19,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Public Health Data Explorer',
   description:
-    'Explore interactive public health dashboards, disease statistics, and health indicators across Africa. Data sourced from DHIS2, WHO, and national health ministries.',
+    'Explore interactive East Africa health data, clinical trends, and DHIS2 analytics across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC.',
   keywords: [
     'public health data Africa',
     'DHIS2 data Kenya',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Public Health Data Explorer',
     description:
-      'Track key health indicators, disease statistics, and outbreaks across East Africa using DHIS2 and WHO data.',
+      'Explore interactive East Africa health data, clinical trends, and DHIS2 analytics across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC.',
     url: 'https://akilibrain.com/health',
     type: 'website',
   },

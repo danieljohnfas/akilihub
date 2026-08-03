@@ -25,7 +25,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Government Tenders in East Africa',
   description:
-    'Browse the latest government tenders, procurement opportunities, and contracts across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and wider Africa. Updated hourly.',
+    'Access public tenders and procurement notices across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and East Africa. Sourced and updated daily.',
   keywords: [
     'government tenders Kenya',
     'tenders East Africa',
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Government Tenders in East Africa',
     description:
-      'Browse the latest government tenders and procurement opportunities across East Africa — Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region.',
+      'Access public tenders and procurement notices across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and East Africa. Sourced and updated daily.',
     url: 'https://akilibrain.com/tenders',
     type: 'website',
   },
@@ -120,6 +120,12 @@ export default async function TendersPage({
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Procurement Directory', url: 'https://akilibrain.com/tenders' },
+        ])}
+      />
       {/* Header & Search */}
       <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
         <div className="space-y-4 flex flex-col items-center">

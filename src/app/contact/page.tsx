@@ -8,11 +8,25 @@ import {
   Clock,
   Globe,
 } from 'lucide-react';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildBreadcrumbSchema } from '@/components/seo/schemas';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
   description:
-    'Get in touch with the AkiliBrain team. General enquiries, data/privacy requests, partnership opportunities, and bug reports. We typically respond within 2 business days.',
+    'Get in touch with the AkiliBrain team for general enquiries, data privacy requests, partnership opportunities, and technical support across East Africa.',
+  openGraph: {
+    title: 'Contact Us | AkiliBrain Support & Enquiries',
+    description:
+      'Get in touch with the AkiliBrain team for general enquiries, data privacy requests, partnership opportunities, and technical support across East Africa.',
+    url: 'https://akilibrain.com/contact',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Contact Us | AkiliBrain Support & Enquiries',
+    description: 'Get in touch with the AkiliBrain team.',
+  },
   alternates: {
     canonical: 'https://akilibrain.com/contact',
   },
@@ -68,6 +82,12 @@ const contacts = [
 export default function ContactPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Contact Us', url: 'https://akilibrain.com/contact' },
+        ])}
+      />
       <div className="space-y-10">
 
         {/* Header */}

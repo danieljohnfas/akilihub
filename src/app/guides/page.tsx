@@ -3,9 +3,36 @@ import { guides } from '@/lib/db/schema/guides';
 import { eq, desc } from 'drizzle-orm';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Professional Guides & Insights | AkiliBrain',
-  description: 'Deep dives, data analysis, and professional guides for East African markets.',
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildBreadcrumbSchema } from '@/components/seo/schemas';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Professional Guides & Regional Insights',
+  description:
+    'Expert guides on regional procurement, career advancement, salary negotiation, and business compliance across East Africa and DRC.',
+  keywords: [
+    'East Africa business guides',
+    'tender guides Kenya',
+    'career advice East Africa',
+    'salary negotiation guides Africa',
+    'procurement strategies Africa',
+  ],
+  openGraph: {
+    title: 'Professional Guides & Regional Insights | AkiliBrain',
+    description:
+      'Expert guides on regional procurement, career advancement, salary negotiation, and business compliance across East Africa and DRC.',
+    url: 'https://akilibrain.com/guides',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Professional Guides & Regional Insights | AkiliBrain',
+    description: 'Expert guides on procurement, careers, salaries, and compliance across East Africa.',
+  },
+  alternates: {
+    canonical: 'https://akilibrain.com/guides',
+  },
 };
 
 // Revalidate every hour
@@ -18,6 +45,12 @@ export default async function GuidesIndexPage() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl space-y-8">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Intelligence & Guides', url: 'https://akilibrain.com/guides' },
+        ])}
+      />
       <header className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Intelligence & Guides</h1>
         <p className="text-xl text-muted-foreground">

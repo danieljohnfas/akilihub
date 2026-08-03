@@ -25,7 +25,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Jobs & Careers in East Africa',
   description:
-    'Browse thousands of job openings and career opportunities across East Africa — Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region. Full-time, part-time, remote, and internship roles updated daily.',
+    'Browse active job openings and career opportunities across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and East Africa. Sourced and updated daily.',
   keywords: [
     'jobs Kenya',
     'careers East Africa',
@@ -43,14 +43,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Jobs & Careers in East Africa',
     description:
-      'Discover thousands of active job openings across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region. Updated daily from across the web.',
+      'Browse active job openings and career opportunities across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and East Africa. Sourced and updated daily.',
     url: 'https://akilibrain.com/jobs',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Jobs & Careers in East Africa',
-    description: 'Discover thousands of active job openings across East Africa. Updated daily.',
+    description: 'Browse active job openings and career opportunities across East Africa. Updated daily.',
   },
   alternates: {
     canonical: 'https://akilibrain.com/jobs',
@@ -77,6 +77,12 @@ export default async function JobsPage({
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Jobs & Careers', url: 'https://akilibrain.com/jobs' },
+        ])}
+      />
       {/* Header */}
       <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
         <div className="space-y-4 flex flex-col items-center">

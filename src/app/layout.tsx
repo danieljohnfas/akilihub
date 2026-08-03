@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     default: "AkiliBrain | East Africa's Professional Intelligence Platform",
     template: "%s | AkiliBrain",
   },
-  description: "Find jobs, tenders & compliance data in East Africa.",
+  description: "East Africa's unified intelligence hub for curated government tenders, verified job openings, business compliance, and market salaries.",
   keywords: [
     "government tenders Kenya",
     "procurement East Africa",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "AkiliBrain",
     title: "AkiliBrain | East Africa's Professional Intelligence Platform",
-    description: "Find jobs, tenders & compliance data in East Africa.",
+    description: "East Africa's unified intelligence hub for curated government tenders, verified job openings, business compliance, and market salaries.",
     url: BASE_URL,
     locale: "en_KE",
     images: [
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AkiliBrain | East Africa's Professional Intelligence Platform",
-    description: "Find jobs, tenders & compliance data in East Africa.",
+    description: "East Africa's unified intelligence hub for curated government tenders, verified job openings, business compliance, and market salaries.",
     images: ["/og.png"],
     site: "@akilibrain",
   },

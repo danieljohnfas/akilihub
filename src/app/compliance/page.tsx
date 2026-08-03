@@ -25,7 +25,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Business Registry & Compliance',
   description:
-    'Search and verify registered businesses across East Africa. Access compliance requirements, permits, and licensing guides for Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region.',
+    'Search registered companies, verify compliance status, and find licensing requirements across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC.',
   keywords: [
     'business registry Kenya',
     'company search East Africa',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Business Registry & Compliance',
     description:
-      'Search registered companies and verify compliance across African jurisdictions — Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and more.',
+      'Search registered companies, verify compliance status, and find licensing requirements across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC.',
     url: 'https://akilibrain.com/compliance',
     type: 'website',
   },
@@ -127,6 +127,12 @@ export default async function CompliancePage({
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Business Registry', url: 'https://akilibrain.com/compliance' },
+        ])}
+      />
       {/* Header & Search */}
       <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
         <div className="space-y-4 flex flex-col items-center">

@@ -1,10 +1,24 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildBreadcrumbSchema } from '@/components/seo/schemas';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'AkiliBrain Privacy Policy — how we collect, use, and protect your data. Covers cookies, Google AdSense advertising, GDPR/CCPA rights, and data retention.',
+    'AkiliBrain Privacy Policy — how we collect, handle, and protect user data across East Africa intelligence services.',
+  openGraph: {
+    title: 'Privacy Policy | AkiliBrain Data Protection',
+    description:
+      'AkiliBrain Privacy Policy — how we collect, handle, and protect user data across East Africa intelligence services.',
+    url: 'https://akilibrain.com/privacy',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Privacy Policy | AkiliBrain',
+    description: 'How we collect, handle, and protect user data.',
+  },
   alternates: {
     canonical: 'https://akilibrain.com/privacy',
   },
@@ -16,6 +30,12 @@ const CONTACT_EMAIL = 'privacy@akilibrain.com';
 export default function PrivacyPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Privacy Policy', url: 'https://akilibrain.com/privacy' },
+        ])}
+      />
       <div className="space-y-10">
 
         {/* Header */}

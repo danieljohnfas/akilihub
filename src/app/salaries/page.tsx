@@ -21,7 +21,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Salary Database East Africa',
   description:
-    'Explore transparent, crowdsourced salary data for public and private sector roles across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider region. Negotiate better compensation with real market data.',
+    'Explore transparent, crowdsourced salary data across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC. Compare compensation by role.',
   keywords: [
     'salary Kenya',
     'salary database East Africa',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Salary Database East Africa',
     description:
-      'Crowdsourced compensation data for public and private sector roles across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, and the wider African market.',
+      'Explore transparent, crowdsourced salary data across Kenya, Tanzania, Uganda, Rwanda, Ethiopia, and DRC. Compare compensation by role.',
     url: 'https://akilibrain.com/salaries',
     type: 'website',
   },
@@ -112,6 +112,12 @@ export default async function SalariesPage({
 
   return (
     <div className="container py-8 max-w-7xl mx-auto space-y-8">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Salary Database', url: 'https://akilibrain.com/salaries' },
+        ])}
+      />
       {/* Header & Search */}
       <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
         <div className="space-y-4 flex flex-col items-center">

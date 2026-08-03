@@ -1,10 +1,24 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildBreadcrumbSchema } from '@/components/seo/schemas';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
-    'AkiliBrain Terms of Service — your rights and responsibilities when using our platform. Covers intellectual property, user-generated content, disclaimers, and governing law.',
+    'AkiliBrain Terms of Service — terms of access, acceptable use, intellectual property, and community guidelines.',
+  openGraph: {
+    title: 'Terms of Service | AkiliBrain User Agreement',
+    description:
+      'AkiliBrain Terms of Service — terms of access, acceptable use, intellectual property, and community guidelines.',
+    url: 'https://akilibrain.com/terms',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Terms of Service | AkiliBrain',
+    description: 'Terms of access, acceptable use, and platform guidelines.',
+  },
   alternates: {
     canonical: 'https://akilibrain.com/terms',
   },
@@ -15,6 +29,12 @@ const LAST_UPDATED = 'July 2026';
 export default function TermsPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Terms of Service', url: 'https://akilibrain.com/terms' },
+        ])}
+      />
       <div className="space-y-10">
 
         {/* Header */}

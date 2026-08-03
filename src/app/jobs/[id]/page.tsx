@@ -14,6 +14,9 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { buildJobPostingSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
   const data = await safeQuery(

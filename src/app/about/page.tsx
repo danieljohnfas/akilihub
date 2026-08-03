@@ -13,10 +13,25 @@ import {
   Users,
 } from 'lucide-react';
 
+import { JsonLd } from '@/components/seo/JsonLd';
+import { buildBreadcrumbSchema } from '@/components/seo/schemas';
+
 export const metadata: Metadata = {
   title: 'About AkiliBrain',
   description:
-    "Learn about AkiliBrain — East Africa's Professional Intelligence Platform. Our mission, story, expertise in DHIS2 and health information systems, and the real data sources behind every module.",
+    "AkiliBrain is East Africa's leading open intelligence platform for government tenders, job opportunities, business compliance, and health data.",
+  openGraph: {
+    title: 'About AkiliBrain | Mission & Data Intelligence',
+    description:
+      "AkiliBrain is East Africa's leading open intelligence platform for government tenders, job opportunities, business compliance, and health data.",
+    url: 'https://akilibrain.com/about',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About AkiliBrain | Mission & Data Intelligence',
+    description: "East Africa's leading open intelligence platform.",
+  },
   alternates: {
     canonical: 'https://akilibrain.com/about',
   },
@@ -109,6 +124,12 @@ const dataPrinciples = [
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'About AkiliBrain', url: 'https://akilibrain.com/about' },
+        ])}
+      />
       <div className="space-y-12">
 
         {/* Hero */}

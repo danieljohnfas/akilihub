@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Zap, TerminalSquare } from "lucide-react";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildBreadcrumbSchema } from "@/components/seo/schemas";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: 'Developer API & Toolbox',
   description:
-    'Access the AkiliBrain developer API for East Africa intelligence data. RESTful endpoints for tenders, jobs, health indicators, and salaries with comprehensive documentation.',
+    'Access developer APIs, FHIR proxies, DHIS2 integrations, and open data for East Africa tender and job intelligence.',
   keywords: [
     'AkiliBrain API',
     'East Africa data API',
@@ -24,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Developer API & Toolbox',
     description:
-      'Integrate East Africa intelligence data into your apps — tenders, jobs, health, and salaries via RESTful API.',
+      'Access developer APIs, FHIR proxies, DHIS2 integrations, and open data for East Africa tender and job intelligence.',
     url: 'https://akilibrain.com/developers',
     type: 'website',
   },
@@ -41,6 +43,12 @@ export const metadata: Metadata = {
 export default function DevelopersPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
+      <JsonLd
+        schema={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://akilibrain.com' },
+          { name: 'Developer API', url: 'https://akilibrain.com/developers' },
+        ])}
+      />
       <div className="flex flex-col space-y-6 mb-12">
         <div>
           <h1 className="text-4xl font-bold tracking-tight mb-3">AkiliBrain API</h1>
