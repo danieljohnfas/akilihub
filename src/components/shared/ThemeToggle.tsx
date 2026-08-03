@@ -10,7 +10,7 @@ export function ThemeToggle() {
   
   // To avoid hydration mismatch errors, we delay rendering the button state until mounted
   const [mounted, setMounted] = React.useState(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => { setMounted(true) }, []);
 
   if (!mounted) {
