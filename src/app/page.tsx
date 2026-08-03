@@ -10,6 +10,9 @@ import { LiveStats } from '@/components/home/LiveStats';
 import { LeadCapture } from '@/components/home/LeadCapture';
 import { Suspense } from 'react';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const features = [
   {
     title: "Procurement Intelligence",
