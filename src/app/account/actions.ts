@@ -101,3 +101,23 @@ export async function toggleAlert(alertId: string, isActive: boolean) {
     console.error('Error toggling alert:', error);
   }
 }
+
+export async function toggleEmailUpdates(enabled: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  try {
+    await db.update(users)
+      .set({ emailUpdates: enabled })
+      .where(eq(users.id, user.id));
+
+    revalidatePath('/account');
+  } catch (error: any) {
+    console.error('Error toggling email updates:', error);
+  }
+}
+

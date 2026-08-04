@@ -10,9 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { updateProfile, createAlert, deleteAlert, toggleAlert } from './actions';
+import { updateProfile, createAlert, deleteAlert, toggleAlert, toggleEmailUpdates } from './actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, User, Trash2, Bookmark } from 'lucide-react';
+import { Bell, User, Trash2, Bookmark, Mail, CheckCircle2, XCircle } from 'lucide-react';
 import { JobCard } from '@/components/jobs/JobCard';
 import { TenderCard } from '@/components/tenders/TenderCard';
 
@@ -196,9 +196,45 @@ export default async function AccountPage() {
           </TabsContent>
 
           <TabsContent value="alerts" className="space-y-6">
+            <div className="rounded-xl border border-white/10 bg-black/40 p-6 md:p-8 backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-indigo-400" />
+                  Opportunity Recommendations & Intelligence Digest
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Receive personalized tender matches, job postings, and weekly East African intelligence recaps directly to your inbox.
+                </p>
+              </div>
+              <div>
+                <form action={async () => {
+                  'use server';
+                  await toggleEmailUpdates(!dbUser?.emailUpdates);
+                }}>
+                  <Button
+                    type="submit"
+                    variant={dbUser?.emailUpdates ? 'default' : 'outline'}
+                    className={dbUser?.emailUpdates ? 'bg-emerald-600 hover:bg-emerald-500 text-white font-medium' : 'border-white/20 text-muted-foreground'}
+                  >
+                    {dbUser?.emailUpdates ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Subscribed
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Unsubscribed (Click to Enable)
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </div>
+
             <div className="rounded-xl border border-white/10 bg-black/40 p-6 md:p-8 backdrop-blur-xl">
-              <h2 className="text-xl font-semibold mb-2">Create New Alert</h2>
-              <p className="text-sm text-muted-foreground mb-6">Get notified when new data matches your interests.</p>
+              <h2 className="text-xl font-semibold mb-2">Create Custom Keyword Alert</h2>
+              <p className="text-sm text-muted-foreground mb-6">Get notified when new data matches your custom keywords.</p>
               
               <form action={createAlert} className="space-y-4 max-w-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
