@@ -3,7 +3,7 @@ import { db } from '@/lib/db/client';
 import { tenders } from '@/lib/db/schema/tenders';
 import { complianceRequirements } from '@/lib/db/schema/compliance';
 import { salarySubmissions } from '@/lib/db/schema/salaries';
-import { sql } from 'drizzle-orm';
+import { sql, and, eq, or, isNull, gte } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +39,8 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   try {
+    const now = new Date();
+
     // Run parallel FTS across all modules
     const [tenderResults, complianceResults, salaryResults] = await Promise.all([
       db.select({
@@ -47,7 +49,13 @@ export async function GET(request: Request) {
         description: tenders.contractingAuthority,
       })
         .from(tenders)
-        .where(sql`to_tsvector('english', ${tenders.title} || ' ' || coalesce(${tenders.description}, '')) @@ plainto_tsquery('english', ${query})`)
+        .where(
+          and(
+            eq(tenders.status, 'open'),
+            or(isNull(tenders.deadline), gte(tenders.deadline, now)),
+            sql`to_tsvector('english', ${tenders.title} || ' ' || coalesce(${tenders.description}, '')) @@ plainto_tsquery('english', ${query})`
+          )
+        )
         .limit(limit).offset(offset),
 
       db.select({

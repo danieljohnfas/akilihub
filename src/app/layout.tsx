@@ -10,6 +10,7 @@ import { ClarityAnalytics } from "@/components/analytics/Clarity";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 const inter = Inter({ subsets: ["latin"] });
 
 const BASE_URL = "https://akilibrain.com";
@@ -105,6 +106,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ClarityAnalytics />
+        <ActivityTracker />
         <PostHogProvider>
           <ThemeProvider
             attribute="class"

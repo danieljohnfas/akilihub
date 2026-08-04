@@ -11,6 +11,10 @@ export const users = pgTable('users', {
   regionId: uuid('region_id').references(() => regions.id),
   isPro: boolean('is_pro').notNull().default(false),
   proExpiresAt: timestamp('pro_expires_at'),
+  lastSeenAt: timestamp('last_seen_at'),
+  lastSearchQuery: text('last_search_query'),
+  emailUpdates: boolean('email_updates').notNull().default(true),
+  welcomeEmailSent: boolean('welcome_email_sent').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

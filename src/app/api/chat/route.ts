@@ -9,7 +9,7 @@ import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';
 import { countries, regions } from '@/lib/db/schema/shared';
 import { userDocuments } from '@/lib/db/schema/documents';
-import { ilike, or, desc, eq } from 'drizzle-orm';
+import { ilike, or, desc, eq, and, isNull, gte } from 'drizzle-orm';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -126,7 +126,7 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
           }),
           execute: async ({ keyword }: { keyword: string }) => {
             const safeKeyword = keyword.trim().substring(0, 100);
-            console.log(`[AI Tool] Searching tenders for: ${safeKeyword}`);
+            const now = new Date();
             const found = await db.select({
               title: tenders.title,
               authority: tenders.contractingAuthority,
@@ -135,7 +135,13 @@ Context: ${JSON.stringify(contextParams)}${pageContext}${documentContext}`;
               deadline: tenders.deadline
             })
             .from(tenders)
-            .where(or(ilike(tenders.title, `%${safeKeyword}%`), ilike(tenders.description, `%${safeKeyword}%`)))
+            .where(
+              and(
+                eq(tenders.status, 'open'),
+                or(isNull(tenders.deadline), gte(tenders.deadline, now)),
+                or(ilike(tenders.title, `%${safeKeyword}%`), ilike(tenders.description, `%${safeKeyword}%`))
+              )
+            )
             .orderBy(desc(tenders.publishedAt))
             .limit(10);
             return JSON.stringify(found);

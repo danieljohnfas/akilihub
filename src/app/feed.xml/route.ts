@@ -60,7 +60,12 @@ export async function GET() {
       })
       .from(tenders)
       .leftJoin(countries, eq(tenders.countryId, countries.id))
-      .where(eq(tenders.status, 'open'))
+      .where(
+        and(
+          eq(tenders.status, 'open'),
+          or(isNull(tenders.deadline), gt(tenders.deadline, now))
+        )
+      )
       .orderBy(desc(tenders.updatedAt))
       .limit(20)
   );

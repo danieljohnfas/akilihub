@@ -69,7 +69,8 @@ import {
 } from "@/inngest/scrape-health";
 
 // Alerts and monitoring
-import { sendTenderAlertsJob, sendDailyDigestJob, sendWeeklyNewsletterJob } from "@/inngest/send-alerts";
+import { sendTenderAlertsJob, sendDailyDigestJob, sendWeeklyNewsletterJob, sendReengagementAlertsJob } from "@/inngest/send-alerts";
+import { sendWelcomeEmailsJob } from "@/inngest/send-welcome";
 import { fetchHealthDataJob } from "@/inngest/fetch-health";
 import { syncHealthDataJob } from "@/inngest/sync-health-data";
 import { enforceDataFreshnessJob } from "@/inngest/enforce-freshness";
@@ -148,6 +149,8 @@ export const { GET, POST, PUT } = serve({
     // Scheduled Newsletters and Digests
     sendDailyDigestJob,
     sendWeeklyNewsletterJob,
+    sendReengagementAlertsJob,
+    sendWelcomeEmailsJob,
 
     // Health data — WHO GHO + DHIS2 sync (Monday 03:00 UTC)
     fetchHealthDataJob,

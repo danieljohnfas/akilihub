@@ -17,6 +17,7 @@ import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterB
 import { AdSlot } from '@/components/shared/AdSlot';
 import { PremiumBanner } from '@/components/shared/PremiumBanner';
 import { DataLoadingState } from '@/components/shared/DataLoadingState';
+import { SearchTracker } from '@/components/analytics/SearchTracker';
 import React, { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
@@ -262,6 +263,7 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
 
   return (
     <>
+      {q && <SearchTracker query={q} module="tenders" />}
       {data.length > 0 && <JsonLd schema={itemListSchema} />}
       <JsonLd schema={breadcrumbSchema} />
       

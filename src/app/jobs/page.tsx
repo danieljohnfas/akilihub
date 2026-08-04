@@ -17,6 +17,7 @@ import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { AdSlot } from '@/components/shared/AdSlot';
 import { PremiumBanner } from '@/components/shared/PremiumBanner';
 import { DataLoadingState } from '@/components/shared/DataLoadingState';
+import { SearchTracker } from '@/components/analytics/SearchTracker';
 import React, { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
@@ -280,6 +281,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
 
   return (
     <>
+      {q && <SearchTracker query={q} module="jobs" />}
       {data.length > 0 && <JsonLd schema={itemListSchema} />}
       <JsonLd schema={breadcrumbSchema} />
       

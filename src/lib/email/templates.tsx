@@ -590,3 +590,189 @@ export function WeeklyNewsletterEmail({ name, topTenders, topJobs }: WeeklyNewsl
     </EmailWrapper>
   );
 }
+
+// ─── 7. Re-engagement / Inactivity Reminder ──────────────────────────────────
+
+export interface ReengagementItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  url: string;
+  type: "tender" | "job";
+}
+
+export interface ReengagementEmailProps {
+  name?: string;
+  lastSearchQuery?: string;
+  recommendations: ReengagementItem[];
+  daysSinceLastSeen: number;
+  userId: string;
+}
+
+export function ReengagementEmail({
+  name,
+  lastSearchQuery,
+  recommendations,
+  daysSinceLastSeen,
+  userId,
+}: ReengagementEmailProps) {
+  const tenders = recommendations.filter((r) => r.type === "tender");
+  const jobs = recommendations.filter((r) => r.type === "job");
+
+  return (
+    <EmailWrapper preview={`We miss you! ${recommendations.length} new opportunities matching your interests await`}>
+      {/* Hero */}
+      <Heading
+        style={{ fontSize: "24px", fontWeight: "700", color: "#ffffff", margin: "0 0 8px" }}
+      >
+        👋 We miss you, {name || "there"}!
+      </Heading>
+      <Text style={{ color: "#ccccdd", fontSize: "15px", lineHeight: "1.6", margin: "0 0 8px" }}>
+        It&apos;s been{" "}
+        <strong style={{ color: "#ffffff" }}>
+          {daysSinceLastSeen} day{daysSinceLastSeen !== 1 ? "s" : ""}
+        </strong>{" "}
+        since your last visit. A lot has changed — here are fresh opportunities we think you&apos;ll love.
+      </Text>
+
+      {lastSearchQuery && (
+        <Section
+          style={{
+            backgroundColor: "rgba(79,70,229,0.1)",
+            border: "1px solid rgba(79,70,229,0.25)",
+            borderRadius: "8px",
+            padding: "12px 16px",
+            margin: "16px 0 24px",
+          }}
+        >
+          <Text style={{ color: "#a5b4fc", fontSize: "13px", margin: 0 }}>
+            🔍 Based on your last search:{" "}
+            <strong style={{ color: "#ffffff" }}>{lastSearchQuery.replace(/^\[(.*?)\]\s*/, "")}</strong>
+          </Text>
+        </Section>
+      )}
+
+      <Hr style={{ borderColor: "rgba(255,255,255,0.08)", margin: "0 0 24px" }} />
+
+      {/* Tender Recommendations */}
+      {tenders.length > 0 && (
+        <Section style={{ marginBottom: "28px" }}>
+          <Heading style={{ fontSize: "16px", fontWeight: "700", color: BRAND_COLOR, margin: "0 0 14px", letterSpacing: "0.03em" }}>
+            📋 New Tenders You Might Have Missed
+          </Heading>
+          {tenders.map((item) => (
+            <Section
+              key={item.id}
+              style={{
+                backgroundColor: "rgba(79,70,229,0.07)",
+                border: "1px solid rgba(79,70,229,0.18)",
+                borderRadius: "8px",
+                padding: "14px 16px",
+                marginBottom: "10px",
+              }}
+            >
+              <Text style={{ color: "#ffffff", fontSize: "14px", fontWeight: "600", margin: "0 0 4px", lineHeight: "1.4" }}>
+                <Link href={item.url} style={{ color: "#ffffff", textDecoration: "none" }}>
+                  {item.title}
+                </Link>
+              </Text>
+              <Text style={{ color: TEXT_MUTED, fontSize: "12px", margin: "0 0 10px" }}>
+                {item.subtitle}
+              </Text>
+              <Button
+                href={item.url}
+                style={{
+                  backgroundColor: "rgba(79,70,229,0.2)",
+                  color: "#a5b4fc",
+                  border: "1px solid rgba(79,70,229,0.3)",
+                  borderRadius: "6px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  textDecoration: "none",
+                }}
+              >
+                View Tender →
+              </Button>
+            </Section>
+          ))}
+        </Section>
+      )}
+
+      {/* Job Recommendations */}
+      {jobs.length > 0 && (
+        <Section style={{ marginBottom: "28px" }}>
+          <Heading style={{ fontSize: "16px", fontWeight: "700", color: "#10b981", margin: "0 0 14px", letterSpacing: "0.03em" }}>
+            💼 Job Openings You Might Like
+          </Heading>
+          {jobs.map((item) => (
+            <Section
+              key={item.id}
+              style={{
+                backgroundColor: "rgba(16,185,129,0.07)",
+                border: "1px solid rgba(16,185,129,0.18)",
+                borderRadius: "8px",
+                padding: "14px 16px",
+                marginBottom: "10px",
+              }}
+            >
+              <Text style={{ color: "#ffffff", fontSize: "14px", fontWeight: "600", margin: "0 0 4px", lineHeight: "1.4" }}>
+                <Link href={item.url} style={{ color: "#ffffff", textDecoration: "none" }}>
+                  {item.title}
+                </Link>
+              </Text>
+              <Text style={{ color: TEXT_MUTED, fontSize: "12px", margin: "0 0 10px" }}>
+                {item.subtitle}
+              </Text>
+              <Button
+                href={item.url}
+                style={{
+                  backgroundColor: "rgba(16,185,129,0.15)",
+                  color: "#34d399",
+                  border: "1px solid rgba(16,185,129,0.3)",
+                  borderRadius: "6px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  textDecoration: "none",
+                }}
+              >
+                View Job →
+              </Button>
+            </Section>
+          ))}
+        </Section>
+      )}
+
+      <Hr style={{ borderColor: "rgba(255,255,255,0.08)", margin: "8px 0 24px" }} />
+
+      {/* CTA */}
+      <Section style={{ textAlign: "center" as const }}>
+        <Text style={{ color: TEXT_MUTED, fontSize: "13px", margin: "0 0 16px" }}>
+          Explore more opportunities tailored for East Africa
+        </Text>
+        <Button
+          href={BASE_URL}
+          style={{
+            backgroundColor: BRAND_COLOR,
+            color: "#ffffff",
+            borderRadius: "8px",
+            padding: "13px 32px",
+            fontSize: "14px",
+            fontWeight: "700",
+            textDecoration: "none",
+            marginBottom: "24px",
+          }}
+        >
+          Return to AkiliBrain →
+        </Button>
+        <Text style={{ color: TEXT_MUTED, fontSize: "11px", margin: "24px 0 0" }}>
+          Don't want to receive these recommendations?{" "}
+          <Link href={`${BASE_URL}/api/unsubscribe?user_id=${userId}`} style={{ color: TEXT_MUTED, textDecoration: "underline" }}>
+            Unsubscribe here
+          </Link>
+        </Text>
+      </Section>
+    </EmailWrapper>
+  );
+}
