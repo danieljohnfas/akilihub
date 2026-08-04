@@ -1,10 +1,7 @@
 import * as cheerio from 'cheerio';
-import { generateObjectWithFallback } from '../ai/router';
+import { generateObjectWithFallback, extractVisionTextWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { downloadDocument, parsePdf } from './pdf-extract';
-import { createGoogle } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
-import { generateText } from 'ai';
 
 export interface ComplianceResource {
   title: string;
@@ -182,62 +179,7 @@ Include:
 
 Output the extracted text clearly and comprehensively in clean Markdown without conversational preamble.`;
 
-  const googleKey =
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY_1 ||
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY_2 ||
-    process.env.GEMINI_API_KEY;
-
-  if (googleKey) {
-    try {
-      const google = createGoogle({ apiKey: googleKey });
-      const { text } = await generateText({
-        model: google('gemini-2.0-flash'),
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: promptText },
-              { type: 'image', image: imageBuffer },
-            ],
-          },
-        ],
-      });
-
-      if (text && text.trim().length > 30) {
-        return text.trim();
-      }
-    } catch (err) {
-      console.warn('[extractTextFromImage] Google vision failed:', (err as Error).message);
-    }
-  }
-
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (openaiKey) {
-    try {
-      const openai = createOpenAI({ apiKey: openaiKey });
-      const { text } = await generateText({
-        model: openai('gpt-4o-mini'),
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: promptText },
-              { type: 'image', image: imageBuffer },
-            ],
-          },
-        ],
-      });
-
-      if (text && text.trim().length > 30) {
-        return text.trim();
-      }
-    } catch (err) {
-      console.warn('[extractTextFromImage] OpenAI vision failed:', (err as Error).message);
-    }
-  }
-
-  return '';
+  return await extractVisionTextWithFallback(imageBuffer, promptText);
 }
 
 const ANNOUNCEMENT_IMAGE_SIGNALS = [

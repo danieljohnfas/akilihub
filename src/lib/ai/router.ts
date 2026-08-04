@@ -180,3 +180,139 @@ export async function generateTextWithFallback(params: Record<string, any>) {
 
   throw lastError ?? new Error('[AI Router] Unknown failure');
 }
+
+// ------------------------------------------------------------------
+// 3. VISION EXTRACTION WITH MULTI-PROVIDER FALLBACK
+// ------------------------------------------------------------------
+
+interface VisionModelCandidate {
+  id: string;
+  name: string;
+  model: any;
+}
+
+function getVisionModelPool(): VisionModelCandidate[] {
+  const pool: VisionModelCandidate[] = [];
+
+  // 1. Google Gemini (2.0 Flash & 1.5 Flash)
+  const googleKeys = [
+    ...getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY'),
+    ...getEnvKeys('GEMINI_API_KEY'),
+  ];
+  const uniqueGoogleKeys = Array.from(new Set(googleKeys));
+
+  uniqueGoogleKeys.forEach((key, i) => {
+    const makeGoogle = createGoogle({ apiKey: key });
+    pool.push({
+      id: `google-flash-2.0-${i + 1}`,
+      name: `Google Gemini 2.0 Flash (${i + 1})`,
+      model: makeGoogle('gemini-2.0-flash'),
+    });
+    pool.push({
+      id: `google-flash-1.5-${i + 1}`,
+      name: `Google Gemini 1.5 Flash (${i + 1})`,
+      model: makeGoogle('gemini-1.5-flash'),
+    });
+  });
+
+  // 2. Mistral Pixtral (Pixtral 12B & Pixtral Large)
+  const mistralKeys = getEnvKeys('MISTRAL_API_KEY');
+  mistralKeys.forEach((key, i) => {
+    const mistral = createMistral({ apiKey: key });
+    pool.push({
+      id: `mistral-pixtral-12b-${i + 1}`,
+      name: `Mistral Pixtral 12B (${i + 1})`,
+      model: mistral('pixtral-12b-2409'),
+    });
+    pool.push({
+      id: `mistral-pixtral-large-${i + 1}`,
+      name: `Mistral Pixtral Large (${i + 1})`,
+      model: mistral('pixtral-large-latest'),
+    });
+  });
+
+  // 3. Groq Llama 3.2 Vision
+  const groqKeys = getEnvKeys('GROQ_API_KEY');
+  groqKeys.forEach((key, i) => {
+    const groq = createGroq({ apiKey: key });
+    pool.push({
+      id: `groq-llama-vision-11b-${i + 1}`,
+      name: `Groq Llama 3.2 11B Vision (${i + 1})`,
+      model: groq('llama-3.2-11b-vision-preview'),
+    });
+    pool.push({
+      id: `groq-llama-vision-90b-${i + 1}`,
+      name: `Groq Llama 3.2 90b Vision (${i + 1})`,
+      model: groq('llama-3.2-90b-vision-preview'),
+    });
+  });
+
+  // 4. OpenAI GPT-4o Vision
+  const openaiKeys = getEnvKeys('OPENAI_API_KEY');
+  openaiKeys.forEach((key, i) => {
+    const openai = createOpenAI({ apiKey: key });
+    pool.push({
+      id: `openai-gpt4o-mini-${i + 1}`,
+      name: `OpenAI GPT-4o Mini (${i + 1})`,
+      model: openai('gpt-4o-mini'),
+    });
+    pool.push({
+      id: `openai-gpt4o-${i + 1}`,
+      name: `OpenAI GPT-4o (${i + 1})`,
+      model: openai('gpt-4o'),
+    });
+  });
+
+  return pool;
+}
+
+/**
+ * Executes multimodal vision OCR across the AI roster with multi-model fallback.
+ * Tries Google Gemini Flash -> Mistral Pixtral -> Groq Llama Vision -> OpenAI GPT-4o.
+ */
+export async function extractVisionTextWithFallback(
+  imageBuffer: Buffer,
+  prompt: string,
+): Promise<string> {
+  const visionModels = getVisionModelPool();
+
+  if (visionModels.length === 0) {
+    console.warn('[Vision Router] No Vision-capable API keys configured.');
+    return '';
+  }
+
+  let lastError: unknown = null;
+
+  for (const candidate of visionModels) {
+    try {
+      console.log(`[Vision Router] Attempting vision OCR with ${candidate.name}...`);
+      const { text } = await withHardTimeout(
+        generateText({
+          model: candidate.model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                { type: 'image', image: imageBuffer },
+              ],
+            },
+          ],
+        }),
+        35_000,
+        candidate.name,
+      );
+
+      if (text && text.trim().length > 30) {
+        console.log(`[Vision Router] ${candidate.name} successfully extracted ${text.length} chars.`);
+        return text.trim();
+      }
+    } catch (err) {
+      console.warn(`[Vision Router] ${candidate.name} failed:`, (err as Error).message?.slice(0, 120));
+      lastError = err;
+    }
+  }
+
+  console.error('[Vision Router] All vision fallback models exhausted.');
+  return '';
+}
