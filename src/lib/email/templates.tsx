@@ -96,7 +96,7 @@ function EmailWrapper({
                 margin: 0,
               }}
             >
-              East Africa&apos;s Professional Intelligence Platform ·{" "}
+              East Africa&apos;s Professional Intelligence Platform (9 Countries) ·{" "}
               <Link
                 href={`${BASE_URL}/tenders`}
                 style={{ color: TEXT_MUTED, textDecoration: "underline" }}
@@ -116,6 +116,20 @@ function EmailWrapper({
                 style={{ color: TEXT_MUTED, textDecoration: "underline" }}
               >
                 Compliance
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href={`${BASE_URL}/salaries`}
+                style={{ color: TEXT_MUTED, textDecoration: "underline" }}
+              >
+                Salaries
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href={`${BASE_URL}/health`}
+                style={{ color: TEXT_MUTED, textDecoration: "underline" }}
+              >
+                Health
               </Link>
             </Text>
             <Text
@@ -144,7 +158,7 @@ export interface WelcomeEmailProps {
 export function WelcomeEmail({ name }: WelcomeEmailProps) {
   const greeting = name ? `Hi ${name}` : "Welcome";
   return (
-    <EmailWrapper preview="Welcome to AkiliBrain — East Africa's intelligence platform">
+    <EmailWrapper preview="Welcome to AkiliBrain — East Africa's 9-country intelligence platform">
       <Heading
         style={{
           fontSize: "24px",
@@ -157,20 +171,21 @@ export function WelcomeEmail({ name }: WelcomeEmailProps) {
       </Heading>
       <Text style={{ color: "#ccccdd", fontSize: "15px", lineHeight: "1.6", margin: "0 0 24px" }}>
         You&apos;re now part of <strong style={{ color: "#ffffff" }}>AkiliBrain</strong> — the
-        fastest way to track government tenders, job opportunities, business
-        compliance, health data, and salaries across East Africa.
+        unified intelligence platform tracking government tenders, job opportunities, business
+        compliance, health data, and salaries across 9 East African countries.
       </Text>
 
       <Hr style={{ borderColor: "rgba(255,255,255,0.08)", margin: "24px 0" }} />
 
       <Text style={{ color: "#888899", fontSize: "13px", margin: "0 0 16px", fontWeight: "600", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
-        What you can do
+        What you can explore
       </Text>
 
       {[
-        { emoji: "📋", title: "Browse Tenders", desc: "Find open government contracts across Kenya, Tanzania, Uganda, and Rwanda.", href: "/tenders" },
-        { emoji: "💼", title: "Find Jobs", desc: "Discover thousands of active job listings updated daily.", href: "/jobs" },
-        { emoji: "🏛️", title: "Check Compliance", desc: "Permits, licenses, and regulatory requirements for your business.", href: "/compliance" },
+        { emoji: "📋", title: "Browse Tenders", desc: "Find verified public contracts across 9 countries: Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, Burundi, Somalia, and South Sudan.", href: "/tenders" },
+        { emoji: "💼", title: "Find Jobs", desc: "Discover thousands of active verified job vacancies updated daily across the region.", href: "/jobs" },
+        { emoji: "🏛️", title: "Check Compliance", desc: "Permits, business registration, tax guidelines, and regulatory requirements.", href: "/compliance" },
+        { emoji: "📊", title: "Salaries & Health", desc: "Explore regional compensation benchmarks and national public health intelligence.", href: "/salaries" },
       ].map((item) => (
         <Row key={item.href} style={{ marginBottom: "12px" }}>
           <Column style={{ width: "36px", verticalAlign: "top", paddingTop: "2px" }}>
