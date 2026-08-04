@@ -3,6 +3,8 @@ import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('user_id');
