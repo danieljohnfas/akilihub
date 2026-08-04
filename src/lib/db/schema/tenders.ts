@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric, integer, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, numeric, integer, boolean, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
 import { countries, regions } from './shared';
 import { sql } from 'drizzle-orm';
 
@@ -28,6 +28,9 @@ export const tenders = pgTable('tenders', {
   deadline: timestamp('deadline'),  // null = deadline not published yet
   sourceUrl: text('source_url').notNull().unique(),
   documentUrl: text('document_url'),
+  // Employer-first sourcing — resolved direct contracting authority URL
+  employerUrl: text('employer_url'),              // resolved authority/government portal URL
+  isAggregatorSource: boolean('is_aggregator_source').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [

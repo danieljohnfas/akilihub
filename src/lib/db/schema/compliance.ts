@@ -46,6 +46,9 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   resourceType: complianceResourceTypeEnum('resource_type').notNull().default('guideline'),
   isActive: boolean('is_active').notNull().default(true),
   lastVerifiedAt: timestamp('last_verified_at'),
+  // Employer-first sourcing — resolved direct authority URL
+  employerUrl: text('employer_url'),
+  isAggregatorSource: boolean('is_aggregator_source').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [

@@ -228,15 +228,15 @@ export default async function TenderDetailPage({
             </div>
 
             <div className="pt-6 space-y-3">
-              {tender.sourceUrl && (
+              {(tender.employerUrl ?? tender.sourceUrl) && (
                 <a 
-                  href={`/api/out?url=${encodeURIComponent(tender.sourceUrl)}&type=tender&id=${tender.id}`} 
+                  href={`/api/out?url=${encodeURIComponent(tender.employerUrl ?? tender.sourceUrl!)}&type=tender&id=${tender.id}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className={buttonVariants({ className: "w-full" })}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Original Source
+                  View on Authority Website
                 </a>
               )}
               {tender.documentUrl && (

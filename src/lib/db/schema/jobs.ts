@@ -21,6 +21,9 @@ export const jobs = pgTable('jobs', {
   salaryMin: numeric('salary_min', { precision: 14, scale: 2 }),
   salaryMax: numeric('salary_max', { precision: 14, scale: 2 }),
   salaryCurrency: text('salary_currency'), // ISO 4217, e.g. "KES", "TZS", "UGX"
+  // Employer-first sourcing — resolved direct employer/authority URL
+  employerUrl: text('employer_url'),              // resolved employer/ATS/authority URL (null = not yet resolved)
+  isAggregatorSource: boolean('is_aggregator_source').notNull().default(false), // true if sourceUrl is an aggregator
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

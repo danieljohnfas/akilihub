@@ -85,6 +85,9 @@ import { rescrapeJobsJob, rescrapeTendersJob, rescrapeComplianceJob } from "@/in
 // Data quality: daily shallow-record enrichment
 import { enrichShallowDataJob } from "@/inngest/enrich-shallow-data";
 
+// Employer-first sourcing: retroactive URL resolution backfill
+import { resolveEmployerUrlsJob } from "@/inngest/resolve-employer-urls";
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
@@ -178,6 +181,9 @@ export const { GET, POST, PUT } = serve({
 
     // Daily shallow-record enrichment (11:30 UTC — after all scrapers finish)
     enrichShallowDataJob,
+
+    // Employer-first sourcing: retroactive URL resolution (12:30 UTC)
+    resolveEmployerUrlsJob,
   ],
 });
 

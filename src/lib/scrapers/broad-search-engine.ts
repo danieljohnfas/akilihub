@@ -2,6 +2,7 @@ import { generateObjectWithFallback } from '../ai/router';
 import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
+import { getAllAggregatorDomains } from '../sources/aggregators';
 
 export interface BroadJobResource {
   title: string;
@@ -18,12 +19,10 @@ export interface BroadJobResource {
   salaryCurrency: string | null; // ISO 4217, e.g. "KES", "TZS"
 }
 
-// ── Blocked job board domains (block heavy aggregators / bot blockers) ──
-const BLOCKED_DOMAINS = [
-  'linkedin.com', 'glassdoor.com', 'indeed.com', 'fuzu.com',
-  'brightermonday.co.ke', 'jobwebkenya.com', 'ziprecruiter.com',
-  'simplyhired.com', 'rozee.pk', 'unjobs.org'
-];
+// ── Blocked domains: all known aggregator domains (sourced from registry) ──────
+// ATS platforms are NOT included here — they can appear in search results as
+// they are the employer's own hiring system.
+const BLOCKED_DOMAINS = getAllAggregatorDomains();
 
 // ── DuckDuckGo search via Python sidecar (free, no API key) ───────────────────
 async function searchDDGS(query: string, numResults: number): Promise<string[]> {

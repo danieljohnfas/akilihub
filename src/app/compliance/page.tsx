@@ -283,7 +283,7 @@ async function ResourcesList({ params }: { params: ReturnType<typeof parseGlobal
               description={resource.description}
               resourceType={resource.resourceType as any}
               issuingAuthority={resource.issuingAuthority}
-              sourceUrl={resource.sourceUrl}
+              sourceUrl={resource.employerUrl ?? resource.sourceUrl}
               country={countryName || 'Unknown'}
               lastVerifiedAt={resource.lastVerifiedAt}
             />

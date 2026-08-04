@@ -4,6 +4,7 @@ import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
 import { countries } from "@/lib/db/schema/shared";
 import { eq, count } from "drizzle-orm";
+import { classifySourceUrl } from "@/lib/sources/employer-resolver";
 
 // ── Thresholds ────────────────────────────────────────────────────────────────
 const JOB_TARGET = 200; // Minimum new inserts before we skip second pass
@@ -25,22 +26,27 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
 
   // Attempt batch insert first (10-30x faster than one-by-one)
   try {
-    const values = discovered.map(job => ({
-      title: job.title,
-      companyName: job.companyName || 'Unknown',
-      description: job.description || 'No description',
-      requirements: job.requirements,
-      regionId: job.regionId,
-      countryId,
-      jobType: job.jobType,
-      sourceUrl: job.sourceUrl,
-      postedDate: job.postedDate || new Date(),
-      deadline: job.deadline ?? null,
-      salaryMin: job.salaryMin?.toString() ?? null,
-      salaryMax: job.salaryMax?.toString() ?? null,
-      salaryCurrency: job.salaryCurrency ?? null,
-      isActive: true,
-    }));
+    const values = discovered.map(job => {
+      const { isAggregatorSource, quickEmployerUrl } = classifySourceUrl(job.sourceUrl);
+      return {
+        title: job.title,
+        companyName: job.companyName || 'Unknown',
+        description: job.description || 'No description',
+        requirements: job.requirements,
+        regionId: job.regionId,
+        countryId,
+        jobType: job.jobType,
+        sourceUrl: job.sourceUrl,
+        employerUrl: quickEmployerUrl,          // null for aggregators (resolved by backfill job)
+        isAggregatorSource,
+        postedDate: job.postedDate || new Date(),
+        deadline: job.deadline ?? null,
+        salaryMin: job.salaryMin?.toString() ?? null,
+        salaryMax: job.salaryMax?.toString() ?? null,
+        salaryCurrency: job.salaryCurrency ?? null,
+        isActive: true,
+      };
+    });
     const rows = await db.insert(jobs).values(values).onConflictDoNothing().returning({ id: jobs.id });
     return rows.length;
   } catch {
@@ -48,6 +54,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
     let inserted = 0;
     for (const job of discovered) {
       try {
+        const { isAggregatorSource, quickEmployerUrl } = classifySourceUrl(job.sourceUrl);
         const rows = await db.insert(jobs).values({
           title: job.title,
           companyName: job.companyName || 'Unknown',
@@ -57,6 +64,8 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
           countryId,
           jobType: job.jobType,
           sourceUrl: job.sourceUrl,
+          employerUrl: quickEmployerUrl,
+          isAggregatorSource,
           postedDate: job.postedDate || new Date(),
           deadline: job.deadline ?? null,
           salaryMin: job.salaryMin?.toString() ?? null,
