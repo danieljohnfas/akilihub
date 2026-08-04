@@ -133,8 +133,9 @@ GENERAL EXTRACTION QUALITY GUIDELINES (apply to every field):
 6. INFER FROM CONTEXT: Use all available context (country, organization name, sector,
    surrounding text) to intelligently fill fields like currency, location, category.
    For example: if the text says "Nairobi" and mentions KES, infer currency = "KES".
-7. PDF/DOCUMENT CONTENT: If document text is appended below the main content, treat it
-   as equally valid source material. Extract all data points found in PDFs/documents.
+7. PDF/DOCUMENT & IMAGE FLYER CONTENT: If document text or image flyer/scan text is
+   appended below the main content, treat it as equally valid source material. Extract all
+   data points found in attached PDFs, Word documents, Excel schedules, or image flyers.
 8. MULTIPLE RECORDS: A single page often contains many listings. Extract ALL of them,
    not just the first one or the most prominent.
 `;

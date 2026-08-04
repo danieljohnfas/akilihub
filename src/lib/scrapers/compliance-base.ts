@@ -2,6 +2,9 @@ import * as cheerio from 'cheerio';
 import { generateObjectWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { downloadDocument, parsePdf } from './pdf-extract';
+import { createGoogle } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
+import { generateText } from 'ai';
 
 export interface ComplianceResource {
   title: string;
@@ -13,10 +16,8 @@ export interface ComplianceResource {
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  // Note: do NOT add Googlebot here — impersonating Googlebot violates most sites' ToS
 ];
 
-// ── Exponential backoff helper ─────────────────────────────────────────────────
 async function sleep(ms: number) {
   return new Promise(res => setTimeout(res, ms));
 }
@@ -32,10 +33,9 @@ async function fetchWithRetry(
       const res = await fetch(url, options);
       if (res.ok) return res;
       if (res.status === 401 || res.status === 403 || res.status === 404 || res.status === 410) {
-        return null; // Don't retry unrecoverable HTTP status codes
+        return null; 
       }
     } catch {
-      // network/timeout error, proceed to retry
     }
     if (attempt < maxRetries - 1) {
       await sleep(baseDelayMs * Math.pow(2, attempt));
@@ -44,7 +44,6 @@ async function fetchWithRetry(
   return null;
 }
 
-// ── Sidecar text extraction (trafilatura) ──────────────────────────────────────
 async function extractTextViaSidecar(
   url: string,
   html?: string,
@@ -68,51 +67,51 @@ async function extractTextViaSidecar(
     });
 
     if (!res.ok) return null;
+
     const data = await res.json();
-    if (data.success && data.text && data.text.length > 50) {
-      return { text: data.text as string, pdfLinks: (data.pdf_links as string[]) ?? [] };
-    }
-    return null;
+    if (!data.success || !data.text || data.text.length < 50) return null;
+
+    return {
+      text: data.text,
+      pdfLinks: Array.isArray(data.pdf_links) ? data.pdf_links : [],
+    };
   } catch {
     return null;
   }
 }
 
-/**
- * Fetches HTML from a URL.
- * Priority:
- *   1. Plain HTTP with rotating desktop user-agents (fastest: 300-800ms)
- *   2. Scrapling Python Sidecar for Cloudflare protected sites
- */
 export async function fetchHtml(url: string): Promise<string | null> {
-  const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
-
-  // 1. Direct plain HTTP with desktop user-agent
   const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-  const res = await fetchWithRetry(url, {
-    headers: {
-      'User-Agent': ua,
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Connection': 'keep-alive',
+
+  const res = await fetchWithRetry(
+    url,
+    {
+      headers: {
+        'User-Agent': ua,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8,sw;q=0.7',
+      },
+      signal: AbortSignal.timeout(10_000),
     },
-    signal: AbortSignal.timeout(6_000),
-  });
+    2,
+    300,
+  );
 
   if (res) {
-    const html = await res.text();
-    if (html && html.length > 300) {
-      return html;
+    try {
+      const html = await res.text();
+      if (html && html.length > 300) return html;
+    } catch {
     }
   }
 
-  // 2. Fallback to Sidecar
   try {
+    const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
     const sidecarRes = await fetch(`${sidecarUrl}/fetch_html`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, use_stealth: false }),
-      signal: AbortSignal.timeout(5_000),
+      body: JSON.stringify({ url, use_stealth: true }),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (sidecarRes.ok) {
@@ -122,32 +121,204 @@ export async function fetchHtml(url: string): Promise<string | null> {
       }
     }
   } catch {
-    // Sidecar offline or timed out
   }
 
   return null;
 }
 
-/**
- * Converts HTML to a condensed text representation suitable for AI extraction.
- *
- * Priority:
- *   1. Route through sidecar /extract_text (trafilatura — best quality)
- *   2. Fall back to local Cheerio parsing
- *
- * Returns: { text, pdfLinks }
- */
+export async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string } | null> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) return null;
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    if (!contentType.startsWith('image/') && !contentType.includes('octet-stream')) {
+      return null;
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    if (buffer.length < 5_000 || buffer.length > 15_000_000) {
+      return null;
+    }
+
+    return { buffer, contentType };
+  } catch {
+    return null;
+  }
+}
+
+export async function extractTextFromImage(imageUrlOrBuffer: string | Buffer): Promise<string> {
+  let imageBuffer: Buffer | null = null;
+
+  if (typeof imageUrlOrBuffer === 'string') {
+    const downloaded = await downloadImage(imageUrlOrBuffer);
+    if (!downloaded) return '';
+    imageBuffer = downloaded.buffer;
+  } else {
+    imageBuffer = imageUrlOrBuffer;
+  }
+
+  if (!imageBuffer || imageBuffer.length < 5_000) return '';
+
+  const promptText = `You are an expert OCR and document analysis AI for East African jobs, tenders, business compliance, and official announcements.
+Transcribe and extract ALL text from this image announcement/flyer.
+Include:
+- Job titles / Tender titles / Notice headings
+- Organization / Company name
+- Full job description / Tender scope
+- Requirements, qualifications, skills, education, experience
+- Deadlines / Closing dates / Submission dates
+- Salary / Compensation figures if stated
+- Application email / Portal URL / Physical address / Submission instructions
+- Reference numbers / Tender numbers
+
+Output the extracted text clearly and comprehensively in clean Markdown without conversational preamble.`;
+
+  const googleKey =
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY_1 ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY_2 ||
+    process.env.GEMINI_API_KEY;
+
+  if (googleKey) {
+    try {
+      const google = createGoogle({ apiKey: googleKey });
+      const { text } = await generateText({
+        model: google('gemini-2.0-flash'),
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: promptText },
+              { type: 'image', image: imageBuffer },
+            ],
+          },
+        ],
+      });
+
+      if (text && text.trim().length > 30) {
+        return text.trim();
+      }
+    } catch (err) {
+      console.warn('[extractTextFromImage] Google vision failed:', (err as Error).message);
+    }
+  }
+
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    try {
+      const openai = createOpenAI({ apiKey: openaiKey });
+      const { text } = await generateText({
+        model: openai('gpt-4o-mini'),
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: promptText },
+              { type: 'image', image: imageBuffer },
+            ],
+          },
+        ],
+      });
+
+      if (text && text.trim().length > 30) {
+        return text.trim();
+      }
+    } catch (err) {
+      console.warn('[extractTextFromImage] OpenAI vision failed:', (err as Error).message);
+    }
+  }
+
+  return '';
+}
+
+const ANNOUNCEMENT_IMAGE_SIGNALS = [
+  'advert', 'ad', 'tangazo', 'vacancy', 'vacancies', 'job', 'tender', 'procurement',
+  'announcement', 'notice', 'circular', 'kazi', 'ajira', 'nafasi', 'poster', 'flyer',
+  'post', 'upload', 'uploads', 'media', 'wp-content/uploads', 'attachment', 'banner'
+];
+
+const IGNORE_IMAGE_SIGNALS = [
+  'avatar', 'logo', 'icon', 'favicon', 'social', 'facebook', 'twitter', 'instagram',
+  'linkedin', 'whatsapp', 'youtube', 'tiktok', 'badge', 'footer', 'header', 'button',
+  '1x1', 'pixel', 'spinner', 'thumb', 'emoji', 'star', 'arrow', 'close', 'menu'
+];
+
+export function extractAnnouncementImagesFromHtml(html: string, baseUrl: string): string[] {
+  const $ = cheerio.load(html);
+  const scoredImages: Array<{ url: string; score: number }> = [];
+
+  const checkUrl = (rawUrl: string, altText: string = '', titleText: string = '') => {
+    if (!rawUrl) return;
+    const lower = rawUrl.toLowerCase();
+
+    const isImageExt = ['.jpg', '.jpeg', '.png', '.webp'].some(ext => lower.includes(ext));
+    if (!isImageExt && !lower.includes('/image') && !lower.includes('/uploads/')) return;
+
+    if (IGNORE_IMAGE_SIGNALS.some(bad => lower.includes(bad) || altText.toLowerCase().includes(bad))) {
+      return;
+    }
+
+    let fullUrl = rawUrl;
+    if (rawUrl.startsWith('//')) {
+      fullUrl = `https:${rawUrl}`;
+    } else if (rawUrl.startsWith('/')) {
+      try {
+        fullUrl = `${new URL(baseUrl).origin}${rawUrl}`;
+      } catch { /* skip */ }
+    } else if (!rawUrl.startsWith('http')) {
+      try {
+        fullUrl = new URL(rawUrl, baseUrl).toString();
+      } catch { /* skip */ }
+    }
+
+    let score = 1;
+    const combinedContext = `${lower} ${altText.toLowerCase()} ${titleText.toLowerCase()}`;
+    for (const signal of ANNOUNCEMENT_IMAGE_SIGNALS) {
+      if (combinedContext.includes(signal)) score += 3;
+    }
+
+    if (score >= 3 && !scoredImages.some(item => item.url === fullUrl)) {
+      scoredImages.push({ url: fullUrl, score });
+    }
+  };
+
+  $('img').each((_i, el) => {
+    const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || $(el).attr('data-original') || '';
+    const alt = $(el).attr('alt') || '';
+    const title = $(el).attr('title') || '';
+    checkUrl(src, alt, title);
+  });
+
+  $('a[href]').each((_i, el) => {
+    const href = $(el).attr('href') || '';
+    const linkText = $(el).text().trim();
+    checkUrl(href, linkText, '');
+  });
+
+  return scoredImages
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(item => item.url);
+}
+
 export async function htmlToTextEnriched(
   html: string,
   baseUrl: string,
 ): Promise<{ text: string; pdfLinks: string[] }> {
-  // Fast, instant local Cheerio parsing
   let text = htmlToText(html, baseUrl);
   const pdfLinks = extractPdfLinksFromHtml(html, baseUrl);
 
-  // Optimize: Actually read the contents of the first 5 PDFs found
   if (pdfLinks.length > 0) {
-    console.log(`[pdf-extract] Attempting to parse text from ${Math.min(pdfLinks.length, 5)} PDF(s) for ${baseUrl}`);
+    console.log(`[pdf-extract] Attempting to parse text from ${Math.min(pdfLinks.length, 5)} document(s) for ${baseUrl}`);
     for (const link of pdfLinks.slice(0, 5)) {
       try {
         const doc = await downloadDocument(link);
@@ -155,7 +326,6 @@ export async function htmlToTextEnriched(
           const pdfText = await parsePdf(doc.buffer);
           if (pdfText && pdfText.length > 50) {
             console.log(`[pdf-extract] Successfully extracted ${pdfText.length} chars from ${link}`);
-            // Append PDF text, capped to ~10k chars to avoid blowing up the prompt
             text += `\n\n--- CONTENT FROM ATTACHED PDF (${link}) ---\n${pdfText.substring(0, 10000)}`;
           }
         }
@@ -165,24 +335,37 @@ export async function htmlToTextEnriched(
     }
   }
 
+  const imageLinks = extractAnnouncementImagesFromHtml(html, baseUrl);
+  if (imageLinks.length > 0) {
+    console.log(`[image-vision] Attempting to transcribe ${Math.min(imageLinks.length, 2)} image(s) for ${baseUrl}`);
+    for (const imgUrl of imageLinks.slice(0, 2)) {
+      try {
+        const imgText = await extractTextFromImage(imgUrl);
+        if (imgText && imgText.length > 50) {
+          console.log(`[image-vision] Successfully transcribed ${imgText.length} chars from ${imgUrl}`);
+          text += `\n\n--- CONTENT FROM ATTACHED IMAGE FLYER (${imgUrl}) ---\n${imgText.substring(0, 10000)}`;
+        }
+      } catch (err) {
+        console.warn(`[image-vision] Failed to transcribe image ${imgUrl}:`, (err as Error).message);
+      }
+    }
+  }
+
   return { text, pdfLinks };
 }
 
-/**
- * Legacy Cheerio-based HTML → text (used as fallback when sidecar unavailable).
- * Improved: keyword-weighted sorting, 500-line limit instead of 300.
- */
 export function htmlToText(html: string, baseUrl: string): string {
   const $ = cheerio.load(html);
 
-  // Remove noise
   $('script, style, noscript, nav, footer, header').remove();
 
-  const procurementKeywords = ['tender', 'procurement', 'bid', 'appel', 'offre', 'contract', 'award', 'notice', 'closing'];
+  const procurementKeywords = [
+    'tender', 'procurement', 'bid', 'appel', 'offre', 'contract', 'award', 'notice', 'closing',
+    'job', 'vacancy', 'kazi', 'ajira', 'tangazo', 'advert', 'qualifications', 'deadline', 'salary'
+  ];
 
   const weighted: Array<{ line: string; weight: number }> = [];
 
-  // Extract all links with their text — key for finding downloadable forms/resources
   $('a[href]').each((_i, el) => {
     const text = $(el).text().trim();
     const href = $(el).attr('href') ?? '';
@@ -205,7 +388,24 @@ export function htmlToText(html: string, baseUrl: string): string {
     weighted.push({ line, weight });
   });
 
-  // Extract visible text elements
+  $('img').each((_i, el) => {
+    const alt = $(el).attr('alt')?.trim() || '';
+    const title = $(el).attr('title')?.trim() || '';
+    const src = $(el).attr('src') || $(el).attr('data-src') || '';
+    const desc = alt || title;
+    if (desc && desc.length > 5 && !IGNORE_IMAGE_SIGNALS.some(k => desc.toLowerCase().includes(k))) {
+      let fullUrl = src;
+      if (src.startsWith('/')) {
+        try { fullUrl = `${new URL(baseUrl).origin}${src}`; } catch { /* skip */ }
+      } else if (!src.startsWith('http') && src.length > 0) {
+        try { fullUrl = new URL(src, baseUrl).toString(); } catch { /* skip */ }
+      }
+      const line = `[IMAGE: "${desc}" => ${fullUrl}]`;
+      const weight = procurementKeywords.some(k => line.toLowerCase().includes(k)) ? 3 : 1;
+      weighted.push({ line, weight });
+    }
+  });
+
   $('p, li, td, th, h1, h2, h3, h4').each((_i, el) => {
     const text = $(el).text().replace(/\s+/g, ' ').trim();
     if (text.length > 10) {
@@ -214,7 +414,6 @@ export function htmlToText(html: string, baseUrl: string): string {
     }
   });
 
-  // Sort by weight descending (procurement-relevant content first)
   weighted.sort((a, b) => b.weight - a.weight);
 
   return weighted
@@ -223,9 +422,6 @@ export function htmlToText(html: string, baseUrl: string): string {
     .join('\n');
 }
 
-/**
- * Extract PDF / document links from raw HTML (local Cheerio fallback).
- */
 export function extractPdfLinksFromHtml(html: string, baseUrl: string): string[] {
   const $ = cheerio.load(html);
   const links: string[] = [];
@@ -252,18 +448,19 @@ export function extractPdfLinksFromHtml(html: string, baseUrl: string): string[]
   return links;
 }
 
-/**
- * Fetch a PDF, DOCX, DOC, or XLSX from a direct URL and extract its plain text.
- *
- * Primary:  Python sidecar /extract_document (pdfminer + python-docx — best quality)
- * Fallback: JS-side pdf-parse (PDFs only)
- *
- * Returns empty string if parsing fails.
- */
 export async function fetchAndParseDocument(url: string): Promise<string> {
+  const lowerUrl = url.toLowerCase().split('?')[0];
+
+  if (['.jpg', '.jpeg', '.png', '.webp'].some(ext => lowerUrl.endsWith(ext) || lowerUrl.includes(ext))) {
+    const imgText = await extractTextFromImage(url);
+    if (imgText && imgText.length > 50) {
+      console.log(`[fetchAndParseDocument:image-vision] image → ${imgText.length} chars from ${url}`);
+      return imgText;
+    }
+  }
+
   const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
 
-  // 1. Try sidecar (handles PDF, DOCX, DOC, XLSX)
   try {
     const res = await fetch(`${sidecarUrl}/extract_document`, {
       method: 'POST',
@@ -280,11 +477,8 @@ export async function fetchAndParseDocument(url: string): Promise<string> {
       }
     }
   } catch {
-    // Sidecar unavailable — fall through to JS fallback
   }
 
-  // 2. JS fallback: pdf-parse (PDFs only)
-  const lowerUrl = url.toLowerCase();
   if (lowerUrl.includes('.pdf')) {
     try {
       const doc = await downloadDocument(url);
@@ -296,7 +490,6 @@ export async function fetchAndParseDocument(url: string): Promise<string> {
         }
       }
     } catch {
-      // ignore
     }
   }
 
@@ -304,9 +497,6 @@ export async function fetchAndParseDocument(url: string): Promise<string> {
   return '';
 }
 
-/**
- * Uses AI to extract structured compliance resources from scraped text.
- */
 export async function extractResourcesWithAI(
   text: string,
   authorityName: string,

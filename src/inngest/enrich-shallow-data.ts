@@ -69,8 +69,8 @@ function richer(existing: string | null | undefined, candidate: string | null | 
 }
 
 function isDirectDocumentUrl(url: string): boolean {
-  const lower = url.toLowerCase();
-  return ['.pdf', '.docx', '.doc', '.xlsx', '.zip'].some(ext => lower.includes(ext));
+  const lower = url.toLowerCase().split('?')[0];
+  return ['.pdf', '.docx', '.doc', '.xlsx', '.zip', '.png', '.jpg', '.jpeg', '.webp'].some(ext => lower.includes(ext));
 }
 
 // ── Re-fetch + extract helpers ─────────────────────────────────────────────────

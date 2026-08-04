@@ -41,6 +41,10 @@ const EMPLOYER_LINK_SIGNALS = [
   'download advert',
   'download pdf',
   'download document',
+  'download flyer',
+  'view poster',
+  'job poster',
+  'tender flyer',
   'job specification',
   'tender document',
   'official announcement',
@@ -49,6 +53,8 @@ const EMPLOYER_LINK_SIGNALS = [
   'tangazo',        // Swahili: "announcement/advert"
   'tovuti',         // Swahili: "website"
   'pakua',          // Swahili: "download"
+  'ona tangazo',    // Swahili: "view advert"
+  'pakua tangazo',  // Swahili: "download advert"
   'postuler',       // French: "apply"
   'candidature',    // French: "application"
   'soumettre',      // French: "submit"
@@ -127,8 +133,8 @@ function extractCandidateLinks(
     if (isAtsPlatform(resolvedUrl)) score += 10;
     // Bonus: government portals
     if (isGovernmentPortal(resolvedUrl)) score += 8;
-    // Bonus: official document attachments (.pdf, .docx, .doc, .xlsx)
-    if (/\.(pdf|docx?|xlsx?)(\?.*)?$/i.test(resolvedUrl)) score += 7;
+    // Bonus: official document or image flyer attachments (.pdf, .docx, .doc, .xlsx, .png, .jpg, .webp)
+    if (/\.(pdf|docx?|xlsx?|png|jpe?g|webp)(\?.*)?$/i.test(resolvedUrl)) score += 7;
     // Bonus: .go.XX, .gov.XX domains (government)
     if (/\.(go|gov)\.[a-z]{2,3}$/.test(linkDomain)) score += 6;
     // Bonus: .org domains (NGOs, nonprofits)
