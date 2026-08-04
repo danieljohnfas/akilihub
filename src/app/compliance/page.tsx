@@ -64,12 +64,11 @@ import { unstable_cache } from 'next/cache';
 
 const getUniqueCountries = unstable_cache(async () => {
   const uniqueCountriesData = await safeQuery(
-    db.selectDistinct({ name: countries.name })
-      .from(businesses)
-      .innerJoin(countries, eq(businesses.countryId, countries.id))
+    db.select({ name: countries.name })
+      .from(countries)
   );
   return uniqueCountriesData.map(c => c.name).filter((c): c is string => Boolean(c)).sort();
-}, ['compliance-unique-countries'], { revalidate: 3600 });
+}, ['compliance-all-countries'], { revalidate: 3600 });
 
 export default async function CompliancePage({
   searchParams: rawParams,
