@@ -4,7 +4,7 @@ import { jobs } from "@/lib/db/schema/jobs";
 import { tenders } from "@/lib/db/schema/tenders";
 import { complianceRequirements } from "@/lib/db/schema/compliance";
 import { eq, and, isNull, or, lt, sql, not, like } from "drizzle-orm";
-import { fetchHtml, htmlToTextEnriched } from "@/lib/scrapers/compliance-base";
+import { fetchHtml, htmlToTextEnriched, fetchAndParseDocument } from "@/lib/scrapers/compliance-base";
 import { extractJobsWithAI } from "@/lib/scrapers/broad-search-engine";
 import { extractTendersWithAI } from "@/lib/scrapers/broad-search-engine-tenders";
 import { extractComplianceWithAI } from "@/lib/scrapers/broad-search-engine-compliance";
@@ -68,8 +68,19 @@ function richer(existing: string | null | undefined, candidate: string | null | 
   return candidate.trim().length > existing.trim().length ? candidate.trim() : existing.trim();
 }
 
+function isDirectDocumentUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  return ['.pdf', '.docx', '.doc', '.xlsx', '.zip'].some(ext => lower.includes(ext));
+}
+
 // ── Re-fetch + extract helpers ─────────────────────────────────────────────────
 async function refetchAndExtractJobs(url: string) {
+  if (isDirectDocumentUrl(url)) {
+    const docText = await fetchAndParseDocument(url);
+    if (docText && docText.length > 50) {
+      return await extractJobsWithAI(docText, url);
+    }
+  }
   const html = await fetchHtml(url);
   if (!html) return [];
   const { text } = await htmlToTextEnriched(html, url);
@@ -77,6 +88,12 @@ async function refetchAndExtractJobs(url: string) {
 }
 
 async function refetchAndExtractTenders(url: string) {
+  if (isDirectDocumentUrl(url)) {
+    const docText = await fetchAndParseDocument(url);
+    if (docText && docText.length > 50) {
+      return await extractTendersWithAI(docText, url, [url]);
+    }
+  }
   const html = await fetchHtml(url);
   if (!html) return [];
   const { text, pdfLinks } = await htmlToTextEnriched(html, url);
@@ -84,6 +101,12 @@ async function refetchAndExtractTenders(url: string) {
 }
 
 async function refetchAndExtractCompliance(url: string) {
+  if (isDirectDocumentUrl(url)) {
+    const docText = await fetchAndParseDocument(url);
+    if (docText && docText.length > 50) {
+      return await extractComplianceWithAI(docText, url, [url]);
+    }
+  }
   const html = await fetchHtml(url);
   if (!html) return [];
   const { text, pdfLinks } = await htmlToTextEnriched(html, url);
@@ -122,6 +145,7 @@ export const enrichShallowDataJob = inngest.createFunction(
           description: jobs.description,
           requirements: jobs.requirements,
           sourceUrl: jobs.sourceUrl,
+          employerUrl: jobs.employerUrl,
         })
         .from(jobs)
         .where(
@@ -142,13 +166,14 @@ export const enrichShallowDataJob = inngest.createFunction(
       let enriched = 0;
       let failed = 0;
 
-      // Group by sourceUrl to batch re-fetches (one fetch can enrich many records)
+      // Group by targetUrl (employerUrl preferred, then sourceUrl) to batch re-fetches
       const byUrl = new Map<string, typeof shallowJobs>();
       for (const job of shallowJobs) {
-        if (!isRealUrl(job.sourceUrl)) continue;
-        const list = byUrl.get(job.sourceUrl) ?? [];
+        const targetUrl = job.employerUrl || job.sourceUrl;
+        if (!isRealUrl(targetUrl)) continue;
+        const list = byUrl.get(targetUrl) ?? [];
         list.push(job);
-        byUrl.set(job.sourceUrl, list);
+        byUrl.set(targetUrl, list);
       }
 
       for (const [url, jobGroup] of byUrl) {
@@ -204,6 +229,7 @@ export const enrichShallowDataJob = inngest.createFunction(
           title: tenders.title,
           description: tenders.description,
           sourceUrl: tenders.sourceUrl,
+          employerUrl: tenders.employerUrl,
           referenceNo: tenders.referenceNo,
         })
         .from(tenders)
@@ -226,10 +252,11 @@ export const enrichShallowDataJob = inngest.createFunction(
 
       const byUrl = new Map<string, typeof shallowTenders>();
       for (const t of shallowTenders) {
-        if (!isRealUrl(t.sourceUrl)) continue;
-        const list = byUrl.get(t.sourceUrl) ?? [];
+        const targetUrl = t.employerUrl || t.sourceUrl;
+        if (!isRealUrl(targetUrl)) continue;
+        const list = byUrl.get(targetUrl) ?? [];
         list.push(t);
-        byUrl.set(t.sourceUrl, list);
+        byUrl.set(targetUrl, list);
       }
 
       for (const [url, tenderGroup] of byUrl) {
@@ -279,6 +306,7 @@ export const enrichShallowDataJob = inngest.createFunction(
           title: complianceRequirements.title,
           description: complianceRequirements.description,
           sourceUrl: complianceRequirements.sourceUrl,
+          employerUrl: complianceRequirements.employerUrl,
           issuingAuthority: complianceRequirements.issuingAuthority,
         })
         .from(complianceRequirements)
@@ -299,10 +327,11 @@ export const enrichShallowDataJob = inngest.createFunction(
 
       const byUrl = new Map<string, typeof shallowCompliance>();
       for (const c of shallowCompliance) {
-        if (!isRealUrl(c.sourceUrl)) continue;
-        const list = byUrl.get(c.sourceUrl!) ?? [];
+        const targetUrl = c.employerUrl || c.sourceUrl;
+        if (!isRealUrl(targetUrl)) continue;
+        const list = byUrl.get(targetUrl!) ?? [];
         list.push(c);
-        byUrl.set(c.sourceUrl!, list);
+        byUrl.set(targetUrl!, list);
       }
 
       for (const [url, compGroup] of byUrl) {

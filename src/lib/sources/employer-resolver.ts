@@ -18,7 +18,7 @@
 import { fetchHtml } from '@/lib/scrapers/compliance-base';
 import { isAggregatorUrl, isAtsPlatform, isGovernmentPortal, isEmployerUrl, getAllAggregatorDomains } from './aggregators';
 
-// ── Link-text signals that indicate a direct employer link ────────────────────
+// ── Link-text signals that indicate a direct employer link or official document ─────
 const EMPLOYER_LINK_SIGNALS = [
   'apply',
   'apply now',
@@ -38,9 +38,21 @@ const EMPLOYER_LINK_SIGNALS = [
   'apply online',
   'apply for this job',
   'application link',
+  'download advert',
+  'download pdf',
+  'download document',
+  'job specification',
+  'tender document',
+  'official announcement',
+  'terms of reference',
+  'full advert',
+  'tangazo',        // Swahili: "announcement/advert"
+  'tovuti',         // Swahili: "website"
+  'pakua',          // Swahili: "download"
   'postuler',       // French: "apply"
   'candidature',    // French: "application"
   'soumettre',      // French: "submit"
+  'télécharger',    // French: "download"
   'apply at',
   'see original',
   'source',
@@ -67,7 +79,8 @@ function isExcludedDomain(url: string): boolean {
 
 /**
  * Parses all external links from raw HTML, scoring them by likelihood of being
- * the true employer/authority URL. Returns scored candidates sorted by score desc.
+ * the true employer/authority URL or official attachment document. Returns scored
+ * candidates sorted by score desc.
  */
 function extractCandidateLinks(
   html: string,
@@ -114,6 +127,8 @@ function extractCandidateLinks(
     if (isAtsPlatform(resolvedUrl)) score += 10;
     // Bonus: government portals
     if (isGovernmentPortal(resolvedUrl)) score += 8;
+    // Bonus: official document attachments (.pdf, .docx, .doc, .xlsx)
+    if (/\.(pdf|docx?|xlsx?)(\?.*)?$/i.test(resolvedUrl)) score += 7;
     // Bonus: .go.XX, .gov.XX domains (government)
     if (/\.(go|gov)\.[a-z]{2,3}$/.test(linkDomain)) score += 6;
     // Bonus: .org domains (NGOs, nonprofits)
