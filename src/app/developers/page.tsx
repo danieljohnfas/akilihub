@@ -101,7 +101,7 @@ export default function DevelopersPage() {
           
           <CodeSnippet 
             language="bash" 
-            code={`curl -X POST https://akilibrain.vercel.app/api/chat \\
+            code={`curl -X POST https://akilibrain.com/api/chat \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer YOUR_API_KEY"`}
           />
@@ -149,7 +149,7 @@ export default function DevelopersPage() {
                 <TabsContent value="curl">
                   <CodeSnippet 
                     language="bash" 
-                    code={`curl -X POST https://akilibrain.vercel.app/api/chat \\
+                    code={`curl -X POST https://akilibrain.com/api/chat \\
   -H "Content-Type: application/json" \\
   -d '{
     "query": "Show me the latest healthcare tenders in Kenya",
@@ -163,7 +163,7 @@ export default function DevelopersPage() {
                 <TabsContent value="node">
                   <CodeSnippet 
                     language="javascript" 
-                    code={`const response = await fetch('https://akilibrain.vercel.app/api/chat', {
+                    code={`const response = await fetch('https://akilibrain.com/api/chat', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -183,7 +183,7 @@ console.log(data.response);`}
                     language="python" 
                     code={`import requests
 
-url = "https://akilibrain.vercel.app/api/chat"
+url = "https://akilibrain.com/api/chat"
 payload = {
     "query": "Show me the latest healthcare tenders in Kenya"
 }

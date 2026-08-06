@@ -231,22 +231,6 @@ function getVisionModelPool(): VisionModelCandidate[] {
     });
   });
 
-  // 3. Groq Llama 3.2 Vision
-  const groqKeys = getEnvKeys('GROQ_API_KEY');
-  groqKeys.forEach((key, i) => {
-    const groq = createGroq({ apiKey: key });
-    pool.push({
-      id: `groq-llama-vision-11b-${i + 1}`,
-      name: `Groq Llama 3.2 11B Vision (${i + 1})`,
-      model: groq('llama-3.2-11b-vision-preview'),
-    });
-    pool.push({
-      id: `groq-llama-vision-90b-${i + 1}`,
-      name: `Groq Llama 3.2 90b Vision (${i + 1})`,
-      model: groq('llama-3.2-90b-vision-preview'),
-    });
-  });
-
   // 4. OpenAI GPT-4o Vision
   const openaiKeys = getEnvKeys('OPENAI_API_KEY');
   openaiKeys.forEach((key, i) => {
@@ -294,7 +278,7 @@ export async function extractVisionTextWithFallback(
               role: 'user',
               content: [
                 { type: 'text', text: prompt },
-                { type: 'image', image: imageBuffer },
+                { type: 'image', image: imageBuffer } as any,
               ],
             },
           ],

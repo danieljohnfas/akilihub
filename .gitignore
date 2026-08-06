@@ -43,6 +43,7 @@ next-env.d.ts
 # project-specific ignores
 .ai-pool-state.json
 scraper-progress.json
+scripts/audit_telemetry.json
 storage/
 scratch/
 

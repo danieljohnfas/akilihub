@@ -6,20 +6,14 @@ const sql = postgres(process.env.DATABASE_URL + '?sslmode=require');
 
 async function run() {
   try {
-    const [jobsRes] = await sql`
-      SELECT count(*) 
-      FROM jobs 
-      INNER JOIN countries ON jobs.country_id = countries.id 
-      WHERE countries.code = 'CD'
-    `;
-    const [tendersRes] = await sql`
-      SELECT count(*) 
-      FROM tenders 
-      INNER JOIN countries ON tenders.country_id = countries.id 
-      WHERE countries.code = 'CD'
-    `;
-    console.log(`DRC Jobs: ${jobsRes.count}`);
-    console.log(`DRC Tenders: ${tendersRes.count}`);
+    const [guidesRes] = await sql`SELECT count(*) FROM guides`;
+    const [compRes] = await sql`SELECT count(*) FROM compliance_requirements`;
+    const [bizRes] = await sql`SELECT count(*) FROM businesses`;
+    const sampleGuides = await sql`SELECT slug, title, category, reading_time_minutes, is_published FROM guides LIMIT 10`;
+    console.log(`Published Guides: ${guidesRes.count}`);
+    console.log(`Compliance Requirements: ${compRes.count}`);
+    console.log(`Businesses: ${bizRes.count}`);
+    console.log(`Sample Guides:`, sampleGuides);
   } catch(e) {
     console.error(e);
   } finally {

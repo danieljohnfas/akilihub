@@ -14,7 +14,7 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // 1. Static & Filter Pages
+  // 1. Static Canonical Pages
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}/tenders`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
@@ -22,20 +22,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/compliance`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/health`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/salaries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/developers`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/guides`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/developers`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/privacy`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${BASE_URL}/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${BASE_URL}/jobs?type=full_time`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-    { url: `${BASE_URL}/jobs?type=remote`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-    { url: `${BASE_URL}/jobs?type=internship`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
-    { url: `${BASE_URL}/jobs?location=Kenya`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-    { url: `${BASE_URL}/jobs?location=Tanzania`, lastModified: now, changeFrequency: 'hourly', priority: 0.7 },
-    { url: `${BASE_URL}/jobs?location=Uganda`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
-    { url: `${BASE_URL}/tenders?status=open`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },
-    { url: `${BASE_URL}/tenders?status=awarded`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
   ];
 
   // 2. Fetch all active entities, capped to ensure we never breach Next.js 50k limit in a single file

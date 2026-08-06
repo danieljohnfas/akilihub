@@ -26,7 +26,7 @@ export async function extractTendersWithAI(
   if (!text || text.length < 50) return [];
 
   const pdfSection = pdfLinks.length > 0
-    ? `\nPDF/document attachments found on this page:\n${pdfLinks.map(l => `- ${l}`).join('\n')}\n`
+    ? `\nPDF/document attachments found on this page:\n${pdfLinks.slice(0, 8).map(l => `- ${l}`).join('\n')}\n`
     : '';
 
   const prompt = `You are a specialized AI assistant that extracts government tender (procurement) opportunities from raw website text.

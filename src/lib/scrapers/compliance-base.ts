@@ -80,6 +80,7 @@ async function extractTextViaSidecar(
 export async function fetchHtml(url: string): Promise<string | null> {
   const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
+  // 1. Direct fetch with realistic browser headers
   const res = await fetchWithRetry(
     url,
     {
@@ -102,6 +103,7 @@ export async function fetchHtml(url: string): Promise<string | null> {
     }
   }
 
+  // 2. Scrapling Stealth Sidecar
   try {
     const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
     const sidecarRes = await fetch(`${sidecarUrl}/fetch_html`, {
@@ -115,6 +117,26 @@ export async function fetchHtml(url: string): Promise<string | null> {
       const data = await sidecarRes.json();
       if (data.success && data.html && data.html.length > 300) {
         return data.html;
+      }
+    }
+  } catch {
+  }
+
+  // 3. Fallback: Jina Reader Proxy (bypasses Cloudflare / 403 bot challenges)
+  try {
+    const jinaRes = await fetch(`https://r.jina.ai/${url}`, {
+      headers: {
+        'User-Agent': ua,
+        Accept: 'text/plain,text/html',
+        'X-No-Cache': 'true',
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (jinaRes.ok) {
+      const text = await jinaRes.text();
+      if (text && text.length > 300) {
+        return text;
       }
     }
   } catch {
@@ -255,7 +277,7 @@ export function extractAnnouncementImagesFromHtml(html: string, baseUrl: string)
 export async function htmlToTextEnriched(
   html: string,
   baseUrl: string,
-): Promise<{ text: string; pdfLinks: string[] }> {
+): Promise<{ text: string; pdfLinks: string[]; images: string[] }> {
   let text = htmlToText(html, baseUrl);
   const pdfLinks = extractPdfLinksFromHtml(html, baseUrl);
 
@@ -293,10 +315,20 @@ export async function htmlToTextEnriched(
     }
   }
 
-  return { text, pdfLinks };
+  return { text, pdfLinks, images: imageLinks };
 }
 
 export function htmlToText(html: string, baseUrl: string): string {
+  // If input is already markdown or plain text from stealth reader proxy
+  if (
+    (!html.includes('<html') && !html.includes('<body') && !html.includes('<div') && !html.includes('<p>')) ||
+    html.startsWith('Title: ') ||
+    html.startsWith('# ') ||
+    html.includes('Markdown Content:')
+  ) {
+    return html.substring(0, 15000);
+  }
+
   const $ = cheerio.load(html);
 
   $('script, style, noscript, nav, footer, header').remove();

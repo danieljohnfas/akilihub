@@ -10,7 +10,7 @@ export async function GET() {
     },
     servers: [
       {
-        url: "https://akilibrain.vercel.app",
+        url: "https://akilibrain.com",
         description: "Production server"
       }
     ],

@@ -256,10 +256,15 @@ async function ResourcesList({ params }: { params: ReturnType<typeof parseGlobal
           <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
             <BookOpen className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Compliance resources coming soon</h3>
+          <h3 className="text-xl font-semibold mb-2">No compliance resources found</h3>
           <p className="text-muted-foreground max-w-md">
-            We are actively indexing official compliance resources, tax guidelines, and business registration forms from East African authorities. Check back soon.
+            No compliance guidelines or statutory requirements matched your current filter criteria. Try adjusting your search query or selecting a different country.
           </p>
+          {(q || (type && type !== 'all') || (country && country !== 'all')) && (
+            <Link href="/compliance" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
+              Clear all filters
+            </Link>
+          )}
         </div>
       </>
     );
@@ -430,11 +435,11 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
               <Inbox className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Business registry sync in progress</h3>
+            <h3 className="text-xl font-semibold mb-2">No registered businesses found</h3>
             <p className="text-muted-foreground max-w-md">
-              We are currently syncing company registration records with national business registries across East Africa. Check back soon.
+              No registered corporate entities matched your search parameters. Try broadening your keywords or clearing the jurisdiction filter.
             </p>
-            {(q || (status && status !== 'all')) && (
+            {(q || (status && status !== 'all') || (country && country !== 'all') || (type && type !== 'all')) && (
               <Link href="/compliance" className={buttonVariants({ variant: "outline", className: "mt-6" })}>
                 Clear all filters
               </Link>
