@@ -207,9 +207,99 @@ export function extractSalaryFromText(text: string): ParsedSalary {
   return { salaryMin: null, salaryMax: null, salaryCurrency: currency };
 }
 
-// ── 5. CONTACT & APPLICATION URL EXTRACTOR ────────────────────────────────────
+// ── 5. CONTACT & APPLICATION URL EXTRACTOR & VALIDATOR ────────────────────────
 const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
 const ATS_URL_REGEX = /https?:\/\/[^\s"'<>]*(?:lever\.co|greenhouse\.io|workable\.com|bamboohr\.com|smartrecruiters\.com|myworkdayjobs\.com|recruitee\.com|forms\.gle|typeform\.com|apply|careers|job-details)[^\s"'<>]*/gi;
+
+export const BANNED_EMPLOYER_DOMAINS = [
+  // Social share & messaging
+  'wa.me',
+  'whatsapp.com',
+  'facebook.com',
+  'twitter.com',
+  'x.com',
+  't.me',
+  'pinterest.com',
+  'linkedin.com/sharing',
+  'linkedin.com/shareArticle',
+  'instagram.com',
+  'tiktok.com',
+  'youtube.com',
+
+  // Cookie & Policy generators
+  'iubenda.com',
+  'cookiebot.com',
+  'termly.io',
+  'onetrust.com',
+  'usercentrics.com',
+  'sentry.io',
+  'google-analytics.com',
+
+  // Placeholders
+  'example.com',
+  'localhost',
+  'test.com',
+
+  // Job boards & Aggregators (NOT direct employers)
+  'brightermonday.co.ke',
+  'brightermonday.co.ug',
+  'brightermonday.co.tz',
+  'fuzu.com',
+  'jobwebkenya.com',
+  'myjobmagghana.com',
+  'myjobmag.co.ke',
+  'myjobmag.com',
+  'ngojobsinafrica.com',
+  'africareers.net',
+  'alljobspo.com',
+  'geezjobs.com',
+  'ethiopianreporterjobs.com',
+  'jobwebrwanda.com',
+  'jobinrwanda.com',
+  'ethio-jobs.net.et',
+  'ethiongojobs.com',
+  'ajiriwa.net',
+  'zoomtanzania.net',
+  'macalindoon.online',
+  'kazibure.com',
+  'kenyajob.com',
+  'jobsearchkenya.com',
+  'reliefweb.int',
+  'unjobs.org',
+  'glassdoor.com',
+  'indeed.com',
+  'shortlist.net',
+  'cvmkr.com',
+];
+
+/**
+ * Validates whether a URL is a legitimate direct employer/authority/ATS link,
+ * rejecting social share links, tracking scripts, and known aggregator domains.
+ */
+export function isLegitimateEmployerUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (trimmed.length < 8 || trimmed.startsWith('#')) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    const fullHref = parsed.href.toLowerCase();
+
+    // Check if domain or full path matches banned list
+    for (const banned of BANNED_EMPLOYER_DOMAINS) {
+      if (hostname.endsWith(banned) || hostname === banned || fullHref.includes(banned)) {
+        return false;
+      }
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function extractApplicationDetails(text: string, html?: string): {
   emails: string[];
@@ -226,7 +316,13 @@ export function extractApplicationDetails(text: string, html?: string): {
   // Application URLs
   const rawUrls = combined.match(ATS_URL_REGEX) || [];
   const applicationUrls = Array.from(new Set(rawUrls))
-    .filter(u => !u.endsWith('.jpg') && !u.endsWith('.png') && !u.endsWith('.css'))
+    .filter(u => {
+      const lower = u.toLowerCase();
+      if (lower.endsWith('.jpg') || lower.endsWith('.png') || lower.endsWith('.css') || lower.endsWith('.js')) {
+        return false;
+      }
+      return isLegitimateEmployerUrl(u);
+    })
     .slice(0, 3);
 
   return { emails, applicationUrls };

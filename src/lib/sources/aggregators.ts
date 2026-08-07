@@ -116,8 +116,29 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'careerbuilder.com',         name: 'CareerBuilder',            type: 'aggregator', category: 'jobs' },
   { domain: 'snagajob.com',              name: 'Snagajob',                 type: 'aggregator', category: 'jobs' },
 
+  // ─── REGIONAL & RECENTLY AUDITED JOB AGGREGATORS ──────────────────────────────
+  { domain: 'ngojobsinafrica.com',       name: 'NGO Jobs in Africa',       type: 'aggregator', category: 'jobs' },
+  { domain: 'myjobmagghana.com',         name: 'MyJobMag Ghana',           type: 'aggregator', category: 'jobs' },
+  { domain: 'africareers.net',           name: 'AfriCareers',              type: 'aggregator', category: 'jobs' },
+  { domain: 'alljobspo.com',             name: 'AllJobsPo',                type: 'aggregator', category: 'jobs' },
+  { domain: 'geezjobs.com',              name: 'GeezJobs Ethiopia',        type: 'aggregator', category: 'jobs' },
+  { domain: 'ethiopianreporterjobs.com', name: 'Ethiopian Reporter Jobs',  type: 'aggregator', category: 'jobs' },
+  { domain: 'jobwebrwanda.com',          name: 'JobWeb Rwanda',            type: 'aggregator', category: 'jobs' },
+  { domain: 'jobinrwanda.com',           name: 'Job in Rwanda',            type: 'aggregator', category: 'jobs' },
+  { domain: 'ethio-jobs.net.et',         name: 'Ethio-Jobs.net.et',        type: 'aggregator', category: 'jobs' },
+  { domain: 'ethiongojobs.com',          name: 'Ethio NGO Jobs',           type: 'aggregator', category: 'jobs' },
+  { domain: 'ajiriwa.net',               name: 'Ajiriwa Tanzania',         type: 'aggregator', category: 'jobs' },
+  { domain: 'zoomtanzania.net',          name: 'Zoom Tanzania',            type: 'aggregator', category: 'jobs' },
+  { domain: 'macalindoon.online',        name: 'Macalindoon Somalia',      type: 'aggregator', category: 'jobs' },
+  { domain: 'kazibure.com',              name: 'KaziBure',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'shortlist.net',             name: 'Shortlist',                type: 'aggregator', category: 'jobs' },
+  { domain: 'cvmkr.com',                 name: 'CV Maker',                 type: 'aggregator', category: 'jobs' },
+
   // ─── TENDER / PROCUREMENT AGGREGATORS ────────────────────────────────────────
 
+  { domain: 'tenderimpulse.com',         name: 'Tender Impulse',           type: 'aggregator', category: 'tenders' },
+  { domain: 'globaltenders.com',         name: 'Global Tenders',           type: 'aggregator', category: 'tenders' },
+  { domain: 'biddetail.com',             name: 'Bid Detail',               type: 'aggregator', category: 'tenders' },
   { domain: 'tenderskenya.com',          name: 'Tenders Kenya',            type: 'aggregator', category: 'tenders' },
   { domain: 'tenders.go.ke',             name: 'Tenders.go.ke',            type: 'aggregator', category: 'tenders' },
   { domain: 'tendersuganda.com',         name: 'Tenders Uganda',           type: 'aggregator', category: 'tenders' },
@@ -138,6 +159,13 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'eastafricatenders.com',     name: 'East Africa Tenders',      type: 'aggregator', category: 'tenders' },
   { domain: 'bidease.com',               name: 'BidEase',                  type: 'aggregator', category: 'tenders' },
   { domain: 'globaltendering.com',       name: 'Global Tendering',         type: 'aggregator', category: 'tenders' },
+
+  // ─── SOCIAL SHARING & COOKIE TOOLS (NEVER EMPLOYERS) ─────────────────────────
+
+  { domain: 'wa.me',                     name: 'WhatsApp Share',           type: 'aggregator', category: 'all' },
+  { domain: 'api.whatsapp.com',          name: 'WhatsApp API',             type: 'aggregator', category: 'all' },
+  { domain: 'iubenda.com',               name: 'Iubenda Policy',           type: 'aggregator', category: 'all' },
+  { domain: 'cookiebot.com',             name: 'Cookiebot',                type: 'aggregator', category: 'all' },
 
   // ─── COMPLIANCE / REGULATORY AGGREGATORS ─────────────────────────────────────
 
@@ -229,14 +257,37 @@ export function isGovernmentPortal(url: string): boolean {
 }
 
 /**
- * True if this URL is already an employer/authority URL that should be
+ * True if this URL is already a legitimate direct employer/authority URL that should be
  * stored as the canonical `employerUrl`.
- * = not a known aggregator, OR is an ATS platform, OR is a government portal.
+ * = valid http(s) URL, no anchor fragments, not a known aggregator, NOT social share / cookie tool,
+ * OR is an ATS platform, OR is a government portal.
  */
-export function isEmployerUrl(url: string): boolean {
-  const source = getKnownSource(url);
-  if (!source) return true;          // unknown domain — assume employer
-  return source.type !== 'aggregator';
+export function isEmployerUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (trimmed.length < 8 || trimmed.startsWith('#')) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    
+    const domain = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    if (!domain || domain.includes('localhost') || domain.includes('example.com')) return false;
+
+    const source = getKnownSource(trimmed);
+    if (source) {
+      return source.type === 'ats_platform' || source.type === 'government_portal';
+    }
+
+    // Check against social/cookie patterns
+    if (domain.includes('whatsapp') || domain.includes('facebook') || domain.includes('twitter') || domain.includes('iubenda')) {
+      return false;
+    }
+
+    return true; // Unrecognized direct domain
+  } catch {
+    return false;
+  }
 }
 
 /** Returns all aggregator domains as a flat array (for BLOCKED_DOMAINS in scrapers). */

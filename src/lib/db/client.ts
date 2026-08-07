@@ -47,9 +47,11 @@ try {
   connectionString = 'postgres://dummy:dummy@localhost:5432/dummy';
 }
 
+const isCloudDb = connectionString.includes('supabase.com') || connectionString.includes('neon.tech') || connectionString.includes('pooler.supabase.com');
+
 const conn = globalForDb.conn ?? postgres(connectionString, {
-  // Supabase pooler requires SSL in production. Allow plain TCP locally (Docker).
-  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
+  // Supabase pooler / cloud databases require SSL even in development
+  ssl: process.env.NODE_ENV === 'production' || isCloudDb ? 'require' : false,
   max: 10,
   idle_timeout: 10,
   connect_timeout: 8,

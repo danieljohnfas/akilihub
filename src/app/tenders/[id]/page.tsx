@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildTenderSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { isGeneratedSlug, appendTrackingTag } from '@/lib/utils';
+import { getSourceProvenance } from '@/lib/utils/provenance';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -91,6 +92,8 @@ export default async function TenderDetailPage({
 
   const { tender, country, sector } = data[0];
   const isExpired = tender.deadline ? tender.deadline < new Date() : false;
+  const targetUrl = tender.employerUrl ?? tender.sourceUrl;
+  const provenance = getSourceProvenance(targetUrl, 'tender');
 
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-8">
@@ -123,6 +126,9 @@ export default async function TenderDetailPage({
       {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
+          <Badge variant="outline" className={`text-xs border ${provenance.badgeClassName}`}>
+            {provenance.badgeLabel}
+          </Badge>
           {!isGeneratedSlug(tender.referenceNo) ? (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
               {tender.referenceNo}
@@ -236,7 +242,7 @@ export default async function TenderDetailPage({
                   className={buttonVariants({ className: "w-full" })}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  View on Authority Website
+                  {provenance.actionText}
                 </a>
               )}
               {tender.documentUrl && (

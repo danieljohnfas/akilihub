@@ -76,6 +76,7 @@ function extractDomain(url: string): string {
 }
 
 function isExcludedDomain(url: string): boolean {
+  if (!isEmployerUrl(url)) return true;
   const domain = extractDomain(url);
   if (!domain) return true;
   // Exact match or subdomain match

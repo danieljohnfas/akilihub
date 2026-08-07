@@ -5,6 +5,7 @@ import { FileText, Calculator, FileWarning, ExternalLink, Calendar } from 'lucid
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { appendTrackingTag } from '@/lib/utils';
+import { getSourceProvenance } from '@/lib/utils/provenance';
 
 interface ResourceCardProps {
   id: string;
@@ -35,6 +36,7 @@ export function ResourceCard({
   lastVerifiedAt,
 }: ResourceCardProps) {
   const { icon: Icon, color, bg } = typeConfig[resourceType] || typeConfig.guideline;
+  const provenance = getSourceProvenance(sourceUrl, 'compliance');
 
   return (
     <Card className="flex flex-col bg-white/5 border-white/10 hover:border-white/20 transition-all group">
@@ -43,11 +45,14 @@ export function ResourceCard({
           <div className={`p-2 rounded-lg ${bg}`}>
             <Icon className={`w-5 h-5 ${color}`} />
           </div>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="bg-black/20 capitalize">
+          <div className="flex flex-wrap gap-2 justify-end">
+            <Badge variant="outline" className={`text-[11px] border ${provenance.badgeClassName}`}>
+              {provenance.badgeLabel}
+            </Badge>
+            <Badge variant="outline" className="bg-black/20 capitalize text-[11px]">
               {country}
             </Badge>
-            <Badge variant="outline" className="bg-black/20 capitalize">
+            <Badge variant="outline" className="bg-black/20 capitalize text-[11px]">
               {resourceType}
             </Badge>
           </div>
@@ -78,9 +83,9 @@ export function ResourceCard({
             href={`/api/out?url=${encodeURIComponent(sourceUrl)}&type=compliance_resource&id=${id}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 gap-1.5 hover:bg-white/10"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 px-3 gap-1.5 hover:bg-white/10"
           >
-            Access Tool
+            {provenance.actionText}
             <ExternalLink className="w-3 h-3" />
           </a>
         )}

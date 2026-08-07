@@ -12,6 +12,7 @@ import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildJobPostingSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { getSourceProvenance } from '@/lib/utils/provenance';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -115,6 +116,8 @@ export default async function JobDetailPage({
   const isExpired = job.deadline ? job.deadline < new Date() : !job.isActive;
   const typeColor = jobTypeColors[job.jobType || 'full_time'] || jobTypeColors['full_time'];
   const typeLabel = jobTypeLabels[job.jobType || 'full_time'] || 'Full Time';
+  const targetUrl = job.employerUrl ?? job.sourceUrl;
+  const provenance = getSourceProvenance(targetUrl, 'job');
 
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-8">
@@ -152,6 +155,9 @@ export default async function JobDetailPage({
       {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
+          <Badge variant="outline" className={`text-xs border ${provenance.badgeClassName}`}>
+            {provenance.badgeLabel}
+          </Badge>
           <Badge variant="outline" className={`border ${typeColor}`}>
             {typeLabel}
           </Badge>
@@ -250,7 +256,7 @@ export default async function JobDetailPage({
                   rel="noopener noreferrer"
                   className={cn(buttonVariants({ size: "lg", variant: "outline", className: "w-full md:w-auto h-12 px-8 text-base font-semibold" }))}
                 >
-                  Apply on Employer Site
+                  {provenance.actionText}
                   <ExternalLink className="w-5 h-5 ml-2" />
                 </a>
               )}
