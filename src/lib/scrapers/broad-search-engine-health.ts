@@ -87,8 +87,40 @@ HEALTH DATA EXTRACTION RULES:
       sourceUrl,
     }));
   } catch (err) {
-    console.error(`[extractHealthWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
-    return [];
+    console.warn(`[extractHealthWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Engaging deterministic fallback.`);
+
+    // Graceful Fallback: Deterministic regex table/line parsing for health metrics
+    const results: BroadHealthResource[] = [];
+    const indicatorPatterns = [
+      { regex: /maternal\s*mortality(?:\s*ratio)?[:\s]*([0-9]+(?:\.[0-9]+)?)/i, code: 'MMR', name: 'Maternal Mortality Ratio', unit: 'per 100,000 live births', category: 'maternal' as const },
+      { regex: /under[- ]5\s*mortality(?:\s*rate)?[:\s]*([0-9]+(?:\.[0-9]+)?)/i, code: 'U5MR', name: 'Under-5 Mortality Rate', unit: 'per 1,000 live births', category: 'child' as const },
+      { regex: /infant\s*mortality(?:\s*rate)?[:\s]*([0-9]+(?:\.[0-9]+)?)/i, code: 'IMR', name: 'Infant Mortality Rate', unit: 'per 1,000 live births', category: 'child' as const },
+      { regex: /hiv\s*prevalence[:\s]*([0-9]+(?:\.[0-9]+)?)\s*%/i, code: 'HIV_PREV', name: 'HIV Prevalence Rate', unit: '%', category: 'infectious' as const },
+      { regex: /malaria\s*incidence[:\s]*([0-9]+(?:\.[0-9]+)?)/i, code: 'MAL_INC', name: 'Malaria Incidence', unit: 'per 1,000 population', category: 'infectious' as const },
+      { regex: /life\s*expectancy[:\s]*([0-9]+(?:\.[0-9]+)?)/i, code: 'LIFE_EXP', name: 'Life Expectancy at Birth', unit: 'years', category: 'general' as const },
+      { regex: /immunization\s*(?:coverage|rate)?[:\s]*([0-9]+(?:\.[0-9]+)?)\s*%/i, code: 'IMM_COV', name: 'Immunization Coverage', unit: '%', category: 'child' as const },
+    ];
+
+    const currentYear = new Date().getFullYear();
+    for (const pat of indicatorPatterns) {
+      const m = pat.regex.exec(enrichedText);
+      if (m && m[1]) {
+        const val = parseFloat(m[1]);
+        if (!isNaN(val)) {
+          results.push({
+            indicatorCode: pat.code,
+            indicatorName: pat.name,
+            unit: pat.unit,
+            category: pat.category,
+            value: val,
+            year: currentYear,
+            sourceUrl,
+          });
+        }
+      }
+    }
+
+    return results;
   }
 }
 

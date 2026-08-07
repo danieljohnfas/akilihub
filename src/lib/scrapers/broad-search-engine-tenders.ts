@@ -3,6 +3,7 @@ import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { searchGoogle, SCRAPING_GUIDELINES } from './broad-search-engine';
+import { extractDeterministicTenderFields } from './deterministic-extractor';
 
 export interface BroadTenderResource {
   referenceNo: string;
@@ -55,6 +56,9 @@ TENDER-SPECIFIC EXTRACTION RULES:
 - Return empty array if no active tenders are found.
 `;
 
+  // Fast-path deterministic pre-extraction
+  const deterministic = extractDeterministicTenderFields(text, sourceUrl);
+
   try {
     const { object } = await generateObjectWithFallback({
       schema: z.object({
@@ -79,24 +83,33 @@ TENDER-SPECIFIC EXTRACTION RULES:
       contractingAuthority: string; category: BroadTenderResource['category'];
       location: string | null; budgetNumber: number | null; currency: string; sourceUrl: string; deadlineIsoString: string | null;
     }, idx: number) => {
-      const refSlug = (tender.referenceNo || tender.title || 'tnd').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40).replace(/^-|-$/g, '');
+      const resolvedRef = (tender.referenceNo && tender.referenceNo.trim() && tender.referenceNo.toLowerCase() !== 'n/a')
+        ? tender.referenceNo
+        : (deterministic.referenceNo || `TND-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}-${idx + 1}`);
+
+      const refSlug = resolvedRef.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40).replace(/^-|-$/g, '');
       const hasSpecificUrl = tender.sourceUrl && tender.sourceUrl.startsWith('http') && tender.sourceUrl !== sourceUrl;
       const uniqueSourceUrl = hasSpecificUrl ? tender.sourceUrl : `${sourceUrl}#${refSlug}-${idx + 1}`;
-      const uniqueRefNo = (tender.referenceNo && tender.referenceNo.trim() && tender.referenceNo.toLowerCase() !== 'n/a')
-        ? tender.referenceNo
-        : `TND-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}-${idx + 1}`;
+
+      let deadline = tender.deadlineIsoString ? new Date(tender.deadlineIsoString) : null;
+      if (!deadline && deterministic.deadline) {
+        deadline = deterministic.deadline;
+      }
+
+      const budget = tender.budgetNumber ?? deterministic.budget;
+      const currency = tender.currency || deterministic.currency || 'USD';
 
       return {
-        referenceNo: uniqueRefNo,
+        referenceNo: resolvedRef,
         title: tender.title,
-        description: tender.description,
+        description: tender.description || deterministic.description,
         contractingAuthority: tender.contractingAuthority,
-        category: tender.category,
+        category: tender.category || deterministic.category,
         location: tender.location,
-        budget: tender.budgetNumber,
-        currency: tender.currency,
+        budget,
+        currency,
         sourceUrl: uniqueSourceUrl,
-        deadline: tender.deadlineIsoString ? new Date(tender.deadlineIsoString) : null,
+        deadline,
         pdfLinks,
       };
     });
@@ -119,7 +132,29 @@ TENDER-SPECIFIC EXTRACTION RULES:
 
     return normalizedTenders;
   } catch (err) {
-    console.error(`[extractTendersWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
+    console.warn(`[extractTendersWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Engaging deterministic fallback.`);
+
+    // Graceful Fallback: Build structured tender from deterministic extraction + raw text
+    if (text.length >= 100 && (deterministic.referenceNo || deterministic.deadline || /tender|procurement|bid|rfp|rfq|expression of interest|ifb|soumission|marche public/i.test(text))) {
+      const titleMatch = /^(?:Tender\s*(?:Title|Name|Notice)?[:\s]*)?([^\n\r]{5,90})/m.exec(text);
+      const inferredTitle = titleMatch ? titleMatch[1].trim().replace(/^[#*-\s]+/, '') : 'Procurement Opportunity';
+      const refNo = deterministic.referenceNo || `TND-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+      return [{
+        referenceNo: refNo,
+        title: inferredTitle,
+        description: deterministic.description,
+        contractingAuthority: 'Procuring Entity',
+        category: deterministic.category,
+        regionId: null,
+        budget: deterministic.budget,
+        currency: deterministic.currency,
+        deadline: deterministic.deadline,
+        sourceUrl,
+        pdfLinks,
+      }];
+    }
+
     return [];
   }
 }

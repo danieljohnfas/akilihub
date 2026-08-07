@@ -8,6 +8,7 @@ import { fetchHtml, htmlToTextEnriched, fetchAndParseDocument } from "@/lib/scra
 import { extractJobsWithAI } from "@/lib/scrapers/broad-search-engine";
 import { extractTendersWithAI } from "@/lib/scrapers/broad-search-engine-tenders";
 import { extractComplianceWithAI } from "@/lib/scrapers/broad-search-engine-compliance";
+import { executeWithRetry } from "@/lib/db/query-resilience";
 
 /**
  * ENRICH SHALLOW DATA
@@ -138,7 +139,7 @@ export const enrichShallowDataJob = inngest.createFunction(
     // ═══════════════════════════════════════════════════
     const jobsResult = await step.run("enrich-shallow-jobs", async () => {
       // Find shallow job records: short description OR missing requirements
-      const shallowJobs = await db
+      const shallowJobs = await executeWithRetry(() => db
         .select({
           id: jobs.id,
           title: jobs.title,
@@ -159,7 +160,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             not(like(jobs.sourceUrl, '%#%')),
           )
         )
-        .limit(BATCH_JOBS);
+        .limit(BATCH_JOBS), { label: 'enrich-shallow-jobs-select' });
 
       console.log(`[enrich-jobs] Found ${shallowJobs.length} shallow job records.`);
 
@@ -203,7 +204,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             if (best.e.salaryCurrency) updatePayload.salaryCurrency = best.e.salaryCurrency;
 
             if (Object.keys(updatePayload).length > 1) { // more than just updatedAt
-              await db.update(jobs).set(updatePayload).where(eq(jobs.id, shallow.id));
+              await executeWithRetry(() => db.update(jobs).set(updatePayload).where(eq(jobs.id, shallow.id)), { label: 'enrich-job-update' });
               enriched++;
             }
           }
@@ -223,7 +224,7 @@ export const enrichShallowDataJob = inngest.createFunction(
     // STEP 2 — TENDERS enrichment
     // ═══════════════════════════════════════════════════
     const tendersResult = await step.run("enrich-shallow-tenders", async () => {
-      const shallowTenders = await db
+      const shallowTenders = await executeWithRetry(() => db
         .select({
           id: tenders.id,
           title: tenders.title,
@@ -243,7 +244,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             not(like(tenders.sourceUrl, '%#%')),
           )
         )
-        .limit(BATCH_TENDERS);
+        .limit(BATCH_TENDERS), { label: 'enrich-shallow-tenders-select' });
 
       console.log(`[enrich-tenders] Found ${shallowTenders.length} shallow tender records.`);
 
@@ -280,7 +281,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             if (best.e.currency && best.e.currency !== 'USD') updatePayload.currency = best.e.currency;
 
             if (Object.keys(updatePayload).length > 1) {
-              await db.update(tenders).set(updatePayload).where(eq(tenders.id, shallow.id));
+              await executeWithRetry(() => db.update(tenders).set(updatePayload).where(eq(tenders.id, shallow.id)), { label: 'enrich-tender-update' });
               enriched++;
             }
           }
@@ -300,7 +301,7 @@ export const enrichShallowDataJob = inngest.createFunction(
     // STEP 3 — COMPLIANCE enrichment
     // ═══════════════════════════════════════════════════
     const complianceResult = await step.run("enrich-shallow-compliance", async () => {
-      const shallowCompliance = await db
+      const shallowCompliance = await executeWithRetry(() => db
         .select({
           id: complianceRequirements.id,
           title: complianceRequirements.title,
@@ -318,7 +319,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             not(like(complianceRequirements.sourceUrl, '%#%')),
           )
         )
-        .limit(BATCH_COMPLIANCE);
+        .limit(BATCH_COMPLIANCE), { label: 'enrich-shallow-compliance-select' });
 
       console.log(`[enrich-compliance] Found ${shallowCompliance.length} shallow compliance records.`);
 
@@ -358,7 +359,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             }
 
             if (Object.keys(updatePayload).length > 2) { // more than updatedAt + lastVerifiedAt
-              await db.update(complianceRequirements).set(updatePayload).where(eq(complianceRequirements.id, shallow.id));
+              await executeWithRetry(() => db.update(complianceRequirements).set(updatePayload).where(eq(complianceRequirements.id, shallow.id)), { label: 'enrich-compliance-update' });
               enriched++;
             }
           }

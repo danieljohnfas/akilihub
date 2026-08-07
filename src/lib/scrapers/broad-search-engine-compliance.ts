@@ -85,7 +85,41 @@ COMPLIANCE-SPECIFIC EXTRACTION RULES:
       sourceUrl: r.sourceUrl || sourceUrl,
     }));
   } catch (err) {
-    console.error(`[extractComplianceWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
+    console.warn(`[extractComplianceWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Engaging deterministic fallback.`);
+
+    // Graceful Fallback: Extract compliance guidelines / notices from document text
+    if (enrichedText.length >= 100 && /tax|vat|paye|registration|compliance|regulation|license|permit|customs|authority|statutory/i.test(enrichedText)) {
+      const titleMatch = /^(?:Guideline|Regulation|Form|Notice|Requirement)?[:\s]*([^\n\r]{5,80})/m.exec(enrichedText);
+      const inferredTitle = titleMatch ? titleMatch[1].trim().replace(/^[#*-\s]+/, '') : 'Regulatory & Compliance Guideline';
+
+      const paragraphs = enrichedText
+        .split(/\n{2,}/)
+        .map(p => p.trim())
+        .filter(p => p.length >= 60 && !p.startsWith('http') && !p.includes('©'));
+      const description = paragraphs.slice(0, 3).join('\n\n') || enrichedText.slice(0, 500);
+
+      let category: BroadComplianceResource['category'] = 'business_registration';
+      const lower = enrichedText.toLowerCase();
+      if (lower.includes('tax') || lower.includes('vat') || lower.includes('paye') || lower.includes('income tax')) {
+        category = 'tax';
+      } else if (lower.includes('employment') || lower.includes('labor') || lower.includes('labour') || lower.includes('nssf')) {
+        category = 'employment';
+      } else if (lower.includes('environment') || lower.includes('nema')) {
+        category = 'environment';
+      } else if (lower.includes('health') || lower.includes('safety') || lower.includes('osha')) {
+        category = 'health_safety';
+      }
+
+      return [{
+        title: inferredTitle,
+        description,
+        category,
+        issuingAuthority: 'Regulatory Authority',
+        resourceType: 'guideline',
+        sourceUrl,
+      }];
+    }
+
     return [];
   }
 }

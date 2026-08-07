@@ -3,6 +3,7 @@ import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { getAllAggregatorDomains } from '../sources/aggregators';
+import { extractDeterministicJobFields } from './deterministic-extractor';
 
 export interface BroadJobResource {
   title: string;
@@ -183,6 +184,9 @@ JOB-SPECIFIC EXTRACTION RULES:
 - Return empty array if no real job postings found.
 `;
 
+  // Fast-path deterministic pre-extraction
+  const deterministic = extractDeterministicJobFields(text, sourceUrl);
+
   try {
     const { object } = await generateObjectWithFallback({
       schema: z.object({
@@ -219,10 +223,23 @@ JOB-SPECIFIC EXTRACTION RULES:
         const d = new Date(job.deadlineIsoString);
         if (!isNaN(d.getTime())) parsedDeadline = d;
       }
+      // Merge deterministic deadline or salary if AI missed them
+      if (!parsedDeadline && deterministic.deadline) {
+        parsedDeadline = deterministic.deadline;
+      }
+      const salaryMin = job.salaryMin > 0 ? job.salaryMin : (deterministic.salaryMin ?? null);
+      const salaryMax = job.salaryMax > 0 ? job.salaryMax : (deterministic.salaryMax ?? null);
+      const salaryCurrency = job.salaryCurrency?.trim() || deterministic.salaryCurrency || null;
+      const requirements = (job.requirements && job.requirements.trim()) || deterministic.requirements || null;
+
       return {
         ...job,
+        requirements,
         parsedPosted,
-        parsedDeadline
+        parsedDeadline,
+        salaryMin,
+        salaryMax,
+        salaryCurrency,
       };
     });
 
@@ -236,23 +253,46 @@ JOB-SPECIFIC EXTRACTION RULES:
         return {
           title: job.title,
           companyName: job.companyName || 'Unknown',
-          description: job.description,
-          requirements: job.requirements || null,
+          description: job.description || deterministic.description,
+          requirements: job.requirements,
           regionId: regionId,
           jobType: job.jobType,
           sourceUrl: uniqueSourceUrl,
           postedDate: job.parsedPosted,
           deadline: job.parsedDeadline,
-          salaryMin: job.salaryMin > 0 ? job.salaryMin : null,
-          salaryMax: job.salaryMax > 0 ? job.salaryMax : null,
-          salaryCurrency: job.salaryCurrency?.trim() || null,
+          salaryMin: job.salaryMin,
+          salaryMax: job.salaryMax,
+          salaryCurrency: job.salaryCurrency,
         };
       })
     );
 
     return normalizedJobs;
   } catch (err) {
-    console.error(`[extractJobsWithAI] Failed on ${sourceUrl}:`, (err as Error).message);
+    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Engaging deterministic fallback.`);
+
+    // Graceful Fallback: Build structured record from deterministic extraction + raw text
+    if (text.length >= 100 && (deterministic.requirements || deterministic.deadline || deterministic.salaryMin || /job|vacancy|career|position|recruitment|employment|officer|manager|engineer|consultant|developer|assistant|director/i.test(text))) {
+      const titleMatch = /^(?:Job\s*(?:Title|Position)?[:\s]*)?([^\n\r]{5,80})/m.exec(text);
+      const inferredTitle = titleMatch ? titleMatch[1].trim().replace(/^[#*-\s]+/, '') : 'Professional Opportunity';
+      const appUrl = deterministic.applicationUrls[0] || sourceUrl;
+
+      return [{
+        title: inferredTitle,
+        companyName: 'Unknown',
+        description: deterministic.description,
+        requirements: deterministic.requirements,
+        regionId: null,
+        jobType: 'full_time',
+        sourceUrl: appUrl,
+        postedDate: new Date(),
+        deadline: deterministic.deadline,
+        salaryMin: deterministic.salaryMin,
+        salaryMax: deterministic.salaryMax,
+        salaryCurrency: deterministic.salaryCurrency,
+      }];
+    }
+
     return [];
   }
 }
