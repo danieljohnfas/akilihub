@@ -185,6 +185,15 @@ export async function generateTextWithFallback(params: Record<string, any>) {
 // 3. VISION EXTRACTION WITH MULTI-PROVIDER FALLBACK
 // ------------------------------------------------------------------
 
+function detectImageMimeType(buf: Buffer): string {
+  if (!buf || buf.length < 4) return 'image/jpeg';
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return 'image/gif';
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46) return 'image/webp';
+  return 'image/jpeg';
+}
+
 interface VisionModelCandidate {
   id: string;
   name: string;
@@ -194,7 +203,7 @@ interface VisionModelCandidate {
 function getVisionModelPool(): VisionModelCandidate[] {
   const pool: VisionModelCandidate[] = [];
 
-  // 1. Google Gemini (2.0 Flash & 1.5 Flash)
+  // 1. Google Gemini (2.0 Flash)
   const googleKeys = [
     ...getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY'),
     ...getEnvKeys('GEMINI_API_KEY'),
@@ -207,11 +216,6 @@ function getVisionModelPool(): VisionModelCandidate[] {
       id: `google-flash-2.0-${i + 1}`,
       name: `Google Gemini 2.0 Flash (${i + 1})`,
       model: makeGoogle('gemini-2.0-flash'),
-    });
-    pool.push({
-      id: `google-flash-1.5-${i + 1}`,
-      name: `Google Gemini 1.5 Flash (${i + 1})`,
-      model: makeGoogle('gemini-1.5-flash'),
     });
   });
 
@@ -231,7 +235,7 @@ function getVisionModelPool(): VisionModelCandidate[] {
     });
   });
 
-  // 4. OpenAI GPT-4o Vision
+  // 3. OpenAI GPT-4o Vision
   const openaiKeys = getEnvKeys('OPENAI_API_KEY');
   openaiKeys.forEach((key, i) => {
     const openai = createOpenAI({ apiKey: key });
@@ -252,7 +256,7 @@ function getVisionModelPool(): VisionModelCandidate[] {
 
 /**
  * Executes multimodal vision OCR across the AI roster with multi-model fallback.
- * Tries Google Gemini Flash -> Mistral Pixtral -> Groq Llama Vision -> OpenAI GPT-4o.
+ * Tries Google Gemini Flash -> Mistral Pixtral -> OpenAI GPT-4o.
  */
 export async function extractVisionTextWithFallback(
   imageBuffer: Buffer,
@@ -265,6 +269,7 @@ export async function extractVisionTextWithFallback(
     return '';
   }
 
+  const mimeType = detectImageMimeType(imageBuffer);
   let lastError: unknown = null;
 
   for (const candidate of visionModels) {
@@ -278,7 +283,12 @@ export async function extractVisionTextWithFallback(
               role: 'user',
               content: [
                 { type: 'text', text: prompt },
-                { type: 'image', image: imageBuffer } as any,
+                {
+                  type: 'file',
+                  data: imageBuffer,
+                  mediaType: mimeType,
+                  mimeType: mimeType,
+                } as any,
               ],
             },
           ],
@@ -300,3 +310,4 @@ export async function extractVisionTextWithFallback(
   console.error('[Vision Router] All vision fallback models exhausted.');
   return '';
 }
+
