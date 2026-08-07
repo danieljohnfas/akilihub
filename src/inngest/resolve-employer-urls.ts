@@ -52,7 +52,12 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
     // ══════════════════════════════════════════════════
     const jobsResult = await step.run("resolve-jobs-employer-urls", async () => {
       const pending = await db
-        .select({ id: jobs.id, sourceUrl: jobs.sourceUrl })
+        .select({
+          id: jobs.id,
+          sourceUrl: jobs.sourceUrl,
+          title: jobs.title,
+          companyName: jobs.companyName,
+        })
         .from(jobs)
         .where(
           and(
@@ -82,9 +87,12 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
             continue;
           }
 
-          // Slow path: fetch aggregator page and extract employer URL
+          // Slow path: fetch aggregator page / search for true employer URL
           flaggedAggregator++;
-          const result = await resolveEmployerUrl(job.sourceUrl);
+          const result = await resolveEmployerUrl(job.sourceUrl, {
+            title: job.title,
+            company: job.companyName,
+          });
           await db.update(jobs)
             .set({
               employerUrl: result.employerUrl, // may be null if resolution failed
@@ -111,7 +119,12 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
     // ══════════════════════════════════════════════════
     const tendersResult = await step.run("resolve-tenders-employer-urls", async () => {
       const pending = await db
-        .select({ id: tenders.id, sourceUrl: tenders.sourceUrl })
+        .select({
+          id: tenders.id,
+          sourceUrl: tenders.sourceUrl,
+          title: tenders.title,
+          contractingAuthority: tenders.contractingAuthority,
+        })
         .from(tenders)
         .where(isNull(tenders.employerUrl))
         .limit(BATCH_TENDERS);
@@ -135,7 +148,10 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
           }
 
           flaggedAggregator++;
-          const result = await resolveEmployerUrl(tender.sourceUrl);
+          const result = await resolveEmployerUrl(tender.sourceUrl, {
+            title: tender.title,
+            company: tender.contractingAuthority,
+          });
           await db.update(tenders)
             .set({
               employerUrl: result.employerUrl,
