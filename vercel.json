@@ -15,6 +15,15 @@
   ],
   "headers": [
     {
+      "source": "/(.*)/opengraph-image(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
