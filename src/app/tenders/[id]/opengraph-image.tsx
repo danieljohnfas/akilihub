@@ -8,6 +8,10 @@ export const alt = 'Government tender on AkiliBrain';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+// Prevent Googlebot from indexing this image-generation endpoint.
+// Next.js translates this into an `X-Robots-Tag: noindex` response header.
+export const robots = 'noindex';
+
 export default async function OgImage({
   params,
 }: {
