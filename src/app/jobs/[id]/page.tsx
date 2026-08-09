@@ -15,8 +15,9 @@ import { buildJobPostingSchema, buildBreadcrumbSchema } from '@/components/seo/s
 import { getSourceProvenance } from '@/lib/utils/provenance';
 import type { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR: revalidate every hour. Avoids Googlebot seeing inconsistent content
+// across multiple crawls (which triggers "Google chose different canonical").
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -29,6 +30,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         region: regions.name,
         country: countries.name,
         createdAt: jobs.createdAt,
+        isActive: jobs.isActive,
+        deadline: jobs.deadline,
       })
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
@@ -47,6 +50,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     : `Apply for the ${job.title} position${companyStr} in ${job.region || job.country || 'East Africa'}.`;
 
   const url = `https://akilibrain.com/jobs/${resolvedParams.id}`;
+
+  // A job is expired if its deadline has passed OR it was deactivated.
+  const isExpired = job.deadline ? job.deadline < new Date() : !job.isActive;
 
   return {
     title,
@@ -67,6 +73,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     alternates: {
       canonical: url,
     },
+    // Expired/closed jobs should not be indexed: their content is a dead end
+    // and Google's "duplicate canonical" signal is often triggered by the
+    // content changing after a job closes. noindex resolves that immediately.
+    ...(isExpired && {
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }),
   };
 }
 

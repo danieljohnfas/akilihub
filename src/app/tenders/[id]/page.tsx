@@ -15,8 +15,9 @@ import { isGeneratedSlug, appendTrackingTag } from '@/lib/utils';
 import { getSourceProvenance } from '@/lib/utils/provenance';
 import type { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR: revalidate every hour. Avoids Googlebot seeing inconsistent content
+// across multiple crawls (which triggers "Google chose different canonical").
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -28,6 +29,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         description: tenders.description,
         country: countries.name,
         publishedAt: tenders.publishedAt,
+        status: tenders.status,
+        deadline: tenders.deadline,
       })
       .from(tenders)
       .leftJoin(countries, eq(tenders.countryId, countries.id))
@@ -44,6 +47,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     : `Government tender by ${tender.authority} in ${tender.country || 'East Africa'}.`;
   
   const url = `https://akilibrain.com/tenders/${resolvedParams.id}`;
+
+  // A tender is closed if its status is non-open OR its deadline has passed.
+  const isClosed =
+    tender.status !== 'open' ||
+    (tender.deadline != null && tender.deadline < new Date());
 
   return {
     title,
@@ -64,6 +72,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     alternates: {
       canonical: url,
     },
+    // Closed/awarded/cancelled tenders are dead content — noindex prevents
+    // Google from flagging canonical conflicts when status changes mid-crawl.
+    ...(isClosed && {
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }),
   };
 }
 
