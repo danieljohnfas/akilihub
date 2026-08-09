@@ -24,6 +24,9 @@ export default function robots(): MetadataRoute.Robots {
           '/account/',
           '/dashboard',
           '/dashboard/',
+          // Action pages — no SEO value
+          '/jobs/*/apply',
+          '/tenders/*/apply',
           // Next.js generated OG image routes — not real pages.
           // Use explicit per-section rules + a broad suffix catch-all.
           // Google supports * as "any sequence of characters" so these cover:

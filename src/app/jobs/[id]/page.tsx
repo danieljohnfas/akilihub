@@ -40,7 +40,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       .limit(1)
   );
 
-  if (!data.length) return { title: 'Job Not Found' };
+  if (!data.length) {
+    return { 
+      title: 'Job Not Found',
+      robots: { index: false, follow: false }
+    };
+  }
 
   const job = data[0];
   const companyStr = (!job.companyName || job.companyName.toLowerCase() === 'unknown') ? '' : ` at ${job.companyName}`;

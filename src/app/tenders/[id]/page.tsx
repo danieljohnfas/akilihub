@@ -38,7 +38,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       .limit(1)
   );
 
-  if (!data.length) return { title: 'Tender Not Found' };
+  if (!data.length) {
+    return { 
+      title: 'Tender Not Found',
+      robots: { index: false, follow: false }
+    };
+  }
 
   const tender = data[0];
   const title = `${tender.title} | AkiliBrain Procurement`;
