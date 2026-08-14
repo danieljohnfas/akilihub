@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ActivityTracker } from "@/components/analytics/ActivityTracker";
+import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 const BASE_URL = "https://akilibrain.com";
@@ -98,11 +99,12 @@ export default function RootLayout({
       <head>
         <JsonLd schema={buildOrganizationSchema()} />
         <JsonLd schema={buildWebSiteSchema()} />
-        <script
+        <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2501499631331261"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || 'ca-pub-2501499631331261'}`}
+          strategy="afterInteractive"
           crossOrigin="anonymous"
-        ></script>
+        />
       </head>
       <body className={inter.className}>
         <ClarityAnalytics />

@@ -234,6 +234,30 @@ export default async function JobDetailPage({
             )}
 
           </section>
+
+          {/* Editorial Context — Google AdSense content quality requirement */}
+          <section className="space-y-3 bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
+            <h2 className="text-lg font-semibold text-foreground">About This Listing</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This job listing was sourced by AkiliBrain&apos;s automated data pipeline from a publicly
+              accessible employer career page or job board. Listings are indexed daily and verified against
+              the original source. AkiliBrain does not charge employers for listing and does not endorse
+              any specific employer or role.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              To apply, use the official link provided by the employer. If you believe this listing
+              contains inaccurate information, please{' '}
+              <a
+                href="mailto:corrections@akilibrain.com"
+                className="text-primary hover:underline underline-offset-4"
+              >
+                contact our editorial team
+              </a>.
+            </p>
+            <p className="text-xs text-muted-foreground/60 pt-1">
+              Source: AkiliBrain Jobs &amp; Careers Intelligence — updated daily from employer portals across East Africa.
+            </p>
+          </section>
         </div>
 
         {/* Sidebar Info */}

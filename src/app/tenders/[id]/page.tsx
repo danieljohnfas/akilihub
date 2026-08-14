@@ -203,6 +203,32 @@ export default async function TenderDetailPage({
               </p>
             </div>
           </section>
+
+          {/* Editorial Context — Google AdSense content quality requirement */}
+          <section className="space-y-3 bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
+            <h2 className="text-lg font-semibold text-foreground">About This Tender</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This procurement notice was sourced by AkiliBrain from a publicly accessible government
+              portal or official procurement authority. AkiliBrain&apos;s pipelines refresh daily to
+              ensure listings reflect current status. Open tenders are indexed; closed or expired tenders
+              are automatically de-listed.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              AkiliBrain does not charge contracting authorities for listing and is not affiliated with
+              any procurement body. Businesses should verify all tender details directly with the
+              contracting authority before submitting bids. If you believe this record contains inaccurate
+              information, please{' '}
+              <a
+                href="mailto:corrections@akilibrain.com"
+                className="text-primary hover:underline underline-offset-4"
+              >
+                contact our editorial team
+              </a>.
+            </p>
+            <p className="text-xs text-muted-foreground/60 pt-1">
+              Source: AkiliBrain Procurement Intelligence — aggregated daily from PPRA, PPIP, PPDA, RPPA and other official East African portals.
+            </p>
+          </section>
         </div>
 
         {/* Sidebar Info */}

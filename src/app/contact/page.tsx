@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbSchema } from '@/components/seo/schemas';
+import { ContactForm } from '@/components/shared/ContactForm';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
@@ -144,6 +145,17 @@ export default function ContactPage() {
               </a>
             </div>
           ))}
+        </section>
+
+        {/* Contact Form */}
+        <section className="bg-white/5 border border-white/10 rounded-xl p-6 md:p-8 space-y-6 shadow-xl">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">Send us a Message</h2>
+            <p className="text-sm text-muted-foreground">
+              Prefer to write to us directly? Fill out the form below and we&apos;ll get back to you.
+            </p>
+          </div>
+          <ContactForm />
         </section>
 
         {/* Community / Social placeholder */}

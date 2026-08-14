@@ -12,6 +12,7 @@ export const navLinks = [
   { href: '/salaries', label: 'Salaries', icon: 'solar:wallet-money-bold-duotone' },
   { href: '/guides', label: 'Insights', icon: 'solar:book-bookmark-bold-duotone' },
   { href: '/developers', label: 'Dev Tools', icon: 'solar:code-circle-bold-duotone' },
+  { href: '/editorial-policy', label: 'Editorial Policy', icon: 'solar:notes-bold-duotone' },
 ];
 
 export function DesktopNav() {
