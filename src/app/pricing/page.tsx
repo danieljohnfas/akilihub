@@ -63,9 +63,11 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button className="w-full shadow-lg hover:shadow-primary/25 transition-all hover:scale-105" asChild>
-              <Link href="/signup">Upgrade to PRO</Link>
-            </Button>
+            <Link href="/signup" className="w-full">
+              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_-5px] shadow-primary/25 transition-all hover:scale-105">
+                Upgrade to PRO
+              </Button>
+            </Link>
           </CardFooter>
         </Card>
       </div>
