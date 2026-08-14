@@ -22,7 +22,7 @@ services:
   # ── 2. Langflow — AI Workflow Builder ──────────────────────────────────────
   - type: web
     name: akilihub-langflow
-    runtime: docker
+    runtime: image
     image:
       url: docker.io/langflowai/langflow:latest
     plan: standard
@@ -39,7 +39,7 @@ services:
   # ── 3. Crawl4AI — LLM Scraping API ────────────────────────────────────────
   - type: web
     name: akilihub-crawl4ai
-    runtime: docker
+    runtime: image
     image:
       url: docker.io/unclecode/crawl4ai:latest
     plan: starter
@@ -52,7 +52,7 @@ services:
   # ── 4. Maxun — Visual Web Scraper ──────────────────────────────────────────
   - type: web
     name: akilihub-maxun
-    runtime: docker
+    runtime: image
     image:
       url: docker.io/maxunhq/maxun:latest
     plan: standard
@@ -72,7 +72,7 @@ services:
   # ── 5. Stirling PDF — PDF Tools ────────────────────────────────────────────
   - type: web
     name: akilihub-stirling-pdf
-    runtime: docker
+    runtime: image
     image:
       url: docker.io/frooodle/s-pdf:latest
     plan: starter
