@@ -3,11 +3,11 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { Calendar, Building2, MapPin, ExternalLink, ArrowLeft, Clock, Briefcase } from 'lucide-react';
+import { Calendar, Building2, MapPin, ExternalLink, ArrowLeft, Briefcase } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
-import { cn, appendTrackingTag } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';

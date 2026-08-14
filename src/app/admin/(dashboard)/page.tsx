@@ -8,7 +8,6 @@ import { healthDataPoints } from '@/lib/db/schema/health';
 import { count } from 'drizzle-orm';
 import { FileText, ShieldCheck, Banknote, Activity, TrendingUp, Database } from 'lucide-react';
 import { TendersChart } from '@/components/dashboard/TendersChart';
-import { sql } from 'drizzle-orm';
 
 async function getStats() {
   const [t, b, s, h] = await Promise.all([

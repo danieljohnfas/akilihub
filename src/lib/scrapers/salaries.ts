@@ -1,8 +1,3 @@
-import { db } from '../db/client';
-import { salarySubmissions, employers } from '../db/schema/salaries';
-import { countries } from '../db/schema/shared';
-import { eq } from 'drizzle-orm';
-import FirecrawlApp from '@mendable/firecrawl-js';
 
 /**
  * Real salary data fetcher. 

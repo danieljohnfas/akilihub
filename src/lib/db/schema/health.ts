@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric, integer, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, numeric, integer, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { countries } from './shared';
 
 export const healthIndicators = pgTable('health_indicators', {

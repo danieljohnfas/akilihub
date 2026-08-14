@@ -9,10 +9,9 @@ import { JobCard } from '@/components/jobs/JobCard';
 import { SalaryCard } from '@/components/salaries/SalaryCard';
 import { buttonVariants } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Building2, MapPin, Search, Briefcase } from 'lucide-react';
+import { Building2, Briefcase } from 'lucide-react';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbSchema } from '@/components/seo/schemas';
-import { notFound } from 'next/navigation';
 
 import type { Metadata } from 'next';
 

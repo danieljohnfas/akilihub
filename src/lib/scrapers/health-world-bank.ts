@@ -1,7 +1,6 @@
 import { db } from '../db/client';
 import { healthIndicators, healthDataPoints } from '../db/schema/health';
 import { countries } from '../db/schema/shared';
-import { eq, and } from 'drizzle-orm';
 
 /**
  * REAL DATA SOURCES — No mock data anywhere.

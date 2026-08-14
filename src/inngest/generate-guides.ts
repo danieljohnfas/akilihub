@@ -4,7 +4,6 @@ import { db } from "@/lib/db/client";
 import { guides } from "@/lib/db/schema/guides";
 import { z } from "zod";
 import { searchGoogle } from "@/lib/scrapers/broad-search-engine";
-import { eq } from "drizzle-orm";
 
 const TOPICS = [
   // Health Data & Systems

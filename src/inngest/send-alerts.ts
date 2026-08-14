@@ -7,7 +7,7 @@ import { tenders } from "@/lib/db/schema/tenders";
 import { jobs } from "@/lib/db/schema/jobs";
 import { users, userAlerts, bookmarks } from "@/lib/db/schema/users";
 import { countries } from "@/lib/db/schema/shared";
-import { desc, eq, sql, inArray, and, lt, isNotNull, or, isNull, gte } from "drizzle-orm";
+import { desc, eq, inArray, and, isNotNull, or, isNull, gte } from "drizzle-orm";
 import React from "react";
 
 // Helper function to chunk array for Resend limits

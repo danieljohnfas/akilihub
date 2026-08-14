@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { BookmarkButton } from '@/components/shared/BookmarkButton';
 import { ShareButton } from '@/components/shared/ShareButton';
-import { appendTrackingTag } from '@/lib/utils';
 
 export interface JobCardProps {
   id: string;

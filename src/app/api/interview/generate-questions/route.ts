@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
-import { jobApplications, mockInterviews } from '@/lib/db/schema/applications';
+import { jobApplications } from '@/lib/db/schema/applications';
 import { jobs } from '@/lib/db/schema/jobs';
 import { eq } from 'drizzle-orm';
 import { generateObjectWithFallback } from '@/lib/ai/router';

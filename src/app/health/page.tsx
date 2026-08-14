@@ -3,13 +3,12 @@ import { healthDataPoints, healthIndicators } from '@/lib/db/schema/health';
 import { countries } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and, count } from 'drizzle-orm';
 import { HealthCard } from '@/components/health/HealthCard';
-import { Input } from '@/components/ui/input';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Search, SlidersHorizontal, Activity, MapPin, Globe } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
+import { Activity, MapPin, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildDatasetSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
-import { GlobalFilterBar, FilterConfig } from '@/components/shared/GlobalFilterBar';
+import { GlobalFilterBar } from '@/components/shared/GlobalFilterBar';
 import { parseGlobalSearchParams } from '@/lib/filters';
 
 export const dynamic = 'force-dynamic';
@@ -47,7 +46,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { Suspense } from 'react';
 import { unstable_cache } from 'next/cache';
 
 const getUniqueCountries = unstable_cache(async () => {

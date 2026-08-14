@@ -189,7 +189,7 @@ export function AIChatPanel() {
       // Re-focus input so user knows they can continue typing
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isLoading]);
+  }, [isLoading, pathname, cvState.status, cvState.documentId]);
 
   const handleCvUpload = useCallback(async (file: File) => {
     setCvState({ status: 'uploading' });
@@ -225,7 +225,7 @@ export function AIChatPanel() {
     } catch {
       setCvState({ status: 'error', message: 'Upload failed. Please try pasting your CV as text.' });
     }
-  }, [sendMessage]);
+  }, [sendMessage, pathname]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

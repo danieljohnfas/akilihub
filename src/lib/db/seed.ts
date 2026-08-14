@@ -5,7 +5,7 @@
 
 import 'dotenv/config';
 import { db } from './client';
-import { countries, regions } from './schema/shared';
+import { countries } from './schema/shared';
 import { tenderSectors } from './schema/tenders';
 import { jobCategories } from './schema/salaries';
 import { businessTypes } from './schema/compliance';

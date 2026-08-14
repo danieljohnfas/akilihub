@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Calendar, Building2, MapPin, DollarSign, FileText, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { BookmarkButton } from '@/components/shared/BookmarkButton';
 import { ShareButton } from '@/components/shared/ShareButton';

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric, integer, boolean, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, numeric, boolean, index, pgEnum } from 'drizzle-orm/pg-core';
 import { countries, regions } from './shared';
 import { sql } from 'drizzle-orm';
 

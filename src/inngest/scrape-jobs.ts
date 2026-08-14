@@ -3,7 +3,7 @@ import { discoverJobs, BroadJobResource } from "@/lib/scrapers/broad-search-engi
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
 import { countries } from "@/lib/db/schema/shared";
-import { eq, count } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { classifySourceUrl } from "@/lib/sources/employer-resolver";
 
 // ── Thresholds ────────────────────────────────────────────────────────────────

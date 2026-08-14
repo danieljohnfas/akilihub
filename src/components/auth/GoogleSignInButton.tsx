@@ -69,15 +69,15 @@ function GoogleSignInButtonInner({ isSignUp = false }: { isSignUp?: boolean }) {
       )}
       <div className="w-full flex justify-center">
         {hashedNonce ? (
-          <GoogleLogin
-            nonce={hashedNonce}
-            onSuccess={handleCredentialResponse}
-            onError={() => setError('Google Login Failed')}
-            useOneTap
-            theme="outline"
-            shape="rectangular"
-            text={isSignUp ? "signup_with" : "signin_with"}
-          />
+            <GoogleLogin
+              nonce={hashedNonce}
+              onSuccess={handleCredentialResponse}
+              onError={() => setError('Google Login Failed')}
+              useOneTap
+              theme="outline"
+              shape="rectangular"
+              text={isSignUp ? "signup_with" : "signin_with"}
+            />
         ) : (
           <div className="h-10 bg-muted animate-pulse rounded-md w-full max-w-[200px]" />
         )}

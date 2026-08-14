@@ -4,7 +4,7 @@ import React, { useTransition } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, Loader2, Sparkles } from 'lucide-react';
+import { Search, Filter, Loader2 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export type FilterType = 'search' | 'select' | 'pills';

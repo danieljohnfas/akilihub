@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
-import { CheckCircle2, ArrowLeft, MailX, BellRing, Sparkles } from 'lucide-react';
+import { ArrowLeft, MailX, BellRing, Sparkles } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +52,7 @@ export default async function UnsubscribePage({ searchParams }: UnsubscribePageP
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Welcome Back!</h1>
             <p className="text-slate-400 text-sm leading-relaxed mb-8">
-              You are now re-subscribed to AkiliBrain intelligence digests and opportunity recommendations. You'll receive fresh tenders and job alerts matching your interests.
+              You are now re-subscribed to AkiliBrain intelligence digests and opportunity recommendations. You&apos;ll receive fresh tenders and job alerts matching your interests.
             </p>
             <Link
               href="/"

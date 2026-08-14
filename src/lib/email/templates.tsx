@@ -11,7 +11,6 @@ import {
   Heading,
   Hr,
   Html,
-  Img,
   Link,
   Preview,
   Section,
@@ -782,7 +781,7 @@ export function ReengagementEmail({
           Return to AkiliBrain →
         </Button>
         <Text style={{ color: TEXT_MUTED, fontSize: "11px", margin: "24px 0 0" }}>
-          Don't want to receive these recommendations?{" "}
+          Don&apos;t want to receive these recommendations?{" "}
           <Link href={`${BASE_URL}/unsubscribe?user_id=${userId}`} style={{ color: TEXT_MUTED, textDecoration: "underline" }}>
             Unsubscribe here
           </Link>

@@ -1,7 +1,6 @@
 import { generateObject, generateText, type GenerateObjectResult } from 'ai';
 import type { ZodType } from 'zod';
 import { createGoogle } from '@ai-sdk/google';
-import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
 import { createCohere } from '@ai-sdk/cohere';
 import { createOpenAI } from '@ai-sdk/openai';

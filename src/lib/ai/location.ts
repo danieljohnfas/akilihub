@@ -1,6 +1,5 @@
 import { db, safeQuery } from '../db/client';
-import { countries, regions } from '../db/schema/shared';
-import { eq, and } from 'drizzle-orm';
+import { regions } from '../db/schema/shared';
 
 // In-memory cache for regions to avoid thousands of DB lookups
 const regionCache = new Map<string, string>(); // "countryCode:regionName" -> regionId

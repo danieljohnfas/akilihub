@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, QrCode, Copy, Check, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Brain, Copy, Check, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 type Step = 'loading' | 'qr' | 'confirm' | 'done';
 

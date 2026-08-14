@@ -2,7 +2,7 @@ import { inngest } from "./client";
 import { db } from "@/lib/db/client";
 import { healthIndicators, healthDataPoints } from "@/lib/db/schema/health";
 import { countries } from "@/lib/db/schema/shared";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 // ── Indicator definitions ─────────────────────────────────────────────────────
 // These are well-known DHIS2 / WHO indicator codes tracked across East Africa.

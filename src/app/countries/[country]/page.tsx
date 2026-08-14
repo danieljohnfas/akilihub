@@ -2,7 +2,7 @@ import { db, safeQuery } from '@/lib/db/client';
 import { tenders, tenderSectors } from '@/lib/db/schema/tenders';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, count } from 'drizzle-orm';
+import { eq, desc, ilike, count } from 'drizzle-orm';
 import { TenderCard } from '@/components/tenders/TenderCard';
 import { JobCard } from '@/components/jobs/JobCard';
 import { buttonVariants } from '@/components/ui/button';

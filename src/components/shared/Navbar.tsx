@@ -8,7 +8,6 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Icon } from '@iconify/react';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/auth/actions';
 import { NavUserMenu } from '@/components/shared/NavUserMenu';
@@ -49,7 +48,7 @@ export async function Navbar() {
           
           <Sheet>
             <SheetTrigger 
-              render={<Button variant="ghost" size="icon" className="md:hidden" />}
+              render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle menu" />}
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle menu</span>

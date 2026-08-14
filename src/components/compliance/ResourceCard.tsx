@@ -1,10 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { FileText, Calculator, FileWarning, ExternalLink, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import Link from 'next/link';
-import { appendTrackingTag } from '@/lib/utils';
 import { getSourceProvenance } from '@/lib/utils/provenance';
 
 interface ResourceCardProps {

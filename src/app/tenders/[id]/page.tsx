@@ -3,15 +3,15 @@ import { tenders, tenderSectors } from '@/lib/db/schema/tenders';
 import { countries } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { Calendar, Building2, MapPin, DollarSign, ExternalLink, ArrowLeft, Download, FileText, Clock } from 'lucide-react';
+import { Calendar, Building2, MapPin, DollarSign, ExternalLink, ArrowLeft, Download, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildTenderSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
-import { isGeneratedSlug, appendTrackingTag } from '@/lib/utils';
+import { isGeneratedSlug } from '@/lib/utils';
 import { getSourceProvenance } from '@/lib/utils/provenance';
 import type { Metadata } from 'next';
 

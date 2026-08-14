@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, FileText, CheckCircle2, AlertCircle, Download, Lock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Loader2, CheckCircle2, AlertCircle, Download, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 

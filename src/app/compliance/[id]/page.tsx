@@ -3,7 +3,7 @@ import { businesses, businessTypes } from '@/lib/db/schema/compliance';
 import { countries } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { Building2, MapPin, CheckCircle2, XCircle, ArrowLeft, Users, FileText, Calendar, Clock } from 'lucide-react';
+import { Building2, MapPin, CheckCircle2, XCircle, ArrowLeft, Users, FileText, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';

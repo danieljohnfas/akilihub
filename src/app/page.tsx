@@ -2,13 +2,15 @@ import Link from "next/link";
 import { FileText, ShieldCheck, Activity, Banknote, Code, ArrowRight, Briefcase } from "lucide-react";
 import { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { MagicCard } from "@/components/ui/magic-card";
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildFAQSchema } from "@/components/seo/schemas";
-import { RelatedGuides } from '@/components/guides/RelatedGuides';
-import { LiveStats } from '@/components/home/LiveStats';
-import { LeadCapture } from '@/components/home/LeadCapture';
-import { Suspense } from 'react';
+
+const MagicCard = dynamic(() => import('@/components/ui/magic-card').then(mod => mod.MagicCard), { ssr: true });
+const RelatedGuides = dynamic(() => import('@/components/guides/RelatedGuides').then(mod => mod.RelatedGuides), { ssr: false });
+const LiveStats = dynamic(() => import('@/components/home/LiveStats').then(mod => mod.LiveStats), { ssr: false });
+const LeadCapture = dynamic(() => import('@/components/home/LeadCapture').then(mod => mod.LeadCapture), { ssr: false });
 
 export const revalidate = 60;
 
