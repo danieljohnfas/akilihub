@@ -189,7 +189,7 @@ export function AIChatPanel() {
       // Re-focus input so user knows they can continue typing
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isLoading, pathname, cvState.status, cvState.documentId]);
+  }, [isLoading, pathname, cvState.status, cvState.status === 'ready' ? cvState.documentId : undefined]);
 
   const handleCvUpload = useCallback(async (file: File) => {
     setCvState({ status: 'uploading' });
