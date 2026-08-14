@@ -10,7 +10,7 @@ services:
     runtime: docker
     dockerfilePath: ./scraper/Dockerfile
     dockerContext: ./scraper
-    plan: starter
+    plan: free
     region: oregon
     branch: main
     healthCheckPath: /health
@@ -25,7 +25,7 @@ services:
     runtime: image
     image:
       url: docker.io/langflowai/langflow:latest
-    plan: standard
+    plan: free
     region: oregon
     envVars:
       - key: LANGFLOW_DATABASE_URL
@@ -42,7 +42,7 @@ services:
     runtime: image
     image:
       url: docker.io/unclecode/crawl4ai:latest
-    plan: starter
+    plan: free
     region: oregon
     envVars:
       - key: CRAWL4AI_API_TOKEN
@@ -54,8 +54,8 @@ services:
     name: akilihub-maxun
     runtime: image
     image:
-      url: docker.io/maxunhq/maxun:latest
-    plan: standard
+      url: docker.io/maxunhq/maxun-core:latest
+    plan: free
     region: oregon
     envVars:
       - key: DATABASE_URL
@@ -75,7 +75,7 @@ services:
     runtime: image
     image:
       url: docker.io/frooodle/s-pdf:latest
-    plan: starter
+    plan: free
     region: oregon
     envVars:
       - key: DOCKER_ENABLE_SECURITY
