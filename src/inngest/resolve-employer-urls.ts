@@ -118,7 +118,7 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
 // 2. THE WORKER (Event Listener)
 // ─────────────────────────────────────────────────────────────────────────────
 export const resolveUrlWorker = inngest.createFunction(
-  { id: "resolve-url-worker", name: "Worker: Resolve URL", concurrency: 5, event: "data.url.resolve" }, // strict concurrency to avoid aggregator bans
+  { id: "resolve-url-worker", name: "Worker: Resolve URL", concurrency: 5, triggers: [{ event: "data.url.resolve" }] }, // strict concurrency to avoid aggregator bans
   async ({ event, step }) => {
     const { id, module, sourceUrl, title, companyName } = event.data;
 
