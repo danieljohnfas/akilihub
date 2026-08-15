@@ -10,23 +10,39 @@ import { classifySourceUrl } from "@/lib/sources/employer-resolver";
 const JOB_TARGET = 200; // Minimum new inserts before we skip second pass
 
 // ── Country lookup ────────────────────────────────────────────────────────────
+const countryCache = new Map<string, string>();
 async function getCountryId(countryHint: string): Promise<string | null> {
-  const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, countryHint)).limit(1);
-  return result.length > 0 ? result[0].id : null;
+  if (!countryHint) return null;
+  const code = countryHint.toUpperCase();
+  if (countryCache.has(code)) return countryCache.get(code)!;
+  
+  const result = await db.select({ id: countries.id }).from(countries).where(eq(countries.code, code)).limit(1);
+  if (result.length > 0) {
+    countryCache.set(code, result[0].id);
+    return result[0].id;
+  }
+  return null;
 }
 
 // ── Batch-insert save (fast path) ─────────────────────────────────────────────
 // Uses batch insert for efficiency (from mass-scrape learnings), falls back
 // to per-item insert on conflict-key violations.
 export async function saveJobs(discovered: BroadJobResource[], countryCode: string): Promise<number> {
-  const countryId = await getCountryId(countryCode);
-  if (!countryId) return 0;
+  const defaultCountryId = await getCountryId(countryCode);
+  if (!defaultCountryId) return 0;
 
   if (discovered.length === 0) return 0;
 
+  // Resolve country dynamically per job
+  const resolvedJobs = await Promise.all(discovered.map(async job => {
+    // If AI found a country, see if we have it in the DB. Otherwise, fallback to the cron's target country.
+    const jobCountryId = job.countryCode ? await getCountryId(job.countryCode) : null;
+    return { ...job, finalCountryId: jobCountryId || defaultCountryId };
+  }));
+
   // Attempt batch insert first (10-30x faster than one-by-one)
   try {
-    const values = discovered.map(job => {
+    const values = resolvedJobs.map(job => {
       const { isAggregatorSource, quickEmployerUrl } = classifySourceUrl(job.sourceUrl);
       return {
         title: job.title,
@@ -34,7 +50,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
         description: job.description || 'No description',
         requirements: job.requirements,
         regionId: job.regionId,
-        countryId,
+        countryId: job.finalCountryId,
         jobType: job.jobType,
         sourceUrl: job.sourceUrl,
         employerUrl: quickEmployerUrl,          // null for aggregators (resolved by backfill job)
@@ -52,7 +68,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
   } catch {
     // Batch failed (e.g. unique constraint on one item): fall back to per-item
     let inserted = 0;
-    for (const job of discovered) {
+    for (const job of resolvedJobs) {
       try {
         const { isAggregatorSource, quickEmployerUrl } = classifySourceUrl(job.sourceUrl);
         const rows = await db.insert(jobs).values({
@@ -61,7 +77,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
           description: job.description || 'No description',
           requirements: job.requirements,
           regionId: job.regionId,
-          countryId,
+          countryId: job.finalCountryId,
           jobType: job.jobType,
           sourceUrl: job.sourceUrl,
           employerUrl: quickEmployerUrl,

@@ -18,6 +18,7 @@ export interface BroadJobResource {
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null; // ISO 4217, e.g. "KES", "TZS"
+  countryCode: string | null; // ISO 3166-1 alpha-2, e.g. "TZ", "KE", "MG"
 }
 
 // ── Blocked domains: all known aggregator domains (sourced from registry) ──────
@@ -167,6 +168,8 @@ JOB-SPECIFIC EXTRACTION RULES:
   of experience, specific skills, certifications, software tools, languages, and any other
   criteria. Separate requirements with semicolons. Use empty string ONLY if truly none stated.
 - For 'location': City or region (e.g., "Nairobi", "Dar es Salaam"). Use empty string if none.
+- For 'countryCode': The 2-letter ISO country code where the job is located (e.g. "TZ", "MG", "KE"). 
+  Infer from text, location, or currency. Use empty string ONLY if completely unknown.
 - For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.
   Infer from context: "volunteer" → contract, "attaché" → internship, "CDI/permanent" → full_time.
 - For 'sourceUrl': If this page is an aggregator or job board, look for an "Apply Here",
@@ -203,6 +206,7 @@ JOB-SPECIFIC EXTRACTION RULES:
           salaryMin: z.number().default(0),
           salaryMax: z.number().default(0),
           salaryCurrency: z.string().default(''),
+          countryCode: z.string().default(''),
         }))
       }),
       prompt,
@@ -211,7 +215,7 @@ JOB-SPECIFIC EXTRACTION RULES:
     const rawJobs = object.jobs.map((job: {
       title: string; companyName: string; description: string; requirements: string;
       location: string; jobType: BroadJobResource['jobType']; sourceUrl: string;
-      postedDateIsoString: string; deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string;
+      postedDateIsoString: string; deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string; countryCode: string;
     }) => {
       let parsedPosted = null;
       if (job.postedDateIsoString && job.postedDateIsoString.trim()) {
@@ -263,6 +267,7 @@ JOB-SPECIFIC EXTRACTION RULES:
           salaryMin: job.salaryMin,
           salaryMax: job.salaryMax,
           salaryCurrency: job.salaryCurrency,
+          countryCode: job.countryCode?.trim().toUpperCase() || null,
         };
       })
     );
@@ -290,6 +295,7 @@ JOB-SPECIFIC EXTRACTION RULES:
         salaryMin: deterministic.salaryMin,
         salaryMax: deterministic.salaryMax,
         salaryCurrency: deterministic.salaryCurrency,
+        countryCode: deterministic.countryCode,
       }];
     }
 

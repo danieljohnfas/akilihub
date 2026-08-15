@@ -49,13 +49,13 @@ getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
   });
 });
 
-// -- GOOGLE (Gemini 2.0 Flash) --
+// -- GOOGLE (Gemini 3.5 Flash Lite) --
 getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   const makeGoogle = createGoogle({ apiKey: key });
   keyPool.register({
     id: `google-flash-${i + 1}`,
     name: `Google Gemini Flash (${i + 1})`,
-    model: makeGoogle('gemini-2.0-flash'),
+    model: makeGoogle('gemini-3.5-flash-lite'),
     supportsStructured: true,
     priority: 3,
   });

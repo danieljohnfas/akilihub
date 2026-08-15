@@ -1,78 +1,43 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+ï»¿import Link from "next/link";
+import { Shield, Globe, BarChart2, AlertCircle, RefreshCw } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildBreadcrumbSchema } from "@/components/seo/schemas";
-import { CheckCircle, Database, RefreshCw, ShieldAlert, Eye, Globe } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "Editorial Policy",
-  description:
-    "AkiliBrain Editorial Policy — how we source, verify, and publish data on government tenders, job listings, business compliance, health data, and salary benchmarks across East Africa.",
-  openGraph: {
-    title: "Editorial Policy | AkiliBrain",
-    description:
-      "How AkiliBrain sources, verifies, and publishes professional intelligence data across East Africa.",
-    url: "https://akilibrain.com/editorial-policy",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Editorial Policy | AkiliBrain",
-    description: "How we source, verify, and publish data.",
-  },
-  alternates: {
-    canonical: "https://akilibrain.com/editorial-policy",
-  },
-};
 
 const principles = [
   {
-    icon: Database,
+    icon: Shield,
     color: "text-blue-400",
     bg: "bg-blue-400/10",
-    title: "Source Traceability",
-    description:
-      "Every data point published on AkiliBrain traces back to a named, authoritative primary source. We do not publish data we cannot attribute.",
+    title: "Source Verification",
+    description: "All data is sourced from named, publicly accessible primary documents. We do not publish unverified or anonymous tips.",
   },
   {
-    icon: CheckCircle,
+    icon: BarChart2,
     color: "text-green-400",
     bg: "bg-green-400/10",
-    title: "Accuracy Over Completeness",
-    description:
-      "Where data is unavailable or cannot be verified, we show nothing rather than filling gaps with estimates. A blank field is always preferable to an inaccurate one.",
+    title: "Editorial Independence",
+    description: "AkiliBrain is editorially and financially independent. No fee is charged for listing - inclusion is determined solely by source availability, not commercial arrangement.",
   },
   {
     icon: RefreshCw,
     color: "text-amber-400",
     bg: "bg-amber-400/10",
-    title: "Freshness",
-    description:
-      "AkiliBrain refreshes data pipelines daily. Listings that have passed their deadline are automatically marked as expired and de-indexed.",
+    title: "Regular Updates",
+    description: "Data pipelines run daily. Records are updated or removed when sources change, ensuring content stays current and relevant.",
   },
   {
-    icon: ShieldAlert,
+    icon: AlertCircle,
     color: "text-purple-400",
     bg: "bg-purple-400/10",
-    title: "Error Correction",
-    description:
-      "When errors are identified, we correct them promptly. To report an error, email corrections@akilibrain.com.",
-  },
-  {
-    icon: Eye,
-    color: "text-teal-400",
-    bg: "bg-teal-400/10",
-    title: "Independence",
-    description:
-      "AkiliBrain is editorially and financially independent. No fee is charged for listing — inclusion is determined solely by source availability, not commercial arrangement.",
+    title: "Corrections Policy",
+    description: "We investigate and correct factual errors promptly. Corrections are applied directly to the affected record without additional editorial fanfare.",
   },
   {
     icon: Globe,
     color: "text-rose-400",
     bg: "bg-rose-400/10",
     title: "Linking to Originals",
-    description:
-      "Where technically possible, every record links directly to the originating document or portal so users can independently verify the source.",
+    description: "Where technically possible, every record links directly to the originating document or portal so users can independently verify the source.",
   },
 ];
 
@@ -81,15 +46,15 @@ const sources = [
     module: "Government Tenders",
     description: "Aggregated daily from official national procurement portals.",
     items: [
-      "PPRA (Tanzania Public Procurement Regulatory Authority) — ppra.go.tz",
-      "PPIP (Kenya Public Procurement Information Portal) — tenders.go.ke",
-      "PPDA (Uganda Public Procurement and Disposal of Assets Authority) — ppda.go.ug",
-      "RPPA (Rwanda Public Procurement Authority) — rppa.gov.rw",
+      "PPRA (Tanzania Public Procurement Regulatory Authority) - ppra.go.tz",
+      "PPIP (Kenya Public Procurement Information Portal) - tenders.go.ke",
+      "PPDA (Uganda Public Procurement and Disposal of Assets Authority) - ppda.go.ug",
+      "RPPA (Rwanda Public Procurement Authority) - rppa.gov.rw",
       "PPPA (Ethiopia Public Procurement and Property Administration Agency)",
     ],
   },
   {
-    module: "Jobs & Careers",
+    module: "Jobs and Careers",
     description: "Sourced from public job boards, NGO portals, and government career pages.",
     items: [
       "Public employer career pages and government HR portals",
@@ -111,9 +76,9 @@ const sources = [
     module: "Health Data",
     description: "Structured public health indicators from authoritative international and national sources.",
     items: [
-      "DHIS2 (District Health Information Software 2) — national and district-level data",
+      "DHIS2 (District Health Information Software 2) - national and district-level data",
       "WHO AFRO (World Health Organization Regional Office for Africa)",
-      "World Bank Open Data — health indicators",
+      "World Bank Open Data - health indicators",
     ],
   },
   {
@@ -121,7 +86,7 @@ const sources = [
     description: "Crowdsourced salary submissions, collected anonymously and validated before publication.",
     items: [
       "Voluntary user submissions (anonymised immediately upon receipt)",
-      "Aggregated at role/sector/country level — individual data is never displayed",
+      "Aggregated at role/sector/country level - individual data is never displayed",
     ],
   },
 ];
@@ -175,7 +140,7 @@ export default function EditorialPolicyPage() {
                 <ul className="space-y-1.5 mt-2">
                   {items.map((src) => (
                     <li key={src} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <span className="text-primary mt-1">·</span>
+                      <span className="text-primary mt-1">-</span>
                       {src}
                     </li>
                   ))}
@@ -190,8 +155,7 @@ export default function EditorialPolicyPage() {
           <p className="text-muted-foreground leading-relaxed">
             AkiliBrain uses automated data pipelines including machine learning assistance for data extraction,
             classification, and summarisation tasks. AI assistance is used to structure data from official
-            sources, not to generate or invent factual claims. All AI-processed outputs are sourced from
-            named primary documents and, where possible, linked directly back to those originating documents.
+            sources, not to generate or invent factual claims.
           </p>
           <p className="text-muted-foreground leading-relaxed">
             We do not use AI to generate fabricated content, fake testimonials, or synthetic records.
@@ -203,8 +167,7 @@ export default function EditorialPolicyPage() {
           <h2 className="text-2xl font-bold">Advertising</h2>
           <p className="text-muted-foreground leading-relaxed">
             AkiliBrain may display advertisements served by Google AdSense and other networks.
-            Advertisements are clearly distinguished from editorial content. The presence of an advertisement
-            does not imply editorial endorsement of the advertiser or their products. Advertising relationships
+            Advertisements are clearly distinguished from editorial content. Advertising relationships
             have no influence over data sourcing, listing inclusion, or editorial decisions.
           </p>
         </section>
@@ -221,10 +184,10 @@ export default function EditorialPolicyPage() {
         </section>
 
         <div className="flex flex-wrap gap-3 pt-2">
-          <Link href="/" className="text-sm text-primary hover:underline underline-offset-4">? Back to Home</Link>
-          <Link href="/about" className="text-sm text-primary hover:underline underline-offset-4">About AkiliBrain ?</Link>
-          <Link href="/privacy" className="text-sm text-primary hover:underline underline-offset-4">Privacy Policy ?</Link>
-          <Link href="/terms" className="text-sm text-primary hover:underline underline-offset-4">Terms of Service ?</Link>
+          <Link href="/" className="text-sm text-primary hover:underline underline-offset-4">Back to Home</Link>
+          <Link href="/about" className="text-sm text-primary hover:underline underline-offset-4">About AkiliBrain</Link>
+          <Link href="/privacy" className="text-sm text-primary hover:underline underline-offset-4">Privacy Policy</Link>
+          <Link href="/terms" className="text-sm text-primary hover:underline underline-offset-4">Terms of Service</Link>
         </div>
       </div>
     </div>

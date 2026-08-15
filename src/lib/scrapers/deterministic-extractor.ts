@@ -83,7 +83,68 @@ export function normalizeCurrency(text: string): string | null {
   return null;
 }
 
-// ── 3. DATE & DEADLINE PARSER ──────────────────────────────────────────────────
+// ── 3. DETERMINISTIC COUNTRY CODE EXTRACTOR ────────────────────────────────────
+// Maps common text mentions (country name, capital, nationality) → ISO 3166-1 alpha-2
+const COUNTRY_HINTS: Array<{ patterns: RegExp; code: string }> = [
+  { patterns: /\b(kenya|nairobi|mombasa|kisumu|nakuru)\b/i, code: 'KE' },
+  { patterns: /\b(tanzania|dar es salaam|dodoma|arusha|zanzibar|mwanza)\b/i, code: 'TZ' },
+  { patterns: /\b(uganda|kampala|entebbe|gulu|jinja)\b/i, code: 'UG' },
+  { patterns: /\b(rwanda|kigali|butare|gisenyi|musanze)\b/i, code: 'RW' },
+  { patterns: /\b(ethiopia|addis ababa|dire dawa|mekelle|hawassa)\b/i, code: 'ET' },
+  { patterns: /\b(drc|congo|r[eé]publique d[eé]mocratique du congo|kinshasa|lubumbashi|goma|bukavu|katanga)\b/i, code: 'CD' },
+  { patterns: /\b(burundi|bujumbura|gitega|ngozi)\b/i, code: 'BI' },
+  { patterns: /\b(somalia|somalie|mogadishu|hargeisa|somaliland|puntland)\b/i, code: 'SO' },
+  { patterns: /\b(south sudan|juba|malakal|wau)\b/i, code: 'SS' },
+  { patterns: /\b(madagascar|antananarivo|toamasina|fianarantsoa|mahajanga|malgache)\b/i, code: 'MG' },
+  { patterns: /\b(nigeria|lagos|abuja|kano|ibadan)\b/i, code: 'NG' },
+  { patterns: /\b(ghana|accra|kumasi|tamale)\b/i, code: 'GH' },
+  { patterns: /\b(senegal|s[eé]n[eé]gal|dakar|saint-louis)\b/i, code: 'SN' },
+  { patterns: /\b(cameroon|cameroun|yaound[eé]|douala)\b/i, code: 'CM' },
+  { patterns: /\b(zambia|lusaka|ndola|kitwe)\b/i, code: 'ZM' },
+  { patterns: /\b(zimbabwe|harare|bulawayo)\b/i, code: 'ZW' },
+  { patterns: /\b(mozambique|maputo|beira|nampula)\b/i, code: 'MZ' },
+  { patterns: /\b(malawi|lilongwe|blantyre|mzuzu)\b/i, code: 'MW' },
+  { patterns: /\b(south africa|johannesburg|cape town|pretoria|durban)\b/i, code: 'ZA' },
+  { patterns: /\b(angola|luanda|huambo|lobito)\b/i, code: 'AO' },
+  { patterns: /\b(sudan|khartoum|omdurman|port sudan)\b/i, code: 'SD' },
+  { patterns: /\b(egypt|cairo|alexandria|giza)\b/i, code: 'EG' },
+  { patterns: /\b(niger|niamey|zinder|maradi)\b/i, code: 'NE' },
+  { patterns: /\b(mali|bamako|timbuktu|gao)\b/i, code: 'ML' },
+  { patterns: /\b(chad|tchad|n'djamena)\b/i, code: 'TD' },
+  { patterns: /\b(guinea|conakry|kankan)\b/i, code: 'GN' },
+  { patterns: /\b(c[oô]te d'ivoire|ivory coast|abidjan|yamoussoukro)\b/i, code: 'CI' },
+  { patterns: /\b(burkina faso|ouagadougou|bobo-dioulasso)\b/i, code: 'BF' },
+  { patterns: /\b(eritrea|asmara)\b/i, code: 'ER' },
+  { patterns: /\b(djibouti)\b/i, code: 'DJ' },
+  { patterns: /\b(comoros|moroni)\b/i, code: 'KM' },
+];
+
+/**
+ * Deterministically extracts a 2-letter ISO country code from raw text.
+ * Checks for explicit "Location: XYZ" patterns first, then scans for country name mentions.
+ */
+export function extractCountryCode(text: string): string | null {
+  if (!text) return null;
+
+  // 1. Try explicit label first: "Location: Madagascar", "Pays : RDC", "Country: Kenya"
+  const locationLabelMatch = /(?:location|country|pays|lieu|emplacement)[:\s]+([\w\s',.À-ÿ-]{2,50})/i.exec(text);
+  if (locationLabelMatch) {
+    const snippet = locationLabelMatch[1].trim();
+    for (const { patterns, code } of COUNTRY_HINTS) {
+      if (patterns.test(snippet)) return code;
+    }
+  }
+
+  // 2. Scan full text for country/city mentions
+  for (const { patterns, code } of COUNTRY_HINTS) {
+    if (patterns.test(text)) return code;
+  }
+
+  return null;
+}
+
+// ── 4. DATE & DEADLINE PARSER ──────────────────────────────────────────────────
+
 const DEADLINE_SIGNAL_REGEX = /(?:deadline|closing\s*date|apply\s*by|date\s*limite(?:\s+de\s+(?:candidature|soumission))?|tarehe\s*ya\s*mwisho(?:\s+ya\s+kutuma\s+maombi)?|application\s*closes?|closing\s*on)[:\s]*([^\n\r.;,<>]+)/i;
 
 /**
@@ -434,6 +495,7 @@ export interface DeterministicJobResult {
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;
+  countryCode: string | null;
   applicationEmails: string[];
   applicationUrls: string[];
 }
@@ -443,6 +505,7 @@ export function extractDeterministicJobFields(text: string, sourceUrl: string): 
   const salary = extractSalaryFromText(text);
   const requirements = extractStructuredRequirements(text);
   const { emails, applicationUrls } = extractApplicationDetails(text);
+  const countryCode = extractCountryCode(text);
 
   // Extract clean 3-5 sentence description snippet
   const paragraphs = text
@@ -461,6 +524,7 @@ export function extractDeterministicJobFields(text: string, sourceUrl: string): 
     salaryMin: salary.salaryMin,
     salaryMax: salary.salaryMax,
     salaryCurrency: salary.salaryCurrency,
+    countryCode,
     applicationEmails: emails,
     applicationUrls,
   };

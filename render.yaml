@@ -49,46 +49,6 @@ services:
         generateValue: true
     autoDeploy: false
 
-  # ── 4. Maxun — Visual Web Scraper ──────────────────────────────────────────
-  - type: web
-    name: akilihub-maxun
-    runtime: image
-    image:
-      url: docker.io/maxunhq/maxun-core:latest
-    plan: free
-    region: oregon
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: akilihub-maxun-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: akilihub-redis
-          type: redis
-          property: connectionString
-    autoDeploy: false
-
-  # ── 5. Stirling PDF — PDF Tools ────────────────────────────────────────────
-  - type: web
-    name: akilihub-stirling-pdf
-    runtime: image
-    image:
-      url: docker.io/frooodle/s-pdf:latest
-    plan: free
-    region: oregon
-    envVars:
-      - key: DOCKER_ENABLE_SECURITY
-        value: "false"
-    autoDeploy: false
-
-# ── Redis (for Maxun) ────────────────────────────────────────────────────────
-  - type: redis
-    name: akilihub-redis
-    plan: free
-    region: oregon
-    ipAllowList: []
-
 # ── Postgres databases ───────────────────────────────────────────────────────
 databases:
   - name: akilihub-langflow-db
@@ -96,9 +56,3 @@ databases:
     region: oregon
     databaseName: langflow
     user: langflow
-
-  - name: akilihub-maxun-db
-    plan: free
-    region: oregon
-    databaseName: maxun
-    user: maxun

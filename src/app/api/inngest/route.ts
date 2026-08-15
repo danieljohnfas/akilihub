@@ -77,8 +77,7 @@ import { enforceDataFreshnessJob } from "@/inngest/enforce-freshness";
 import { checkDataStatusJob } from "@/inngest/check-data-status";
 import { salaryConsensusVerificationJob } from "@/inngest/salary-consensus";
 import { generateWeeklyGuidesJob } from "@/inngest/generate-guides";
-import { keepDatabaseAliveJob } from "@/inngest/keep-alive";
-
+import { keepDatabaseAliveJob, keepScraperAliveJob } from "@/inngest/keep-alive";
 // Rescrape
 import { rescrapeJobsJob, rescrapeTendersJob, rescrapeComplianceJob } from "@/inngest/rescrape-all";
 
@@ -173,6 +172,7 @@ export const { GET, POST, PUT } = serve({
 
     // Database anti-sleep ping (Hourly)
     keepDatabaseAliveJob,
+    keepScraperAliveJob,
 
     // Continuous deep rescraping
     rescrapeJobsJob,

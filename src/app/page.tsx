@@ -8,9 +8,11 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { buildFAQSchema } from "@/components/seo/schemas";
 
 const MagicCard = dynamic(() => import('@/components/ui/magic-card').then(mod => mod.MagicCard), { ssr: true });
-const RelatedGuides = dynamic(() => import('@/components/guides/RelatedGuides').then(mod => mod.RelatedGuides), { ssr: false });
-const LiveStats = dynamic(() => import('@/components/home/LiveStats').then(mod => mod.LiveStats), { ssr: false });
-const LeadCapture = dynamic(() => import('@/components/home/LeadCapture').then(mod => mod.LeadCapture), { ssr: false });
+const RelatedGuides = dynamic(() => import('@/components/guides/RelatedGuides').then(mod => mod.RelatedGuides), { ssr: true });
+const LiveStats = dynamic(() => import('@/components/home/LiveStats').then(mod => mod.LiveStats), { ssr: true });
+import { LeadCapture } from '@/components/home/ClientWidgets';
+
+
 
 export const revalidate = 60;
 

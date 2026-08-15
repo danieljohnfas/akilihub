@@ -28,3 +28,35 @@ export const keepDatabaseAliveJob = inngest.createFunction(
     return { message: "Keep-alive job completed", result };
   }
 );
+
+/**
+ * A scheduled background job to keep the Scraper sidecar (on Render free tier)
+ * from spinning down due to inactivity. Render spins down after 15 minutes.
+ * 
+ * Runs every 14 minutes to ping the scraper health endpoint.
+ */
+export const keepScraperAliveJob = inngest.createFunction(
+  {
+    id: "keep-scraper-alive",
+    name: "Keep Scraper Alive",
+    triggers: [{ cron: "*/14 * * * *" }] // Run every 14 minutes
+  },
+  async ({ step }) => {
+    const result = await step.run("ping-scraper", async () => {
+      try {
+        const sidecarUrl = (process.env.SCRAPLING_URL ?? 'http://localhost:8001').trim();
+        const response = await fetch(`${sidecarUrl}/health`);
+        if (response.ok) {
+          return { success: true, message: "Scraper pinged successfully", status: response.status };
+        } else {
+          return { success: false, error: `Failed with status: ${response.status}` };
+        }
+      } catch (error) {
+        console.error("Scraper keep-alive ping failed:", error);
+        return { success: false, error: String(error) };
+      }
+    });
+
+    return { message: "Scraper keep-alive job completed", result };
+  }
+);
