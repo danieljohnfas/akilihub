@@ -4,6 +4,7 @@ import { createGoogle } from '@ai-sdk/google';
 import { createMistral } from '@ai-sdk/mistral';
 import { createCohere } from '@ai-sdk/cohere';
 import { createOpenAI } from '@ai-sdk/openai';
+import { createGroq } from '@ai-sdk/groq';
 import { keyPool } from './key-pool';
 
 // ------------------------------------------------------------------
@@ -11,8 +12,6 @@ import { keyPool } from './key-pool';
 // ------------------------------------------------------------------
 
 // Helper: extract all env vars starting with baseName (supports _2, _3, etc.)
-// Matches exactly baseName or baseName_<digits> to avoid picking up unrelated
-// env vars that share the same prefix (e.g. GROQ_API_KEYSTONE).
 function getEnvKeys(baseName: string): string[] {
   const keys: string[] = [];
   const pattern = new RegExp(`^${baseName}(?:_\\d+)?$`);
@@ -24,8 +23,21 @@ function getEnvKeys(baseName: string): string[] {
   return keys;
 }
 
-// -- MISTRAL --
-// Extremely fast (~1.5s) and natively supports json_schema structured output.
+// ── PRIORITY 1: GROQ (Llama 3.3 70B) ────────────────────────────────────────
+// 14,400 req/day free · fastest inference (~0.8s) · full JSON schema support
+getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
+  const groq = createGroq({ apiKey: key });
+  keyPool.register({
+    id: `groq-llama-${i + 1}`,
+    name: `Groq Llama 3.3 70B (${i + 1})`,
+    model: groq('llama-3.3-70b-versatile'),
+    supportsStructured: true,
+    priority: 1,
+  });
+});
+
+// ── PRIORITY 2: MISTRAL (Small) ───────────────────────────────────────────────
+// Free tier · native JSON schema · fast
 getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
   const mistral = createMistral({ apiKey: key });
   keyPool.register({
@@ -33,11 +45,105 @@ getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
     name: `Mistral Small (${i + 1})`,
     model: mistral('mistral-small-latest'),
     supportsStructured: true,
-    priority: 1,
+    priority: 2,
   });
 });
 
-// -- COHERE (Command R+) --
+// ── PRIORITY 3: GOOGLE (Gemini 2.5 Flash) ────────────────────────────────────
+// 1,500 req/day free · confirmed working · reliable structured output
+getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
+  const makeGoogle = createGoogle({ apiKey: key });
+  keyPool.register({
+    id: `google-flash-${i + 1}`,
+    name: `Google Gemini 2.5 Flash (${i + 1})`,
+    model: makeGoogle('gemini-2.5-flash'),
+    supportsStructured: true,
+    priority: 3,
+  });
+});
+
+// ── PRIORITY 4: CEREBRAS (Llama 3.3 70B) ─────────────────────────────────────
+// Ultra-fast free inference (wafer-scale chip) · OpenAI-compatible API
+getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
+  const cerebras = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api.cerebras.ai/v1',
+  });
+  keyPool.register({
+    id: `cerebras-llama-${i + 1}`,
+    name: `Cerebras Llama 3.3 70B (${i + 1})`,
+    model: cerebras('llama-3.3-70b'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 5: SAMBANOVA (Llama 3.3 70B) ────────────────────────────────────
+// Free fast inference · OpenAI-compatible API
+getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
+  const sambanova = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api.sambanova.ai/v1',
+  });
+  keyPool.register({
+    id: `sambanova-llama-${i + 1}`,
+    name: `SambaNova Llama 3.3 70B (${i + 1})`,
+    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
+    supportsStructured: true,
+    priority: 5,
+  });
+});
+
+// ── PRIORITY 6: OPENROUTER (multi-model pool) ─────────────────────────────────
+// 50 req/day free · routes to best available model automatically
+getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
+  const openrouter = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://openrouter.ai/api/v1',
+  });
+  keyPool.register({
+    id: `openrouter-llama-${i + 1}`,
+    name: `OpenRouter Llama 3.3 70B (${i + 1})`,
+    model: openrouter('meta-llama/llama-3.3-70b-instruct:free'),
+    supportsStructured: false, // OpenRouter free tier may not support json_schema mode
+    priority: 6,
+  });
+});
+
+// ── PRIORITY 7: DEEPSEEK ──────────────────────────────────────────────────────
+// OpenAI-compatible · affordable · strong reasoning
+getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
+  const deepseek = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api.deepseek.com/v1',
+  });
+  keyPool.register({
+    id: `deepseek-chat-${i + 1}`,
+    name: `DeepSeek Chat (${i + 1})`,
+    model: deepseek('deepseek-chat'),
+    supportsStructured: true,
+    priority: 7,
+  });
+});
+
+// ── PRIORITY 8: HUGGING FACE (Llama 3.3 70B Instruct) ───────────────────────
+// Free serverless inference · OpenAI-compatible
+getEnvKeys('HUGGINGFACE_API_KEY').forEach((key, i) => {
+  const hf = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://router.huggingface.co/v1',
+  });
+  keyPool.register({
+    id: `huggingface-llama-${i + 1}`,
+    name: `HuggingFace Llama 3.3 70B (${i + 1})`,
+    model: hf('meta-llama/Llama-3.3-70B-Instruct'),
+    supportsStructured: false,
+    priority: 8,
+  });
+});
+
+// ── PRIORITY 9: COHERE (Command R+) ──────────────────────────────────────────
+// Fallback — trial key may be exhausted; kept for redundancy
 getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
   const cohere = createCohere({ apiKey: key });
   keyPool.register({
@@ -45,23 +151,9 @@ getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
     name: `Cohere Command R+ (${i + 1})`,
     model: cohere('command-r-plus-08-2024'),
     supportsStructured: true,
-    priority: 2,
+    priority: 9,
   });
 });
-
-// -- GOOGLE (Gemini 3.5 Flash Lite) --
-getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
-  const makeGoogle = createGoogle({ apiKey: key });
-  keyPool.register({
-    id: `google-flash-${i + 1}`,
-    name: `Google Gemini Flash (${i + 1})`,
-    model: makeGoogle('gemini-3.5-flash-lite'),
-    supportsStructured: true,
-    priority: 3,
-  });
-});
-
-// (Removed dead providers: Minimax, OpenRouter, DeepSeek, SambaNova, Cerebras, Hyperbolic)
 
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
@@ -73,14 +165,9 @@ if (keyPool.size === 0) {
 // 2. GENERATION WITH FALLBACK
 // ------------------------------------------------------------------
 
-const MAX_RETRIES = 4;
-const AI_TIMEOUT_MS = 45_000; // 45s per attempt to allow full structured JSON completion
+const MAX_RETRIES = 6; // More retries now that we have more models
+const AI_TIMEOUT_MS = 45_000;
 
-/**
- * Wraps a promise with a hard timeout.
- * Unlike AbortSignal.timeout(), this works on all Node.js versions and
- * doesn't silently hang if the underlying fetch ignores the signal.
- */
 function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`[Timeout] ${label} exceeded ${ms}ms`)), ms);
@@ -91,7 +178,12 @@ function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Pro
   });
 }
 
- 
+// Models that support native JSON schema structured output
+const NATIVE_STRUCTURED_IDS = ['google-', 'mistral-', 'cohere-', 'groq-', 'cerebras-', 'sambanova-', 'deepseek-', 'github-'];
+function usesJsonMode(modelId: string): boolean {
+  return !NATIVE_STRUCTURED_IDS.some(prefix => modelId.startsWith(prefix));
+}
+
 export async function generateObjectWithFallback<T = unknown>(
   params: Record<string, any> & { schema?: ZodType<T> }
 ): Promise<GenerateObjectResult<T>> {
@@ -104,7 +196,6 @@ export async function generateObjectWithFallback<T = unknown>(
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     let activeKey = keyPool.getNextKey(true);
     if (!activeKey) {
-      // All keys on cooldown — wait 5s and try once more
       await new Promise(r => setTimeout(r, 5000));
       activeKey = keyPool.getNextKey(true);
       if (!activeKey) break;
@@ -113,13 +204,11 @@ export async function generateObjectWithFallback<T = unknown>(
     console.log(`[AI Router] [Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
-       
       const result = await withHardTimeout(
         (generateObject as any)({
           ...params,
           model: activeKey.model,
-          // Use json mode for models that do not natively support json_schema
-          ...(!activeKey.id.startsWith('google-') && !activeKey.id.startsWith('mistral-') && !activeKey.id.startsWith('cohere-') ? { mode: 'json' } : {}),
+          ...(usesJsonMode(activeKey.id) ? { mode: 'json' } : {}),
         }),
         AI_TIMEOUT_MS,
         activeKey.name,
@@ -131,11 +220,9 @@ export async function generateObjectWithFallback<T = unknown>(
     } catch (error: unknown) {
       const err = error as Error & { name?: string };
       console.warn(`[AI Router] ${activeKey.name} failed (attempt ${attempt}): ${err.message?.slice(0, 120)}`);
-      // If schema/validation fails or no object generated, let the next model try
       if (err.name === 'TypeValidationError' || err.name === 'JSONParseError' || err.message?.includes('No object generated')) {
         continue;
       }
-
       keyPool.markFailed(activeKey.id);
     }
   }
@@ -144,7 +231,6 @@ export async function generateObjectWithFallback<T = unknown>(
   throw lastError ?? new Error('[AI Router] All fallback attempts exhausted with no specific error.');
 }
 
- 
 export async function generateTextWithFallback(params: Record<string, any>) {
   if (keyPool.getAvailableCount() === 0) {
     throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
@@ -160,7 +246,6 @@ export async function generateTextWithFallback(params: Record<string, any>) {
     console.log(`[AI Router] [Text][Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
-       
       const result = await withHardTimeout(
         (generateText as any)({ ...params, model: activeKey.model }),
         AI_TIMEOUT_MS,
@@ -202,51 +287,37 @@ interface VisionModelCandidate {
 function getVisionModelPool(): VisionModelCandidate[] {
   const pool: VisionModelCandidate[] = [];
 
-  // 1. Google Gemini (2.0 Flash)
+  // 1. Google Gemini (2.5 Flash) — best vision quality
   const googleKeys = [
     ...getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY'),
     ...getEnvKeys('GEMINI_API_KEY'),
   ];
-  const uniqueGoogleKeys = Array.from(new Set(googleKeys));
-
-  uniqueGoogleKeys.forEach((key, i) => {
+  Array.from(new Set(googleKeys)).forEach((key, i) => {
     const makeGoogle = createGoogle({ apiKey: key });
     pool.push({
-      id: `google-flash-2.0-${i + 1}`,
-      name: `Google Gemini 2.0 Flash (${i + 1})`,
-      model: makeGoogle('gemini-2.0-flash'),
+      id: `google-vision-${i + 1}`,
+      name: `Google Gemini 2.5 Flash Vision (${i + 1})`,
+      model: makeGoogle('gemini-2.5-flash'),
     });
   });
 
-  // 2. Mistral Pixtral (Pixtral 12B & Pixtral Large)
-  const mistralKeys = getEnvKeys('MISTRAL_API_KEY');
-  mistralKeys.forEach((key, i) => {
+  // 2. DeepSeek (vision via chat — partial support)
+  getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
+    const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com/v1' });
+    pool.push({
+      id: `deepseek-vision-${i + 1}`,
+      name: `DeepSeek Vision (${i + 1})`,
+      model: deepseek('deepseek-chat'),
+    });
+  });
+
+  // 3. Mistral Pixtral (vision specialist)
+  getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
     const mistral = createMistral({ apiKey: key });
     pool.push({
-      id: `mistral-pixtral-12b-${i + 1}`,
+      id: `mistral-pixtral-${i + 1}`,
       name: `Mistral Pixtral 12B (${i + 1})`,
       model: mistral('pixtral-12b-2409'),
-    });
-    pool.push({
-      id: `mistral-pixtral-large-${i + 1}`,
-      name: `Mistral Pixtral Large (${i + 1})`,
-      model: mistral('pixtral-large-latest'),
-    });
-  });
-
-  // 3. OpenAI GPT-4o Vision
-  const openaiKeys = getEnvKeys('OPENAI_API_KEY');
-  openaiKeys.forEach((key, i) => {
-    const openai = createOpenAI({ apiKey: key });
-    pool.push({
-      id: `openai-gpt4o-mini-${i + 1}`,
-      name: `OpenAI GPT-4o Mini (${i + 1})`,
-      model: openai('gpt-4o-mini'),
-    });
-    pool.push({
-      id: `openai-gpt4o-${i + 1}`,
-      name: `OpenAI GPT-4o (${i + 1})`,
-      model: openai('gpt-4o'),
     });
   });
 
@@ -255,7 +326,6 @@ function getVisionModelPool(): VisionModelCandidate[] {
 
 /**
  * Executes multimodal vision OCR across the AI roster with multi-model fallback.
- * Tries Google Gemini Flash -> Mistral Pixtral -> OpenAI GPT-4o.
  */
 export async function extractVisionTextWithFallback(
   imageBuffer: Buffer,
@@ -309,4 +379,3 @@ export async function extractVisionTextWithFallback(
   console.error('[Vision Router] All vision fallback models exhausted.');
   return '';
 }
-
