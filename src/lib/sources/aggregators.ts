@@ -168,7 +168,7 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'globaltenders.com',         name: 'Global Tenders',           type: 'aggregator', category: 'tenders' },
   { domain: 'biddetail.com',             name: 'Bid Detail',               type: 'aggregator', category: 'tenders' },
   { domain: 'tenderskenya.com',          name: 'Tenders Kenya',            type: 'aggregator', category: 'tenders' },
-  { domain: 'tenders.go.ke',             name: 'Tenders.go.ke',            type: 'aggregator', category: 'tenders' },
+  { domain: 'tenders.go.ke',             name: 'Tenders.go.ke',            type: 'government_portal', category: 'tenders' },
   { domain: 'tendersuganda.com',         name: 'Tenders Uganda',           type: 'aggregator', category: 'tenders' },
   { domain: 'tenderinfo.ug',             name: 'Tender Info Uganda',       type: 'aggregator', category: 'tenders' },
   { domain: 'ethiotender.com',           name: 'Ethio Tender',             type: 'aggregator', category: 'tenders' },

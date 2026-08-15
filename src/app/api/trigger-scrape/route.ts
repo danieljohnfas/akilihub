@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   const COUNTRIES = ['ke', 'tz', 'ug', 'rw', 'et', 'cd', 'bi', 'so', 'ss'];
-  const MODULES = ['jobs', 'tenders', 'compliance', 'health'];
+  const MODULES = ['jobs', 'tenders', 'compliance'];
   const events: any[] = [];
 
   for (const country of COUNTRIES) {

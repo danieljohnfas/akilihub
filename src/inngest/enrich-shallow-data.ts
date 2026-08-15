@@ -38,8 +38,8 @@ function isDirectDocumentUrl(url: string): boolean {
 }
 
 function tokenOverlap(a: string, b: string): number {
-  const tokA = new Set(a.toLowerCase().split(/\W+/).filter(t => t.length > 2));
-  const tokB = new Set(b.toLowerCase().split(/\W+/).filter(t => t.length > 2));
+  const tokA = new Set(a.toLowerCase().split(/\W+/).filter(t => t.length > 1));
+  const tokB = new Set(b.toLowerCase().split(/\W+/).filter(t => t.length > 1));
   let overlap = 0;
   for (const t of tokA) if (tokB.has(t)) overlap++;
   return tokA.size === 0 ? 0 : overlap / tokA.size;
@@ -101,6 +101,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             not(like(jobs.sourceUrl, '%#%'))
           )
         )
+        .limit(1000) // avoid full table scan + Inngest event overload
       );
     });
 
@@ -134,6 +135,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             not(like(tenders.sourceUrl, '%#%'))
           )
         )
+        .limit(1000)
       );
     });
 
@@ -167,6 +169,7 @@ export const enrichShallowDataJob = inngest.createFunction(
             not(like(complianceRequirements.sourceUrl, '%#%'))
           )
         )
+        .limit(1000)
       );
     });
 
