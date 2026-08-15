@@ -1,6 +1,5 @@
 import { config } from 'dotenv';
-config({ path: '.env.local' });
-import { inngest } from '../src/inngest/client';
+config({ path: '.env.vercel' });
 
 const COUNTRIES = [
   'ke', // Kenya
@@ -17,6 +16,7 @@ const COUNTRIES = [
 const MODULES = ['jobs', 'tenders', 'compliance', 'health'];
 
 async function triggerMassScrape() {
+  const { inngest } = await import('../src/inngest/client');
   console.log('🚀 Triggering Mass Scrape for all countries and modules...');
   const events: { name: string, data: any }[] = [];
 

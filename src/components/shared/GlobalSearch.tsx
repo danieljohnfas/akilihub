@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, Scale, HeartPulse, DollarSign, Loader2 } from 'lucide-react';
+import { Search, FileText, Scale, HeartPulse, DollarSign, Briefcase, Loader2 } from 'lucide-react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import type { SearchResult } from '@/app/api/search/route';
 
 const moduleIcons = {
+  jobs: <Briefcase className="w-4 h-4 text-orange-400" />,
   tenders: <FileText className="w-4 h-4 text-blue-400" />,
   compliance: <Scale className="w-4 h-4 text-purple-400" />,
   health: <HeartPulse className="w-4 h-4 text-rose-400" />,
@@ -21,6 +22,7 @@ const moduleIcons = {
 };
 
 const moduleLabels = {
+  jobs: 'Jobs',
   tenders: 'Procurement',
   compliance: 'Compliance',
   health: 'Health Intel',

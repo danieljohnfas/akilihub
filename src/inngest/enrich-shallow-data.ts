@@ -204,8 +204,7 @@ export const enrichShallowDataJob = inngest.createFunction(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const enrichJobWorker = inngest.createFunction(
-  { id: "enrich-job-worker", name: "Worker: Enrich Job", concurrency: 10 },
-  { event: "data.job.enrich" },
+  { id: "enrich-job-worker", name: "Worker: Enrich Job", concurrency: 10, event: "data.job.enrich" },
   async ({ event, step }) => {
     const { id, targetUrl, shallowTitle, shallowDesc, shallowReq } = event.data;
     
@@ -240,8 +239,7 @@ export const enrichJobWorker = inngest.createFunction(
 );
 
 export const enrichTenderWorker = inngest.createFunction(
-  { id: "enrich-tender-worker", name: "Worker: Enrich Tender", concurrency: 10 },
-  { event: "data.tender.enrich" },
+  { id: "enrich-tender-worker", name: "Worker: Enrich Tender", concurrency: 10, event: "data.tender.enrich" },
   async ({ event, step }) => {
     const { id, targetUrl, shallowTitle, shallowDesc } = event.data;
     
@@ -273,8 +271,7 @@ export const enrichTenderWorker = inngest.createFunction(
 );
 
 export const enrichComplianceWorker = inngest.createFunction(
-  { id: "enrich-compliance-worker", name: "Worker: Enrich Compliance", concurrency: 10 },
-  { event: "data.compliance.enrich" },
+  { id: "enrich-compliance-worker", name: "Worker: Enrich Compliance", concurrency: 10, event: "data.compliance.enrich" },
   async ({ event, step }) => {
     const { id, targetUrl, shallowTitle, shallowDesc, issuingAuthority } = event.data;
     
