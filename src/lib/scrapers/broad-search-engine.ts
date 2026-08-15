@@ -161,9 +161,7 @@ JOB-SPECIFIC EXTRACTION RULES:
 - Extract up to 15 real job postings found in the text. Extract ALL jobs visible, not just the first.
 - For 'companyName': DO NOT use the name of job boards or aggregators. Find the actual hiring
   organization or company. If completely unknown, return 'Unknown'.
-- For 'description': Provide a FULL, detailed summary of the role including: primary duties and
-  responsibilities, reporting line if stated, key deliverables, work environment, and any unique
-  aspects of the role. Aim for 3-6 sentences. Do not truncate if more detail is available.
+- For 'description': Provide the FULL, comprehensive original content of the role as found in the source text. Do NOT summarize or truncate. Include all paragraphs detailing primary duties, responsibilities, reporting line, deliverables, work environment, and any other relevant information. We need the full comprehensive text to provide maximum value to the user.
 - For 'requirements': Extract ALL qualifications and experience required: education level, years
   of experience, specific skills, certifications, software tools, languages, and any other
   criteria. Separate requirements with semicolons. Use empty string ONLY if truly none stated.

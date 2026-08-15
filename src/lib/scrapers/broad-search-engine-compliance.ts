@@ -46,9 +46,7 @@ COMPLIANCE-SPECIFIC EXTRACTION RULES:
   Extract ALL compliance items visible, not just the most prominent.
 - For 'title': The exact name of the compliance requirement or form (e.g. "VAT Registration",
   "PAYE Form P10", "Formulaire CNSS"). Keep in original language.
-- For 'description': A FULL explanation (3-4 sentences) covering: what it is, who must comply,
-  the filing/submission deadline or frequency, penalties for non-compliance if stated, and any
-  fees involved. This should be comprehensive enough for a business owner to understand their obligation.
+- For 'description': Provide the FULL, comprehensive original content covering: what it is, who must comply, the filing/submission deadline or frequency, penalties for non-compliance if stated, and any fees involved. Do NOT summarize or truncate. We need the full comprehensive text.
 - For 'category': Must be one of: tax, business_registration, employment, environment,
   health_safety, sector_specific.
 - For 'issuingAuthority': The exact government body or agency (e.g. "KRA", "TRA", "URSB",

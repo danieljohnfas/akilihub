@@ -41,8 +41,7 @@ ${text.substring(0, 12000)}
 TENDER-SPECIFIC EXTRACTION RULES:
 - Extract up to 15 real tender, bid, or procurement postings found in the text. Extract ALL visible, not just the first.
 - Only extract open, active tenders. Skip anything marked closed, awarded, or cancelled.
-- For 'description': Provide a FULL scope of work including: what goods/services are required, the
-  procurement objective, any technical specifications mentioned, and eligibility criteria (3-5 sentences).
+- For 'description': Provide the FULL, comprehensive original content of the tender/procurement scope of work as found in the source text. Do NOT summarize or truncate. Include all paragraphs detailing what goods/services are required, the procurement objective, technical specifications, eligibility criteria, and any other relevant information. We need the full comprehensive text.
 - For 'contractingAuthority': The exact name of the procuring entity (ministry, agency, NGO, UN body).
 - For 'sourceUrl': If this page is an aggregator, look for the original purchasing authority's website
   link or tender document link in the [LINK] sections and return the TRUE origin URL.
