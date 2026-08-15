@@ -96,9 +96,7 @@ export const sendDailyDigestJob = inngest.createFunction(
         .leftJoin(users, eq(userAlerts.userId, users.id))
         .where(eq(userAlerts.frequency, 'daily'));
         
-      // For now, in unverified domain mode, we only send to Admin.
-      // But we simulate the logic for production readiness.
-      return activeAlerts.filter(a => a.users && ADMIN_EMAIL && a.users.email === ADMIN_EMAIL);
+      return activeAlerts.filter(a => a.users);
     });
 
     if (subscribers.length === 0) return { skipped: true, reason: "No subscribers" };
@@ -187,9 +185,7 @@ export const sendWeeklyNewsletterJob = inngest.createFunction(
   async ({ step }) => {
     // 1. Fetch all active users
     const allUsers = await step.run("fetch-all-users", async () => {
-      const rows = await db.select().from(users);
-      // Filter for unverified domain test mode — only send to admin
-      return ADMIN_EMAIL ? rows.filter(u => u.email === ADMIN_EMAIL) : [];
+      return await db.select().from(users);
     });
 
     if (allUsers.length === 0) return { skipped: true, reason: "No users" };
