@@ -115,6 +115,33 @@ async function runQueriesForCountry(queries: string[], countryCode: string, labe
   return total;
 }
 
+// ── Run known sources for a country, returns total inserted ─────────────────
+async function runKnownSourcesForCountry(countryCode: string, label: string): Promise<number> {
+  let total = 0;
+  try {
+    const { getKnownEmployerUrlsForCountry, scrapeKnownUrls } = await import('@/lib/scrapers/known-sources-scraper');
+    const { extractJobsWithAI } = await import('@/lib/scrapers/broad-search-engine');
+    const countryId = await getCountryId(countryCode);
+    if (!countryId) return 0;
+
+    const urls = await getKnownEmployerUrlsForCountry(countryId, 'jobs', 20);
+    console.log(`[${label}] Found ${urls.length} known employer URLs to scrape directly.`);
+
+    const pages = await scrapeKnownUrls(urls);
+    for (const page of pages) {
+      const extracted = await extractJobsWithAI(page.text, page.url);
+      if (extracted.length > 0) {
+        const inserted = await saveJobs(extracted, countryCode);
+        total += inserted;
+        console.log(`[${label}] Scraped known source ${page.url} → +${inserted} (running: ${total})`);
+      }
+    }
+  } catch (e) {
+    console.error(`[${label}] Known sources failed: ${(e as Error).message}`);
+  }
+  return total;
+}
+
 // ── Job factory with retry logic ──────────────────────────────────────────────
 function makeJobScraper(
   id: string,
@@ -124,14 +151,21 @@ function makeJobScraper(
   countryCode: string
 ) {
   return inngest.createFunction(
-    { id, name, triggers: [{ cron }] },
+    { id, name, triggers: [{ cron }, { event: "manual.scrape.jobs" }] },
     async ({ step }) => {
-      // Pass 1 — run all queries
+      // Pass 0 — known sources (cleanest, highest priority)
+      const pass0 = await step.run(`execute-job-scraper-known`, async () => {
+        return await runKnownSourcesForCountry(countryCode, `${id}-known`);
+      });
+
+      let totalInserted = pass0;
+
+      // Pass 1 — run all broad queries
       const pass1 = await step.run(`execute-job-scraper-pass1`, async () => {
         return await runQueriesForCountry(queries, countryCode, `${id}-p1`);
       });
 
-      let totalInserted = pass1;
+      totalInserted += pass1;
 
       // Pass 2 — only if we fell short of the target (retry on under-performance)
       if (pass1 < JOB_TARGET) {

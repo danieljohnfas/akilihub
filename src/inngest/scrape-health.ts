@@ -74,7 +74,7 @@ function makeHealthScraper(
   countryCode: string
 ) {
   return inngest.createFunction(
-    { id, name, triggers: [{ cron }] },
+    { id, name, triggers: [{ cron }, { event: "manual.scrape.health" }] },
     async ({ step }) => {
       const pass1 = await step.run(`execute-health-scraper-pass1`, async () => {
         return await runHealthQueries(queries, countryCode, `${id}-p1`);

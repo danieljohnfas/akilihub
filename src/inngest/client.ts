@@ -14,6 +14,9 @@ export type AppEvents = {
   "data.url.resolve": {
     data: { id: string; module: 'jobs' | 'tenders' | 'compliance'; sourceUrl: string; companyName: string | null; title: string };
   };
+  "manual.data.review": {
+    data: {};
+  };
 };
 
 // Picks up INNGEST_SIGNING_KEY and INNGEST_EVENT_KEY automatically from env

@@ -258,7 +258,7 @@ function buildStrategyEngine() {
 // ── Job factory ───────────────────────────────────────────────────────────────
 function makePortalJob(portal: (typeof PORTALS)[number]) {
   return inngest.createFunction(
-    { id: portal.id, name: portal.name, triggers: [{ cron: portal.cron }] },
+    { id: portal.id, name: portal.name, triggers: [{ cron: portal.cron }, { event: "manual.scrape.tenders" }] },
     async ({ step }) => {
       const insertedCount = await step.run("execute-scraper", async () => {
         const countryId = await getCountryId(portal.countryCode);

@@ -85,7 +85,7 @@ export const enrichShallowDataJob = inngest.createFunction(
   {
     id: "enrich-shallow-data-dispatcher",
     name: "🔬 Enrich Shallow Data (Dispatcher)",
-    triggers: [{ cron: "30 11 * * *" }], // 11:30 UTC daily
+    triggers: [{ cron: "30 11 * * *" }, { event: "manual.data.review" }], // 11:30 UTC daily or manual trigger
   },
   async ({ step }) => {
     

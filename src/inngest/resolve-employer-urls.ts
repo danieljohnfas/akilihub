@@ -14,7 +14,7 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
   {
     id: "resolve-employer-urls-dispatcher",
     name: "🏢 Resolve Employer URLs (Dispatcher)",
-    triggers: [{ cron: "30 12 * * *" }], // 12:30 UTC daily
+    triggers: [{ cron: "30 12 * * *" }, { event: "manual.data.review" }], // 12:30 UTC daily or manual trigger
   },
   async ({ step }) => {
     

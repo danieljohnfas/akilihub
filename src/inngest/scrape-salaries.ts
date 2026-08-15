@@ -66,7 +66,7 @@ function makeSalaryScraper(
   countryCode: string
 ) {
   return inngest.createFunction(
-    { id, name, triggers: [{ cron }] },
+    { id, name, triggers: [{ cron }, { event: "manual.scrape.salaries" }] },
     async ({ step }) => {
       const pass1 = await step.run(`execute-salary-scraper-pass1`, async () => {
         return await runSalaryQueries(queries, countryCode, `${id}-p1`);
