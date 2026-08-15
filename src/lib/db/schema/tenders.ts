@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric, boolean, index, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, numeric, boolean, index, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
 import { countries, regions } from './shared';
 import { sql } from 'drizzle-orm';
 
@@ -40,4 +40,6 @@ export const tenders = pgTable('tenders', {
   index('tenders_deadline_idx').on(table.deadline),
   index('tenders_created_at_idx').on(table.createdAt),
   index('tenders_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
+  // Secondary dedup guard: prevents same tender re-inserted with a different auto-generated referenceNo
+  uniqueIndex('tenders_title_authority_country_udx').on(table.title, table.contractingAuthority, table.countryId),
 ]);

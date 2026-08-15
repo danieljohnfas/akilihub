@@ -255,65 +255,121 @@ function buildStrategyEngine() {
   ]);
 }
 
+// ── Thresholds ────────────────────────────────────────────────────────────────
+const TENDER_TARGET = 200; // Minimum new inserts before we skip second pass
+
+// ── Run known sources for a country, returns total inserted ─────────────────
+async function runKnownTenderSourcesForCountry(countryCode: string, label: string): Promise<number> {
+  let total = 0;
+  try {
+    const { getKnownEmployerUrlsForCountry, scrapeKnownUrls } = await import('@/lib/scrapers/known-sources-scraper');
+    const { extractTendersWithAI } = await import('@/lib/scrapers/broad-search-engine-tenders');
+    const countryId = await getCountryId(countryCode);
+    if (!countryId) return 0;
+
+    const urls = await getKnownEmployerUrlsForCountry(countryId, 'tenders', 20);
+    console.log(`[${label}] Found ${urls.length} known authority URLs to scrape directly.`);
+
+    const pages = await scrapeKnownUrls(urls);
+    for (const page of pages) {
+      const extracted = await extractTendersWithAI(page.text, page.url, page.pdfLinks);
+      if (extracted.length > 0) {
+        const inserted = await saveBroadResults(extracted, countryId);
+        total += inserted;
+        console.log(`[${label}] Scraped known source ${page.url} → +${inserted} (running: ${total})`);
+      }
+    }
+  } catch (e) {
+    console.error(`[${label}] Known sources failed: ${(e as Error).message}`);
+  }
+  return total;
+}
+
+// ── Run broad queries for a country, returns total inserted ──────────────────
+async function runBroadQueriesForCountry(queries: string[], countryCode: string, label: string): Promise<number> {
+  let total = 0;
+  const countryId = await getCountryId(countryCode);
+  if (!countryId) return 0;
+  for (const query of queries) {
+    try {
+      const discovered = await discoverTenders(query, 5);
+      const saved = await saveBroadResults(discovered, countryId);
+      total += saved;
+      console.log(`[${label}] Broad "${query}" → +${saved} (running: ${total})`);
+    } catch (err) {
+      console.warn(`[${label}] Broad query failed: "${query}" — ${(err as Error).message}`);
+    }
+  }
+  return total;
+}
+
 // ── Job factory ───────────────────────────────────────────────────────────────
 function makePortalJob(portal: (typeof PORTALS)[number]) {
   return inngest.createFunction(
     { id: portal.id, name: portal.name, triggers: [{ cron: portal.cron }, { event: "manual.scrape.tenders" }] },
     async ({ step }) => {
-      const insertedCount = await step.run("execute-scraper", async () => {
-        const countryId = await getCountryId(portal.countryCode);
-        if (!countryId) {
-          console.warn(`[${portal.id}] Country ${portal.countryCode} not found. Skipping.`);
-          return 0;
-        }
+      const countryId = await getCountryId(portal.countryCode);
+      if (!countryId) {
+        console.warn(`[${portal.id}] Country ${portal.countryCode} not found. Skipping.`);
+        return { message: `Country ${portal.countryCode} not found.` };
+      }
 
-        let totalInserted = 0;
+      // Pass 0 — known authority URLs (cleanest, highest priority)
+      const pass0 = await step.run("execute-known-sources", async () => {
+        return await runKnownTenderSourcesForCountry(portal.countryCode, `${portal.id}-known`);
+      });
 
-        // ── Step 1: Portal-direct scraping (Scrapling → Firecrawl → Crawl4AI) ──
-        // High-quality official procurement portals — structured, verified tenders.
+      let totalInserted = pass0;
+
+      // Pass 1 — portal-direct scraping + broad queries
+      const pass1 = await step.run("execute-portal-and-broad", async () => {
+        let inserted = 0;
+
+        // Portal-direct scraping (Scrapling → Firecrawl → Crawl4AI)
         const engine = buildStrategyEngine();
         try {
           const { result, strategyUsed } = await engine.executeWithFallback({
             url: portal.url,
             portalType: portal.portalType,
           });
-
           console.log(`[${portal.id}] ${strategyUsed} returned ${result.length} portal tenders.`);
           if (result.length > 0) {
             const saved = await saveTenderResults(result, countryId);
-            totalInserted += saved;
-            console.log(`[${portal.id}] Portal save: +${saved} (running: ${totalInserted})`);
+            inserted += saved;
+            console.log(`[${portal.id}] Portal save: +${saved}`);
           }
         } catch (err) {
           console.warn(`[${portal.id}] Portal strategies failed: ${(err as Error).message} — continuing to broad search.`);
         }
 
-        // ── Step 2: Broad web search — ALWAYS runs regardless of portal result ──
-        // Catches NGO tenders, UNOPS, World Bank, ReliefWeb, etc. that official
-        // portals don't list. This is the gap the manual mass-scrape identified.
-        for (const query of portal.broadSearchQueries) {
-          try {
-            const discovered = await discoverTenders(query, 5);
-            const saved = await saveBroadResults(discovered, countryId);
-            totalInserted += saved;
-            console.log(`[${portal.id}] Broad "${query}" → +${saved} (running: ${totalInserted})`);
-          } catch (err) {
-            console.warn(`[${portal.id}] Broad query failed: "${query}" — ${(err as Error).message}`);
-          }
-        }
-
-        return totalInserted;
+        // Broad web search (catches NGO, UNOPS, World Bank, ReliefWeb, etc.)
+        inserted += await runBroadQueriesForCountry(portal.broadSearchQueries, portal.countryCode, `${portal.id}-p1`);
+        return inserted;
       });
 
-      if (insertedCount > 0) {
+      totalInserted += pass1;
+
+      // Pass 2 — retry broad queries if we fell short of the target
+      if (totalInserted < TENDER_TARGET) {
+        console.log(`[${portal.id}] Pass 1 yielded ${totalInserted} — under target ${TENDER_TARGET}. Running second pass...`);
+        const pass2 = await step.run("execute-broad-pass2", async () => {
+          return await runBroadQueriesForCountry(portal.broadSearchQueries, portal.countryCode, `${portal.id}-p2`);
+        });
+        totalInserted += pass2;
+        console.log(`[${portal.id}] Pass 2 added ${pass2}. Grand total: ${totalInserted}`);
+      }
+
+      if (totalInserted > 0) {
         await step.sendEvent("notify-new-tenders", {
           name: "tenders.new",
-          data: { count: insertedCount, source: portal.name },
+          data: { count: totalInserted, source: portal.name },
         });
       }
 
       return {
-        message: `Scraped and inserted ${insertedCount} tenders for ${portal.name}.`,
+        message: `Scraped and inserted ${totalInserted} tenders for ${portal.name}.`,
+        totalInserted,
+        hitTarget: totalInserted >= TENDER_TARGET,
       };
     }
   );
