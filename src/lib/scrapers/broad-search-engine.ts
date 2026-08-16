@@ -259,7 +259,7 @@ JOB-SPECIFIC EXTRACTION RULES:
           description: job.description || deterministic.description,
           requirements: job.requirements,
           regionId: regionId,
-          jobType: job.jobType,
+          jobType: (job.jobType || 'full_time').toLowerCase().replace(/[\s-]/g, '_') as BroadJobResource['jobType'],
           sourceUrl: uniqueSourceUrl,
           postedDate: job.parsedPosted,
           deadline: job.parsedDeadline,

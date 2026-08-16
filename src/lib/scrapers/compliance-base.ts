@@ -528,10 +528,13 @@ Rules:
       prompt: fullPrompt,
     });
 
-    if (!object || !object.resources) return [];
+    const normalizedResources = object.resources.map((r: any) => ({
+      ...r,
+      resourceType: (r.resourceType || 'notice').toLowerCase().replace(/[\s-]/g, '_')
+    }));
 
-    console.log(`[extractResourcesWithAI] AI extracted ${object.resources.length} resources`);
-    return object.resources;
+    console.log(`[extractResourcesWithAI] AI extracted ${normalizedResources.length} resources`);
+    return normalizedResources;
   } catch (err) {
     console.error(`[extractResourcesWithAI] Failed on ${baseUrl}:`, (err as Error).message);
     return [];
