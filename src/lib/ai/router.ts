@@ -209,7 +209,7 @@ export async function generateObjectWithFallback<T = unknown>(
     try {
       let result;
       if (activeKey.id.startsWith('sambanova-') || activeKey.id.startsWith('groq-')) {
-        const textResult = await withHardTimeout(
+        const textResult: any = await withHardTimeout(
           (generateText as any)({
             ...params,
             model: activeKey.model,
