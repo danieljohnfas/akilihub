@@ -51,7 +51,9 @@ export const summarizeTenderDocumentJob = inngest.createFunction(
           }
 
           const buffer = Buffer.from(await response.arrayBuffer());
-          const { text } = await pdfParse(buffer);
+          const parser = new PDFParse({ data: buffer });
+          const result = await parser.getText();
+          const text = result.text;
 
           // Trim text to avoid excessive token usage (~8000 chars ≈ ~2000 tokens)
           const trimmedText = text.slice(0, 8000);
