@@ -107,6 +107,8 @@ class ScrapeRequest(BaseModel):
     use_camoufox: bool = False      # Use Firefox/camoufox as stealth engine
     crawl_dir: str | None = None    # Path for pause/resume checkpoints (Spider mode)
     max_pages: int = 1              # Pages to crawl (1 = single-page fetch)
+    proxies: list[str] | None = None  # Optional proxy list for Spider mode
+                                      # e.g. ["http://user:pass@host:port"]
 
 
 class TenderItem(BaseModel):
@@ -241,11 +243,15 @@ async def scrape(req: ScrapeRequest):
     strategy_used = "scrapling"
     try:
         if req.max_pages > 1 and req.crawl_dir:
+            # Resolve proxies: use request-supplied list, or auto-fetch free ones
+            from fetchers.proxies import get_proxies
+            proxies = req.proxies if req.proxies else get_proxies()
             tenders = await TenderSpider.run(
                 start_url=req.url,
                 portal_type=req.portal_type,
                 max_pages=req.max_pages,
                 crawl_dir=req.crawl_dir,
+                proxies=proxies or None,
             )
         elif req.use_camoufox:
             # Firefox-based stealth engine for hard targets
@@ -620,7 +626,6 @@ async def extract_document(req: ExtractDocumentRequest):
         text = ""
 
         if file_type == "pdf":
-            # Use pdfminer.six for reliable text extraction
             import io
             from pdfminer.high_level import extract_text as pdfminer_extract
             try:
@@ -635,7 +640,6 @@ async def extract_document(req: ExtractDocumentRequest):
             try:
                 doc = Document(io.BytesIO(raw_bytes))
                 text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
-                # Also extract tables
                 for table in doc.tables:
                     for row in table.rows:
                         text += "\n" + "\t".join(cell.text for cell in row.cells)
@@ -644,7 +648,6 @@ async def extract_document(req: ExtractDocumentRequest):
                 text = ""
 
         elif file_type == "doc":
-            # Legacy .doc — attempt UTF-8 decode, fall back to latin-1
             try:
                 text = raw_bytes.decode("utf-8", errors="ignore")
             except Exception:
@@ -666,13 +669,11 @@ async def extract_document(req: ExtractDocumentRequest):
                 logger.warning("openpyxl failed for %s: %s", req.url, xl_exc)
                 text = ""
         else:
-            # Try plain text decode
             try:
                 text = raw_bytes.decode("utf-8", errors="ignore")
             except Exception:
                 text = ""
 
-        # Clean up and cap
         text = text.strip()
         if len(text) > req.max_chars:
             text = text[: req.max_chars]

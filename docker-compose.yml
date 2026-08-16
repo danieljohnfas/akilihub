@@ -8,7 +8,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - SCRAPLING_URL=http://scrapling:8001
+      - SCRAPLING_URL=http://scrapling:7860
+      - SCRAPLING_MCP_URL=http://scrapling:8765/mcp
     depends_on:
       - db
       - redis
@@ -35,12 +36,19 @@ services:
       context: ./scraper
       dockerfile: Dockerfile
     ports:
-      - "8001:8001"
+      - "7860:7860"          # FastAPI scraping sidecar
+      - "8765:8765"          # Scrapling MCP server (streamable HTTP)
     volumes:
       - crawl_data:/app/crawl_data
+      - scrapling_storage:/root/.scrapling  # Persist adaptive selector fingerprints
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+      # Optional: add your own proxies (Webshare free tier or paid residential)
+      # Get 10 free proxies at https://proxy.webshare.io/ (no credit card)
+      # Format: comma-separated proxy URLs
+      # - PROXY_LIST=http://user:pass@host1:port,http://user:pass@host2:port
+      - PROXY_LIST=${PROXY_LIST:-}
 
   # 4. Maxun (Visual Scraper)
   maxun:
@@ -103,3 +111,4 @@ volumes:
   db_data:
   redis_data:
   crawl_data:
+  scrapling_storage:  # Persists adaptive selector fingerprints across restarts

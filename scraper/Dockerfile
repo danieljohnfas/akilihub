@@ -1,12 +1,13 @@
 # ─── Scrapling Sidecar — Dockerfile ───────────────────────────────────────────
-# Extends the official python image and installs playwright/camoufox manually
-# Port: 7860
+# Runs two services via a startup script:
+#   Port 7860 — FastAPI scraping sidecar (uvicorn)
+#   Port 8765 — Scrapling MCP server (streamable HTTP, for AI agent access)
 # ──────────────────────────────────────────────────────────────────────────────
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install OS dependencies for playwright
+# Install OS dependencies for playwright + camoufox
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -27,6 +28,11 @@ COPY . .
 # Create a writable directory for pause/resume crawl checkpoints
 RUN mkdir -p /app/crawl_data
 
-EXPOSE 7860
+# Create writable Scrapling adaptive storage directory
+RUN mkdir -p /root/.scrapling
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
+EXPOSE 7860
+EXPOSE 8765
+
+# Startup script launches both services concurrently
+CMD ["sh", "/app/start.sh"]

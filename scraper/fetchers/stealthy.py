@@ -5,118 +5,23 @@ AsyncStealthyFetcher (Scrapling ≥ 0.4) opens a real Chromium browser with
 fingerprint spoofing in a non-blocking async context, meaning concurrent
 requests within FastAPI's event loop are no longer serialized.
 
-`auto_save=True` on element selection writes element signatures to a local
-SQLite cache (~/.scrapling/). If the page redesigns later, Scrapling's
-adaptive mode uses those signatures to find relocated elements automatically.
+Adaptive selector logic is centralised in fetchers/_extract.py.  On the
+first scrape of a portal the element fingerprints are saved to Scrapling's
+local SQLite store (~/.scrapling/storage.db).  Every subsequent scrape uses
+those fingerprints with adaptive=True so the scraper self-heals when a portal
+redesigns its page layout.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
-import re
-from datetime import datetime, timedelta, timezone
 
 from scrapling.fetchers import Fetcher
 
-from css_selectors import PORTAL_SELECTORS, FALLBACK_SELECTORS
+from fetchers._extract import extract_tenders
 
 logger = logging.getLogger(__name__)
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def _now_plus_days(days: int = 30) -> str:
-    return (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
-
-
-def _clean(text: str | None) -> str:
-    if not text:
-        return ""
-    return re.sub(r"\s+", " ", text).strip()
-
-
-def _build_tender(
-    title: str,
-    ref: str,
-    authority: str,
-    deadline: str,
-    published: str,
-    source_url: str,
-    description: str = "",
-    idx: int = 0,
-    portal_type: str = "generic",
-) -> dict:
-    return {
-        "title": title[:500],
-        "reference_no": ref or f"{portal_type.upper()}-{idx}-{int(datetime.now().timestamp())}",
-        "contracting_authority": authority or "Government Authority",
-        "deadline": deadline or _now_plus_days(30),
-        "source_url": source_url,
-        "description": description[:1000] if description else None,
-        "published_date": published or datetime.now(timezone.utc).isoformat(),
-    }
-
-
-# ── Core extraction ───────────────────────────────────────────────────────────
-
-def _extract_tenders(page, portal_type: str, source_url: str) -> list[dict]:
-    """
-    Given a Scrapling page object, extract tenders using portal-specific
-    selectors with adaptive fallback.
-    """
-    selectors = PORTAL_SELECTORS.get(portal_type, FALLBACK_SELECTORS)
-    results: list[dict] = []
-
-    # Primary: portal-specific row selector
-    rows = page.css(selectors["row"], auto_save=True)
-
-    for idx, row in enumerate(rows):
-        title_el = row.css(selectors["title"])
-        if not title_el:
-            continue
-
-        title = _clean(title_el[0].text)
-        if not title or len(title) < 5:
-            continue
-
-        ref_el   = row.css(selectors["ref"])
-        auth_el  = row.css(selectors["authority"])
-        dl_el    = row.css(selectors.get("deadline", "td:last-child"))
-        pub_el   = row.css(selectors.get("published", ""))
-
-        results.append(_build_tender(
-            title=title,
-            ref=_clean(ref_el[0].text) if ref_el else "",
-            authority=_clean(auth_el[0].text) if auth_el else "",
-            deadline=_clean(dl_el[0].text) if dl_el else "",
-            published=_clean(pub_el[0].text) if pub_el else "",
-            source_url=source_url,
-            idx=idx,
-            portal_type=portal_type,
-        ))
-
-    # Generic heuristic fallback when no rows matched
-    if not results:
-        logger.info("No rows from primary selector — trying generic heuristic.")
-        for idx, row in enumerate(page.css("tr", auto_save=True)):
-            cells = row.css("td")
-            if len(cells) < 2:
-                continue
-            row_text = row.text or ""
-            if any(kw in row_text.lower() for kw in ("tender", "procurement", "bid", "appel", "offre")):
-                title = _clean(cells[1].text if len(cells) > 1 else cells[0].text)
-                if title and len(title) > 5:
-                    results.append(_build_tender(
-                        title=title,
-                        ref=_clean(cells[0].text),
-                        authority=_clean(cells[2].text) if len(cells) > 2 else "",
-                        deadline=_clean(cells[3].text) if len(cells) > 3 else "",
-                        published="",
-                        source_url=source_url,
-                        idx=idx,
-                        portal_type=portal_type,
-                    ))
-
-    return results
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -132,45 +37,10 @@ async def stealthy_scrape(
     use_stealth=True  → AsyncStealthyFetcher (Cloudflare bypass, headless Chromium, non-blocking)
     use_stealth=False → Fetcher (fast HTTP, TLS fingerprint spoofing, no browser)
     """
-    import asyncio
     logger.info("Fetching %s (stealth=%s)", url, use_stealth)
 
-    if use_stealth:
-        try:
-            # AsyncStealthyFetcher (Scrapling ≥ 0.4) — truly non-blocking
-            from scrapling.fetchers import AsyncStealthyFetcher
-
-            page = await AsyncStealthyFetcher.async_fetch(
-                url,
-                headless=True,
-                network_idle=True,
-                solve_cloudflare=True,
-                google_search=False,
-                adaptive=True,
-            )
-        except (ImportError, AttributeError):
-            # Scrapling < 0.4 compatibility: run sync StealthyFetcher in executor
-            logger.warning("AsyncStealthyFetcher unavailable — falling back to sync in executor.")
-            from scrapling.fetchers import StealthyFetcher
-            loop = asyncio.get_event_loop()
-            page = await loop.run_in_executor(
-                None,
-                lambda: StealthyFetcher.fetch(
-                    url,
-                    headless=True,
-                    network_idle=True,
-                    solve_cloudflare=True,
-                    google_search=False,
-                ),
-            )
-    else:
-        page = Fetcher.get(
-            url,
-            stealthy_headers=True,
-            impersonate="chrome",
-        )
-
-    tenders = _extract_tenders(page, portal_type, url)
+    page = await _fetch(url, use_stealth)
+    tenders = extract_tenders(page, portal_type, url)
     logger.info("Extracted %d tenders from %s", len(tenders), url)
     return tenders
 
@@ -183,23 +53,37 @@ async def stealthy_fetch_html(
     Fetch a single page and return its raw rendered HTML.
     Used for jobs and compliance scraping where Gemini extracts the data.
     """
-    import asyncio
     logger.info("Fetching raw HTML for %s (stealth=%s)", url, use_stealth)
+    page = await _fetch(url, use_stealth)
+    return page.text or ""
 
+
+# ── Internal fetch helper ─────────────────────────────────────────────────────
+
+async def _fetch(url: str, use_stealth: bool):
+    """Resolve the appropriate Scrapling fetcher and return a page object."""
     if use_stealth:
         try:
+            # AsyncStealthyFetcher (Scrapling ≥ 0.4) — truly non-blocking
             from scrapling.fetchers import AsyncStealthyFetcher
-            page = await AsyncStealthyFetcher.async_fetch(
+
+            return await AsyncStealthyFetcher.async_fetch(
                 url,
                 headless=True,
                 network_idle=True,
                 solve_cloudflare=True,
                 google_search=False,
+                adaptive=True,
             )
         except (ImportError, AttributeError):
+            # Scrapling < 0.4 compatibility: run sync StealthyFetcher in executor
+            logger.warning(
+                "AsyncStealthyFetcher unavailable — falling back to sync in executor."
+            )
             from scrapling.fetchers import StealthyFetcher
+
             loop = asyncio.get_event_loop()
-            page = await loop.run_in_executor(
+            return await loop.run_in_executor(
                 None,
                 lambda: StealthyFetcher.fetch(
                     url,
@@ -210,10 +94,8 @@ async def stealthy_fetch_html(
                 ),
             )
     else:
-        page = Fetcher.get(
+        return Fetcher.get(
             url,
             stealthy_headers=True,
             impersonate="chrome",
         )
-
-    return page.text or ""
