@@ -25,6 +25,7 @@ export const jobs = pgTable('jobs', {
   employerUrl: text('employer_url'),              // resolved employer/ATS/authority URL (null = not yet resolved)
   isAggregatorSource: boolean('is_aggregator_source').notNull().default(false), // true if sourceUrl is an aggregator
   isActive: boolean('is_active').notNull().default(true),
+  needsAiExtraction: boolean('needs_ai_extraction').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [
@@ -33,6 +34,7 @@ export const jobs = pgTable('jobs', {
   index('jobs_deadline_idx').on(table.deadline),
   index('jobs_active_idx').on(table.isActive),
   index('jobs_created_at_idx').on(table.createdAt),
+  index('jobs_needs_ai_idx').on(table.needsAiExtraction),
   index('jobs_search_idx').using('gin', sql`to_tsvector('english', ${table.title} || ' ' || coalesce(${table.description}, ''))`),
 ]);
 

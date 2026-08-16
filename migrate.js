@@ -9,6 +9,10 @@ async function run() {
     await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS region_id uuid REFERENCES regions(id);`;
     await sql`CREATE INDEX IF NOT EXISTS jobs_region_idx ON jobs (region_id);`;
 
+    console.log("Adding needs_ai_extraction to jobs...");
+    await sql`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS needs_ai_extraction boolean NOT NULL DEFAULT false;`;
+    await sql`CREATE INDEX IF NOT EXISTS jobs_needs_ai_idx ON jobs (needs_ai_extraction);`;
+
     console.log("Adding region_id to tenders...");
     await sql`ALTER TABLE tenders ADD COLUMN IF NOT EXISTS region_id uuid REFERENCES regions(id);`;
     await sql`CREATE INDEX IF NOT EXISTS tenders_region_idx ON tenders (region_id);`;

@@ -70,6 +70,7 @@ import {
 
 // Alerts and monitoring
 import { sendTenderAlertsJob, sendDailyDigestJob, sendWeeklyNewsletterJob, sendReengagementAlertsJob } from "@/inngest/send-alerts";
+import { whatsappBroadcastJob } from "@/inngest/whatsapp-broadcast";
 import { sendWelcomeEmailsJob } from "@/inngest/send-welcome";
 import { fetchHealthDataJob } from "@/inngest/fetch-health";
 import { syncHealthDataJob } from "@/inngest/sync-health-data";
@@ -150,6 +151,7 @@ export const { GET, POST, PUT } = serve({
     
     // Scheduled Newsletters and Digests
     sendDailyDigestJob,
+    whatsappBroadcastJob,
     sendWeeklyNewsletterJob,
     sendReengagementAlertsJob,
     sendWelcomeEmailsJob,

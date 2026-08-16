@@ -293,9 +293,23 @@ export default async function JobDetailPage({
             )}
 
             <div className="pt-6 space-y-3">
-              {(job.employerUrl ?? job.sourceUrl) && (
+              {job.employerUrl ? (
                 <a 
-                  href={`/api/out?url=${encodeURIComponent(job.employerUrl ?? job.sourceUrl!)}&type=job&id=${job.id}`} 
+                  href={`/api/out?url=${encodeURIComponent(job.employerUrl)}&type=job&id=${job.id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={cn(buttonVariants({ size: "lg", variant: "outline", className: "w-full md:w-auto h-12 px-8 text-base font-semibold" }))}
+                >
+                  Apply on Employer Site
+                  <ExternalLink className="w-5 h-5 ml-2" />
+                </a>
+              ) : job.isAggregatorSource ? (
+                <div className="w-full md:w-auto h-12 px-4 flex items-center justify-center text-sm font-medium text-amber-600 border border-amber-200 bg-amber-50 rounded-md">
+                  Direct employer link pending resolution
+                </div>
+              ) : job.sourceUrl ? (
+                <a 
+                  href={`/api/out?url=${encodeURIComponent(job.sourceUrl)}&type=job&id=${job.id}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className={cn(buttonVariants({ size: "lg", variant: "outline", className: "w-full md:w-auto h-12 px-8 text-base font-semibold" }))}
@@ -303,7 +317,7 @@ export default async function JobDetailPage({
                   {provenance.actionText}
                   <ExternalLink className="w-5 h-5 ml-2" />
                 </a>
-              )}
+              ) : null}
               <Link
                 href={`/jobs/${job.id}/apply`}
                 className={cn(buttonVariants({ size: "lg", className: "w-full md:w-auto h-12 px-8 text-base font-semibold shadow-lg shadow-primary/20" }))}

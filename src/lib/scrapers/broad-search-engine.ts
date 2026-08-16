@@ -19,6 +19,7 @@ export interface BroadJobResource {
   salaryMax: number | null;
   salaryCurrency: string | null; // ISO 4217, e.g. "KES", "TZS"
   countryCode: string | null; // ISO 3166-1 alpha-2, e.g. "TZ", "KE", "MG"
+  needsAiExtraction?: boolean;
 }
 
 // ── Blocked domains: all known aggregator domains (sourced from registry) ──────
@@ -294,6 +295,7 @@ JOB-SPECIFIC EXTRACTION RULES:
         salaryMax: deterministic.salaryMax,
         salaryCurrency: deterministic.salaryCurrency,
         countryCode: deterministic.countryCode,
+        needsAiExtraction: true,
       }];
     }
 

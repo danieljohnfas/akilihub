@@ -4,7 +4,7 @@ import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
 import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
-import { classifySourceUrl } from "@/lib/sources/employer-resolver";
+import { classifySourceUrl, resolveEmployerUrl } from "@/lib/sources/employer-resolver";
 
 // ── Thresholds ────────────────────────────────────────────────────────────────
 const JOB_TARGET = 200; // Minimum new inserts before we skip second pass
@@ -33,17 +33,41 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
 
   if (discovered.length === 0) return 0;
 
-  // Resolve country dynamically per job
+  // Resolve country dynamically per job and synchronously resolve employer URLs
   const resolvedJobs = await Promise.all(discovered.map(async job => {
     // If AI found a country, see if we have it in the DB. Otherwise, fallback to the cron's target country.
     const jobCountryId = job.countryCode ? await getCountryId(job.countryCode) : null;
-    return { ...job, finalCountryId: jobCountryId || defaultCountryId };
+    
+    // Strict employer-first resolution
+    const classification = classifySourceUrl(job.sourceUrl);
+    let employerUrl = classification.quickEmployerUrl;
+    let isAggregatorSource = classification.isAggregatorSource;
+
+    if (isAggregatorSource) {
+      try {
+        const resolution = await resolveEmployerUrl(job.sourceUrl, {
+          title: job.title,
+          company: job.companyName
+        });
+        if (resolution.employerUrl) {
+          employerUrl = resolution.employerUrl;
+        }
+      } catch (err) {
+        console.error(`[scrape-jobs] Sync resolve failed for ${job.sourceUrl}`, err);
+      }
+    }
+
+    return { 
+      ...job, 
+      finalCountryId: jobCountryId || defaultCountryId,
+      employerUrl,
+      isAggregatorSource
+    };
   }));
 
   // Attempt batch insert first (10-30x faster than one-by-one)
   try {
     const values = resolvedJobs.map(job => {
-      const { isAggregatorSource, quickEmployerUrl } = classifySourceUrl(job.sourceUrl);
       return {
         title: job.title,
         companyName: job.companyName || 'Unknown',
@@ -53,14 +77,15 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
         countryId: job.finalCountryId,
         jobType: job.jobType,
         sourceUrl: job.sourceUrl,
-        employerUrl: quickEmployerUrl,          // null for aggregators (resolved by backfill job)
-        isAggregatorSource,
+        employerUrl: job.employerUrl,
+        isAggregatorSource: job.isAggregatorSource,
         postedDate: job.postedDate || new Date(),
         deadline: job.deadline ?? null,
         salaryMin: job.salaryMin?.toString() ?? null,
         salaryMax: job.salaryMax?.toString() ?? null,
         salaryCurrency: job.salaryCurrency ?? null,
         isActive: true,
+        needsAiExtraction: job.needsAiExtraction ?? false,
       };
     });
     const rows = await db.insert(jobs).values(values).onConflictDoNothing().returning({ id: jobs.id });
@@ -70,7 +95,6 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
     let inserted = 0;
     for (const job of resolvedJobs) {
       try {
-        const { isAggregatorSource, quickEmployerUrl } = classifySourceUrl(job.sourceUrl);
         const rows = await db.insert(jobs).values({
           title: job.title,
           companyName: job.companyName || 'Unknown',
@@ -80,14 +104,15 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
           countryId: job.finalCountryId,
           jobType: job.jobType,
           sourceUrl: job.sourceUrl,
-          employerUrl: quickEmployerUrl,
-          isAggregatorSource,
+          employerUrl: job.employerUrl,
+          isAggregatorSource: job.isAggregatorSource,
           postedDate: job.postedDate || new Date(),
           deadline: job.deadline ?? null,
           salaryMin: job.salaryMin?.toString() ?? null,
           salaryMax: job.salaryMax?.toString() ?? null,
           salaryCurrency: job.salaryCurrency ?? null,
           isActive: true,
+          needsAiExtraction: job.needsAiExtraction ?? false,
         }).onConflictDoNothing().returning({ id: jobs.id });
         if (rows.length > 0) inserted++;
       } catch (e) {
