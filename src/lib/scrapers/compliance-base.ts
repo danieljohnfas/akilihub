@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import { generateObjectWithFallback, extractVisionTextWithFallback } from '../ai/router';
 import { z } from 'zod';
 import { downloadDocument, parsePdf } from './pdf-extract';
+import FirecrawlApp from '@mendable/firecrawl-js';
 
 export interface ComplianceResource {
   title: string;
@@ -140,6 +141,24 @@ export async function fetchHtml(url: string): Promise<string | null> {
       }
     }
   } catch {
+  }
+
+  // 4. Ultimate Fallback: Firecrawl (Cloud Headless Browser)
+  // Handles heavy JS rendering when Sidecar and Jina fail.
+  const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+  if (firecrawlKey) {
+    try {
+      const app = new FirecrawlApp({ apiKey: firecrawlKey });
+      const result = await app.scrapeUrl(url, {
+        formats: ['html'],
+        waitFor: 3000,
+      } as any) as any;
+
+      if (result.success && result.html && result.html.length > 300) {
+        return result.html;
+      }
+    } catch {
+    }
   }
 
   return null;

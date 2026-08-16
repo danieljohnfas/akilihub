@@ -23,6 +23,23 @@ function getEnvKeys(baseName: string): string[] {
   return keys;
 }
 
+// ── PRIORITY 1: SAMBANOVA CLOUD ───────────────────────────────────────────────
+// Fast inference via SambaNova Cloud (Llama 3.3 70B)
+getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
+  const sambanova = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api.sambanova.ai/v1',
+  });
+  keyPool.register({
+    id: `sambanova-llama-${i + 1}`,
+    name: `SambaNova Llama 3.3 70B (${i + 1})`,
+    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
+    supportsStructured: true,
+    priority: 1,
+  });
+});
+
+
 // ── PRIORITY 1: GROQ (Llama 3.3 70B) ────────────────────────────────────────
 // 14,400 req/day free · fastest inference (~0.8s) · full JSON schema support
 getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
@@ -31,7 +48,7 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
     id: `groq-llama-${i + 1}`,
     name: `Groq Llama 3.3 70B (${i + 1})`,
     model: groq('llama-3.3-70b-versatile'),
-    supportsStructured: false, // Groq API dropped json_schema support recently
+    supportsStructured: true, // We fallback to json mode for Groq
     priority: 1,
   });
 });
@@ -62,37 +79,7 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   });
 });
 
-// ── PRIORITY 4: CEREBRAS (Llama 3.3 70B) ─────────────────────────────────────
-// Ultra-fast free inference (wafer-scale chip) · OpenAI-compatible API
-getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
-  const cerebras = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://api.cerebras.ai/v1',
-  });
-  keyPool.register({
-    id: `cerebras-llama-${i + 1}`,
-    name: `Cerebras Llama 3.1 8B (${i + 1})`,
-    model: cerebras('llama3.1-8b'),
-    supportsStructured: false,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 5: SAMBANOVA (Llama 3.3 70B) ────────────────────────────────────
-// Free fast inference · OpenAI-compatible API
-getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
-  const sambanova = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://api.sambanova.ai/v1',
-  });
-  keyPool.register({
-    id: `sambanova-llama-${i + 1}`,
-    name: `SambaNova Llama 3.1 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.1-70B-Instruct'),
-    supportsStructured: false, // Response API endpoint compatibility issues
-    priority: 5,
-  });
-});
+// (Removed duplicate Cerebras and SambaNova blocks)
 
 // ── PRIORITY 6: OPENROUTER (multi-model pool) ─────────────────────────────────
 // 50 req/day free · routes to best available model automatically
@@ -195,7 +182,7 @@ function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Pro
 }
 
 // Models that support native JSON schema structured output
-const NATIVE_STRUCTURED_IDS = ['google-', 'mistral-', 'cohere-', 'groq-', 'cerebras-', 'sambanova-', 'deepseek-', 'github-', 'nvidia-', 'openrouter-'];
+const NATIVE_STRUCTURED_IDS = ['google-', 'mistral-', 'cohere-', 'cerebras-', 'deepseek-', 'github-', 'nvidia-', 'openrouter-'];
 function usesJsonMode(modelId: string): boolean {
   return !NATIVE_STRUCTURED_IDS.some(prefix => modelId.startsWith(prefix));
 }
@@ -220,15 +207,36 @@ export async function generateObjectWithFallback<T = unknown>(
     console.log(`[AI Router] [Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
-      const result = await withHardTimeout(
-        (generateObject as any)({
-          ...params,
-          model: activeKey.model,
-          ...(usesJsonMode(activeKey.id) ? { mode: 'json' } : {}),
-        }),
-        AI_TIMEOUT_MS,
-        activeKey.name,
-      );
+      let result;
+      if (activeKey.id.startsWith('sambanova-') || activeKey.id.startsWith('groq-')) {
+        const textResult = await withHardTimeout(
+          (generateText as any)({
+            ...params,
+            model: activeKey.model,
+            prompt: (params.prompt || '') + `\n\nCRITICAL INSTRUCTION: You MUST return ONLY a valid JSON object. Do not include any explanations, preambles, or markdown formatting like \`\`\`json. Start the response directly with { and end it with }.`
+          }),
+          AI_TIMEOUT_MS,
+          activeKey.name,
+        );
+        let text = textResult.text.trim();
+        if (text.startsWith('```json')) text = text.replace(/^```json/g, '').replace(/```$/g, '').trim();
+        if (text.startsWith('```')) text = text.replace(/^```/g, '').replace(/```$/g, '').trim();
+        try {
+          result = { object: JSON.parse(text), usage: textResult.usage };
+        } catch (e) {
+          throw new Error(`Failed to parse JSON from ${activeKey.name}: ${text.substring(0, 100)}...`);
+        }
+      } else {
+        result = await withHardTimeout(
+          (generateObject as any)({
+            ...params,
+            model: activeKey.model,
+            ...(usesJsonMode(activeKey.id) ? { mode: 'json' } : {}),
+          }),
+          AI_TIMEOUT_MS,
+          activeKey.name,
+        );
+      }
 
       keyPool.markSuccess(activeKey.id);
       return result as GenerateObjectResult<T>;

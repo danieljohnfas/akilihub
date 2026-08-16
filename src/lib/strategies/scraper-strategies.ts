@@ -108,7 +108,7 @@ export class ScraplingStrategy implements Strategy<ScraperInput, TenderResult[]>
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.SIDECAR_URL ?? 'http://localhost:7860';
+    this.baseUrl = process.env.SCRAPLING_URL ?? process.env.SIDECAR_URL ?? 'http://localhost:8001';
   }
 
   async execute(input: ScraperInput): Promise<TenderResult[]> {
@@ -218,7 +218,7 @@ export class Crawl4AiStrategy implements Strategy<ScraperInput, TenderResult[]> 
   name = 'Crawl4AI (CSS Extraction via Sidecar)';
 
   async execute(input: ScraperInput): Promise<TenderResult[]> {
-    const sidecarUrl = process.env.SIDECAR_URL ?? 'http://localhost:7860';
+    const sidecarUrl = process.env.SCRAPLING_URL ?? process.env.SIDECAR_URL ?? 'http://localhost:8001';
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45_000);
 
