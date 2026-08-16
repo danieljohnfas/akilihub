@@ -88,6 +88,9 @@ import { enrichShallowDataJob, enrichJobWorker, enrichTenderWorker, enrichCompli
 // Employer-first sourcing: retroactive URL resolution backfill
 import { resolveEmployerUrlsJob, resolveUrlWorker } from "@/inngest/resolve-employer-urls";
 
+// AI Tender Document Summarizer
+import { summarizeTenderDocumentJob } from "@/inngest/tender-summarizer";
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
@@ -190,6 +193,9 @@ export const { GET, POST, PUT } = serve({
     // Employer-first sourcing: retroactive URL resolution (12:30 UTC)
     resolveEmployerUrlsJob,
     resolveUrlWorker,
+
+    // AI Tender PDF Summarizer (13:00 UTC daily)
+    summarizeTenderDocumentJob,
   ],
 });
 

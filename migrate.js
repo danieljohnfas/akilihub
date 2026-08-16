@@ -23,6 +23,9 @@ async function run() {
     console.log("Adding region_id to user_alerts...");
     await sql`ALTER TABLE user_alerts ADD COLUMN IF NOT EXISTS region_id uuid REFERENCES regions(id);`;
 
+    console.log("Adding ai_summary to tenders...");
+    await sql`ALTER TABLE tenders ADD COLUMN IF NOT EXISTS ai_summary text;`;
+
     console.log("Migration complete!");
   } catch (err) {
     console.error("Migration failed:", err);
