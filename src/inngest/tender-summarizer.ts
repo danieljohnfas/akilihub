@@ -4,7 +4,7 @@ import { tenders } from '@/lib/db/schema/tenders';
 import { and, eq, isNotNull, isNull, lte } from 'drizzle-orm';
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
-import pdfParse from 'pdf-parse';
+import { PDFParse as pdfParse } from 'pdf-parse';
 
 const BATCH_SIZE = 20;
 
