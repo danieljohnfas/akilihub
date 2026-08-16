@@ -10,6 +10,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
+import { AutoLinker } from '@/components/seo/AutoLinker';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildJobPostingSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { getSourceProvenance } from '@/lib/utils/provenance';
@@ -203,7 +204,7 @@ export default async function JobDetailPage({
             </h2>
             <div className="prose prose-invert max-w-none text-muted-foreground">
               {job.description && job.description !== 'null' && job.description.trim() !== '' ? (
-                <p className="whitespace-pre-wrap">{job.description}</p>
+                <AutoLinker text={job.description} className="whitespace-pre-wrap" />
               ) : (
                 <p className="italic">No detailed description provided.</p>
               )}
@@ -217,7 +218,7 @@ export default async function JobDetailPage({
                 Requirements
               </h2>
               <div className="prose prose-invert max-w-none text-muted-foreground">
-                <p className="whitespace-pre-wrap">{job.requirements}</p>
+                <AutoLinker text={job.requirements} className="whitespace-pre-wrap" />
               </div>
             </section>
           )}

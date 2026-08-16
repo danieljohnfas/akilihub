@@ -31,7 +31,7 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
     id: `groq-llama-${i + 1}`,
     name: `Groq Llama 3.3 70B (${i + 1})`,
     model: groq('llama-3.3-70b-versatile'),
-    supportsStructured: true,
+    supportsStructured: false, // Groq API dropped json_schema support recently
     priority: 1,
   });
 });
@@ -71,9 +71,9 @@ getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
   });
   keyPool.register({
     id: `cerebras-llama-${i + 1}`,
-    name: `Cerebras Llama 3.3 70B (${i + 1})`,
-    model: cerebras('llama-3.3-70b'),
-    supportsStructured: true,
+    name: `Cerebras Llama 3.1 8B (${i + 1})`,
+    model: cerebras('llama3.1-8b'),
+    supportsStructured: false,
     priority: 4,
   });
 });
@@ -87,9 +87,9 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
   });
   keyPool.register({
     id: `sambanova-llama-${i + 1}`,
-    name: `SambaNova Llama 3.3 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
-    supportsStructured: true,
+    name: `SambaNova Llama 3.1 70B (${i + 1})`,
+    model: sambanova('Meta-Llama-3.1-70B-Instruct'),
+    supportsStructured: false, // Response API endpoint compatibility issues
     priority: 5,
   });
 });
@@ -102,15 +102,31 @@ getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
     baseURL: 'https://openrouter.ai/api/v1',
   });
   keyPool.register({
-    id: `openrouter-llama-${i + 1}`,
-    name: `OpenRouter Llama 3.3 70B (${i + 1})`,
-    model: openrouter('meta-llama/llama-3.3-70b-instruct:free'),
-    supportsStructured: false, // OpenRouter free tier may not support json_schema mode
+    id: `openrouter-free-${i + 1}`,
+    name: `OpenRouter Free (${i + 1})`,
+    model: openrouter('openrouter/free'),
+    supportsStructured: true, // openrouter/free supports JSON schema!
     priority: 6,
   });
 });
 
-// ── PRIORITY 7: DEEPSEEK ──────────────────────────────────────────────────────
+// ── PRIORITY 7: NVIDIA (Nemotron) ───────────────────────────────────────────
+// High quality model hosted on NVIDIA's free/paid API endpoints
+getEnvKeys('NVIDIA_API_KEY').forEach((key, i) => {
+  const nvidia = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://integrate.api.nvidia.com/v1',
+  });
+  keyPool.register({
+    id: `nvidia-nemotron-${i + 1}`,
+    name: `NVIDIA Nemotron 70B (${i + 1})`,
+    model: nvidia('nvidia/llama-3.1-nemotron-70b-instruct'),
+    supportsStructured: true, // OpenAI compatible endpoint supports structured
+    priority: 7,
+  });
+});
+
+// ── PRIORITY 8: DEEPSEEK ──────────────────────────────────────────────────────
 // OpenAI-compatible · affordable · strong reasoning
 getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
   const deepseek = createOpenAI({
@@ -166,7 +182,7 @@ if (keyPool.size === 0) {
 // ------------------------------------------------------------------
 
 const MAX_RETRIES = 6; // More retries now that we have more models
-const AI_TIMEOUT_MS = 45_000;
+const AI_TIMEOUT_MS = 90_000;
 
 function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -179,7 +195,7 @@ function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Pro
 }
 
 // Models that support native JSON schema structured output
-const NATIVE_STRUCTURED_IDS = ['google-', 'mistral-', 'cohere-', 'groq-', 'cerebras-', 'sambanova-', 'deepseek-', 'github-'];
+const NATIVE_STRUCTURED_IDS = ['google-', 'mistral-', 'cohere-', 'groq-', 'cerebras-', 'sambanova-', 'deepseek-', 'github-', 'nvidia-', 'openrouter-'];
 function usesJsonMode(modelId: string): boolean {
   return !NATIVE_STRUCTURED_IDS.some(prefix => modelId.startsWith(prefix));
 }

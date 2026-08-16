@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
+import { AutoLinker } from '@/components/seo/AutoLinker';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildTenderSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { isGeneratedSlug } from '@/lib/utils';
@@ -187,7 +188,7 @@ export default async function TenderDetailPage({
             </h2>
             <div className="prose prose-invert max-w-none text-muted-foreground">
               {tender.description ? (
-                <p className="whitespace-pre-wrap">{tender.description}</p>
+                <AutoLinker text={tender.description} className="whitespace-pre-wrap" />
               ) : (
                 <p className="italic">No detailed description provided by the authority.</p>
               )}
