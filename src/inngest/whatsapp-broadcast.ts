@@ -9,8 +9,10 @@ const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
 export const whatsappBroadcastJob = inngest.createFunction(
-  { id: 'whatsapp-daily-broadcast' },
-  { cron: '0 6 * * *' }, // 6:00 AM UTC -> 9:00 AM EAT
+  { 
+    id: 'whatsapp-daily-broadcast',
+    triggers: [{ cron: '0 6 * * *' }] // 6:00 AM UTC -> 9:00 AM EAT
+  },
   async ({ step }) => {
     if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
       console.warn('WhatsApp API credentials missing. Skipping broadcast.');
