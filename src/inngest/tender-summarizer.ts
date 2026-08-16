@@ -9,9 +9,12 @@ import { PDFParse as pdfParse } from 'pdf-parse';
 const BATCH_SIZE = 20;
 
 export const summarizeTenderDocumentJob = inngest.createFunction(
-  { id: 'summarize-tender-documents', name: '📄 Summarize Tender PDFs' },
-  // Run daily at 13:00 UTC (16:00 EAT) — after morning scrapers finish
-  { cron: '0 13 * * *' },
+  { 
+    id: 'summarize-tender-documents', 
+    name: '📄 Summarize Tender PDFs',
+    // Run daily at 13:00 UTC (16:00 EAT) — after morning scrapers finish
+    triggers: [{ cron: '0 13 * * *' }] 
+  },
   async ({ step, logger }) => {
     // Fetch tenders that have a documentUrl but no aiSummary yet
     const pending = await step.run('fetch-pending-tenders', async () => {
