@@ -2,7 +2,7 @@ import { inngest } from "@/inngest/client";
 import { db, safeQuery } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
 import { tenders } from "@/lib/db/schema/tenders";
-import { compliance } from "@/lib/db/schema/compliance";
+import { complianceRequirements as compliance } from "@/lib/db/schema/compliance";
 import { dataVerificationLog } from "@/lib/db/schema/admin";
 import { eq, isNull, inArray, sql } from "drizzle-orm";
 import { generateObjectWithFallback } from "@/lib/ai/router";
@@ -21,11 +21,9 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
   {
     id: "data-cleanup-orchestrator",
     name: "AI Data Cleanup & Verification Worker",
-    // Run up to 5 minutes on Vercel
-    executionEnvironment: "edge", 
-    retries: 3
+    retries: 3,
+    triggers: [{ event: "data.verification.start" }]
   },
-  { event: "data.verification.start" },
   async ({ event, step }) => {
     const batchSize = event.data.batchSize || 10;
     const startTime = event.data.startTime || Date.now();
@@ -146,7 +144,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 publishedAt: job.postedDate,
                 deadline: job.deadline,
                 referenceNo: `MIGRATED-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-              }).onConflictDoNothing();
+              } as any).onConflictDoNothing();
               // Delete from jobs
               await tx.delete(jobs).where(eq(jobs.id, job.id));
             });
@@ -161,9 +159,9 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 issuingAuthority: job.companyName,
                 sourceUrl: job.sourceUrl,
                 countryId: job.countryId,
-                category: 'notices',
+                category: 'sector_specific',
                 status: 'active'
-              }).onConflictDoNothing();
+              } as any).onConflictDoNothing();
               await tx.delete(jobs).where(eq(jobs.id, job.id));
             });
             actionTaken = 'moved';
@@ -213,7 +211,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 regionId: tender.regionId,
                 postedDate: tender.publishedAt,
                 deadline: tender.deadline,
-              }).onConflictDoNothing();
+              } as any).onConflictDoNothing();
               await tx.delete(tenders).where(eq(tenders.id, tender.id));
             });
             actionTaken = 'moved';
@@ -258,7 +256,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 companyName: comp.issuingAuthority || 'Unknown',
                 sourceUrl: comp.sourceUrl,
                 countryId: comp.countryId,
-              }).onConflictDoNothing();
+              } as any).onConflictDoNothing();
               await tx.delete(compliance).where(eq(compliance.id, comp.id));
             });
             actionTaken = 'moved';
