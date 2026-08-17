@@ -1,0 +1,10 @@
+import type { OutputFormat, Region } from '../types/config.js';
+export declare function parseOutputFormat(value: unknown): OutputFormat;
+export declare function parseRegion(value: string): Region;
+export declare function parsePositiveInteger(value: unknown, name: string): number;
+export declare function parseBoolean(value: unknown, name: string): boolean;
+export declare function parseJsonArray(value: string | undefined, name: string): unknown[] | undefined;
+export declare function ensureFileExists(filePath: string): void;
+export declare function requireValue(value: string | undefined, message: string): string;
+export declare function parseUrl(value: string): string;
+export declare function validateFileSize(filePath: string, maxSizeMB: number): void;

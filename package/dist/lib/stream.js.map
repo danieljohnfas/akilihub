@@ -1,0 +1,1 @@
+{"version":3,"file":"stream.js","sourceRoot":"","sources":["../../src/lib/stream.ts"],"names":[],"mappings":"AAEA,MAAM,UAAU,iBAAiB,CAAC,KAAkB;IAClD,OAAO,KAAK,CAAC,OAAO,EAAE,GAAG,CAAC,CAAC,MAAM,EAAE,EAAE,CAAC,MAAM,CAAC,KAAK,EAAE,OAAO,IAAI,EAAE,CAAC,CAAC,IAAI,CAAC,EAAE,CAAC,IAAI,EAAE,CAAC;AACpF,CAAC"}

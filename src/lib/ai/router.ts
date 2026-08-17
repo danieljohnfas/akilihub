@@ -16,12 +16,28 @@ function getEnvKeys(baseName: string): string[] {
   const keys: string[] = [];
   const pattern = new RegExp(`^${baseName}(?:_\\d+)?$`);
   for (const [key, value] of Object.entries(process.env)) {
-    if (pattern.test(key) && value && value.trim() !== '') {
+    if (pattern.test(key) && value && value.trim() !== '' && !value.trim().startsWith('encrypted:')) {
       keys.push(value.trim());
     }
   }
   return keys;
 }
+
+// ── PRIORITY 1: CEREBRAS (Llama 3.3 70B) ────────────────────────────────────
+// Ultra-fast free inference · native JSON schema support
+getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
+  const cerebras = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api.cerebras.ai/v1',
+  });
+  keyPool.register({
+    id: `cerebras-llama-${i + 1}`,
+    name: `Cerebras Llama 3.3 70B (${i + 1})`,
+    model: cerebras('llama-3.3-70b'),
+    supportsStructured: true,
+    priority: 1,
+  });
+});
 
 // ── PRIORITY 1: SAMBANOVA CLOUD ───────────────────────────────────────────────
 // Fast inference via SambaNova Cloud (Llama 3.3 70B)
@@ -33,12 +49,27 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `sambanova-llama-${i + 1}`,
     name: `SambaNova Llama 3.3 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
+    model: sambanova('Meta-Llama-3.1-405B-Instruct'),
     supportsStructured: true,
     priority: 1,
   });
 });
 
+// ── PRIORITY 1: Z.AI (GLM-5.2) ────────────────────────────────────────────────
+// 300M tokens/day free · 744B open-weight model · OpenAI API compatible
+getEnvKeys('ZAI_API_KEY').forEach((key, i) => {
+  const zai = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://open.bigmodel.cn/api/paas/v4/',
+  });
+  keyPool.register({
+    id: `zai-glm-${i + 1}`,
+    name: `Z.ai GLM-5.2 (${i + 1})`,
+    model: zai('glm-5.2'),
+    supportsStructured: true,
+    priority: 1,
+  });
+});
 
 // ── PRIORITY 1: GROQ (Llama 3.3 70B) ────────────────────────────────────────
 // 14,400 req/day free · fastest inference (~0.8s) · full JSON schema support
@@ -47,8 +78,8 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `groq-llama-${i + 1}`,
     name: `Groq Llama 3.3 70B (${i + 1})`,
-    model: groq('llama-3.3-70b-versatile'),
-    supportsStructured: true, // We fallback to json mode for Groq
+    model: groq('mixtral-8x7b-32768'),
+    supportsStructured: true,
     priority: 1,
   });
 });
@@ -79,7 +110,65 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   });
 });
 
-// (Removed duplicate Cerebras and SambaNova blocks)
+// ── PRIORITY 4: GITHUB MODELS (GPT-4o) ───────────────────────────────────────
+// Free via GitHub token · GPT-4o quality · native JSON schema support
+getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
+  const github = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://models.inference.ai.azure.com',
+  });
+  keyPool.register({
+    id: `github-gpt4o-${i + 1}`,
+    name: `GitHub Models GPT-4o (${i + 1})`,
+    model: github('gpt-4o'),
+    supportsStructured: true,
+    priority: 4,
+  });
+  // Also register Llama 3.3 70B on GitHub for additional capacity
+  keyPool.register({
+    id: `github-llama-${i + 1}`,
+    name: `GitHub Models Llama 3.3 70B (${i + 1})`,
+    model: github('meta-llama-3.3-70b-instruct'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 5: CLOUDFLARE WORKERS AI ────────────────────────────────────────
+// Free AI inference · OpenAI-compatible · runs on Cloudflare's global network
+{
+  const cfToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
+  const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+  if (cfToken && cfAccountId && !cfToken.startsWith('encrypted:')) {
+    const cloudflare = createOpenAI({
+      apiKey: cfToken,
+      baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`,
+    });
+    keyPool.register({
+      id: `cloudflare-llama-1`,
+      name: `Cloudflare Workers AI Llama 3.3 70B`,
+      model: cloudflare('@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
+      supportsStructured: true,
+      priority: 5,
+    });
+  }
+}
+
+// ── PRIORITY 5: HYPERBOLIC (Llama 3.3 70B) ───────────────────────────────────
+// Fast OpenAI-compatible inference · competitive free tier
+getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
+  const hyperbolic = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api.hyperbolic.xyz/v1',
+  });
+  keyPool.register({
+    id: `hyperbolic-llama-${i + 1}`,
+    name: `Hyperbolic Llama 3.3 70B (${i + 1})`,
+    model: hyperbolic('meta-llama/Llama-3.3-70B-Instruct'),
+    supportsStructured: true,
+    priority: 5,
+  });
+});
 
 // ── PRIORITY 6: OPENROUTER (multi-model pool) ─────────────────────────────────
 // 50 req/day free · routes to best available model automatically
@@ -91,29 +180,29 @@ getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `openrouter-free-${i + 1}`,
     name: `OpenRouter Free (${i + 1})`,
-    model: openrouter('openrouter/free'),
-    supportsStructured: true, // openrouter/free supports JSON schema!
+    model: openrouter('qwen/qwen-2-7b-instruct:free'),
+    supportsStructured: true,
     priority: 6,
   });
 });
 
-// ── PRIORITY 7: NVIDIA (Nemotron) ───────────────────────────────────────────
-// High quality model hosted on NVIDIA's free/paid API endpoints
-getEnvKeys('NVIDIA_API_KEY').forEach((key, i) => {
-  const nvidia = createOpenAI({
+// ── PRIORITY 6: MINIMAX (MiniMax-Text-01) ─────────────────────────────────────
+// Large context window · OpenAI-compatible · strong reasoning
+getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
+  const minimax = createOpenAI({
     apiKey: key,
-    baseURL: 'https://integrate.api.nvidia.com/v1',
+    baseURL: 'https://api.minimaxi.chat/v1',
   });
   keyPool.register({
-    id: `nvidia-nemotron-${i + 1}`,
-    name: `NVIDIA Nemotron 70B (${i + 1})`,
-    model: nvidia('nvidia/llama-3.1-nemotron-70b-instruct'),
-    supportsStructured: true, // OpenAI compatible endpoint supports structured
-    priority: 7,
+    id: `minimax-text-${i + 1}`,
+    name: `MiniMax Text-01 (${i + 1})`,
+    model: minimax('MiniMax-Text-01'),
+    supportsStructured: true,
+    priority: 6,
   });
 });
 
-// ── PRIORITY 8: DEEPSEEK ──────────────────────────────────────────────────────
+// ── PRIORITY 7: DEEPSEEK ──────────────────────────────────────────────────────
 // OpenAI-compatible · affordable · strong reasoning
 getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
   const deepseek = createOpenAI({
@@ -168,7 +257,7 @@ if (keyPool.size === 0) {
 // 2. GENERATION WITH FALLBACK
 // ------------------------------------------------------------------
 
-const MAX_RETRIES = 6; // More retries now that we have more models
+const MAX_RETRIES = 8; // More retries now that we have more models
 const AI_TIMEOUT_MS = 90_000;
 
 function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -181,10 +270,32 @@ function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Pro
   });
 }
 
-// Models that support native JSON schema structured output
-const NATIVE_STRUCTURED_IDS = ['google-', 'mistral-', 'cohere-', 'cerebras-', 'deepseek-', 'github-', 'nvidia-', 'openrouter-'];
+// Providers that support native JSON schema structured output (no need for json mode).
+// All others fall back to { mode: 'json' } when calling generateObject.
+const NATIVE_STRUCTURED_IDS = [
+  'cerebras-',
+  'google-',
+  'mistral-',
+  'cohere-',
+  'deepseek-',
+  'github-',
+  'openrouter-',
+];
 function usesJsonMode(modelId: string): boolean {
   return !NATIVE_STRUCTURED_IDS.some(prefix => modelId.startsWith(prefix));
+}
+
+// Providers that don't reliably support generateObject at all —
+// we call generateText with a JSON instruction instead.
+function usesTextModeFallback(modelId: string): boolean {
+  return (
+    modelId.startsWith('sambanova-') ||
+    modelId.startsWith('groq-') ||
+    modelId.startsWith('zai-') ||
+    modelId.startsWith('cloudflare-') ||
+    modelId.startsWith('hyperbolic-') ||
+    modelId.startsWith('minimax-')
+  );
 }
 
 export async function generateObjectWithFallback<T = unknown>(
@@ -208,10 +319,12 @@ export async function generateObjectWithFallback<T = unknown>(
 
     try {
       let result;
-      if (activeKey.id.startsWith('sambanova-') || activeKey.id.startsWith('groq-')) {
+      if (usesTextModeFallback(activeKey.id)) {
+        // Text-mode path: call generateText with a strict JSON instruction, then parse manually.
+        const { schema, mode, output, ...safeParams } = params as any;
         const textResult: any = await withHardTimeout(
           (generateText as any)({
-            ...params,
+            ...safeParams,
             model: activeKey.model,
             prompt: (params.prompt || '') + `\n\nCRITICAL INSTRUCTION: You MUST return ONLY a valid JSON object. Do not include any explanations, preambles, or markdown formatting like \`\`\`json. Start the response directly with { and end it with }.`
           }),
@@ -227,6 +340,7 @@ export async function generateObjectWithFallback<T = unknown>(
           throw new Error(`Failed to parse JSON from ${activeKey.name}: ${text.substring(0, 100)}...`);
         }
       } else {
+        // Native generateObject path (with or without json mode).
         result = await withHardTimeout(
           (generateObject as any)({
             ...params,
@@ -325,13 +439,16 @@ function getVisionModelPool(): VisionModelCandidate[] {
     });
   });
 
-  // 2. DeepSeek (vision via chat — partial support)
-  getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
-    const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com/v1' });
+  // 2. GitHub Models (GPT-4o) — excellent vision capability
+  getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
+    const github = createOpenAI({
+      apiKey: key,
+      baseURL: 'https://models.inference.ai.azure.com',
+    });
     pool.push({
-      id: `deepseek-vision-${i + 1}`,
-      name: `DeepSeek Vision (${i + 1})`,
-      model: deepseek('deepseek-chat'),
+      id: `github-vision-${i + 1}`,
+      name: `GitHub Models GPT-4o Vision (${i + 1})`,
+      model: github('gpt-4o'),
     });
   });
 
@@ -342,6 +459,16 @@ function getVisionModelPool(): VisionModelCandidate[] {
       id: `mistral-pixtral-${i + 1}`,
       name: `Mistral Pixtral 12B (${i + 1})`,
       model: mistral('pixtral-12b-2409'),
+    });
+  });
+
+  // 4. DeepSeek (vision via chat — partial support)
+  getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
+    const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com/v1' });
+    pool.push({
+      id: `deepseek-vision-${i + 1}`,
+      name: `DeepSeek Vision (${i + 1})`,
+      model: deepseek('deepseek-chat'),
     });
   });
 

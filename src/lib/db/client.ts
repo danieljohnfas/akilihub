@@ -54,7 +54,7 @@ const conn = globalForDb.conn ?? postgres(connectionString, {
   ssl: process.env.NODE_ENV === 'production' || isCloudDb ? 'require' : false,
   max: 10,
   idle_timeout: 10,
-  connect_timeout: 8,
+  connect_timeout: 30,
   prepare: false, // pgBouncer does not support prepared statements
 });
 
