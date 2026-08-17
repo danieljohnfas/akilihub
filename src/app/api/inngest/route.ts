@@ -91,6 +91,9 @@ import { resolveEmployerUrlsJob, resolveUrlWorker } from "@/inngest/resolve-empl
 // AI Tender Document Summarizer
 import { summarizeTenderDocumentJob } from "@/inngest/tender-summarizer";
 
+// Massive Data Verification & Cleanup Loop
+import { dataCleanupOrchestratorJob } from "@/inngest/data-cleanup-worker";
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
@@ -196,6 +199,9 @@ export const { GET, POST, PUT } = serve({
 
     // AI Tender PDF Summarizer (13:00 UTC daily)
     summarizeTenderDocumentJob,
+
+    // AI Massive Data Verification Loop (Event Driven)
+    dataCleanupOrchestratorJob,
   ],
 });
 

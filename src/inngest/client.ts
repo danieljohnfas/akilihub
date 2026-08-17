@@ -17,6 +17,12 @@ export type AppEvents = {
   "manual.data.review": {
     data: {};
   };
+  "data.verification.start": {
+    data: { 
+      batchSize?: number;
+      startTime?: number;
+    };
+  };
 };
 
 // Picks up INNGEST_SIGNING_KEY and INNGEST_EVENT_KEY automatically from env
