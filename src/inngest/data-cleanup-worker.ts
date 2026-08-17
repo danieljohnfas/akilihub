@@ -114,6 +114,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
 
     // 4. Process the batch using AI
     let movedCount = 0;
+    let hitRateLimit = false;
     
     await step.run("process-batch-via-ai", async () => {
       // Process Jobs
@@ -177,17 +178,15 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
             actionTaken: actionTaken,
           });
 
-        } catch (e) {
+        } catch (e: any) {
           console.error(`AI failed for job ${job.id}`, e);
-          // Mark as unknown so it's not checked again
-          await db.insert(dataVerificationLog).values({
-            recordId: job.id,
-            sourceModule: 'jobs',
-            targetModule: 'unknown',
-            actionTaken: 'error',
-          });
+          // Do not log to dataVerificationLog so it is picked up again next time
+          hitRateLimit = true;
+          break; // Stop processing this batch
         }
       }
+
+      if (hitRateLimit) return;
 
       // Process Tenders
       for (const tender of unverifiedTenders) {
@@ -228,16 +227,14 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
             actionTaken: actionTaken,
           });
 
-        } catch (e) {
+        } catch (e: any) {
           console.error(`AI failed for tender ${tender.id}`, e);
-          await db.insert(dataVerificationLog).values({
-            recordId: tender.id,
-            sourceModule: 'tenders',
-            targetModule: 'unknown',
-            actionTaken: 'error',
-          });
+          hitRateLimit = true;
+          break;
         }
       }
+
+      if (hitRateLimit) return;
 
       // Process Compliance
       for (const comp of unverifiedCompliance) {
@@ -275,17 +272,17 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
             actionTaken: actionTaken,
           });
 
-        } catch (e) {
+        } catch (e: any) {
           console.error(`AI failed for compliance ${comp.id}`, e);
-          await db.insert(dataVerificationLog).values({
-            recordId: comp.id,
-            sourceModule: 'compliance',
-            targetModule: 'unknown',
-            actionTaken: 'error',
-          });
+          hitRateLimit = true;
+          break;
         }
       }
     });
+
+    if (hitRateLimit) {
+      await step.sleep("rate-limit-cooldown", "5m");
+    }
 
     // 5. Send hourly email if needed
     const oneHourMs = 60 * 60 * 1000;
@@ -303,7 +300,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
       await step.run("send-hourly-progress-email", async () => {
         // Find total processed count
         const totalProcessedObj = await safeQuery(
-          db.select({ count: sql<number>\`count(*)\` }).from(dataVerificationLog)
+          db.select({ count: sql<number>`count(*)` }).from(dataVerificationLog)
         );
         const totalProcessed = totalProcessedObj[0]?.count || 0;
         
