@@ -40,7 +40,7 @@ async function main() {
         <li><b>Current Compliance count:</b> ${compliance}</li>
       </ul>
       <p>Total remaining to verify: ${Number(jobs) + Number(tenders) + Number(compliance) - Number(verified)}</p>
-      <p>The Inngest worker is running in the background and will continue to process records.</p>
+      <p>The GitHub Action cron is running in the background and will continue to process records.</p>
     `,
   });
   console.log("Email sent:", emailResult?.data?.id);
