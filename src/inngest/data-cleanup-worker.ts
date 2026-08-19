@@ -4,33 +4,86 @@ import { jobs } from "@/lib/db/schema/jobs";
 import { tenders } from "@/lib/db/schema/tenders";
 import { complianceRequirements as compliance } from "@/lib/db/schema/compliance";
 import { dataVerificationLog } from "@/lib/db/schema/admin";
-import { eq, isNull, inArray, sql } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 import { generateObjectWithFallback } from "@/lib/ai/router";
 import { z } from "zod";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const REPORT_EMAIL = "danieljohnfassanga@gmail.com";
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const BATCH_SIZE = 5; // Small batches so each step.run completes fast
+
 const ClassificationSchema = z.object({
   module: z.enum(['jobs', 'tenders', 'compliance', 'unknown']).describe("The correct module this data belongs to."),
   reasoning: z.string().describe("Brief explanation of why this belongs in the module."),
 });
 
-// A long running step-function worker that processes batches until everything is clean
+async function getStats() {
+  const [[verified], [jobCount], [tenderCount], [complianceCount]] = await Promise.all([
+    safeQuery(db.select({ count: sql<number>`count(*)` }).from(dataVerificationLog)),
+    safeQuery(db.select({ count: sql<number>`count(*)` }).from(jobs).leftJoin(dataVerificationLog, eq(jobs.id, dataVerificationLog.recordId)).where(isNull(dataVerificationLog.id))),
+    safeQuery(db.select({ count: sql<number>`count(*)` }).from(tenders).leftJoin(dataVerificationLog, eq(tenders.id, dataVerificationLog.recordId)).where(isNull(dataVerificationLog.id))),
+    safeQuery(db.select({ count: sql<number>`count(*)` }).from(compliance).leftJoin(dataVerificationLog, eq(compliance.id, dataVerificationLog.recordId)).where(isNull(dataVerificationLog.id))),
+  ]);
+  return {
+    verified: Number(verified?.count ?? 0),
+    unverifiedJobs: Number(jobCount?.count ?? 0),
+    unverifiedTenders: Number(tenderCount?.count ?? 0),
+    unverifiedCompliance: Number(complianceCount?.count ?? 0),
+  };
+}
+
+async function sendProgressEmail(subject: string, stats: Awaited<ReturnType<typeof getStats>>, extra?: string) {
+  const total = stats.unverifiedJobs + stats.unverifiedTenders + stats.unverifiedCompliance;
+  await resend.emails.send({
+    from: "AkiliBrain Cleanup <noreply@akilibrain.com>",
+    to: REPORT_EMAIL,
+    subject,
+    html: `
+      <h2>AkiliBrain Data Verification Report</h2>
+      ${extra ? `<p>${extra}</p>` : ""}
+      <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+        <tr><th>Metric</th><th>Count</th></tr>
+        <tr><td>✅ Records verified by AI so far</td><td><b>${stats.verified}</b></td></tr>
+        <tr><td>📋 Jobs still to verify</td><td>${stats.unverifiedJobs}</td></tr>
+        <tr><td>📄 Tenders still to verify</td><td>${stats.unverifiedTenders}</td></tr>
+        <tr><td>⚖️ Compliance records still to verify</td><td>${stats.unverifiedCompliance}</td></tr>
+        <tr><td>📦 Total remaining</td><td><b>${total}</b></td></tr>
+      </table>
+      <p style="color:#888;font-size:12px;">The worker continues running until all records are verified. Next update in ~1 hour.</p>
+    `,
+  });
+}
+
 export const dataCleanupOrchestratorJob = inngest.createFunction(
   {
     id: "data-cleanup-orchestrator",
     name: "AI Data Cleanup & Verification Worker",
-    retries: 3,
+    retries: 2,
+    concurrency: { limit: 1, key: "data-cleanup-singleton" },
     triggers: [{ event: "data.verification.start" }]
   },
   async ({ event, step }) => {
-    const batchSize = event.data.batchSize || 10;
-    const startTime = event.data.startTime || Date.now();
+    const startTime: number = event.data.startTime || Date.now();
+    const lastEmailTime: number = event.data.lastEmailTime || 0;
+    const isFirstRun: boolean = lastEmailTime === 0;
 
-    // 1. Fetch unverified Jobs
+    // ── STEP 1: Send an immediate startup email on the very first invocation ──
+    if (isFirstRun) {
+      await step.run("send-startup-email", async () => {
+        const stats = await getStats();
+        await sendProgressEmail(
+          "🚀 Data Cleanup Task Started!",
+          stats,
+          `The AI-powered data verification task has just been started. It will process all ${stats.unverifiedJobs + stats.unverifiedTenders + stats.unverifiedCompliance} records across Jobs, Tenders, and Compliance modules.`
+        );
+      });
+    }
+
+    // ── STEP 2: Fetch one small batch of unverified Jobs ──
     const unverifiedJobs = await step.run("fetch-unverified-jobs", async () => {
-      // Find jobs that have NOT been logged in dataVerificationLog
       return await safeQuery(
         db.select({
           id: jobs.id,
@@ -46,11 +99,11 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
         .from(jobs)
         .leftJoin(dataVerificationLog, eq(jobs.id, dataVerificationLog.recordId))
         .where(isNull(dataVerificationLog.id))
-        .limit(batchSize)
+        .limit(BATCH_SIZE)
       );
     });
 
-    // 2. Fetch unverified Tenders (if no jobs found, move to tenders)
+    // ── STEP 3: Fetch one small batch of unverified Tenders (if no jobs) ──
     let unverifiedTenders: any[] = [];
     if (unverifiedJobs.length === 0) {
       unverifiedTenders = await step.run("fetch-unverified-tenders", async () => {
@@ -69,12 +122,12 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
           .from(tenders)
           .leftJoin(dataVerificationLog, eq(tenders.id, dataVerificationLog.recordId))
           .where(isNull(dataVerificationLog.id))
-          .limit(batchSize)
+          .limit(BATCH_SIZE)
         );
       });
     }
 
-    // 3. Fetch unverified Compliance (if no tenders or jobs found)
+    // ── STEP 4: Fetch one small batch of unverified Compliance (if neither) ──
     let unverifiedCompliance: any[] = [];
     if (unverifiedJobs.length === 0 && unverifiedTenders.length === 0) {
       unverifiedCompliance = await step.run("fetch-unverified-compliance", async () => {
@@ -90,40 +143,40 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
           .from(compliance)
           .leftJoin(dataVerificationLog, eq(compliance.id, dataVerificationLog.recordId))
           .where(isNull(dataVerificationLog.id))
-          .limit(batchSize)
+          .limit(BATCH_SIZE)
         );
       });
     }
 
     const totalToProcess = unverifiedJobs.length + unverifiedTenders.length + unverifiedCompliance.length;
 
-    // If completely empty, we are done!
+    // ── STEP 5: Done! All data verified. ──
     if (totalToProcess === 0) {
       await step.run("send-completion-email", async () => {
-        await resend.emails.send({
-          from: "AkiliBrain Cleanup <noreply@akilibrain.com>",
-          to: "danieljohnfassanga@gmail.com",
-          subject: "✅ Data Cleanup Task Completed!",
-          html: `<p>The massive online data verification task has successfully completed. All records across Jobs, Tenders, and Compliance have been verified by AI and re-categorized where necessary.</p>`,
-        });
+        const stats = await getStats();
+        await sendProgressEmail(
+          "✅ Data Cleanup Task Completed!",
+          stats,
+          `All records have been verified by AI. The data is now clean and properly categorized.`
+        );
       });
-      return { message: "Task completed. No more unverified records." };
+      return { message: "Task completed. All records verified." };
     }
 
-    // 4. Process the batch using AI
+    // ── STEP 6: Process each record individually ──
+    // Each record is its own step so failures are isolated and don't block others
     let movedCount = 0;
-    let hitRateLimit = false;
-    
-    await step.run("process-batch-via-ai", async () => {
-      // Process Jobs
-      for (const job of unverifiedJobs) {
-        const textToAnalyze = `Title: ${job.title}\nDescription: ${job.description || ''}\nCompany: ${job.companyName}`;
-        
+    let rateLimitHit = false;
+
+    // Process Jobs
+    for (const job of unverifiedJobs) {
+      const result = await step.run(`process-job-${job.id}`, async () => {
+        const textToAnalyze = `Title: ${job.title}\nDescription: ${(job.description || '').substring(0, 500)}\nCompany: ${job.companyName}`;
         try {
           const aiResult = await generateObjectWithFallback({
-            modelName: "Google Gemini 2.5 Flash", // Reliable fallback
+            modelName: "Google Gemini 2.5 Flash",
             schema: ClassificationSchema,
-            system: "You are a data cleaner. Categorize the following text as a job posting, a tender/procurement notice, or a compliance/legal notice. Be extremely accurate.",
+            system: "You are a data quality controller. Classify this record as: 'jobs' (employment listing), 'tenders' (procurement/bid notice), 'compliance' (legal/regulatory notice), or 'unknown'. Be accurate.",
             prompt: textToAnalyze,
           });
 
@@ -131,9 +184,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
           let actionTaken = 'none';
 
           if (module === 'tenders') {
-            // MOVE JOB TO TENDERS
             await db.transaction(async (tx) => {
-              // Insert to tenders
               await tx.insert(tenders).values({
                 title: job.title,
                 description: job.description,
@@ -143,15 +194,13 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 regionId: job.regionId,
                 publishedAt: job.postedDate,
                 deadline: job.deadline,
-                referenceNo: `MIGRATED-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+                referenceNo: `MIGRATED-${Date.now()}`,
               } as any).onConflictDoNothing();
-              // Delete from jobs
               await tx.delete(jobs).where(eq(jobs.id, job.id));
             });
             actionTaken = 'moved';
             movedCount++;
           } else if (module === 'compliance') {
-            // MOVE JOB TO COMPLIANCE
             await db.transaction(async (tx) => {
               await tx.insert(compliance).values({
                 title: job.title,
@@ -160,7 +209,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 sourceUrl: job.sourceUrl,
                 countryId: job.countryId,
                 category: 'sector_specific',
-                status: 'active'
+                status: 'active',
               } as any).onConflictDoNothing();
               await tx.delete(jobs).where(eq(jobs.id, job.id));
             });
@@ -168,163 +217,190 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
             movedCount++;
           }
 
-          // Log verification
           await db.insert(dataVerificationLog).values({
             recordId: job.id,
             sourceModule: 'jobs',
             targetModule: module,
-            actionTaken: actionTaken,
+            actionTaken,
           });
-
+          return { success: true as boolean, rateLimitHit: false as boolean };
         } catch (e: any) {
-          console.error(`AI failed for job ${job.id}`, e);
-          // Do not log to dataVerificationLog so it is picked up again next time
-          hitRateLimit = true;
-          break; // Stop processing this batch
+          console.error(`AI error for job ${job.id}:`, e?.message);
+          return { success: false, rateLimitHit: true };
         }
+      });
+
+      if (!result.success && result.rateLimitHit) {
+        rateLimitHit = true;
+        break;
       }
+    }
 
-      if (hitRateLimit) return;
-
-      // Process Tenders
+    // Process Tenders
+    if (!rateLimitHit) {
       for (const tender of unverifiedTenders) {
-        const textToAnalyze = `Title: ${tender.title}\nDescription: ${tender.description || ''}\nAuthority: ${tender.contractingAuthority}`;
-        try {
-          const aiResult = await generateObjectWithFallback({
-            modelName: "Google Gemini 2.5 Flash", 
-            schema: ClassificationSchema,
-            system: "You are a data cleaner. Categorize the following text as a job posting, a tender/procurement notice, or a compliance/legal notice. Be extremely accurate.",
-            prompt: textToAnalyze,
-          });
-
-          const module = aiResult.object.module;
-          let actionTaken = 'none';
-
-          if (module === 'jobs') {
-            await db.transaction(async (tx) => {
-              await tx.insert(jobs).values({
-                title: tender.title,
-                description: tender.description || '',
-                companyName: tender.contractingAuthority,
-                sourceUrl: tender.sourceUrl,
-                countryId: tender.countryId,
-                regionId: tender.regionId,
-                postedDate: tender.publishedAt,
-                deadline: tender.deadline,
-              } as any).onConflictDoNothing();
-              await tx.delete(tenders).where(eq(tenders.id, tender.id));
+        const result = await step.run(`process-tender-${tender.id}`, async () => {
+          const textToAnalyze = `Title: ${tender.title}\nDescription: ${(tender.description || '').substring(0, 500)}\nAuthority: ${tender.contractingAuthority}`;
+          try {
+            const aiResult = await generateObjectWithFallback({
+              modelName: "Google Gemini 2.5 Flash",
+              schema: ClassificationSchema,
+              system: "You are a data quality controller. Classify this record as: 'jobs' (employment listing), 'tenders' (procurement/bid notice), 'compliance' (legal/regulatory notice), or 'unknown'. Be accurate.",
+              prompt: textToAnalyze,
             });
-            actionTaken = 'moved';
-            movedCount++;
-          }
-          
-          await db.insert(dataVerificationLog).values({
-            recordId: tender.id,
-            sourceModule: 'tenders',
-            targetModule: module,
-            actionTaken: actionTaken,
-          });
 
-        } catch (e: any) {
-          console.error(`AI failed for tender ${tender.id}`, e);
-          hitRateLimit = true;
+            const module = aiResult.object.module;
+            let actionTaken = 'none';
+
+            if (module === 'jobs') {
+              await db.transaction(async (tx) => {
+                await tx.insert(jobs).values({
+                  title: tender.title,
+                  description: tender.description || '',
+                  companyName: tender.contractingAuthority || 'Unknown',
+                  sourceUrl: tender.sourceUrl,
+                  countryId: tender.countryId,
+                  regionId: tender.regionId,
+                  postedDate: tender.publishedAt,
+                  deadline: tender.deadline,
+                } as any).onConflictDoNothing();
+                await tx.delete(tenders).where(eq(tenders.id, tender.id));
+              });
+              actionTaken = 'moved';
+              movedCount++;
+            } else if (module === 'compliance') {
+              await db.transaction(async (tx) => {
+                await tx.insert(compliance).values({
+                  title: tender.title,
+                  description: tender.description,
+                  issuingAuthority: tender.contractingAuthority,
+                  sourceUrl: tender.sourceUrl,
+                  countryId: tender.countryId,
+                  category: 'sector_specific',
+                  status: 'active',
+                } as any).onConflictDoNothing();
+                await tx.delete(tenders).where(eq(tenders.id, tender.id));
+              });
+              actionTaken = 'moved';
+              movedCount++;
+            }
+
+            await db.insert(dataVerificationLog).values({
+              recordId: tender.id,
+              sourceModule: 'tenders',
+              targetModule: module,
+              actionTaken,
+            });
+            return { success: true as boolean, rateLimitHit: false as boolean };
+          } catch (e: any) {
+            console.error(`AI error for tender ${tender.id}:`, e?.message);
+            return { success: false, rateLimitHit: true };
+          }
+        });
+
+        if (!result.success && result.rateLimitHit) {
+          rateLimitHit = true;
           break;
         }
       }
+    }
 
-      if (hitRateLimit) return;
-
-      // Process Compliance
+    // Process Compliance
+    if (!rateLimitHit) {
       for (const comp of unverifiedCompliance) {
-        const textToAnalyze = `Title: ${comp.title}\nDescription: ${comp.description || ''}\nAuthority: ${comp.issuingAuthority}`;
-        try {
-          const aiResult = await generateObjectWithFallback({
-            modelName: "Google Gemini 2.5 Flash", 
-            schema: ClassificationSchema,
-            system: "You are a data cleaner. Categorize the following text as a job posting, a tender/procurement notice, or a compliance/legal notice. Be extremely accurate.",
-            prompt: textToAnalyze,
-          });
-
-          const module = aiResult.object.module;
-          let actionTaken = 'none';
-
-          if (module === 'jobs') {
-            await db.transaction(async (tx) => {
-              await tx.insert(jobs).values({
-                title: comp.title,
-                description: comp.description || '',
-                companyName: comp.issuingAuthority || 'Unknown',
-                sourceUrl: comp.sourceUrl,
-                countryId: comp.countryId,
-              } as any).onConflictDoNothing();
-              await tx.delete(compliance).where(eq(compliance.id, comp.id));
+        const result = await step.run(`process-compliance-${comp.id}`, async () => {
+          const textToAnalyze = `Title: ${comp.title}\nDescription: ${(comp.description || '').substring(0, 500)}\nAuthority: ${comp.issuingAuthority}`;
+          try {
+            const aiResult = await generateObjectWithFallback({
+              modelName: "Google Gemini 2.5 Flash",
+              schema: ClassificationSchema,
+              system: "You are a data quality controller. Classify this record as: 'jobs' (employment listing), 'tenders' (procurement/bid notice), 'compliance' (legal/regulatory notice), or 'unknown'. Be accurate.",
+              prompt: textToAnalyze,
             });
-            actionTaken = 'moved';
-            movedCount++;
-          }
-          
-          await db.insert(dataVerificationLog).values({
-            recordId: comp.id,
-            sourceModule: 'compliance',
-            targetModule: module,
-            actionTaken: actionTaken,
-          });
 
-        } catch (e: any) {
-          console.error(`AI failed for compliance ${comp.id}`, e);
-          hitRateLimit = true;
+            const module = aiResult.object.module;
+            let actionTaken = 'none';
+
+            if (module === 'jobs') {
+              await db.transaction(async (tx) => {
+                await tx.insert(jobs).values({
+                  title: comp.title,
+                  description: comp.description || '',
+                  companyName: comp.issuingAuthority || 'Unknown',
+                  sourceUrl: comp.sourceUrl,
+                  countryId: comp.countryId,
+                } as any).onConflictDoNothing();
+                await tx.delete(compliance).where(eq(compliance.id, comp.id));
+              });
+              actionTaken = 'moved';
+              movedCount++;
+            } else if (module === 'tenders') {
+              await db.transaction(async (tx) => {
+                await tx.insert(tenders).values({
+                  title: comp.title,
+                  description: comp.description,
+                  contractingAuthority: comp.issuingAuthority,
+                  sourceUrl: comp.sourceUrl,
+                  countryId: comp.countryId,
+                  referenceNo: `MIGRATED-${Date.now()}`,
+                } as any).onConflictDoNothing();
+                await tx.delete(compliance).where(eq(compliance.id, comp.id));
+              });
+              actionTaken = 'moved';
+              movedCount++;
+            }
+
+            await db.insert(dataVerificationLog).values({
+              recordId: comp.id,
+              sourceModule: 'compliance',
+              targetModule: module,
+              actionTaken,
+            });
+            return { success: true as boolean, rateLimitHit: false as boolean };
+          } catch (e: any) {
+            console.error(`AI error for compliance ${comp.id}:`, e?.message);
+            return { success: false, rateLimitHit: true };
+          }
+        });
+
+        if (!result.success && result.rateLimitHit) {
+          rateLimitHit = true;
           break;
         }
       }
-    });
+    }
 
-    if (hitRateLimit) {
+    // ── STEP 7: Rate limit cooldown if needed ──
+    if (rateLimitHit) {
       await step.sleep("rate-limit-cooldown", "5m");
     }
 
-    // 5. Send hourly email if needed
-    const oneHourMs = 60 * 60 * 1000;
+    // ── STEP 8: Send hourly progress email ──
     const now = Date.now();
-    
-    // We send an email if exactly an hour has elapsed since we started (or multiples of an hour)
-    // To do this simply, we'll check if (now - startTime) crossed an hour boundary compared to the start of this batch
-    // Alternatively, a simpler way is to just dispatch the next batch and rely on a separate cron for emails,
-    // BUT since we are looping, we can just check elapsed time. We pass `lastEmailTime` in the event payload!
-    const lastEmailTime = event.data.lastEmailTime || startTime;
-    
-    let updatedLastEmailTime = lastEmailTime;
-    
-    if (now - lastEmailTime >= oneHourMs) {
-      await step.run("send-hourly-progress-email", async () => {
-        // Find total processed count
-        const totalProcessedObj = await safeQuery(
-          db.select({ count: sql<number>`count(*)` }).from(dataVerificationLog)
+    let updatedLastEmailTime = lastEmailTime || startTime;
+
+    if (now - updatedLastEmailTime >= ONE_HOUR_MS) {
+      await step.run("send-hourly-email", async () => {
+        const stats = await getStats();
+        const elapsedHours = ((now - startTime) / ONE_HOUR_MS).toFixed(1);
+        await sendProgressEmail(
+          `⏳ Data Cleanup Progress — ${elapsedHours}h elapsed`,
+          stats,
+          `Hourly progress update. In the latest batch, ${movedCount} records were re-categorized to their correct module.`
         );
-        const totalProcessed = totalProcessedObj[0]?.count || 0;
-        
-        await resend.emails.send({
-          from: "AkiliBrain Cleanup <noreply@akilibrain.com>",
-          to: "danieljohnfassanga@gmail.com",
-          subject: "⏳ Data Cleanup Progress Report",
-          html: `<p>The online data verification task is still running.</p>
-                 <p>Total records verified so far: <b>${totalProcessed}</b></p>
-                 <p>In the latest batch, we processed ${totalToProcess} records and moved <b>${movedCount}</b> out-of-place records to their correct modules.</p>
-                 <p>The system will continue to run until all records are verified.</p>`,
-        });
       });
       updatedLastEmailTime = now;
     }
 
-    // 6. Recursively trigger the next batch! (This makes it run forever until done)
+    // ── STEP 9: Schedule the next batch ──
     await step.sendEvent("trigger-next-batch", {
       name: "data.verification.start",
       data: {
-        batchSize: batchSize,
-        startTime: startTime,
+        startTime,
         lastEmailTime: updatedLastEmailTime,
-      }
+      },
     });
 
-    return { processed: totalToProcess, moved: movedCount };
+    return { processed: totalToProcess, moved: movedCount, rateLimitHit };
   }
 );
