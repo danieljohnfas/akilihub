@@ -59,10 +59,10 @@ async function sendProgressEmail(subject: string, stats: Awaited<ReturnType<type
 
 export const dataCleanupOrchestratorJob = inngest.createFunction(
   {
-    id: "data-cleanup-orchestrator",
+    id: "data-cleanup-orchestrator-v2",
     name: "AI Data Cleanup & Verification Worker",
     retries: 2,
-    concurrency: { limit: 1, key: "data-cleanup-singleton" },
+    concurrency: { limit: 1, key: "data-cleanup-singleton-v2" },
     triggers: [{ event: "data.verification.v2.start" }]
   },
   async ({ event, step }) => {
