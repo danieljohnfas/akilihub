@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
-import { compliance } from '@/lib/db/schema/compliance';
-import { dataVerificationLog } from '@/lib/db/schema/data-verification-log';
+import { complianceRequirements as compliance } from '@/lib/db/schema/compliance';
+import { dataVerificationLog } from '@/lib/db/schema/admin';
 import { eq, isNull } from 'drizzle-orm';
 import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
@@ -66,7 +66,7 @@ export async function GET(req: Request) {
           prompt: "Title: " + job.title + "\nDescription: " + (job.description || '').substring(0, 500) + "\nCompany: " + job.companyName,
         });
 
-        const module = aiResult.object.module;
+        const module = (aiResult.object as any).module;
         let actionTaken = 'none';
 
         if (module === 'tenders') {
@@ -99,7 +99,7 @@ export async function GET(req: Request) {
           prompt: "Title: " + tender.title + "\nDescription: " + (tender.description || '').substring(0, 500) + "\nAuthority: " + tender.contractingAuthority,
         });
 
-        const module = aiResult.object.module;
+        const module = (aiResult.object as any).module;
         let actionTaken = 'none';
 
         if (module === 'jobs') {
@@ -132,7 +132,7 @@ export async function GET(req: Request) {
           prompt: "Title: " + comp.title + "\nDescription: " + (comp.description || '').substring(0, 500) + "\nAuthority: " + comp.issuingAuthority,
         });
 
-        const module = aiResult.object.module;
+        const module = (aiResult.object as any).module;
         let actionTaken = 'none';
 
         if (module === 'jobs') {
