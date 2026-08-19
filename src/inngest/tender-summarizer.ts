@@ -4,7 +4,7 @@ import { tenders } from '@/lib/db/schema/tenders';
 import { and, eq, isNotNull, isNull, lte } from 'drizzle-orm';
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
-import { PDFParse } from 'pdf-parse';
+
 
 const BATCH_SIZE = 20;
 
@@ -51,6 +51,7 @@ export const summarizeTenderDocumentJob = inngest.createFunction(
           }
 
           const buffer = Buffer.from(await response.arrayBuffer());
+          const { PDFParse } = require('pdf-parse');
           const parser = new PDFParse({ data: buffer });
           const result = await parser.getText();
           const text = result.text;
