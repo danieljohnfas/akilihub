@@ -63,7 +63,7 @@ export async function GET(req: Request) {
         const aiResult = await generateObjectWithFallback({
           schema: ClassificationSchema,
           system: "You are a data quality controller. Classify this record as: 'jobs', 'tenders', 'compliance', or 'unknown'.",
-          prompt: \Title: \ + job.title + \\nDescription: \ + (job.description || '').substring(0, 500) + \\nCompany: \ + job.companyName,
+          prompt: "Title: " + job.title + "\nDescription: " + (job.description || '').substring(0, 500) + "\nCompany: " + job.companyName,
         });
 
         const module = aiResult.object.module;
@@ -91,13 +91,12 @@ export async function GET(req: Request) {
       }
     }
 
-    // Do similar for Tenders...
     for (const tender of unverifiedTenders) {
       try {
         const aiResult = await generateObjectWithFallback({
           schema: ClassificationSchema,
           system: "You are a data quality controller. Classify this record as: 'jobs', 'tenders', 'compliance', or 'unknown'.",
-          prompt: \Title: \ + tender.title + \\nDescription: \ + (tender.description || '').substring(0, 500) + \\nAuthority: \ + tender.contractingAuthority,
+          prompt: "Title: " + tender.title + "\nDescription: " + (tender.description || '').substring(0, 500) + "\nAuthority: " + tender.contractingAuthority,
         });
 
         const module = aiResult.object.module;
@@ -125,13 +124,12 @@ export async function GET(req: Request) {
       }
     }
 
-    // Do similar for Compliance...
     for (const comp of unverifiedCompliance) {
       try {
         const aiResult = await generateObjectWithFallback({
           schema: ClassificationSchema,
           system: "You are a data quality controller. Classify this record as: 'jobs', 'tenders', 'compliance', or 'unknown'.",
-          prompt: \Title: \ + comp.title + \\nDescription: \ + (comp.description || '').substring(0, 500) + \\nAuthority: \ + comp.issuingAuthority,
+          prompt: "Title: " + comp.title + "\nDescription: " + (comp.description || '').substring(0, 500) + "\nAuthority: " + comp.issuingAuthority,
         });
 
         const module = aiResult.object.module;
@@ -158,12 +156,6 @@ export async function GET(req: Request) {
         break;
       }
     }
-
-    // Check if we should send an email (only if last email was > 1 hr ago)
-    // We'll use a simple KV table or just query the DB for the last log entry time
-    // For now, I'll let the existing send-status-email script handle it, or we can send it here.
-    // Actually, sending every hour is complex without a state table. 
-    // We'll just rely on the existing scripts/send-status-email.ts for email reporting.
 
     return NextResponse.json({ success: true, processed: processedCount, moved: movedCount });
   } catch (error: any) {
