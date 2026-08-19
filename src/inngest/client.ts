@@ -17,7 +17,7 @@ export type AppEvents = {
   "manual.data.review": {
     data: {};
   };
-  "data.verification.start": {
+  "data.verification.v2.start": {
     data: { 
       batchSize?: number;
       startTime?: number;

@@ -63,7 +63,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
     name: "AI Data Cleanup & Verification Worker",
     retries: 2,
     concurrency: { limit: 1, key: "data-cleanup-singleton" },
-    triggers: [{ event: "data.verification.start" }]
+    triggers: [{ event: "data.verification.v2.start" }]
   },
   async ({ event, step }) => {
     const startTime: number = event.data.startTime || Date.now();
@@ -394,7 +394,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
 
     // ── STEP 9: Schedule the next batch ──
     await step.sendEvent("trigger-next-batch", {
-      name: "data.verification.start",
+      name: "data.verification.v2.start",
       data: {
         startTime,
         lastEmailTime: updatedLastEmailTime,

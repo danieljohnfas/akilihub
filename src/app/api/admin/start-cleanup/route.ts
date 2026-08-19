@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const batchSize = parseInt(url.searchParams.get("batch") || "20");
 
     await inngest.send({
-      name: "data.verification.start",
+      name: "data.verification.v2.start",
       data: {
         batchSize: batchSize,
         startTime: Date.now(),
