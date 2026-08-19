@@ -21,6 +21,7 @@ export type AppEvents = {
     data: { 
       batchSize?: number;
       startTime?: number;
+      lastEmailTime?: number;
     };
   };
 };
