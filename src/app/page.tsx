@@ -14,6 +14,14 @@ import { LeadCapture } from '@/components/home/ClientWidgets';
 
 
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://akilibrain.com',
+  },
+};
+
 export const revalidate = 60;
 
 const features = [
