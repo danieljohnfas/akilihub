@@ -125,7 +125,7 @@ export const resolveUrlWorker = inngest.createFunction(
     const result = await step.run("fetch-and-resolve", () => resolveEmployerUrl(sourceUrl, { title, company: companyName }));
 
     await step.run("update-db", async () => {
-      const payload = { employerUrl: result.employerUrl, isAggregatorSource: result.isAggregator, updatedAt: new Date() };
+      const payload = { employerUrl: result.employerUrl, updatedAt: new Date() };
 
       if (module === 'jobs') {
         await executeWithRetry(() => db.update(jobs).set(payload).where(eq(jobs.id, id)));
