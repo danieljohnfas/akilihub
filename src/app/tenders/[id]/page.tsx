@@ -282,6 +282,11 @@ export default async function TenderDetailPage({
             </div>
 
             <div className="pt-6 space-y-3">
+              {isExpired && (
+                <div className="w-full text-center py-2 text-sm font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                  Expired / Closed
+                </div>
+              )}
               {(tender.employerUrl ?? tender.sourceUrl) && (
                 <a 
                   href={`/api/out?url=${encodeURIComponent(tender.employerUrl ?? tender.sourceUrl!)}&type=tender&id=${tender.id}`} 

@@ -3,7 +3,7 @@ import { db } from "@/lib/db/client";
 import { tenders } from "@/lib/db/schema/tenders";
 import { jobs } from "@/lib/db/schema/jobs";
 import { healthDataPoints } from "@/lib/db/schema/health";
-import { lt, and, eq, sql } from "drizzle-orm";
+import { lt, and, eq, sql, or, isNull } from "drizzle-orm";
 
 /**
  * DATA FRESHNESS ENFORCEMENT
@@ -44,7 +44,10 @@ export const enforceDataFreshnessJob = inngest.createFunction(
         .where(
           and(
             eq(tenders.status, "open"),
-            lt(tenders.deadline, now)
+            or(
+              lt(tenders.deadline, now),
+              and(isNull(tenders.deadline), lt(tenders.createdAt, new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)))
+            )
           )
         )
         .returning({ id: tenders.id });
@@ -66,7 +69,10 @@ export const enforceDataFreshnessJob = inngest.createFunction(
         .where(
           and(
             eq(jobs.isActive, true),
-            lt(jobs.deadline, now)
+            or(
+              lt(jobs.deadline, now),
+              and(isNull(jobs.deadline), lt(jobs.createdAt, new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)))
+            )
           )
         )
         .returning({ id: jobs.id });

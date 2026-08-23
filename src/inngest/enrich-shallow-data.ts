@@ -92,12 +92,16 @@ export const enrichShallowDataJob = inngest.createFunction(
     // JOBS
     const shallowJobs = await step.run("fetch-shallow-jobs", async () => {
       return await executeWithRetry(() => db
-        .select({ id: jobs.id, title: jobs.title, description: jobs.description, requirements: jobs.requirements, sourceUrl: jobs.sourceUrl, employerUrl: jobs.employerUrl })
+        .select({ id: jobs.id, title: jobs.title, description: jobs.description, requirements: jobs.requirements, sourceUrl: jobs.sourceUrl, employerUrl: jobs.employerUrl, isAggregatorSource: jobs.isAggregatorSource })
         .from(jobs)
         .where(
           and(
             eq(jobs.isActive, true),
-            or(lt(sql<number>`length(${jobs.description})`, JOB_DESC_MIN_LEN), isNull(jobs.requirements)),
+            or(
+              lt(sql<number>`length(${jobs.description})`, JOB_DESC_MIN_LEN), 
+              isNull(jobs.requirements),
+              and(eq(jobs.isAggregatorSource, true), not(isNull(jobs.employerUrl)))
+            ),
             not(like(jobs.sourceUrl, '%#%'))
           )
         )
@@ -113,6 +117,7 @@ export const enrichShallowDataJob = inngest.createFunction(
         shallowTitle: job.title,
         shallowDesc: job.description,
         shallowReq: job.requirements,
+        isAggregatorSource: job.isAggregatorSource,
       }
     })).filter(e => isRealUrl(e.data.targetUrl));
 
@@ -126,12 +131,16 @@ export const enrichShallowDataJob = inngest.createFunction(
     // TENDERS
     const shallowTenders = await step.run("fetch-shallow-tenders", async () => {
       return await executeWithRetry(() => db
-        .select({ id: tenders.id, title: tenders.title, description: tenders.description, sourceUrl: tenders.sourceUrl, employerUrl: tenders.employerUrl })
+        .select({ id: tenders.id, title: tenders.title, description: tenders.description, sourceUrl: tenders.sourceUrl, employerUrl: tenders.employerUrl, isAggregatorSource: tenders.isAggregatorSource })
         .from(tenders)
         .where(
           and(
             eq(tenders.status, "open"),
-            or(isNull(tenders.description), lt(sql<number>`length(coalesce(${tenders.description}, ''))`, TENDER_DESC_MIN_LEN)),
+            or(
+              isNull(tenders.description), 
+              lt(sql<number>`length(coalesce(${tenders.description}, ''))`, TENDER_DESC_MIN_LEN),
+              and(eq(tenders.isAggregatorSource, true), not(isNull(tenders.employerUrl)))
+            ),
             not(like(tenders.sourceUrl, '%#%'))
           )
         )
@@ -147,6 +156,7 @@ export const enrichShallowDataJob = inngest.createFunction(
         shallowTitle: t.title,
         shallowDesc: t.description,
         issuingAuthority: null, // extracted later
+        isAggregatorSource: t.isAggregatorSource,
       }
     })).filter(e => isRealUrl(e.data.targetUrl));
 
@@ -159,13 +169,16 @@ export const enrichShallowDataJob = inngest.createFunction(
     // COMPLIANCE
     const shallowCompliance = await step.run("fetch-shallow-compliance", async () => {
       return await executeWithRetry(() => db
-        .select({ id: complianceRequirements.id, title: complianceRequirements.title, description: complianceRequirements.description, sourceUrl: complianceRequirements.sourceUrl, employerUrl: complianceRequirements.employerUrl, issuingAuthority: complianceRequirements.issuingAuthority })
+        .select({ id: complianceRequirements.id, title: complianceRequirements.title, description: complianceRequirements.description, sourceUrl: complianceRequirements.sourceUrl, employerUrl: complianceRequirements.employerUrl, issuingAuthority: complianceRequirements.issuingAuthority, isAggregatorSource: complianceRequirements.isAggregatorSource })
         .from(complianceRequirements)
         .where(
           and(
             eq(complianceRequirements.isActive, true),
             not(isNull(complianceRequirements.sourceUrl)),
-            lt(sql<number>`length(${complianceRequirements.description})`, COMPLIANCE_DESC_MIN_LEN),
+            or(
+              lt(sql<number>`length(${complianceRequirements.description})`, COMPLIANCE_DESC_MIN_LEN),
+              and(eq(complianceRequirements.isAggregatorSource, true), not(isNull(complianceRequirements.employerUrl)))
+            ),
             not(like(complianceRequirements.sourceUrl, '%#%'))
           )
         )
@@ -181,6 +194,7 @@ export const enrichShallowDataJob = inngest.createFunction(
         shallowTitle: c.title,
         shallowDesc: c.description,
         issuingAuthority: c.issuingAuthority,
+        isAggregatorSource: c.isAggregatorSource,
       }
     })).filter(e => isRealUrl(e.data.targetUrl));
 
@@ -209,7 +223,7 @@ export const enrichShallowDataJob = inngest.createFunction(
 export const enrichJobWorker = inngest.createFunction(
   { id: "enrich-job-worker", name: "Worker: Enrich Job", concurrency: 10, triggers: [{ event: "data.job.enrich" }] },
   async ({ event, step }) => {
-    const { id, targetUrl, shallowTitle, shallowDesc, shallowReq } = event.data;
+    const { id, targetUrl, shallowTitle, shallowDesc, shallowReq, isAggregatorSource } = event.data;
     
     const extracted = await step.run("extract-url", () => refetchAndExtractJobs(targetUrl));
     if (extracted.length === 0) return { status: "no_data_extracted" };
@@ -231,6 +245,7 @@ export const enrichJobWorker = inngest.createFunction(
       if (best.e.salaryMin)     updatePayload.salaryMin     = best.e.salaryMin.toString();
       if (best.e.salaryMax)     updatePayload.salaryMax     = best.e.salaryMax.toString();
       if (best.e.salaryCurrency) updatePayload.salaryCurrency = best.e.salaryCurrency;
+      if (isAggregatorSource)    updatePayload.isAggregatorSource = false; // Successfully fetched from real employer
 
       if (Object.keys(updatePayload).length > 1) {
         await executeWithRetry(() => db.update(jobs).set(updatePayload).where(eq(jobs.id, id)));
@@ -244,7 +259,7 @@ export const enrichJobWorker = inngest.createFunction(
 export const enrichTenderWorker = inngest.createFunction(
   { id: "enrich-tender-worker", name: "Worker: Enrich Tender", concurrency: 10, triggers: [{ event: "data.tender.enrich" }] },
   async ({ event, step }) => {
-    const { id, targetUrl, shallowTitle, shallowDesc } = event.data;
+    const { id, targetUrl, shallowTitle, shallowDesc, isAggregatorSource } = event.data;
     
     const extracted = await step.run("extract-url", () => refetchAndExtractTenders(targetUrl));
     if (extracted.length === 0) return { status: "no_data_extracted" };
@@ -263,6 +278,7 @@ export const enrichTenderWorker = inngest.createFunction(
       if (best.e.deadline)  updatePayload.deadline = best.e.deadline;
       if (best.e.budget)    updatePayload.budget   = best.e.budget.toString();
       if (best.e.currency && best.e.currency !== 'USD') updatePayload.currency = best.e.currency;
+      if (isAggregatorSource) updatePayload.isAggregatorSource = false; // Successfully fetched from real employer
 
       if (Object.keys(updatePayload).length > 1) {
         await executeWithRetry(() => db.update(tenders).set(updatePayload).where(eq(tenders.id, id)));
@@ -276,7 +292,7 @@ export const enrichTenderWorker = inngest.createFunction(
 export const enrichComplianceWorker = inngest.createFunction(
   { id: "enrich-compliance-worker", name: "Worker: Enrich Compliance", concurrency: 10, triggers: [{ event: "data.compliance.enrich" }] },
   async ({ event, step }) => {
-    const { id, targetUrl, shallowTitle, shallowDesc, issuingAuthority } = event.data;
+    const { id, targetUrl, shallowTitle, shallowDesc, issuingAuthority, isAggregatorSource } = event.data;
     
     const extracted = await step.run("extract-url", () => refetchAndExtractCompliance(targetUrl));
     if (extracted.length === 0) return { status: "no_data_extracted" };
@@ -295,6 +311,7 @@ export const enrichComplianceWorker = inngest.createFunction(
       if (best.e.issuingAuthority && best.e.issuingAuthority.length > (issuingAuthority?.length ?? 0)) {
         updatePayload.issuingAuthority = best.e.issuingAuthority;
       }
+      if (isAggregatorSource) updatePayload.isAggregatorSource = false;
 
       if (Object.keys(updatePayload).length > 2) {
         await executeWithRetry(() => db.update(complianceRequirements).set(updatePayload).where(eq(complianceRequirements.id, id)));

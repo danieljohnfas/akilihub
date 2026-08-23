@@ -201,6 +201,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
 
   const activeCondition = and(
     eq(jobs.isActive, true),
+    eq(jobs.isAggregatorSource, false),
     or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
   );
 

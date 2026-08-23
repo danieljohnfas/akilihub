@@ -197,6 +197,7 @@ async function TendersList({ params }: { params: ReturnType<typeof parseGlobalSe
   const offset = (page - 1) * PAGE_SIZE;
   
   const conditions = [
+    eq(tenders.isAggregatorSource, false),
     q ? ilike(tenders.title, `%${q}%`) : undefined,
     status && status !== 'all' ? eq(tenders.status, status as never) : undefined,
     country && country !== 'all' ? eq(countries.name, country) : undefined,

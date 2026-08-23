@@ -137,6 +137,7 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'zoomtanzania.net',          name: 'Zoom Tanzania',            type: 'aggregator', category: 'jobs' },
   { domain: 'macalindoon.online',        name: 'Macalindoon Somalia',      type: 'aggregator', category: 'jobs' },
   { domain: 'kazibure.com',              name: 'KaziBure',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'ajirayako.co.tz',           name: 'AjiraYako',                type: 'aggregator', category: 'jobs' },
   { domain: 'shortlist.net',             name: 'Shortlist',                type: 'aggregator', category: 'jobs' },
   { domain: 'cvmkr.com',                 name: 'CV Maker',                 type: 'aggregator', category: 'jobs' },
   { domain: 'unjobs.media',              name: 'UNJobs Media',             type: 'aggregator', category: 'jobs' },

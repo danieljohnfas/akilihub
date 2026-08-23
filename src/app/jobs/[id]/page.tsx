@@ -294,6 +294,11 @@ export default async function JobDetailPage({
             )}
 
             <div className="pt-6 space-y-3">
+              {isExpired && (
+                <div className="w-full text-center py-2 text-sm font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                  Expired / Closed
+                </div>
+              )}
               {job.employerUrl ? (
                 <a 
                   href={`/api/out?url=${encodeURIComponent(job.employerUrl)}&type=job&id=${job.id}`} 

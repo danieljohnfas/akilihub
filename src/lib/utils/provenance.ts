@@ -80,6 +80,7 @@ const KNOWN_AGGREGATORS = [
   'ethio-jobs',
   'ethiongojobs',
   'ajiriwa',
+  'ajirayako',
   'zoomtanzania',
   'macalindoon',
   'kazibure',
