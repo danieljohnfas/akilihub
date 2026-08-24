@@ -132,7 +132,7 @@ const HEALTH_QUERIES: Record<string, string[]> = {
   SS: ["South Sudan health statistics WHO 2026", "maternal mortality South Sudan 2026"],
 };
 
-const COUNTRIES = ['KE', 'TZ', 'UG', 'RW', 'ET', 'CD', 'BI', 'SO', 'SS'];
+const COUNTRIES = ['TZ', 'KE', 'UG', 'RW', 'ET', 'CD', 'BI', 'SO', 'SS'];
 
 // ── Result tracker ────────────────────────────────────────────────────────────
 interface Stats {
