@@ -198,9 +198,46 @@ async function saveJobs(items: BroadJobResource[], cid: string) {
     const validItems = items.filter(job => calculateSeoScore(job) >= 30);
     if (validItems.length === 0) return { ins: 0, errs: [] };
 
-    const values = validItems.map(job => {
+    const enrichedItems = [];
+    for (const job of validItems) {
       const score = calculateSeoScore(job);
-      return {
+      let sector = null;
+      let profession = null;
+      let experienceLevel = null;
+      let educationLevel = null;
+      let skills = [];
+
+      // If the job is high quality, try to extract metadata
+      if (score >= 40) {
+        try {
+          // Dynamic import of AI function to avoid breaking non-AI flows
+          const { generateObjectWithFallback } = await import('../src/lib/ai/router');
+          const { z } = await import('zod');
+          
+          const aiRes = await generateObjectWithFallback({
+            prompt: `Extract structured fields from this job posting. Title: ${job.title}, Company: ${job.companyName}. Description: ${job.description || ''}. Requirements: ${job.requirements || ''}`,
+            schema: z.object({
+              sector: z.string().nullable().describe('Industry sector, e.g. IT, Healthcare, NGO, Finance, Agriculture'),
+              profession: z.string().nullable().describe('Profession, e.g. Software Engineer, Accountant, Nurse, Manager'),
+              experienceLevel: z.string().nullable().describe('One of: entry-level, junior, mid-level, senior, manager, director, executive, graduate, internship'),
+              educationLevel: z.string().nullable().describe('One of: diploma, degree, bachelors, masters, phd, certificate'),
+              skills: z.array(z.string()).describe('Top 5 key skills required')
+            })
+          });
+          
+          if (aiRes?.object) {
+            sector = aiRes.object.sector;
+            profession = aiRes.object.profession;
+            experienceLevel = aiRes.object.experienceLevel;
+            educationLevel = aiRes.object.educationLevel;
+            skills = aiRes.object.skills || [];
+          }
+        } catch (err) {
+          console.error('[AI Enrichment Error]', err);
+        }
+      }
+
+      enrichedItems.push({
         title: job.title,
         companyName: job.companyName || 'Unknown',
         description: job.description || 'No description',
@@ -215,11 +252,29 @@ async function saveJobs(items: BroadJobResource[], cid: string) {
         salaryMax: job.salaryMax?.toString() ?? null,
         salaryCurrency: job.salaryCurrency ?? null,
         isActive: score >= 50,
-      };
-    });
+        sector,
+        profession,
+        experienceLevel,
+        educationLevel,
+        skills
+      });
+    }
+
     const r = await withDbTimeout(
-      db.insert(jobs).values(values).onConflictDoNothing().returning({ id: jobs.id })
+      db.insert(jobs).values(enrichedItems).onConflictDoNothing().returning({ id: jobs.id })
     );
+    
+    // Call Google Indexing API for newly published jobs
+    if (r.length > 0) {
+      try {
+        const { submitToGoogleIndexing } = await import('../src/lib/seo/indexing');
+        const urls = r.map((inserted: any) => `https://akilibrain.com/jobs/${inserted.id}`);
+        await submitToGoogleIndexing(urls, 'URL_UPDATED');
+      } catch (idxErr) {
+        console.error('[Indexing] Failed to submit to Google:', idxErr);
+      }
+    }
+    
     return { ins: r.length, errs: [] };
   } catch (e) {
     return { ins: 0, errs: [(e as Error).message?.slice(0, 80)] };

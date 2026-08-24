@@ -23,6 +23,14 @@ export const jobs = pgTable('jobs', {
   salaryCurrency: text('salary_currency'), // ISO 4217, e.g. "KES", "TZS", "UGX"
   // Employer-first sourcing — resolved direct employer/authority URL
   employerUrl: text('employer_url'),              // resolved employer/ATS/authority URL (null = not yet resolved)
+  
+  // AI Extracted Entity Fields
+  sector: text('sector'),
+  profession: text('profession'),
+  experienceLevel: text('experience_level'),
+  educationLevel: text('education_level'),
+  skills: text('skills').array(),
+  
   isAggregatorSource: boolean('is_aggregator_source').notNull().default(false), // true if sourceUrl is an aggregator
   isActive: boolean('is_active').notNull().default(true),
   needsAiExtraction: boolean('needs_ai_extraction').notNull().default(false),
