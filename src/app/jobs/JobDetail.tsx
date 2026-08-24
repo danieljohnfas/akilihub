@@ -107,13 +107,11 @@ const jobTypeColors: Record<string, string> = {
   remote: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
 };
 
-export default async function JobDetailPage({
-  params,
+export async function JobDetail({
+  id,
 }: {
-  params: Promise<{ id: string }>;
+  id: string;
 }) {
-  const resolvedParams = await params;
-  
   const data = await safeQuery(db
     .select({
       job: jobs,
@@ -124,7 +122,7 @@ export default async function JobDetailPage({
     .from(jobs)
     .leftJoin(countries, eq(jobs.countryId, countries.id))
     .leftJoin(regions, eq(jobs.regionId, regions.id))
-    .where(eq(jobs.id, resolvedParams.id))
+    .where(eq(jobs.id, id))
     .limit(1));
 
 
@@ -324,8 +322,8 @@ export default async function JobDetailPage({
                   <ExternalLink className="w-5 h-5 ml-2" />
                 </a>
               ) : null}
-              <Link
-                href={`/jobs/${job.id}/apply`}
+              <Link 
+                href={`/jobs/apply/${job.id}`}
                 className={cn(buttonVariants({ size: "lg", className: "w-full md:w-auto h-12 px-8 text-base font-semibold shadow-lg shadow-primary/20" }))}
               >
                 Apply with AI Assistant

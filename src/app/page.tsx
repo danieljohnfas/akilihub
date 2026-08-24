@@ -3,13 +3,13 @@ import { FileText, ShieldCheck, Activity, Banknote, Code, ArrowRight, Briefcase 
 import { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildFAQSchema } from "@/components/seo/schemas";
 
-const MagicCard = dynamic(() => import('@/components/ui/magic-card').then(mod => mod.MagicCard), { ssr: true });
-const RelatedGuides = dynamic(() => import('@/components/guides/RelatedGuides').then(mod => mod.RelatedGuides), { ssr: true });
-const LiveStats = dynamic(() => import('@/components/home/LiveStats').then(mod => mod.LiveStats), { ssr: true });
+const MagicCard = nextDynamic(() => import('@/components/ui/magic-card').then(mod => mod.MagicCard), { ssr: true });
+const RelatedGuides = nextDynamic(() => import('@/components/guides/RelatedGuides').then(mod => mod.RelatedGuides), { ssr: true });
+const LiveStats = nextDynamic(() => import('@/components/home/LiveStats').then(mod => mod.LiveStats), { ssr: true });
 import { LeadCapture } from '@/components/home/ClientWidgets';
 
 
@@ -22,8 +22,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 60;
-
+export const dynamic = 'force-dynamic';
 const features = [
   {
     title: "Procurement Intelligence",
@@ -104,7 +103,35 @@ const homeFAQSchema = buildFAQSchema([
   },
 ]);
 
-export default function Home() {
+import { db, safeQuery } from '@/lib/db/client';
+import { jobs } from '@/lib/db/schema/jobs';
+import { tenders } from '@/lib/db/schema/tenders';
+import { countries } from '@/lib/db/schema/shared';
+import { count, eq, or, isNull, gt, and } from 'drizzle-orm';
+
+export default async function Home() {
+  const [activeJobsCount, openTendersCount, countriesCount] = await Promise.all([
+    safeQuery(
+      db.select({ value: count() }).from(jobs).where(
+        and(
+          eq(jobs.isActive, true),
+          eq(jobs.isAggregatorSource, false),
+          or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
+        )
+      )
+    ),
+    safeQuery(
+      db.select({ value: count() }).from(tenders).where(eq(tenders.status, 'open'))
+    ),
+    safeQuery(
+      db.select({ value: count() }).from(countries)
+    ),
+  ]);
+
+  const jobsTotal = activeJobsCount?.[0]?.value ?? 1500;
+  const tendersTotal = openTendersCount?.[0]?.value ?? 226;
+  const countriesTotal = countriesCount?.[0]?.value ?? 9;
+
   return (
     <>
       <JsonLd schema={homeFAQSchema} />
@@ -112,25 +139,53 @@ export default function Home() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 text-center space-y-6 max-w-4xl">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-foreground/70 pb-2">
-          East Africa&apos;s Professional <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Intelligence Platform</span>
+          Find Jobs Across <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">East Africa</span>
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Access curated government tenders, compliance requirements, crowdsourced salaries, 
-          and actionable health data in one unified hub.
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
+          {jobsTotal.toLocaleString()}+ Active Jobs | {countriesTotal} Countries | Updated Daily
         </p>
-        <div className="flex justify-center gap-4 pt-6">
-          <Link href="/tenders" className={buttonVariants({ size: "lg", className: "rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-105 duration-300" })}>
-            Browse Tenders
-          </Link>
-          <Link href="/salaries" className={buttonVariants({ size: "lg", variant: "outline", className: "rounded-full backdrop-blur-md bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300" })}>
-            Check Salaries
-          </Link>
-        </div>
         
-        <LeadCapture />
+        <div className="max-w-2xl mx-auto mt-8">
+          <form action="/jobs" method="GET" className="relative flex items-center">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2">
+              <Briefcase className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <input 
+              type="text" 
+              name="q"
+              placeholder="Search jobs, companies, skills or locations..." 
+              className="w-full pl-14 pr-32 py-5 rounded-full bg-white/5 border border-white/20 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 outline-none text-lg backdrop-blur-sm transition-all"
+            />
+            <button 
+              type="submit" 
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-full font-medium transition-all"
+            >
+              Search
+            </button>
+          </form>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-6 text-sm text-muted-foreground">
+            <Link href="/jobs/tanzania" className="hover:text-foreground transition-colors">Tanzania</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/kenya" className="hover:text-foreground transition-colors">Kenya</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/uganda" className="hover:text-foreground transition-colors">Uganda</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/rwanda" className="hover:text-foreground transition-colors">Rwanda</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/ethiopia" className="hover:text-foreground transition-colors">Ethiopia</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/somalia" className="hover:text-foreground transition-colors">Somalia</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/burundi" className="hover:text-foreground transition-colors">Burundi</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/south-sudan" className="hover:text-foreground transition-colors">South Sudan</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/jobs/djibouti" className="hover:text-foreground transition-colors">Djibouti</Link>
+          </div>
+        </div>
 
         <Suspense fallback={<div className="h-24 mt-8" />}>
-          <LiveStats />
+          <LiveStats jobsTotal={jobsTotal} tendersTotal={tendersTotal} countriesTotal={countriesTotal} />
         </Suspense>
       </section>
 
@@ -175,6 +230,45 @@ export default function Home() {
               </MagicCard>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* AI CV Matcher Section */}
+      <section className="container mx-auto px-4 w-full max-w-5xl">
+        <div className="border border-primary/20 rounded-2xl p-8 md:p-12 bg-gradient-to-br from-primary/5 via-background to-transparent relative overflow-hidden">
+          <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Let AI Find Your Perfect Role</h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Stop applying blindly. Upload your CV and let our AI calculate your match percentage for thousands of jobs across East Africa, suggest improvements, and generate tailored cover letters.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/login?redirect=/dashboard/cv-analyzer" className={buttonVariants({ size: "lg", className: "rounded-full shadow-lg shadow-primary/20 text-md px-8" })}>
+                  Analyze My CV
+                </Link>
+                <Link href="/signup" className={buttonVariants({ variant: "outline", size: "lg", className: "rounded-full text-md px-8" })}>
+                  Create Profile
+                </Link>
+              </div>
+            </div>
+            <div className="hidden md:flex flex-col gap-4">
+              {/* Funnel visual representation */}
+              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 font-bold">1</div>
+                <div><p className="font-semibold">Upload CV</p><p className="text-xs text-muted-foreground">PDF or Word</p></div>
+              </div>
+              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-white/10 ml-6">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 font-bold">2</div>
+                <div><p className="font-semibold">AI Match</p><p className="text-xs text-muted-foreground">&quot;You match 84% of 37 jobs&quot;</p></div>
+              </div>
+              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-white/10 ml-12">
+                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 font-bold">3</div>
+                <div><p className="font-semibold">Apply Instantly</p><p className="text-xs text-muted-foreground">With auto-generated cover letters</p></div>
+              </div>
+            </div>
+          </div>
+          {/* Background decoration */}
+          <div className="absolute right-0 bottom-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
         </div>
       </section>
 

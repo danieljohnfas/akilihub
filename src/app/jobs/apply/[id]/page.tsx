@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const id = resolvedParams.id;
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'evaluating' | 'success' | 'error'>('idle');
@@ -66,7 +67,7 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          jobId: resolvedParams.id,
+          jobId: id,
           cvText: uploadData.text,
           cvUrl: uploadData.documentId,
         }),
@@ -120,10 +121,10 @@ export default function ApplyPage({ params }: { params: Promise<{ id: string }> 
           Please sign in or create an account to use the AI Job Assistant and evaluate your CV.
         </p>
         <div className="flex items-center justify-center gap-4 pt-4">
-          <Link href={`/login?callbackUrl=/jobs/${resolvedParams.id}/apply`}>
+          <Link href={`/login?callbackUrl=/jobs/apply/${id}`}>
             <Button size="lg">Log In</Button>
           </Link>
-          <Link href={`/signup?callbackUrl=/jobs/${resolvedParams.id}/apply`}>
+          <Link href={`/signup?callbackUrl=/jobs/apply/${id}`}>
             <Button size="lg" variant="outline">Sign Up</Button>
           </Link>
         </div>

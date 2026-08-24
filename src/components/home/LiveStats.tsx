@@ -5,27 +5,16 @@ import { countries } from '@/lib/db/schema/shared';
 import { count, eq, or, isNull, gt, and } from 'drizzle-orm';
 import { Briefcase, FileText, Globe } from 'lucide-react';
 
-export async function LiveStats() {
-  const [activeJobsCount, openTendersCount, countriesCount] = await Promise.all([
-    safeQuery(
-      db.select({ value: count() }).from(jobs).where(
-        and(
-          eq(jobs.isActive, true),
-          or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
-        )
-      )
-    ),
-    safeQuery(
-      db.select({ value: count() }).from(tenders).where(eq(tenders.status, 'open'))
-    ),
-    safeQuery(
-      db.select({ value: count() }).from(countries)
-    ),
-  ]);
+export async function LiveStats({ 
+  jobsTotal = 780, 
+  tendersTotal = 226, 
+  countriesTotal = 9 
+}: { 
+  jobsTotal?: number;
+  tendersTotal?: number;
+  countriesTotal?: number;
+}) {
 
-  const jobsTotal = activeJobsCount?.[0]?.value ?? 780;
-  const tendersTotal = openTendersCount?.[0]?.value ?? 226;
-  const countriesTotal = countriesCount?.[0]?.value ?? 9;
 
   const stats = [
     { label: 'Active Jobs', value: jobsTotal, icon: Briefcase, color: 'text-amber-500' },

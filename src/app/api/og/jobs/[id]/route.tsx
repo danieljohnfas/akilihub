@@ -20,11 +20,12 @@ const jobTypeLabels: Record<string, string> = {
   remote: 'Remote',
 };
 
-export default async function OgImage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
   const data = await safeQuery(
     db
       .select({
@@ -37,7 +38,7 @@ export default async function OgImage({
       .from(jobs)
       .leftJoin(countries, eq(jobs.countryId, countries.id))
       .leftJoin(regions, eq(jobs.regionId, regions.id))
-      .where(eq(jobs.id, params.id))
+      .where(eq(jobs.id, id))
       .limit(1)
   );
 
