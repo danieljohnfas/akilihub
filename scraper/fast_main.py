@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from ddgs import DDGS
+from duckduckgo_search import DDGS
 import trafilatura
 
 app = FastAPI()
