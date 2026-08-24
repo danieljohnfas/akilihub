@@ -31,7 +31,7 @@ export const jobs = pgTable('jobs', {
   educationLevel: text('education_level'),
   skills: text('skills').array(),
   
-  isAggregatorSource: boolean('is_aggregator_source').notNull().default(false), // true if sourceUrl is an aggregator
+  isAggregatorSource: boolean('is_aggregator').notNull().default(false), // true if sourceUrl is an aggregator
   isActive: boolean('is_active').notNull().default(true),
   needsAiExtraction: boolean('needs_ai_extraction').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
