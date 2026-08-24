@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
@@ -438,5 +439,6 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
     </>
   );
 }
+
 
 
