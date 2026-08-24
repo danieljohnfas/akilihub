@@ -38,24 +38,7 @@ const globalForDb = globalThis as unknown as { conn: postgres.Sql };
 // Provide a robust dummy fallback
 let connectionString = (process.env.DIRECT_URL || process.env.DATABASE_URL) || 'postgres://dummy:dummy@localhost:5432/dummy';
 
-// Validate the URL. If the user accidentally left placeholders like [YOUR-PASSWORD] in the Vercel dashboard,
-// new URL() will throw ERR_INVALID_URL. We catch it and use the dummy string so the build can proceed.
-if (connectionString.includes('pooler.supabase.com')) {
-  try {
-    const url = new URL(connectionString);
-    const parts = url.username.split('.');
-    if (parts.length > 1) {
-      const projectId = parts[1];
-      url.hostname = 'db.' + projectId + '.supabase.co';
-      url.port = '6543';
-      url.username = 'postgres';
-      connectionString = url.toString();
-      console.log('[DB Config] Bypassing PgBouncer, connecting direct to:', url.host);
-    }
-  } catch (e) {
-    console.error('Failed to rewrite connection URL', e);
-  }
-} 
+ 
 
 try {
   new URL(connectionString);
@@ -102,6 +85,7 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
     if (timeoutId) clearTimeout(timeoutId);
   }
 }
+
 
 
 
