@@ -42,7 +42,7 @@ let connectionString = (process.env.DIRECT_URL || process.env.DATABASE_URL) || '
 // new URL() will throw ERR_INVALID_URL. We catch it and use the dummy string so the build can proceed.
 if (connectionString.includes('pooler.supabase.com') && process.env.NEXT_PUBLIC_SUPABASE_URL) {
   try {
-    const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL);
+    const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL as string);
     const host = 'db.' + url.hostname.replace('.supabase.co', '') + '.supabase.co';
     const dbUrl = new URL(connectionString);
     dbUrl.hostname = host;
@@ -100,3 +100,4 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
     if (timeoutId) clearTimeout(timeoutId);
   }
 }
+
