@@ -55,8 +55,7 @@ if (connectionString.includes('pooler.supabase.com')) {
   } catch (e) {
     console.error('Failed to rewrite connection URL', e);
   }
-}
-}
+} 
 
 try {
   new URL(connectionString);
@@ -103,6 +102,7 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
     if (timeoutId) clearTimeout(timeoutId);
   }
 }
+
 
 
 
