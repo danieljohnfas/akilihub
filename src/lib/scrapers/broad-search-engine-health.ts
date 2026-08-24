@@ -40,7 +40,7 @@ Source URL: ${sourceUrl}
 ${SCRAPING_GUIDELINES}
 
 Scraped content:
-${enrichedText.substring(0, 12000)}
+${enrichedText.substring(0, 20000)}
 
 HEALTH DATA EXTRACTION RULES:
 - Extract up to 20 health indicators, statistics, or metrics. Extract ALL data points visible,
@@ -130,25 +130,34 @@ export async function discoverHealth(query: string, maxPages: number = 5): Promi
   console.log(`[discoverHealth] Found ${urls.length} viable URLs to scrape.`);
 
   const allData: BroadHealthResource[] = [];
-  let pagesProcessed = 0;
+  const CONCURRENT = 3;
+  const urlsToProcess = urls.slice(0, maxPages);
 
-  for (const url of urls) {
-    if (pagesProcessed >= maxPages) break;
+  for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
+    const batch = urlsToProcess.slice(i, i + CONCURRENT);
 
-    console.log(`[discoverHealth] Scraping ${url}...`);
-    const html = await fetchHtml(url);
-    if (!html) continue;
+    const results = await Promise.allSettled(
+      batch.map(async (url) => {
+        console.log(`[discoverHealth] Scraping ${url}...`);
+        const html = await fetchHtml(url);
+        if (!html) return [] as BroadHealthResource[];
+        const { text, pdfLinks } = await htmlToTextEnriched(html, url);
+        return extractHealthWithAI(text, url, pdfLinks);
+      })
+    );
 
-    const { text, pdfLinks } = await htmlToTextEnriched(html, url);
-    const data = await extractHealthWithAI(text, url, pdfLinks);
-
-    if (data.length > 0) {
-      console.log(`[discoverHealth] Extracted ${data.length} health data points from ${url}`);
-      allData.push(...data);
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value.length > 0) {
+        console.log(`[discoverHealth] Extracted ${result.value.length} health data points from batch.`);
+        allData.push(...result.value);
+      } else if (result.status === 'rejected') {
+        console.warn(`[discoverHealth] A URL in the batch failed: ${(result.reason as Error)?.message}`);
+      }
     }
 
-    pagesProcessed++;
-    await new Promise(res => setTimeout(res, 2000));
+    if (i + CONCURRENT < urlsToProcess.length) {
+      await new Promise(res => setTimeout(res, 2000));
+    }
   }
 
   console.log(`[discoverHealth] Finished. Total health data points discovered: ${allData.length}`);

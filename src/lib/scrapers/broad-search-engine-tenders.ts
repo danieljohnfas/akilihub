@@ -36,7 +36,7 @@ ${pdfSection}
 ${SCRAPING_GUIDELINES}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 20000)}
 
 TENDER-SPECIFIC EXTRACTION RULES:
 - Extract up to 15 real tender, bid, or procurement postings found in the text. Extract ALL visible, not just the first.
@@ -164,27 +164,34 @@ export async function discoverTenders(query: string, maxPages: number = 5): Prom
   console.log(`[discoverTenders] Found ${urls.length} viable URLs to scrape.`);
 
   const allTenders: BroadTenderResource[] = [];
-  let pagesProcessed = 0;
+  const CONCURRENT = 3;
+  const urlsToProcess = urls.slice(0, maxPages);
 
-  for (const url of urls) {
-    if (pagesProcessed >= maxPages) break;
+  for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
+    const batch = urlsToProcess.slice(i, i + CONCURRENT);
 
-    console.log(`[discoverTenders] Scraping ${url}...`);
-    const html = await fetchHtml(url);
-    if (!html) continue;
+    const results = await Promise.allSettled(
+      batch.map(async (url) => {
+        console.log(`[discoverTenders] Scraping ${url}...`);
+        const html = await fetchHtml(url);
+        if (!html) return [] as BroadTenderResource[];
+        const { text, pdfLinks } = await htmlToTextEnriched(html, url);
+        return extractTendersWithAI(text, url, pdfLinks);
+      })
+    );
 
-    // Use trafilatura-enriched extraction (returns text + PDF links)
-    const { text, pdfLinks } = await htmlToTextEnriched(html, url);
-    const tenders = await extractTendersWithAI(text, url, pdfLinks);
-
-    if (tenders.length > 0) {
-      console.log(`[discoverTenders] Extracted ${tenders.length} tenders from ${url} (${pdfLinks.length} PDF links)`);
-      allTenders.push(...tenders);
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value.length > 0) {
+        console.log(`[discoverTenders] Extracted ${result.value.length} tenders from batch.`);
+        allTenders.push(...result.value);
+      } else if (result.status === 'rejected') {
+        console.warn(`[discoverTenders] A URL in the batch failed: ${(result.reason as Error)?.message}`);
+      }
     }
 
-    pagesProcessed++;
-    // Polite delay between pages
-    await new Promise(res => setTimeout(res, 3000));
+    if (i + CONCURRENT < urlsToProcess.length) {
+      await new Promise(res => setTimeout(res, 2000));
+    }
   }
 
   console.log(`[discoverTenders] Finished. Total tenders discovered: ${allTenders.length}`);

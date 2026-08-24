@@ -39,7 +39,7 @@ Source URL: ${sourceUrl}
 ${SCRAPING_GUIDELINES}
 
 Scraped content:
-${enrichedText.substring(0, 12000)}
+${enrichedText.substring(0, 20000)}
 
 COMPLIANCE-SPECIFIC EXTRACTION RULES:
 - Extract up to 10 compliance requirements, official forms, guidelines, or regulatory notices.
@@ -128,25 +128,34 @@ export async function discoverCompliance(query: string, maxPages: number = 3): P
   console.log(`[discoverCompliance] Found ${urls.length} viable URLs to scrape.`);
 
   const allResources: BroadComplianceResource[] = [];
-  let pagesProcessed = 0;
+  const CONCURRENT = 3;
+  const urlsToProcess = urls.slice(0, maxPages);
 
-  for (const url of urls) {
-    if (pagesProcessed >= maxPages) break;
+  for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
+    const batch = urlsToProcess.slice(i, i + CONCURRENT);
 
-    console.log(`[discoverCompliance] Scraping ${url}...`);
-    const html = await fetchHtml(url);
-    if (!html) continue;
+    const results = await Promise.allSettled(
+      batch.map(async (url) => {
+        console.log(`[discoverCompliance] Scraping ${url}...`);
+        const html = await fetchHtml(url);
+        if (!html) return [] as BroadComplianceResource[];
+        const { text, pdfLinks } = await htmlToTextEnriched(html, url);
+        return extractComplianceWithAI(text, url, pdfLinks);
+      })
+    );
 
-    const { text, pdfLinks } = await htmlToTextEnriched(html, url);
-    const resources = await extractComplianceWithAI(text, url, pdfLinks);
-
-    if (resources.length > 0) {
-      console.log(`[discoverCompliance] Extracted ${resources.length} resources from ${url}`);
-      allResources.push(...resources);
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value.length > 0) {
+        console.log(`[discoverCompliance] Extracted ${result.value.length} resources from batch.`);
+        allResources.push(...result.value);
+      } else if (result.status === 'rejected') {
+        console.warn(`[discoverCompliance] A URL in the batch failed: ${(result.reason as Error)?.message}`);
+      }
     }
 
-    pagesProcessed++;
-    await new Promise(res => setTimeout(res, 2000));
+    if (i + CONCURRENT < urlsToProcess.length) {
+      await new Promise(res => setTimeout(res, 2000));
+    }
   }
 
   console.log(`[discoverCompliance] Finished. Total resources discovered: ${allResources.length}`);

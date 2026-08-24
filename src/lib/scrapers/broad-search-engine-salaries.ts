@@ -25,7 +25,7 @@ Source URL: ${sourceUrl}
 ${SCRAPING_GUIDELINES}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 20000)}
 
 SALARY-SPECIFIC EXTRACTION RULES:
 - Extract up to 20 real salary or compensation benchmarks. Extract ALL salary data points visible.
@@ -93,25 +93,34 @@ export async function discoverSalaries(query: string, maxPages: number = 5): Pro
   console.log(`[discoverSalaries] Found ${urls.length} viable URLs to scrape.`);
 
   const allSalaries: BroadSalaryResource[] = [];
-  let pagesProcessed = 0;
+  const CONCURRENT = 3;
+  const urlsToProcess = urls.slice(0, maxPages);
 
-  for (const url of urls) {
-    if (pagesProcessed >= maxPages) break;
+  for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
+    const batch = urlsToProcess.slice(i, i + CONCURRENT);
 
-    console.log(`[discoverSalaries] Scraping ${url}...`);
-    const html = await fetchHtml(url);
-    if (!html) continue;
+    const results = await Promise.allSettled(
+      batch.map(async (url) => {
+        console.log(`[discoverSalaries] Scraping ${url}...`);
+        const html = await fetchHtml(url);
+        if (!html) return [] as BroadSalaryResource[];
+        const { text } = await htmlToTextEnriched(html, url);
+        return extractSalariesWithAI(text, url);
+      })
+    );
 
-    const { text } = await htmlToTextEnriched(html, url);
-    const salaries = await extractSalariesWithAI(text, url);
-
-    if (salaries.length > 0) {
-      console.log(`[discoverSalaries] Extracted ${salaries.length} salaries from ${url}`);
-      allSalaries.push(...salaries);
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value.length > 0) {
+        console.log(`[discoverSalaries] Extracted ${result.value.length} salaries from batch.`);
+        allSalaries.push(...result.value);
+      } else if (result.status === 'rejected') {
+        console.warn(`[discoverSalaries] A URL in the batch failed: ${(result.reason as Error)?.message}`);
+      }
     }
 
-    pagesProcessed++;
-    await new Promise(res => setTimeout(res, 2000));
+    if (i + CONCURRENT < urlsToProcess.length) {
+      await new Promise(res => setTimeout(res, 2000));
+    }
   }
 
   console.log(`[discoverSalaries] Finished. Total salaries discovered: ${allSalaries.length}`);
