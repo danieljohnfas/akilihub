@@ -32,14 +32,22 @@ async function searchDDGS(query: string, numResults: number): Promise<string[]> 
   const sidecarUrl = (process.env.SCRAPLING_URL ?? 'http://localhost:8001').trim();
 
   try {
-    const res = await fetch(`${sidecarUrl}/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: query.trim(), max_results: numResults, region: 'wt-wt', time_limit: 'm' }),
-      signal: AbortSignal.timeout(45_000), // 45s — enough for Render cold start (30-60s) + query execution
-    });
+    let res: Response | null = null;
+    let attempts = 0;
+    while (attempts < 12) {
+      attempts++;
+      res = await fetch(`${sidecarUrl}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim(), max_results: numResults, region: 'wt-wt', time_limit: 'm' }),
+        signal: AbortSignal.timeout(45_000),
+      });
+      if (res.ok) break;
+      console.warn(`[searchDDGS] Sidecar returned ${res.status}. Retrying in 5s... (Attempt ${attempts}/12)`);
+      await new Promise(r => setTimeout(r, 5000));
+    }
 
-    if (!res.ok) {
+    if (!res || !res.ok) {
       return [];
     }
 
