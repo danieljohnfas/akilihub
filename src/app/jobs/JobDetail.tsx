@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq } from 'drizzle-orm';
+import { eq, or, and, isNull, gt, ilike, ne, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { Calendar, Building2, MapPin, ExternalLink, ArrowLeft, Briefcase } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { JobCard } from '@/components/jobs/JobCard';
 
 import { AutoLinker } from '@/components/seo/AutoLinker';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -138,6 +139,35 @@ export async function JobDetail({
   const targetUrl = job.employerUrl ?? job.sourceUrl;
   const provenance = getSourceProvenance(targetUrl, 'job');
 
+  // Query similar active jobs
+  const activeCondition = and(
+    eq(jobs.isActive, true),
+    or(isNull(jobs.deadline), gt(jobs.deadline, new Date())),
+    ne(jobs.id, id)
+  );
+  
+  const similarCondition = and(
+    activeCondition,
+    job.countryId ? eq(jobs.countryId, job.countryId) : undefined,
+    job.profession ? ilike(jobs.profession, job.profession) : (
+      job.sector ? eq(jobs.sector, job.sector) : ilike(jobs.title, `%${job.title.split(' ')[0]}%`)
+    )
+  );
+
+  const similarJobsRes = await safeQuery(
+    db.select({
+      job: jobs,
+      country: countries.name,
+      region: regions.name,
+    })
+    .from(jobs)
+    .leftJoin(countries, eq(jobs.countryId, countries.id))
+    .leftJoin(regions, eq(jobs.regionId, regions.id))
+    .where(similarCondition)
+    .orderBy(desc(jobs.createdAt))
+    .limit(isExpired ? 6 : 3)
+  );
+
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-8">
       {/* JSON-LD Schemas */}
@@ -156,6 +186,10 @@ export async function JobDetail({
         salaryMin: job.salaryMin ? parseFloat(job.salaryMin) : null,
         salaryMax: job.salaryMax ? parseFloat(job.salaryMax) : null,
         salaryCurrency: job.salaryCurrency,
+        sector: job.sector,
+        skills: job.skills,
+        experienceLevel: job.experienceLevel,
+        educationLevel: job.educationLevel,
       })} />
 
 
@@ -173,6 +207,20 @@ export async function JobDetail({
 
       {/* Header */}
       <div className="space-y-4">
+        {isExpired && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 mb-6">
+            <h2 className="text-xl font-bold text-destructive mb-2">This position has closed.</h2>
+            <p className="text-destructive/80 mb-4">
+              The application deadline for this role has passed or the employer has stopped accepting applications. 
+              Don't worry—we've found {similarJobsRes.length} similar active jobs for you below!
+            </p>
+            <div className="flex gap-4">
+              <a href="#similar-jobs" className={buttonVariants({ variant: "destructive" })}>
+                View Similar Active Jobs ↓
+              </a>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-3">
           <Badge variant="outline" className={`text-xs border ${provenance.badgeClassName}`}>
             {provenance.badgeLabel}
@@ -180,11 +228,6 @@ export async function JobDetail({
           <Badge variant="outline" className={`border ${typeColor}`}>
             {typeLabel}
           </Badge>
-          {isExpired && (
-            <Badge variant="secondary" className="bg-destructive/20 text-destructive border-destructive/30">
-              Expired / Closed
-            </Badge>
-          )}
         </div>
         
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
@@ -256,6 +299,57 @@ export async function JobDetail({
             <p className="text-xs text-muted-foreground/60 pt-1">
               Source: AkiliBrain Jobs &amp; Careers Intelligence — updated daily from employer portals across East Africa.
             </p>
+          </section>
+
+          {/* Similar Jobs (Below main content) */}
+          <section id="similar-jobs" className="mt-12 space-y-6 border-t border-white/10 pt-8">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              Similar {job.profession ? job.profession : 'Active'} Jobs {country ? `in ${country}` : ''}
+            </h2>
+            {similarJobsRes.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {similarJobsRes.map((sj) => (
+                  <JobCard
+                    key={sj.job.id}
+                    id={sj.job.id}
+                    title={sj.job.title}
+                    companyName={sj.job.companyName}
+                    description={sj.job.description}
+                    requirements={sj.job.requirements}
+                    location={sj.region || null}
+                    country={sj.country || 'Africa'}
+                    jobType={sj.job.jobType ?? 'full_time'}
+                    sourceUrl={sj.job.sourceUrl}
+                    postedDate={sj.job.postedDate}
+                    deadline={sj.job.deadline}
+                    createdAt={sj.job.createdAt}
+                    layout="list"
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No similar active jobs found at the moment.</p>
+            )}
+            
+            {/* Related Searches */}
+            <div className="mt-8 bg-white/5 border border-white/10 rounded-xl p-6">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">People who viewed this also searched for:</h3>
+              <div className="flex flex-wrap gap-2">
+                {job.profession && (
+                  <Link href={`/jobs/${countryCode?.toLowerCase() || 'africa'}/${job.profession.toLowerCase().replace(/ /g, '-')}`} className="text-sm text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-full">
+                    {job.profession} Jobs in {country || 'East Africa'}
+                  </Link>
+                )}
+                {job.sector && (
+                  <Link href={`/jobs/${countryCode?.toLowerCase() || 'africa'}/${job.sector.toLowerCase().replace(/ /g, '-')}`} className="text-sm text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-full">
+                    {job.sector} Sector Jobs
+                  </Link>
+                )}
+                <Link href={`/jobs/${countryCode?.toLowerCase() || 'africa'}/${region?.toLowerCase().replace(/ /g, '-') || ''}`} className="text-sm text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-full">
+                  Jobs in {region || country || 'East Africa'}
+                </Link>
+              </div>
+            </div>
           </section>
         </div>
 

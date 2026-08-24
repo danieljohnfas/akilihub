@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, or, isNull, gt, count } from 'drizzle-orm';
+import { eq, desc, ilike, and, or, isNull, gt, count, sql, ne } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { JobDetail } from '../JobDetail';
@@ -217,6 +217,48 @@ export default async function SlugRoute({
     )
   ]);
 
+  // Aggregate Insights (Top Employers & Skills)
+  let topEmployers: { name: string, count: number }[] = [];
+  let avgSalaryStr = "";
+  
+  if (data.length > 0 && page === 1) {
+    try {
+      const employerAgg = await safeQuery(
+        db.select({
+          companyName: jobs.companyName,
+          jobCount: count()
+        })
+        .from(jobs)
+        .where(and(whereClause, ne(jobs.companyName, 'Unknown'), ne(jobs.companyName, '')))
+        .groupBy(jobs.companyName)
+        .orderBy(desc(count()))
+        .limit(5)
+      );
+      if (employerAgg && employerAgg.length > 0) {
+        topEmployers = employerAgg.map(e => ({ name: e.companyName || 'Unknown', count: e.jobCount }));
+      }
+      
+      const salaryAgg = await safeQuery(
+        db.select({
+          avgMin: sql<number>`AVG(CAST(${jobs.salaryMin} AS NUMERIC))`,
+          avgMax: sql<number>`AVG(CAST(${jobs.salaryMax} AS NUMERIC))`,
+          currency: jobs.salaryCurrency
+        })
+        .from(jobs)
+        .where(and(whereClause, isNull(jobs.salaryMin) === false))
+        .groupBy(jobs.salaryCurrency)
+        .limit(1)
+      );
+      
+      if (salaryAgg && salaryAgg.length > 0 && salaryAgg[0].avgMin) {
+        const s = salaryAgg[0];
+        avgSalaryStr = `${s.currency || 'TZS'} ${Math.round(s.avgMin).toLocaleString()} - ${s.currency || 'TZS'} ${Math.round(s.avgMax || s.avgMin).toLocaleString()}`;
+      }
+    } catch (e) {
+      console.error("Aggregation failed", e);
+    }
+  }
+
   const totalCount = totalCountResult?.[0]?.value || 0;
   
   const titleParts = [experienceName, educationName, categoryName, 'Jobs'].filter(Boolean);
@@ -245,12 +287,36 @@ export default async function SlugRoute({
       <JsonLd schema={itemListSchema} />
       <JsonLd schema={breadcrumbSchema} />
       
-      <div className="flex flex-col items-center text-center gap-6 border-b border-white/5 pb-10 mb-6">
+      <div className="flex flex-col items-center text-center gap-6 pb-6 border-b border-white/5">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{titleStr}</h1>
         <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
           {totalCount} active vacancies found. Explore top employers, required qualifications, and salary trends for {titleStr}.
         </p>
       </div>
+      
+      {/* Dynamic Intelligence Dashboard */}
+      {(topEmployers.length > 0 || avgSalaryStr) && page === 1 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-white/5 border border-white/10 rounded-xl p-6">
+          {avgSalaryStr && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">Average Advertised Salary</h3>
+              <p className="text-xl font-bold text-emerald-400">{avgSalaryStr}</p>
+            </div>
+          )}
+          {topEmployers.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Top Employers Hiring</h3>
+              <div className="flex flex-wrap gap-2">
+                {topEmployers.map(emp => (
+                  <span key={emp.name} className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-md">
+                    {emp.name} ({emp.count})
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-end mb-4">
         <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-lg">

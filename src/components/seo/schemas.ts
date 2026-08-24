@@ -101,6 +101,10 @@ interface JobPostingInput {
   salaryMax?: number | null;
   /** ISO 4217 currency code, e.g. "KES", "TZS" */
   salaryCurrency?: string | null;
+  sector?: string | null;
+  skills?: string[] | null;
+  experienceLevel?: string | null;
+  educationLevel?: string | null;
 }
 
 /**
@@ -164,6 +168,10 @@ export function buildJobPostingSchema(job: JobPostingInput): Record<string, unkn
       name: SITE_NAME,
       value: job.id,
     },
+    ...(job.sector ? { industry: job.sector } : {}),
+    ...(job.skills && job.skills.length > 0 ? { skills: job.skills.join(', ') } : {}),
+    ...(job.experienceLevel ? { experienceRequirements: job.experienceLevel } : {}),
+    ...(job.educationLevel ? { educationRequirements: job.educationLevel } : {}),
   };
 
   // datePosted is required by Google; fall back to today if missing
