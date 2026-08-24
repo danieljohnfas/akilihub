@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, pgEnum, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, pgEnum, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { countries, regions } from './shared';
 
 export const alertFrequencyEnum = pgEnum('alert_frequency', ['immediate', 'daily', 'weekly']);
@@ -17,7 +17,10 @@ export const users = pgTable('users', {
   welcomeEmailSent: boolean('welcome_email_sent').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-});
+}, (table) => [
+  // Speeds up the sendWelcomeEmailsJob that runs every 15 minutes
+  index('users_welcome_email_idx').on(table.welcomeEmailSent)
+]);
 
 export const userAlerts = pgTable('user_alerts', {
   id: uuid('id').primaryKey().defaultRandom(),

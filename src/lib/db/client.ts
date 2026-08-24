@@ -68,10 +68,10 @@ export type DB = typeof db;
  * Returns the result on success, or [] on failure/timeout.
  * This prevents a slow DB cold start or connection queue from triggering a Vercel 504 timeout.
  */
-export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 9000): Promise<T> {
+export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 9000, label: string = 'Unnamed Query'): Promise<T> {
   let timeoutId: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs);
+    timeoutId = setTimeout(() => reject(new Error(`Query [${label}] timed out after ${timeoutMs}ms`)), timeoutMs);
   });
 
   try {
@@ -79,7 +79,7 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
     return result;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[DB Error] safeQuery caught:', message);
+    console.error(`[DB Error] safeQuery caught in [${label}]:`, message);
     return [] as unknown as T;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);

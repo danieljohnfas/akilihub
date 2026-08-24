@@ -19,7 +19,7 @@ export const rescrapeJobsJob = inngest.createFunction(
         .from(jobs)
         .where(eq(jobs.isActive, true))
         .orderBy(asc(jobs.updatedAt))
-        .limit(5);
+        .limit(20);
 
       let updatedCount = 0;
 
@@ -93,7 +93,7 @@ export const rescrapeTendersJob = inngest.createFunction(
         .from(tenders)
         .where(eq(tenders.status, "open"))
         .orderBy(asc(tenders.updatedAt))
-        .limit(5);
+        .limit(20);
 
       let updatedCount = 0;
 
@@ -156,7 +156,7 @@ export const rescrapeComplianceJob = inngest.createFunction(
           eq(complianceRequirements.isActive, true),
         ))
         .orderBy(asc(complianceRequirements.updatedAt))
-        .limit(5);
+        .limit(20);
 
       let updatedCount = 0;
 

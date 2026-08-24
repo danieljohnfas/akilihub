@@ -36,7 +36,7 @@ async function searchDDGS(query: string, numResults: number): Promise<string[]> 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: query.trim(), max_results: numResults, region: 'wt-wt', time_limit: 'm' }),
-      signal: AbortSignal.timeout(12_000), // 12s — enough time for Render cold start
+      signal: AbortSignal.timeout(45_000), // 45s — enough for Render cold start (30-60s) + query execution
     });
 
     if (!res.ok) {
@@ -156,7 +156,7 @@ Source URL: ${sourceUrl}
 ${SCRAPING_GUIDELINES}
 
 Scraped content:
-${text.substring(0, 12000)}
+${text.substring(0, 20000)}
 
 JOB-SPECIFIC EXTRACTION RULES:
 - Extract up to 15 real job postings found in the text. Extract ALL jobs visible, not just the first.
@@ -319,6 +319,7 @@ JOB-SPECIFIC EXTRACTION RULES:
 
 /**
  * Master function to run a broad search for jobs and extract them.
+ * Processes URLs in concurrent batches of 3 for ~3× throughput vs sequential.
  */
 export async function discoverJobs(query: string, maxPages: number = 5): Promise<BroadJobResource[]> {
   console.log(`[discoverJobs] Searching for: "${query}"...`);
@@ -326,28 +327,38 @@ export async function discoverJobs(query: string, maxPages: number = 5): Promise
   console.log(`[discoverJobs] Found ${urls.length} viable URLs to scrape.`);
 
   const allJobs: BroadJobResource[] = [];
-  let pagesProcessed = 0;
+  const CONCURRENT = 3; // 3 simultaneous fetches — polite but ~3× faster than sequential
+  const urlsToProcess = urls.slice(0, maxPages);
 
-  for (const url of urls) {
-    if (pagesProcessed >= maxPages) break;
+  for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
+    const batch = urlsToProcess.slice(i, i + CONCURRENT);
 
-    console.log(`[discoverJobs] Scraping ${url}...`);
-    const html = await fetchHtml(url);
-    if (!html) continue;
+    const results = await Promise.allSettled(
+      batch.map(async (url) => {
+        console.log(`[discoverJobs] Scraping ${url}...`);
+        const html = await fetchHtml(url);
+        if (!html) return [] as BroadJobResource[];
+        const { text } = await htmlToTextEnriched(html, url);
+        return extractJobsWithAI(text, url);
+      })
+    );
 
-    const { text } = await htmlToTextEnriched(html, url);
-    const extractedJobs = await extractJobsWithAI(text, url);
-
-    if (extractedJobs.length > 0) {
-      console.log(`[discoverJobs] Extracted ${extractedJobs.length} jobs from ${url}`);
-      allJobs.push(...extractedJobs);
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value.length > 0) {
+        console.log(`[discoverJobs] Extracted ${result.value.length} jobs from batch.`);
+        allJobs.push(...result.value);
+      } else if (result.status === 'rejected') {
+        console.warn(`[discoverJobs] A URL in the batch failed: ${(result.reason as Error)?.message}`);
+      }
     }
 
-    pagesProcessed++;
-    // Polite delay between pages
-    await new Promise(res => setTimeout(res, 3000));
+    // Polite delay between batches (not between individual URLs within a batch)
+    if (i + CONCURRENT < urlsToProcess.length) {
+      await new Promise(res => setTimeout(res, 2000));
+    }
   }
 
   console.log(`[discoverJobs] Finished. Total jobs discovered: ${allJobs.length}`);
   return allJobs;
 }
+

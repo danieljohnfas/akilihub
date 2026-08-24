@@ -1,0 +1,1 @@
+CREATE INDEX "users_welcome_email_idx" ON "users" USING btree ("welcome_email_sent");

@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, or, isNull, gt, count, sql, ne } from 'drizzle-orm';
+import { eq, desc, ilike, and, or, isNull, isNotNull, gt, count, sql, ne } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { JobDetail } from '../JobDetail';
@@ -231,7 +231,7 @@ export default async function SlugRoute({
         .from(jobs)
         .where(and(whereClause, ne(jobs.companyName, 'Unknown'), ne(jobs.companyName, '')))
         .groupBy(jobs.companyName)
-        .orderBy(desc(count()))
+        .orderBy(desc(sql`COUNT(*)`))
         .limit(5)
       );
       if (employerAgg && employerAgg.length > 0) {
@@ -245,7 +245,7 @@ export default async function SlugRoute({
           currency: jobs.salaryCurrency
         })
         .from(jobs)
-        .where(and(whereClause, isNull(jobs.salaryMin) === false))
+        .where(and(whereClause, isNotNull(jobs.salaryMin)))
         .groupBy(jobs.salaryCurrency)
         .limit(1)
       );

@@ -251,6 +251,8 @@ if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
 } else {
   console.log(`[AI Router] Loaded ${keyPool.size} model(s) into the pool.`);
+  // Fire and forget restore on startup
+  keyPool.restoreFromDb().catch(e => console.error('[AI Router] Failed to restore key pool state:', e));
 }
 
 // ------------------------------------------------------------------

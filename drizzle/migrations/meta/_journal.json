@@ -127,6 +127,13 @@
       "when": 1787553956777,
       "tag": "0017_slow_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787560211504,
+      "tag": "0018_common_skullbuster",
+      "breakpoints": true
     }
   ]
 }

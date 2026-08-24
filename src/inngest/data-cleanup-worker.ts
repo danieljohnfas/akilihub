@@ -13,7 +13,7 @@ const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
 
 const REPORT_EMAIL = "danieljohnfassanga@gmail.com";
 const ONE_HOUR_MS = 60 * 60 * 1000;
-const BATCH_SIZE = 5; // Small batches so each step.run completes fast
+const BATCH_SIZE = 20; // Increased batch size for higher throughput
 
 const ClassificationSchema = z.object({
   module: z.enum(['jobs', 'tenders', 'compliance', 'unknown']).describe("The correct module this data belongs to."),

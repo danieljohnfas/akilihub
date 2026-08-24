@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, or, isNull, gt, count, sql } from 'drizzle-orm';
+import { eq, desc, ilike, and, or, isNull, isNotNull, gt, count, sql, ne } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { JobCard } from '@/components/jobs/JobCard';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -96,10 +96,10 @@ export default async function SalaryHub({
       ilike(jobs.title, '%' + categoryName.replace(/jobs/i, '').trim() + '%'),
       ilike(jobs.profession, '%' + categoryName.replace(/jobs/i, '').trim() + '%')
     ) : undefined,
-    isNull(jobs.salaryMin) === false // MUST have salary data
+    isNotNull(jobs.salaryMin) // MUST have salary data
   ].filter(Boolean);
 
-  const whereClause = conditions.length > 0 ? and(...conditions) : isNull(jobs.salaryMin) === false;
+  const whereClause = conditions.length > 0 ? and(...conditions) : isNotNull(jobs.salaryMin);
 
   // Aggregate Salary Data
   const salaryAgg = await safeQuery(
@@ -112,7 +112,7 @@ export default async function SalaryHub({
     .from(jobs)
     .where(whereClause)
     .groupBy(jobs.salaryCurrency)
-    .orderBy(desc(count()))
+    .orderBy(desc(sql`COUNT(*)`))
     .limit(1)
   );
 
@@ -173,7 +173,7 @@ export default async function SalaryHub({
         </p>
       </div>
 
-      {hasSalaryData ? (
+      {sData ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="col-span-1 md:col-span-3 bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl p-8 text-center flex flex-col items-center justify-center">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-emerald-500/80 mb-2">Average Monthly Salary</h2>

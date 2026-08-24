@@ -24,6 +24,7 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
         .select({ id: jobs.id, sourceUrl: jobs.sourceUrl, title: jobs.title, companyName: jobs.companyName })
         .from(jobs)
         .where(and(eq(jobs.isActive, true), isNull(jobs.employerUrl)))
+        .limit(2000)
       );
 
       let fastResolved = 0;
@@ -50,6 +51,7 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
         .select({ id: tenders.id, sourceUrl: tenders.sourceUrl, title: tenders.title, contractingAuthority: tenders.contractingAuthority })
         .from(tenders)
         .where(isNull(tenders.employerUrl))
+        .limit(2000)
       );
 
       let fastResolved = 0;
@@ -76,6 +78,7 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
         .select({ id: complianceRequirements.id, sourceUrl: complianceRequirements.sourceUrl, title: complianceRequirements.title, issuingAuthority: complianceRequirements.issuingAuthority })
         .from(complianceRequirements)
         .where(and(eq(complianceRequirements.isActive, true), isNull(complianceRequirements.employerUrl)))
+        .limit(2000)
       );
 
       const withUrl = pending.filter(r => !!r.sourceUrl);

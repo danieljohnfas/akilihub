@@ -140,6 +140,51 @@ class KeyPool {
       coolingFor: Math.max(0, Math.ceil((rest.coolUntil - now) / 1000)),
     }));
   }
+
+  /**
+   * Reads persisted cooldown state from the DB and applies it back into the
+   * in-memory pool. Call this once at startup (after all keys are registered)
+   * so that a Vercel cold start doesn't lose the backoff state built up in the
+   * previous warm instance and immediately hammer rate-limited providers again.
+   */
+  async restoreFromDb(): Promise<void> {
+    try {
+      if (!this._dbDepsPromise) {
+        this._dbDepsPromise = Promise.all([
+          import('../db/client'),
+          import('../db/schema/ai'),
+        ]);
+      }
+
+      const [{ db }, { aiTelemetry }] = await this._dbDepsPromise;
+      const rows = await db.select().from(aiTelemetry);
+      const now = Date.now();
+      let restored = 0;
+
+      for (const row of rows) {
+        const key = this.keys.get(row.id);
+        if (!key) continue;
+
+        // Restore running stats so the telemetry is cumulative, not per-instance
+        key.totalCalls = row.totalCalls ?? key.totalCalls;
+        key.totalErrors = row.totalErrors ?? key.totalErrors;
+
+        // Only restore the cooldown if it's still active — stale cooldowns are ignored
+        if (row.coolUntil && row.coolUntil > now) {
+          key.coolUntil = row.coolUntil;
+          key.errorCount = row.errorCount ?? key.errorCount;
+          restored++;
+        }
+      }
+
+      if (restored > 0) {
+        console.log(`[KeyPool] Restored ${restored} active cooldown(s) from DB (cold-start recovery).`);
+      }
+    } catch {
+      // Non-critical — silently ignore. The pool remains functional without restored state.
+    }
+  }
 }
 
 export const keyPool = new KeyPool();
+
