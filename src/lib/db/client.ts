@@ -40,6 +40,21 @@ let connectionString = (process.env.DIRECT_URL || process.env.DATABASE_URL) || '
 
 // Validate the URL. If the user accidentally left placeholders like [YOUR-PASSWORD] in the Vercel dashboard,
 // new URL() will throw ERR_INVALID_URL. We catch it and use the dummy string so the build can proceed.
+if (connectionString.includes('pooler.supabase.com') && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  try {
+    const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL);
+    const host = 'db.' + url.hostname.replace('.supabase.co', '') + '.supabase.co';
+    const dbUrl = new URL(connectionString);
+    dbUrl.hostname = host;
+    dbUrl.port = '5432';
+    dbUrl.username = 'postgres';
+    connectionString = dbUrl.toString();
+    console.log('[DB Config] Bypassing PgBouncer, connecting direct to:', dbUrl.host);
+  } catch (e) {
+    console.error('Failed to rewrite connection URL', e);
+  }
+}
+
 try {
   new URL(connectionString);
 } catch (e) {
