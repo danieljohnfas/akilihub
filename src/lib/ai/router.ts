@@ -45,7 +45,6 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
   const sambanova = createOpenAI({
     apiKey: key,
     baseURL: 'https://api.sambanova.ai/v1',
-    compatibility: 'compatible', // force chat/completions, not Responses API
   });
   keyPool.register({
     id: `sambanova-llama-${i + 1}`,
@@ -144,7 +143,6 @@ getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
     const cloudflare = createOpenAI({
       apiKey: cfToken,
       baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`,
-      compatibility: 'compatible',
     });
     keyPool.register({
       id: `cloudflare-llama-1`,
@@ -178,7 +176,7 @@ getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
   const openrouter = createOpenAI({
     apiKey: key,
     baseURL: 'https://openrouter.ai/api/v1',
-    defaultHeaders: {
+    headers: {
       'HTTP-Referer': 'https://akilibrain.com',
       'X-Title': 'AkiliHub',
     },
@@ -193,7 +191,7 @@ getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
   });
   // Secondary free model for extra capacity
   keyPool.register({
-    id: `openrouter-gemma-${i + 1}`,
+    id: `openrouter-gemma-3-${i + 1}`,
     name: `OpenRouter Gemma 3 1B Free (${i + 1})`,
     model: openrouter('google/gemma-3-1b-it:free'),
     supportsStructured: false,
