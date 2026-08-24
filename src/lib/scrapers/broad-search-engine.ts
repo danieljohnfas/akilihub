@@ -31,11 +31,11 @@ const BLOCKED_DOMAINS = getAllAggregatorDomains();
 async function searchDDGS(query: string, numResults: number): Promise<string[]> {
   const sidecarUrl = (process.env.SCRAPLING_URL ?? 'http://localhost:8001').trim();
 
-  try {
-    let res: Response | null = null;
-    let attempts = 0;
-    while (attempts < 12) {
-      attempts++;
+  let res: Response | null = null;
+  let attempts = 0;
+  while (attempts < 12) {
+    attempts++;
+    try {
       res = await fetch(`${sidecarUrl}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,9 +44,13 @@ async function searchDDGS(query: string, numResults: number): Promise<string[]> 
       });
       if (res.ok) break;
       console.warn(`[searchDDGS] Sidecar returned ${res.status}. Retrying in 5s... (Attempt ${attempts}/12)`);
-      await new Promise(r => setTimeout(r, 5000));
+    } catch (err) {
+      console.warn(`[searchDDGS] Sidecar fetch failed: ${(err as Error).message}. Retrying in 5s... (Attempt ${attempts}/12)`);
     }
+    await new Promise(r => setTimeout(r, 5000));
+  }
 
+  try {
     if (!res || !res.ok) {
       return [];
     }
