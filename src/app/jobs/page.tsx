@@ -439,3 +439,4 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
     </>
   );
 }
+
