@@ -271,7 +271,11 @@ JOB-SPECIFIC EXTRACTION RULES:
       })
     );
 
-    return normalizedJobs;
+    return normalizedJobs.filter(job => {
+      const titleLower = (job.title || '').toLowerCase().trim();
+      if (titleLower.startsWith('[link]') || titleLower.startsWith('[image:')) return false;
+      return true;
+    });
   } catch (err) {
     console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Engaging deterministic fallback.`);
 
@@ -280,6 +284,16 @@ JOB-SPECIFIC EXTRACTION RULES:
       const titleMatch = /^(?:Job\s*(?:Title|Position)?[:\s]*)?([^\n\r]{5,80})/m.exec(text);
       const inferredTitle = titleMatch ? titleMatch[1].trim().replace(/^[#*-\s]+/, '') : 'Professional Opportunity';
       const appUrl = deterministic.applicationUrls[0] || sourceUrl;
+      
+      const titleLower = inferredTitle.toLowerCase();
+      if (titleLower.startsWith('[link]') || 
+          titleLower.startsWith('[image:') || 
+          titleLower.includes('find the job') || 
+          titleLower.includes('skip to') || 
+          titleLower.includes('professional opportunity') ||
+          titleLower.includes('career portal')) {
+        return [];
+      }
 
       return [{
         title: inferredTitle,

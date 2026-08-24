@@ -168,6 +168,8 @@ async function runKnownSourcesForCountry(countryCode: string, label: string): Pr
 }
 
 // ── Job factory with retry logic ──────────────────────────────────────────────
+export async function runKnownSourcesForCountryProxy(countryCode: string, label: string) { return runKnownSourcesForCountry(countryCode, label); }
+export async function runQueriesForCountryProxy(queries: string[], countryCode: string, label: string) { return runQueriesForCountry(queries, countryCode, label); }
 function makeJobScraper(
   id: string,
   name: string,

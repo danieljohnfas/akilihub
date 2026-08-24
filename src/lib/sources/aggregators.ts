@@ -138,18 +138,35 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'macalindoon.online',        name: 'Macalindoon Somalia',      type: 'aggregator', category: 'jobs' },
   { domain: 'kazibure.com',              name: 'KaziBure',                 type: 'aggregator', category: 'jobs' },
   { domain: 'ajirayako.co.tz',           name: 'AjiraYako',                type: 'aggregator', category: 'jobs' },
+  { domain: 'unjoblink.org',             name: 'UNJoblink',                type: 'aggregator', category: 'jobs' },
+  { domain: 'ndangira.net',              name: 'Ndangira',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'progigfinder.com',          name: 'ProGigFinder',             type: 'aggregator', category: 'jobs' },
+  { domain: 'tanzaniajobsearch.com',     name: 'Tanzania Job Search',      type: 'aggregator', category: 'jobs' },
+  { domain: 'jobslinking.com',           name: 'Jobs Linking',             type: 'aggregator', category: 'jobs' },
+  { domain: 'fursa.co.tz',               name: 'Fursa TZ',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'topnews.ke',                name: 'Top News KE',              type: 'aggregator', category: 'jobs' },
+  { domain: 'kompeaa.com',               name: 'Kompeaa',                  type: 'aggregator', category: 'jobs' },
+  { domain: 'kenyansnews.com',           name: 'Kenyans News',             type: 'aggregator', category: 'jobs' },
+  { domain: 'jobvacanciesnow.com',       name: 'Job Vacancies Now',        type: 'aggregator', category: 'jobs' },
+  { domain: 'ajirazetu.co.tz',           name: 'Ajira Zetu TZ',            type: 'aggregator', category: 'jobs' },
+  { domain: 'afrorama.org',              name: 'Afrorama',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'unvacancies.org',           name: 'UN Vacancies',             type: 'aggregator', category: 'jobs' },
+  { domain: 'unjobnet.org',              name: 'UNJobNet',                 type: 'aggregator', category: 'jobs' },
   { domain: 'shortlist.net',             name: 'Shortlist',                type: 'aggregator', category: 'jobs' },
   { domain: 'cvmkr.com',                 name: 'CV Maker',                 type: 'aggregator', category: 'jobs' },
   { domain: 'unjobs.media',              name: 'UNJobs Media',             type: 'aggregator', category: 'jobs' },
   { domain: 'houseinrwanda.com',         name: 'House in Rwanda',          type: 'aggregator', category: 'jobs' },
   { domain: 'hrms.rw',                   name: 'HRMS Rwanda',              type: 'aggregator', category: 'jobs' },
   { domain: 'jobalertuganda.com',        name: 'Job Alert Uganda',         type: 'aggregator', category: 'jobs' },
-  { domain: 'unjobnet.org',              name: 'UN Job Net',               type: 'aggregator', category: 'jobs' },
   { domain: 'edomatch.com',              name: 'EdoMatch',                 type: 'aggregator', category: 'jobs' },
   { domain: 'sewaseweth.com',            name: 'Sewasew Jobs',             type: 'aggregator', category: 'jobs' },
   { domain: 'hahu.jobs',                 name: 'HaHu Jobs',                type: 'aggregator', category: 'jobs' },
   { domain: 'developmentaid.org',        name: 'DevelopmentAid',           type: 'aggregator', category: 'jobs' },
   { domain: 'advance-africa.com',        name: 'Advance Africa',           type: 'aggregator', category: 'jobs' },
+  { domain: 'ethiopianjobs.net',         name: 'Ethiopian Jobs Net',       type: 'aggregator', category: 'jobs' },
+  { domain: 'mysarkarinaukri.com',       name: 'MySarkariNaukri',          type: 'aggregator', category: 'jobs' },
+  { domain: 'govtjobguru.in',            name: 'GovtJobGuru',              type: 'aggregator', category: 'jobs' },
+  { domain: 'africatraininginstitute.org',name: 'Africa Training Institute',type: 'aggregator', category: 'jobs' },
   { domain: 'codingkenya.com',           name: 'Coding Kenya',             type: 'aggregator', category: 'jobs' },
   { domain: 'lafabsolution.com',         name: 'Lafab Solution',           type: 'aggregator', category: 'jobs' },
   { domain: 'tanzajob.com',              name: 'TanzaJob',                 type: 'aggregator', category: 'jobs' },
@@ -389,7 +406,7 @@ export function isEmployerUrl(url: string | null | undefined): boolean {
       return false;
     }
 
-    // Block CDNs, ad networks & OAuth providers
+    // Block CDNs, ad networks, OAuth providers, and generic blogs
     if (
       domain.includes('bootstrapcdn') ||
       domain.includes('cdnjs') ||
@@ -402,7 +419,8 @@ export function isEmployerUrl(url: string | null | undefined): boolean {
       domain.includes('googleadservices') ||
       domain.includes('googletagmanager') ||
       domain.includes('google.com') ||
-      domain.includes('accounts.google')
+      domain.includes('accounts.google') ||
+      domain.includes('googleblog.com')
     ) {
       return false;
     }
