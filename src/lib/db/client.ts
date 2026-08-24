@@ -36,7 +36,7 @@ const schema = {
 const globalForDb = globalThis as unknown as { conn: postgres.Sql };
 
 // Provide a robust dummy fallback
-let connectionString = process.env.DATABASE_URL || 'postgres://dummy:dummy@localhost:5432/dummy';
+let connectionString = (process.env.DIRECT_URL || process.env.DATABASE_URL) || 'postgres://dummy:dummy@localhost:5432/dummy';
 
 // Validate the URL. If the user accidentally left placeholders like [YOUR-PASSWORD] in the Vercel dashboard,
 // new URL() will throw ERR_INVALID_URL. We catch it and use the dummy string so the build can proceed.
