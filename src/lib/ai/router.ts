@@ -45,12 +45,13 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
   const sambanova = createOpenAI({
     apiKey: key,
     baseURL: 'https://api.sambanova.ai/v1',
+    compatibility: 'compatible', // force chat/completions, not Responses API
   });
   keyPool.register({
     id: `sambanova-llama-${i + 1}`,
     name: `SambaNova Llama 3.3 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.1-405B-Instruct'),
-    supportsStructured: true,
+    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
+    supportsStructured: false, // SambaNova doesn't support the Response API for JSON schema
     priority: 1,
   });
 });
@@ -78,7 +79,7 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `groq-llama-${i + 1}`,
     name: `Groq Llama 3.3 70B (${i + 1})`,
-    model: groq('mixtral-8x7b-32768'),
+    model: groq('llama-3.3-70b-versatile'),
     supportsStructured: true,
     priority: 1,
   });
@@ -143,12 +144,13 @@ getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
     const cloudflare = createOpenAI({
       apiKey: cfToken,
       baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`,
+      compatibility: 'compatible',
     });
     keyPool.register({
       id: `cloudflare-llama-1`,
-      name: `Cloudflare Workers AI Llama 3.3 70B`,
-      model: cloudflare('@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
-      supportsStructured: true,
+      name: `Cloudflare Workers AI Llama 3.2 3B`,
+      model: cloudflare('@cf/meta/llama-3.2-3b-instruct'),
+      supportsStructured: false,
       priority: 5,
     });
   }
@@ -171,17 +173,30 @@ getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
 });
 
 // ── PRIORITY 6: OPENROUTER (multi-model pool) ─────────────────────────────────
-// 50 req/day free · routes to best available model automatically
+// Free tier · routes to best available model automatically
 getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
   const openrouter = createOpenAI({
     apiKey: key,
     baseURL: 'https://openrouter.ai/api/v1',
+    defaultHeaders: {
+      'HTTP-Referer': 'https://akilibrain.com',
+      'X-Title': 'AkiliHub',
+    },
   });
+  // Primary free model
   keyPool.register({
-    id: `openrouter-free-${i + 1}`,
-    name: `OpenRouter Free (${i + 1})`,
-    model: openrouter('qwen/qwen-2-7b-instruct:free'),
-    supportsStructured: true,
+    id: `openrouter-gemma-${i + 1}`,
+    name: `OpenRouter Gemma 2 9B Free (${i + 1})`,
+    model: openrouter('google/gemma-2-9b-it:free'),
+    supportsStructured: false,
+    priority: 6,
+  });
+  // Secondary free model for extra capacity
+  keyPool.register({
+    id: `openrouter-gemma-${i + 1}`,
+    name: `OpenRouter Gemma 3 1B Free (${i + 1})`,
+    model: openrouter('google/gemma-3-1b-it:free'),
+    supportsStructured: false,
     priority: 6,
   });
 });
