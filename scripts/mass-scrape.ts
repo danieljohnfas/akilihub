@@ -455,17 +455,17 @@ async function main() {
   // PHASE 1 — JOBS  (target 200+ new per country)
   // ══════════════════════════════════════════════════════════
   log('\n══════════════════════════════════════════');
-  log('PHASE 1: JOBS (target ≥200 new per country)');
+  log('PHASE 1: JOBS (target ≥2000 new per country)');
   log('══════════════════════════════════════════');
 
   for (const code of COUNTRIES) {
     const s = statsAll[code]; if (!s) continue;
     log(`\n  ▶ [JOBS] ${code}`);
-    const { total, errors } = await scrapeModule('JOBS', JOB_QUERIES[code]!, discoverJobs, saveJobs, s.countryId, 200);
+    const { total, errors } = await scrapeModule('JOBS', JOB_QUERIES[code]!, discoverJobs, saveJobs, s.countryId, 2000);
 
-    // If under 200, run second pass with same queries
-    if (total < 200) {
-      log(`  ⚠️  ${code}: ${total} jobs so far, need ${200 - total} more — running second pass...`);
+    // If under 2000, run second pass with same queries
+    if (total < 2000) {
+      log(`  ⚠️  ${code}: ${total} jobs so far, need ${2000 - total} more — running second pass...`);
       const pass2 = await scrapeModule('JOBS-P2', JOB_QUERIES[code]!, discoverJobs, saveJobs, s.countryId, 0);
       s.inserted.jobs = total + pass2.total;
       s.errors.push(...errors, ...pass2.errors);
@@ -559,7 +559,7 @@ async function main() {
 
   for (const code of COUNTRIES) {
     const s = statsAll[code]; if (!s) continue;
-    const jobsStatus = s.inserted.jobs >= 200 ? '✅' : s.inserted.jobs > 50 ? '⚠️ ' : '❌';
+    const jobsStatus = s.inserted.jobs >= 2000 ? '✅' : s.inserted.jobs > 500 ? '⚠️ ' : '❌';
     log(`${code}:`);
     log(`  Jobs       ${jobsStatus} +${s.inserted.jobs} new  (DB total: ${s.after.jobs})`);
     log(`  Tenders    ➕ +${s.inserted.tenders} new  (DB total: ${s.after.tenders})`);
