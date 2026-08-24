@@ -244,7 +244,20 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
     safeQuery(
       db
         .select({
-          job: jobs,
+          job: {
+            id: jobs.id,
+            title: jobs.title,
+            companyName: jobs.companyName,
+            description: jobs.description,
+            requirements: jobs.requirements,
+            jobType: jobs.jobType,
+            sourceUrl: jobs.sourceUrl,
+            postedDate: jobs.postedDate,
+            deadline: jobs.deadline,
+            createdAt: jobs.createdAt,
+            isActive: jobs.isActive,
+            isAggregatorSource: jobs.isAggregatorSource
+          },
           country: countries.name,
           region: regions.name,
         })
