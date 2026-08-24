@@ -31,7 +31,7 @@ export const tenders = pgTable('tenders', {
   // Employer-first sourcing — resolved direct contracting authority URL
   employerUrl: text('employer_url'),              // resolved authority/government portal URL
   aiSummary: text('ai_summary'),
-  isAggregatorSource: boolean('is_aggregator').notNull().default(false),
+  isAggregatorSource: boolean('is_aggregator_source').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [
