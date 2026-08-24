@@ -47,7 +47,7 @@ if (connectionString.includes('pooler.supabase.com')) {
     if (parts.length > 1) {
       const projectId = parts[1];
       url.hostname = 'db.' + projectId + '.supabase.co';
-      url.port = '5432';
+      url.port = '6543';
       url.username = 'postgres';
       connectionString = url.toString();
       console.log('[DB Config] Bypassing PgBouncer, connecting direct to:', url.host);
@@ -103,5 +103,6 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
     if (timeoutId) clearTimeout(timeoutId);
   }
 }
+
 
 
