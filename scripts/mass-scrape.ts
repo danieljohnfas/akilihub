@@ -7,6 +7,8 @@
 
 import { config } from 'dotenv';
 config({ path: '.env.local', override: true });
+import dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
 
 // Force NODE_ENV=production so the DB client uses SSL (Supabase requires it even locally)
 (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
@@ -42,118 +44,45 @@ function log(msg: string) {
 }
 
 // ── All queries per country per module ───────────────────────────────────────
-const JOB_QUERIES: Record<string, string[]> = {
-  KE: [
-    "jobs hiring Nairobi Kenya 2026",
-    "latest job vacancies Kenya NGO 2026",
-    "site:reliefweb.int jobs Kenya",
-    "health medical nursing jobs Kenya 2026",
-    "finance accounting jobs Nairobi Kenya 2026",
-    "UN UNICEF WHO jobs Kenya 2026",
-    "government jobs Kenya PSC 2026",
-    "engineering construction jobs Kenya 2026",
-    "site:ngojobsinafrica.com Kenya",
-    "remote software engineering jobs Kenya 2026",
-    "teaching education lecturer jobs Kenya 2026",
-    "humanitarian jobs Kenya 2026",
-  ],
-  TZ: [
-    "ajira mpya Tanzania Dar es Salaam 2026",
-    "jobs vacancies Tanzania 2026",
-    "nafasi za kazi Tanzania 2026",
-    "NGO jobs Tanzania 2026",
-    "site:reliefweb.int jobs Tanzania",
-    "IT software developer jobs Dar es Salaam 2026",
-    "health medical jobs Tanzania 2026",
-    "UN WFP UNICEF jobs Tanzania 2026",
-    "site:ngojobsinafrica.com Tanzania",
-    "finance accounting ajira Tanzania 2026",
-  ],
-  UG: [
-    "jobs vacancies Uganda Kampala 2026",
-    "entry level graduate jobs Uganda 2026",
-    "NGO development jobs Uganda 2026",
-    "site:reliefweb.int jobs Uganda",
-    "health medical jobs Uganda 2026",
-    "IT technology jobs Kampala Uganda 2026",
-    "UN UNICEF WHO jobs Uganda 2026",
-    "finance accounting jobs Uganda 2026",
-    "site:ngojobsinafrica.com Uganda",
-    "engineering construction jobs Uganda 2026",
-  ],
-  RW: [
-    "jobs vacancies Rwanda Kigali 2026",
-    "IT technology software jobs Rwanda 2026",
-    "international organization NGO jobs Rwanda 2026",
-    "site:reliefweb.int jobs Rwanda",
-    "finance banking jobs Rwanda 2026",
-    "health medical jobs Rwanda 2026",
-    "UN WFP UNHCR jobs Rwanda 2026",
-    "site:ngojobsinafrica.com Rwanda",
-    "engineering infrastructure jobs Rwanda 2026",
-    "government public sector jobs Rwanda 2026",
-  ],
-  ET: [
-    "jobs vacancies Ethiopia Addis Ababa 2026",
-    "NGO jobs Ethiopia 2026",
-    "humanitarian jobs Ethiopia UNHCR 2026",
-    "site:reliefweb.int jobs Ethiopia",
-    "health medical jobs Ethiopia WHO 2026",
-    "finance accounting jobs Addis Ababa 2026",
-    "UN WFP UNICEF jobs Ethiopia 2026",
-    "site:ngojobsinafrica.com Ethiopia",
-    "teaching education jobs Ethiopia 2026",
-    "engineering logistics jobs Ethiopia 2026",
-  ],
-  CD: [
-    "offres emploi RDC Kinshasa 2026",
-    "recrutement ONG RDC Congo 2026",
-    "emplois mines extractives Congo 2026",
-    "offres emploi santé médecin RDC 2026",
-    "site:reliefweb.int emploi RDC Congo",
-    "UN UNICEF ONU recrutement RDC 2026",
-    "ingénieur civil génie civil RDC 2026",
-    "site:ngojobsinafrica.com DRC Congo",
-    "jobs in DRC Congo English 2026",
-    "recrutement entreprises Kinshasa Lubumbashi 2026",
-  ],
-  BI: [
-    "offres emploi Bujumbura Burundi 2026",
-    "recrutement ONG Burundi 2026",
-    "emplois fonctionnaire gouvernement Burundi 2026",
-    "site:reliefweb.int emploi Burundi",
-    "UN UNICEF UNHCR recrutement Burundi 2026",
-    "santé médecin emploi Burundi 2026",
-    "NGO jobs Burundi humanitarian 2026",
-    "site:ngojobsinafrica.com Burundi",
-    "emplois finances comptabilité Burundi 2026",
-    "jobs vacancies Burundi English 2026",
-  ],
-  SO: [
-    "site:reliefweb.int jobs Somalia",
-    "NGO jobs Mogadishu Somalia 2026",
-    "humanitarian jobs Somalia 2026",
-    "UN UNICEF UNHCR jobs Somalia 2026",
-    "jobs vacancies Hargeisa Somaliland 2026",
-    "health medical jobs Somalia WHO 2026",
-    "site:ngojobsinafrica.com Somalia",
-    "Somalia jobs English 2026",
-    "AMISOM peacekeeping jobs Somalia 2026",
-    "international NGO Somalia Mogadishu hiring 2026",
-  ],
-  SS: [
-    "site:reliefweb.int jobs South Sudan",
-    "NGO jobs Juba South Sudan 2026",
-    "humanitarian jobs South Sudan 2026",
-    "UN UNMISS UNICEF jobs South Sudan 2026",
-    "OCHA WFP jobs South Sudan 2026",
-    "health medical jobs South Sudan 2026",
-    "jobs vacancies Juba South Sudan 2026",
-    "site:ngojobsinafrica.com South Sudan",
-    "MSF IRC jobs South Sudan 2026",
-    "South Sudan international organization jobs 2026",
-  ],
+
+const PROFESSIONS = ['accounting', 'IT', 'software developer', 'nursing', 'medical', 'project manager', 'procurement', 'HR', 'finance', 'engineering', 'teaching'];
+const SECTORS = ['NGO', 'government', 'bank', 'UN', 'remote', 'graduate', 'internship', 'healthcare', 'humanitarian'];
+const EMPLOYERS = ['UNICEF', 'WHO', 'World Bank', 'Deloitte', 'PwC', 'WFP', 'Safaricom', 'Vodacom'];
+const CITIES: Record<string, string[]> = {
+  KE: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru'],
+  TZ: ['Dar es Salaam', 'Arusha', 'Mwanza', 'Dodoma'],
+  UG: ['Kampala', 'Entebbe', 'Jinja', 'Gulu'],
+  RW: ['Kigali', 'Musanze', 'Rubavu'],
+  ET: ['Addis Ababa', 'Hawassa', 'Dire Dawa'],
+  CD: ['Kinshasa', 'Lubumbashi', 'Goma'],
+  BI: ['Bujumbura', 'Gitega'],
+  SO: ['Mogadishu', 'Hargeisa'],
+  SS: ['Juba', 'Malakal'],
 };
+
+const JOB_QUERIES: Record<string, string[]> = {};
+for (const [code, cities] of Object.entries(CITIES)) {
+  const queries: string[] = [];
+  queries.push(`jobs ${code}`);
+  for (const prof of PROFESSIONS.slice(0, 5)) {
+    queries.push(`${prof} jobs ${code}`);
+    queries.push(`${prof} jobs ${cities[0]}`);
+  }
+  for (const sec of SECTORS.slice(0, 4)) {
+    queries.push(`${sec} jobs ${code}`);
+  }
+  for (const emp of EMPLOYERS.slice(0, 3)) {
+    queries.push(`${emp} jobs ${code}`);
+  }
+  for (let i = 0; i < 5; i++) {
+    const rProf = PROFESSIONS[Math.floor(Math.random() * PROFESSIONS.length)];
+    const rSec = SECTORS[Math.floor(Math.random() * SECTORS.length)];
+    const rCity = cities[Math.floor(Math.random() * cities.length)];
+    queries.push(`${rProf} ${rSec} jobs ${rCity}`);
+  }
+  JOB_QUERIES[code] = queries;
+}
+
 
 const TENDER_QUERIES: Record<string, string[]> = {
   KE: ["government tenders Kenya 2026", "site:reliefweb.int tenders Kenya", "UNOPS procurement Kenya", "NGO tenders Kenya 2026"],
@@ -249,25 +178,45 @@ async function countAll(cid: string) {
 }
 
 // ── Save functions ────────────────────────────────────────────────────────────
+function calculateSeoScore(job: BroadJobResource): number {
+  let score = 0;
+  if (job.companyName && job.companyName.toLowerCase() !== 'unknown') score += 10;
+  if (job.title) score += 10;
+  if (job.regionId) score += 10;
+  if (job.deadline && new Date(job.deadline) > new Date()) score += 10;
+  if (job.salaryMin || job.salaryMax) score += 8;
+  if (job.deadline) score += 8;
+  if (job.description && job.description.length > 500) score += 5;
+  if (job.sourceUrl && !job.sourceUrl.includes('google.com')) score += 5;
+  if (job.requirements && job.requirements.length > 0) score += 5;
+  return score;
+}
+
 async function saveJobs(items: BroadJobResource[], cid: string) {
   if (items.length === 0) return { ins: 0, errs: [] };
   try {
-    const values = items.map(job => ({
-      title: job.title,
-      companyName: job.companyName || 'Unknown',
-      description: job.description || 'No description',
-      requirements: job.requirements,
-      regionId: job.regionId,
-      countryId: cid,
-      jobType: job.jobType,
-      sourceUrl: job.sourceUrl,
-      postedDate: job.postedDate || new Date(),
-      deadline: job.deadline ?? null,
-      salaryMin: job.salaryMin?.toString() ?? null,
-      salaryMax: job.salaryMax?.toString() ?? null,
-      salaryCurrency: job.salaryCurrency ?? null,
-      isActive: true,
-    }));
+    const validItems = items.filter(job => calculateSeoScore(job) >= 30);
+    if (validItems.length === 0) return { ins: 0, errs: [] };
+
+    const values = validItems.map(job => {
+      const score = calculateSeoScore(job);
+      return {
+        title: job.title,
+        companyName: job.companyName || 'Unknown',
+        description: job.description || 'No description',
+        requirements: job.requirements,
+        regionId: job.regionId,
+        countryId: cid,
+        jobType: job.jobType,
+        sourceUrl: job.sourceUrl,
+        postedDate: job.postedDate || new Date(),
+        deadline: job.deadline ?? null,
+        salaryMin: job.salaryMin?.toString() ?? null,
+        salaryMax: job.salaryMax?.toString() ?? null,
+        salaryCurrency: job.salaryCurrency ?? null,
+        isActive: score >= 50,
+      };
+    });
     const r = await withDbTimeout(
       db.insert(jobs).values(values).onConflictDoNothing().returning({ id: jobs.id })
     );

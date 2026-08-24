@@ -57,47 +57,62 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const job = data[0];
-    const companyStr = (!job.companyName || job.companyName.toLowerCase() === 'unknown') ? '' : ` at ${job.companyName}`;
-    const title = `${job.title}${companyStr} | Jobs`;
+    const companyStr = (!job.companyName || job.companyName.toLowerCase() === 'unknown') ? '' : ' at ' + job.companyName;
+    const title = job.title + companyStr + ' | Jobs';
     const desc = job.description 
       ? (job.description.slice(0, 150) + (job.description.length > 150 ? '...' : ''))
-      : `Apply for the ${job.title} position${companyStr} in ${job.region || job.country || 'East Africa'}.`;
+      : 'Apply for the ' + job.title + ' position' + companyStr + ' in ' + (job.region || job.country || 'East Africa') + '.';
 
-    const url = `https://akilibrain.com/jobs/${lastSlug}`;
+    const url = 'https://akilibrain.com/jobs/' + lastSlug;
     const isExpired = job.deadline ? job.deadline < new Date() : !job.isActive;
 
     return {
       title,
       description: desc,
       keywords: [job.title, job.companyName, job.region || '', job.country || '', 'job vacancy', 'career'].filter(Boolean),
-      openGraph: { title, description: desc, url, type: 'article', publishedTime: job.createdAt.toISOString(), images: [{ url: `https://akilibrain.com/api/og/jobs/${lastSlug}`, width: 1200, height: 630 }] },
-      twitter: { card: 'summary_large_image', title, description: desc, images: [`https://akilibrain.com/api/og/jobs/${lastSlug}`] },
+      openGraph: { title, description: desc, url, type: 'article', publishedTime: job.createdAt.toISOString(), images: [{ url: 'https://akilibrain.com/api/og/jobs/' + lastSlug, width: 1200, height: 630 }] },
+      twitter: { card: 'summary_large_image', title, description: desc, images: ['https://akilibrain.com/api/og/jobs/' + lastSlug] },
       alternates: { canonical: url },
       ...(isExpired && { robots: { index: false, follow: false } }),
     };
   } else {
     // SEO Landing Page Metadata
-    let countryName = '';
-    let categoryName = '';
+    const COUNTRIES = ['tanzania', 'kenya', 'uganda', 'rwanda', 'ethiopia', 'somalia', 'burundi', 'south-sudan', 'djibouti', 'drc', 'congo'];
+    const CITIES = ['dar-es-salaam', 'arusha', 'mwanza', 'dodoma', 'nairobi', 'mombasa', 'kisumu', 'nakuru', 'kampala', 'entebbe', 'jinja', 'gulu', 'kigali', 'musanze', 'rubavu', 'addis-ababa', 'hawassa', 'dire-dawa', 'kinshasa', 'lubumbashi', 'goma', 'bujumbura', 'gitega', 'mogadishu', 'hargeisa', 'juba', 'malakal'];
+    const EXPERIENCE = ['entry-level', 'junior', 'mid-level', 'senior', 'manager', 'director', 'executive', 'graduate', 'internship'];
+    const EDUCATION = ['diploma', 'degree', 'bachelors', 'masters', 'phd', 'certificate'];
 
-    if (slugArray.length === 1) {
-      const slug = slugArray[0];
-      if (['tanzania', 'kenya', 'uganda', 'rwanda', 'ethiopia', 'somalia', 'burundi', 'south-sudan', 'djibouti'].includes(slug.toLowerCase())) {
-        countryName = toTitleCase(slug);
-      } else {
-        categoryName = toTitleCase(slug);
-      }
-    } else if (slugArray.length === 2) {
-      categoryName = toTitleCase(slugArray[0]);
-      countryName = toTitleCase(slugArray[1]);
+    let parsedCountry = '';
+    let parsedCity = '';
+    let parsedExperience = '';
+    let parsedEducation = '';
+    let keywordSlugs: string[] = [];
+
+    for (const slug of slugArray) {
+      const s = slug.toLowerCase();
+      if (COUNTRIES.includes(s)) parsedCountry = s;
+      else if (CITIES.includes(s)) parsedCity = s;
+      else if (EXPERIENCE.includes(s)) parsedExperience = s;
+      else if (EDUCATION.includes(s)) parsedEducation = s;
+      else keywordSlugs.push(slug);
     }
 
-    const title = `${categoryName ? categoryName + ' ' : ''}Jobs in ${countryName || 'East Africa'}`;
+    const countryName = parsedCountry ? toTitleCase(parsedCountry) : '';
+    const cityName = parsedCity ? toTitleCase(parsedCity) : '';
+    const experienceName = parsedExperience ? toTitleCase(parsedExperience.replace('-', ' ')) : '';
+    const educationName = parsedEducation ? toTitleCase(parsedEducation) : '';
+    const categoryName = keywordSlugs.map(toTitleCase).join(' ');
+
+    const titleParts = [experienceName, educationName, categoryName, 'Jobs'].filter(Boolean);
+    const locParts = [cityName, countryName].filter(Boolean);
+    
+    const title = titleParts.join(' ') + (locParts.length ? ' in ' + locParts.join(', ') : '');
+    
     return {
       title,
-      description: `Find the latest ${categoryName ? categoryName.toLowerCase() + ' ' : ''}jobs and career opportunities in ${countryName || 'East Africa'}. Salary information, vacancies, and top employers.`,
+      description: 'Find the latest ' + title.toLowerCase() + ' and career opportunities. Salary information, vacancies, and top employers.',
       openGraph: { title, type: 'website' },
-      alternates: { canonical: `https://akilibrain.com/jobs/${slugArray.join('/')}` },
+      alternates: { canonical: 'https://akilibrain.com/jobs/' + slugArray.join('/') },
     };
   }
 }
@@ -119,22 +134,31 @@ export default async function SlugRoute({
   }
 
   // SEO Landing Page Mode
-  let countryName = '';
-  let categoryName = '';
+  const COUNTRIES = ['tanzania', 'kenya', 'uganda', 'rwanda', 'ethiopia', 'somalia', 'burundi', 'south-sudan', 'djibouti', 'drc', 'congo'];
+  const CITIES = ['dar-es-salaam', 'arusha', 'mwanza', 'dodoma', 'nairobi', 'mombasa', 'kisumu', 'nakuru', 'kampala', 'entebbe', 'jinja', 'gulu', 'kigali', 'musanze', 'rubavu', 'addis-ababa', 'hawassa', 'dire-dawa', 'kinshasa', 'lubumbashi', 'goma', 'bujumbura', 'gitega', 'mogadishu', 'hargeisa', 'juba', 'malakal'];
+  const EXPERIENCE = ['entry-level', 'junior', 'mid-level', 'senior', 'manager', 'director', 'executive', 'graduate', 'internship'];
+  const EDUCATION = ['diploma', 'degree', 'bachelors', 'masters', 'phd', 'certificate'];
 
-  if (slugArray.length === 1) {
-    const slug = slugArray[0];
-    if (['tanzania', 'kenya', 'uganda', 'rwanda', 'ethiopia', 'somalia', 'burundi', 'south-sudan', 'djibouti'].includes(slug.toLowerCase())) {
-      countryName = toTitleCase(slug);
-    } else {
-      categoryName = toTitleCase(slug);
-    }
-  } else if (slugArray.length === 2) {
-    categoryName = toTitleCase(slugArray[0]);
-    countryName = toTitleCase(slugArray[1]);
-  } else {
-    notFound();
+  let parsedCountry = '';
+  let parsedCity = '';
+  let parsedExperience = '';
+  let parsedEducation = '';
+  let keywordSlugs: string[] = [];
+
+  for (const slug of slugArray) {
+    const s = slug.toLowerCase();
+    if (COUNTRIES.includes(s)) parsedCountry = s;
+    else if (CITIES.includes(s)) parsedCity = s;
+    else if (EXPERIENCE.includes(s)) parsedExperience = s;
+    else if (EDUCATION.includes(s)) parsedEducation = s;
+    else keywordSlugs.push(slug);
   }
+
+  const countryName = parsedCountry ? toTitleCase(parsedCountry) : '';
+  const cityName = parsedCity ? toTitleCase(parsedCity) : '';
+  const experienceName = parsedExperience ? toTitleCase(parsedExperience.replace('-', ' ')) : '';
+  const educationName = parsedEducation ? toTitleCase(parsedEducation) : '';
+  const categoryName = keywordSlugs.map(toTitleCase).join(' ');
 
   const PAGE_SIZE = 30;
   const pageStr = Array.isArray(searchParams?.page) ? searchParams.page[0] : searchParams?.page;
@@ -153,11 +177,23 @@ export default async function SlugRoute({
     const cRes = await safeQuery(db.select({ id: countries.id }).from(countries).where(ilike(countries.name, countryName)).limit(1));
     if (cRes.length > 0) countryId = cRes[0].id;
   }
+  
+  let regionId: string | undefined;
+  if (cityName) {
+    const rRes = await safeQuery(db.select({ id: regions.id }).from(regions).where(ilike(regions.name, cityName)).limit(1));
+    if (rRes.length > 0) regionId = rRes[0].id;
+  }
 
   const conditions = [
     activeCondition,
     countryId ? eq(jobs.countryId, countryId) : undefined,
-    categoryName ? ilike(jobs.title, `%${categoryName.replace(/jobs/i, '').trim()}%`) : undefined
+    regionId ? eq(jobs.regionId, regionId) : undefined,
+    categoryName ? or(
+      ilike(jobs.title, '%' + categoryName.replace(/jobs/i, '').trim() + '%'),
+      ilike(jobs.companyName, '%' + categoryName.replace(/jobs/i, '').trim() + '%')
+    ) : undefined,
+    experienceName ? ilike(jobs.title, '%' + experienceName + '%') : undefined,
+    educationName ? ilike(jobs.requirements, '%' + educationName + '%') : undefined
   ].filter(Boolean);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -182,23 +218,26 @@ export default async function SlugRoute({
   ]);
 
   const totalCount = totalCountResult?.[0]?.value || 0;
-  const titleStr = `${categoryName ? categoryName + ' ' : ''}Jobs in ${countryName || 'East Africa'}`;
+  
+  const titleParts = [experienceName, educationName, categoryName, 'Jobs'].filter(Boolean);
+  const locParts = [cityName, countryName].filter(Boolean);
+  const titleStr = titleParts.join(' ') + (locParts.length ? ' in ' + locParts.join(', ') : '');
 
   const itemListSchema = buildItemListSchema(
     titleStr,
-    `Active job openings for ${titleStr}`,
+    'Active job openings for ' + titleStr,
     data.slice(0, 20).map(({ job, country }, idx) => ({
       position: idx + 1,
-      name: `${job.title} at ${job.companyName}`,
+      name: job.title + ' at ' + job.companyName,
       description: job.description?.slice(0, 120) ?? undefined,
-      url: `https://akilibrain.com/jobs/${job.id}`,
+      url: 'https://akilibrain.com/jobs/' + job.id,
     }))
   );
 
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: 'Home', url: 'https://akilibrain.com' },
     { name: 'Jobs', url: 'https://akilibrain.com/jobs' },
-    { name: titleStr, url: `https://akilibrain.com/jobs/${slugArray.join('/')}` },
+    { name: titleStr, url: 'https://akilibrain.com/jobs/' + slugArray.join('/') },
   ]);
 
   return (
