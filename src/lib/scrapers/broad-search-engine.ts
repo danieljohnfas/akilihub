@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { getAllAggregatorDomains } from '../sources/aggregators';
 import { extractDeterministicJobFields } from './deterministic-extractor';
+import * as cheerio from 'cheerio';
 
 export interface BroadJobResource {
   title: string;
@@ -27,49 +28,51 @@ export interface BroadJobResource {
 // they are the employer's own hiring system.
 const BLOCKED_DOMAINS = getAllAggregatorDomains();
 
-// ── DuckDuckGo search via Python sidecar (free, no API key) ───────────────────
-async function searchDDGS(query: string, numResults: number): Promise<string[]> {
-  const sidecarUrl = (process.env.SCRAPLING_URL ?? 'http://localhost:8001').trim();
-
-  let res: Response | null = null;
-  let attempts = 0;
-  while (attempts < 12) {
-    attempts++;
-    try {
-      res = await fetch(`${sidecarUrl}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query.trim(), max_results: numResults, region: 'wt-wt', time_limit: 'm' }),
-        signal: AbortSignal.timeout(45_000),
-      });
-      if (res.ok) break;
-      console.warn(`[searchDDGS] Sidecar returned ${res.status}. Retrying in 5s... (Attempt ${attempts}/12)`);
-    } catch (err) {
-      console.warn(`[searchDDGS] Sidecar fetch failed: ${(err as Error).message}. Retrying in 5s... (Attempt ${attempts}/12)`);
-    }
-    await new Promise(r => setTimeout(r, 5000));
-  }
-
+// ── DuckDuckGo HTML Search (free, robust, direct fetch) ────────────────────────
+async function searchDDGHtml(query: string, numResults: number): Promise<string[]> {
   try {
-    if (!res || !res.ok) {
+    const res = await fetch("https://html.duckduckgo.com/html/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      body: `q=${encodeURIComponent(query)}`,
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      console.warn(`[searchDDGHtml] returned ${res.status}`);
       return [];
     }
 
-    const data = await res.json();
-    if (!data.success || !Array.isArray(data.results)) return [];
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const urls: string[] = [];
 
-    const urls: string[] = data.results
-      .map((r: { url?: string }) => r.url)
-      .filter((u: string | undefined) => !!u && !BLOCKED_DOMAINS.some(d => u.includes(d)));
+    $("a.result__url").each((i, el) => {
+      let href = $(el).attr("href");
+      if (!href) return;
+      if (href.startsWith("//duckduckgo.com/l/?uddg=")) {
+         href = decodeURIComponent(href.replace("//duckduckgo.com/l/?uddg=", "").split("&")[0]);
+      }
+      if (href && !BLOCKED_DOMAINS.some(d => href!.includes(d))) {
+        urls.push(href);
+      }
+    });
 
-    console.log(`[searchDDGS] DuckDuckGo returned ${urls.length} URLs for: "${query}"`);
-    return urls;
-  } catch {
+    const finalUrls = urls.slice(0, numResults);
+    if (finalUrls.length > 0) {
+      console.log(`[searchDDGHtml] DuckDuckGo returned ${finalUrls.length} URLs for: "${query}"`);
+    }
+    return finalUrls;
+  } catch (err) {
+    console.error(`[searchDDGHtml] Error:`, err);
     return [];
   }
 }
 
-// ── Serper.dev fallback (paid, used only when SERPER_API_KEY is set and ddgs fails) ──
+// ── Serper.dev fallback (paid, used only when SERPER_API_KEY is set) ────────
 async function searchSerper(query: string, numResults: number): Promise<string[]> {
   const apiKey = process.env.SERPER_API_KEY?.trim();
   if (!apiKey) return [];
@@ -100,83 +103,24 @@ async function searchSerper(query: string, numResults: number): Promise<string[]
   }
 }
 
-// ── SearXNG (open-source, no API key, no registration, works globally) ───────
-// Tries multiple public instances in order — falls to the next on failure.
-const SEARXNG_INSTANCES = [
-  'https://searx.be',
-  'https://search.privacyguides.net',
-  'https://searxng.world',
-  'https://paulgo.io',
-  'https://search.sapti.me',
-];
-
-async function searchSearXNG(query: string, numResults: number): Promise<string[]> {
-  for (const instance of SEARXNG_INSTANCES) {
-    try {
-      const url = new URL(`${instance}/search`);
-      url.searchParams.set('q', query);
-      url.searchParams.set('format', 'json');
-      url.searchParams.set('categories', 'general');
-      url.searchParams.set('language', 'en');
-      url.searchParams.set('time_range', 'month');
-      url.searchParams.set('safesearch', '0');
-
-      const res = await fetch(url.toString(), {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; AkiliScraper/1.0)',
-        },
-        signal: AbortSignal.timeout(12_000),
-      });
-
-      if (!res.ok) {
-        console.warn(`[searchSearXNG] ${instance} returned ${res.status} — trying next instance`);
-        continue;
-      }
-
-      const data = await res.json();
-      const results: Array<{ url?: string }> = data?.results ?? [];
-
-      const urls = results
-        .slice(0, numResults)
-        .map(r => r.url)
-        .filter((u): u is string => !!u && !BLOCKED_DOMAINS.some(d => u.includes(d)));
-
-      if (urls.length > 0) {
-        console.log(`[searchSearXNG] ${instance} → ${urls.length} URLs for: "${query}"`);
-        return urls;
-      }
-    } catch (err) {
-      console.warn(`[searchSearXNG] ${instance} failed: ${(err as Error).message} — trying next`);
-    }
-  }
-  return [];
-}
-
 /**
  * Searches for relevant URLs.
  *
  * Priority order:
- *   1. SearXNG       — free, open-source, no API key, works globally
- *   2. Serper.dev    — paid, used if credits available
- *   3. DuckDuckGo via Python sidecar — free, requires sidecar to be warm
+ *   1. DuckDuckGo HTML  — direct scraping via Cheerio, free, very reliable
+ *   2. Serper.dev       — paid, used if DDG fails and credits are available
  */
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
-  // 1. Try SearXNG — completely free, no key needed
-  const searxUrls = await searchSearXNG(query, numResults);
-  if (searxUrls.length > 0) return searxUrls;
-  console.warn(`[searchGoogle] SearXNG returned 0 results — trying Serper`);
+  // 1. Try DuckDuckGo HTML — completely free, robust
+  const ddgUrls = await searchDDGHtml(query, numResults);
+  if (ddgUrls.length > 0) return ddgUrls;
+  console.warn(`[searchGoogle] DuckDuckGo HTML returned 0 results — trying Serper`);
 
   // 2. Try Serper — fast when credits are available
   if (process.env.SERPER_API_KEY) {
     const serperUrls = await searchSerper(query, numResults);
     if (serperUrls.length > 0) return serperUrls;
-    console.warn(`[searchGoogle] Serper returned 0 results — trying DuckDuckGo sidecar`);
   }
-
-  // 3. DuckDuckGo via sidecar (free fallback)
-  const ddgsUrls = await searchDDGS(query, numResults);
-  if (ddgsUrls.length > 0) return ddgsUrls;
 
   console.warn(`[searchGoogle] All search engines returned 0 results for: "${query}"`);
   return [];
