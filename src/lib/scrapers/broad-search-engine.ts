@@ -100,19 +100,63 @@ async function searchSerper(query: string, numResults: number): Promise<string[]
   }
 }
 
+// ── Brave Search API (free tier: 2,000 queries/month, no credit card required) ─
+async function searchBrave(query: string, numResults: number): Promise<string[]> {
+  const apiKey = process.env.BRAVE_API_KEY?.trim();
+  if (!apiKey) return [];
+
+  try {
+    const url = new URL('https://api.search.brave.com/res/v1/web/search');
+    url.searchParams.set('q', query);
+    url.searchParams.set('count', String(Math.min(numResults, 20)));
+    url.searchParams.set('safesearch', 'off');
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip',
+        'X-Subscription-Token': apiKey,
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[searchBrave] API failed: ${res.status} ${res.statusText} — ${errText}`);
+      return [];
+    }
+
+    const data = await res.json();
+    const results = data?.web?.results ?? [];
+    const urls: string[] = results
+      .map((item: { url?: string }) => item.url)
+      .filter((u: string | undefined) => !!u && !BLOCKED_DOMAINS.some(d => u!.includes(d)));
+
+    console.log(`[searchBrave] Returned ${urls.length} URLs for: "${query}"`);
+    return urls;
+  } catch (error) {
+    console.error('[searchBrave] Error:', error);
+    return [];
+  }
+}
+
 /**
  * Searches for relevant URLs.
  *
- * Priority order (designed for Vercel + Render sidecar architecture):
- *   1. Serper.dev  — always available, instant, used when SERPER_API_KEY is set
- *   2. DuckDuckGo via Python sidecar — free but requires sidecar to be warm
- *
- * Rationale: SERPER_API_KEY is set in Vercel Production + Preview. The sidecar
- * (Render free tier) cold-starts in 30-60s, but the old timeout was only 4s.
- * This was silently killing tenders and compliance scrapers for 12+ days.
+ * Priority order:
+ *   1. Brave Search  — free (2k/month), no credit card, reliable
+ *   2. Serper.dev    — paid, used if credits available
+ *   3. DuckDuckGo via Python sidecar — free, requires sidecar to be warm
  */
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
-  // 1. Try Serper first — it's instant and always available when key is set
+  // 1. Try Brave first — free and reliable
+  if (process.env.BRAVE_API_KEY) {
+    const braveUrls = await searchBrave(query, numResults);
+    if (braveUrls.length > 0) return braveUrls;
+    console.warn(`[searchGoogle] Brave returned 0 results — trying Serper`);
+  }
+
+  // 2. Try Serper — fast when credits are available
   if (process.env.SERPER_API_KEY) {
     const serperUrls = await searchSerper(query, numResults);
     if (serperUrls.length > 0) return serperUrls;
