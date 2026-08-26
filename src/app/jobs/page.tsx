@@ -180,6 +180,11 @@ export default async function JobsPage({
             { label: 'Jobs in Tanzania', href: '/jobs?location=Tanzania' },
             { label: 'Jobs in Uganda', href: '/jobs?location=Uganda' },
             { label: 'Jobs in Rwanda', href: '/jobs?location=Rwanda' },
+            { label: 'Jobs in Ethiopia', href: '/jobs?location=Ethiopia' },
+            { label: 'Jobs in Somalia', href: '/jobs?location=Somalia' },
+            { label: 'Jobs in South Sudan', href: '/jobs?location=South Sudan' },
+            { label: 'Jobs in DRC', href: '/jobs?location=Democratic Republic of the Congo' },
+            { label: 'Jobs in Burundi', href: '/jobs?location=Burundi' },
           ].map(({ label, href }) => (
             <Link
               key={href}
@@ -272,7 +277,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
   ]);
   const totalCount = totalCountResult?.[0]?.value || 0;
 
-  const hasFilters = q || type || company || country;
+  const hasFilters = q || type || company || country || time;
 
   const itemListSchema = buildItemListSchema(
     'Jobs & Careers in East Africa',
@@ -375,27 +380,37 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
       )}
 
       {/* Pagination */}
-      {data.length > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
-          {page > 1 && (
-            <Link
-              href={`/jobs?q=${q || ''}&type=${type || ''}&company=${company || ''}&country=${country || ''}&time=${time || ''}&layout=${layout || 'grid'}&page=${page - 1}`}
-              className={buttonVariants({ variant: 'outline' })}
-            >
-              ← Previous
-            </Link>
-          )}
-          <span className="text-sm text-muted-foreground">Page {page}</span>
-          {data.length === PAGE_SIZE && (
-            <Link
-              href={`/jobs?q=${q || ''}&type=${type || ''}&company=${company || ''}&country=${country || ''}&time=${time || ''}&layout=${layout || 'grid'}&page=${page + 1}`}
-              className={buttonVariants({ variant: 'outline' })}
-            >
-              Next →
-            </Link>
-          )}
-        </div>
-      )}
+      {data.length > 0 && (() => {
+        const baseParams = {
+          ...(q ? { q } : {}),
+          ...(type ? { type } : {}),
+          ...(company ? { company } : {}),
+          ...(country ? { country } : {}),
+          ...(time ? { time } : {}),
+          layout,
+        };
+        return (
+          <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
+            {page > 1 && (
+              <Link
+                href={`/jobs?${new URLSearchParams({ ...baseParams, page: String(page - 1) }).toString()}`}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                ← Previous
+              </Link>
+            )}
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            {data.length === PAGE_SIZE && (
+              <Link
+                href={`/jobs?${new URLSearchParams({ ...baseParams, page: String(page + 1) }).toString()}`}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                Next →
+              </Link>
+            )}
+          </div>
+        );
+      })()}
 
       {/* SEO-rich Content Block for AdSense / Googlebot */}
       <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
@@ -411,16 +426,16 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-            <h2 className="text-xl font-semibold text-foreground mb-3">Top Industries Hiring in 2024</h2>
+            <h3 className="text-xl font-semibold text-foreground mb-3">Top Industries Hiring in 2026</h3>
             <ul className="space-y-2 text-sm list-disc list-inside">
               <li><strong>Information Technology (IT):</strong> High demand for software engineers, data analysts, and cybersecurity experts, particularly in tech hubs like Nairobi (Silicon Savannah) and Kigali.</li>
-              <li><strong>Financial Services & Fintech:</strong> Roles in mobile money, digital banking, and microfinance are rapidly expanding across the region.</li>
-              <li><strong>NGOs & Development:</strong> International organizations frequently hire specialists in public health, agriculture, and project management in Uganda and Tanzania.</li>
+              <li><strong>Financial Services &amp; Fintech:</strong> Roles in mobile money, digital banking, and microfinance are rapidly expanding across the region.</li>
+              <li><strong>NGOs &amp; Development:</strong> International organizations frequently hire specialists in public health, agriculture, and project management in Uganda and Tanzania.</li>
               <li><strong>Renewable Energy:</strong> Opportunities in solar power, wind energy, and sustainability consulting are on the rise.</li>
             </ul>
           </div>
           <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-            <h2 className="text-xl font-semibold text-foreground mb-3">Tips for Crafting a Winning Application</h2>
+            <h3 className="text-xl font-semibold text-foreground mb-3">Tips for Crafting a Winning Application</h3>
             <ul className="space-y-2 text-sm list-disc list-inside">
               <li><strong>Tailor Your CV:</strong> Ensure your resume highlights specific skills and experiences relevant to the job description. Use industry-standard keywords.</li>
               <li><strong>Write a Compelling Cover Letter:</strong> Address the hiring manager directly and explain why you are uniquely qualified for the role.</li>
@@ -431,18 +446,18 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
         </div>
         
         <div className="border border-white/10 rounded-xl p-6 bg-white/5">
-            <h2 className="text-xl font-semibold text-foreground mb-3">Frequently Asked Questions (FAQ)</h2>
+            <h3 className="text-xl font-semibold text-foreground mb-3">Frequently Asked Questions (FAQ)</h3>
             <div className="space-y-4">
               <div>
-                <h3 className="font-semibold text-foreground">Are the jobs on this platform verified?</h3>
+                <h4 className="font-semibold text-foreground">Are the jobs on this platform verified?</h4>
                 <p className="text-sm mt-1">Yes, we aggregate job postings from reputable employers, official government portals, and trusted NGO career sites to ensure authenticity.</p>
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">How often is the job board updated?</h3>
+                <h4 className="font-semibold text-foreground">How often is the job board updated?</h4>
                 <p className="text-sm mt-1">Our platform is updated daily with fresh listings, ensuring you have access to the latest opportunities as soon as they become available.</p>
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">Can I find remote jobs here?</h3>
+                <h4 className="font-semibold text-foreground">Can I find remote jobs here?</h4>
                 <p className="text-sm mt-1">Absolutely. You can use our &quot;Job Type&quot; filter to specifically search for remote roles that allow you to work from anywhere in East Africa or globally.</p>
               </div>
             </div>

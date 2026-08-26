@@ -19,10 +19,10 @@ export function Footer() {
             Providing critical data for professionals across the region.
           </p>
           <div className="flex items-center gap-4">
-            <Link href="https://twitter.com/akilibrain" target="_blank" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all">
+            <Link href="https://twitter.com/akilibrain" target="_blank" aria-label="Follow AkiliBrain on Twitter" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all">
               <Icon icon="mdi:twitter" className="w-4 h-4 text-white" />
             </Link>
-            <Link href="https://linkedin.com/company/akilibrain" target="_blank" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all">
+            <Link href="https://linkedin.com/company/akilibrain" target="_blank" aria-label="Follow AkiliBrain on LinkedIn" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-primary transition-all">
               <Icon icon="mdi:linkedin" className="w-4 h-4 text-white" />
             </Link>
           </div>
@@ -76,7 +76,7 @@ export function Footer() {
               required 
               className="bg-black/20 border-white/10 focus-visible:ring-primary/50"
             />
-            <Button type="submit" size="icon" className="shrink-0 transition-transform active:scale-95">
+            <Button type="submit" size="icon" aria-label="Subscribe to newsletter" className="shrink-0 transition-transform active:scale-95">
               <Send className="w-4 h-4" />
             </Button>
           </form>

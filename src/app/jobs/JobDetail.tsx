@@ -345,9 +345,11 @@ export async function JobDetail({
                     {job.sector} Sector Jobs
                   </Link>
                 )}
-                <Link href={`/jobs/${countryCode?.toLowerCase() || 'africa'}/${region?.toLowerCase().replace(/ /g, '-') || ''}`} className="text-sm text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-full">
-                  Jobs in {region || country || 'East Africa'}
-                </Link>
+                {(region || country) && (
+                  <Link href={`/jobs/${countryCode?.toLowerCase() || 'africa'}/${(region || country)!.toLowerCase().replace(/ /g, '-')}`} className="text-sm text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-full">
+                    Jobs in {region || country || 'East Africa'}
+                  </Link>
+                )}
               </div>
             </div>
           </section>

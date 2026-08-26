@@ -90,7 +90,7 @@ export function JobCard({
           <div className="flex items-center gap-1.5 text-xs text-white/60 md:w-32 md:justify-end ml-auto md:ml-0">
             <Calendar className="w-3.5 h-3.5" />
             <span className="truncate">
-              {deadline ? (isExpired ? 'Closed' : `Due ${formatDistanceToNow(deadline)}`) : postedDate ? `${formatDistanceToNow(postedDate)}` : `Found ${formatDistanceToNow(createdAt)}`}
+              {deadline ? (isExpired ? 'Closed' : `Due ${formatDistanceToNow(deadline, { addSuffix: true })}`) : postedDate ? `${formatDistanceToNow(postedDate, { addSuffix: true })}` : `Found ${formatDistanceToNow(createdAt, { addSuffix: true })}`}
             </span>
           </div>
         </div>
