@@ -56,7 +56,6 @@ jobs:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
-          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
           SCRAPLING_URL: https://akilihub-scraper.onrender.com
         run: npx tsx scripts/mass-scrape.ts
 

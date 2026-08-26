@@ -100,61 +100,72 @@ async function searchSerper(query: string, numResults: number): Promise<string[]
   }
 }
 
-// ── Brave Search API (free tier: 2,000 queries/month, no credit card required) ─
-async function searchBrave(query: string, numResults: number): Promise<string[]> {
-  const apiKey = process.env.BRAVE_API_KEY?.trim();
-  if (!apiKey) return [];
+// ── SearXNG (open-source, no API key, no registration, works globally) ───────
+// Tries multiple public instances in order — falls to the next on failure.
+const SEARXNG_INSTANCES = [
+  'https://searx.be',
+  'https://search.privacyguides.net',
+  'https://searxng.world',
+  'https://paulgo.io',
+  'https://search.sapti.me',
+];
 
-  try {
-    const url = new URL('https://api.search.brave.com/res/v1/web/search');
-    url.searchParams.set('q', query);
-    url.searchParams.set('count', String(Math.min(numResults, 20)));
-    url.searchParams.set('safesearch', 'off');
+async function searchSearXNG(query: string, numResults: number): Promise<string[]> {
+  for (const instance of SEARXNG_INSTANCES) {
+    try {
+      const url = new URL(`${instance}/search`);
+      url.searchParams.set('q', query);
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('categories', 'general');
+      url.searchParams.set('language', 'en');
+      url.searchParams.set('time_range', 'month');
+      url.searchParams.set('safesearch', '0');
 
-    const res = await fetch(url.toString(), {
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Encoding': 'gzip',
-        'X-Subscription-Token': apiKey,
-      },
-      signal: AbortSignal.timeout(15_000),
-    });
+      const res = await fetch(url.toString(), {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; AkiliScraper/1.0)',
+        },
+        signal: AbortSignal.timeout(12_000),
+      });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`[searchBrave] API failed: ${res.status} ${res.statusText} — ${errText}`);
-      return [];
+      if (!res.ok) {
+        console.warn(`[searchSearXNG] ${instance} returned ${res.status} — trying next instance`);
+        continue;
+      }
+
+      const data = await res.json();
+      const results: Array<{ url?: string }> = data?.results ?? [];
+
+      const urls = results
+        .slice(0, numResults)
+        .map(r => r.url)
+        .filter((u): u is string => !!u && !BLOCKED_DOMAINS.some(d => u.includes(d)));
+
+      if (urls.length > 0) {
+        console.log(`[searchSearXNG] ${instance} → ${urls.length} URLs for: "${query}"`);
+        return urls;
+      }
+    } catch (err) {
+      console.warn(`[searchSearXNG] ${instance} failed: ${(err as Error).message} — trying next`);
     }
-
-    const data = await res.json();
-    const results = data?.web?.results ?? [];
-    const urls: string[] = results
-      .map((item: { url?: string }) => item.url)
-      .filter((u: string | undefined) => !!u && !BLOCKED_DOMAINS.some(d => u!.includes(d)));
-
-    console.log(`[searchBrave] Returned ${urls.length} URLs for: "${query}"`);
-    return urls;
-  } catch (error) {
-    console.error('[searchBrave] Error:', error);
-    return [];
   }
+  return [];
 }
 
 /**
  * Searches for relevant URLs.
  *
  * Priority order:
- *   1. Brave Search  — free (2k/month), no credit card, reliable
+ *   1. SearXNG       — free, open-source, no API key, works globally
  *   2. Serper.dev    — paid, used if credits available
  *   3. DuckDuckGo via Python sidecar — free, requires sidecar to be warm
  */
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
-  // 1. Try Brave first — free and reliable
-  if (process.env.BRAVE_API_KEY) {
-    const braveUrls = await searchBrave(query, numResults);
-    if (braveUrls.length > 0) return braveUrls;
-    console.warn(`[searchGoogle] Brave returned 0 results — trying Serper`);
-  }
+  // 1. Try SearXNG — completely free, no key needed
+  const searxUrls = await searchSearXNG(query, numResults);
+  if (searxUrls.length > 0) return searxUrls;
+  console.warn(`[searchGoogle] SearXNG returned 0 results — trying Serper`);
 
   // 2. Try Serper — fast when credits are available
   if (process.env.SERPER_API_KEY) {
@@ -163,7 +174,7 @@ export async function searchGoogle(query: string, numResults: number = 20): Prom
     console.warn(`[searchGoogle] Serper returned 0 results — trying DuckDuckGo sidecar`);
   }
 
-  // 2. DuckDuckGo via sidecar (free fallback)
+  // 3. DuckDuckGo via sidecar (free fallback)
   const ddgsUrls = await searchDDGS(query, numResults);
   if (ddgsUrls.length > 0) return ddgsUrls;
 
