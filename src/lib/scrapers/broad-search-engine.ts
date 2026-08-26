@@ -103,20 +103,88 @@ async function searchSerper(query: string, numResults: number): Promise<string[]
   }
 }
 
+// ── SearXNG Dynamic Fallback ──────────────────────────────────────────────
+let cachedSearxngInstances: string[] | null = null;
+let lastSearxngFetch = 0;
+
+async function getSearxngInstances() {
+  if (cachedSearxngInstances && Date.now() - lastSearxngFetch < 1000 * 60 * 60) {
+    return cachedSearxngInstances;
+  }
+  try {
+    const res = await fetch("https://searx.space/data/instances.json", { signal: AbortSignal.timeout(10000) });
+    const data = await res.json();
+    const instances = Object.keys(data.instances).filter(k => {
+      const inst = data.instances[k];
+      return inst.network_type === "normal" && inst.error === null && (inst.timing?.search?.all?.median ?? 10) < 2.0;
+    });
+    // Shuffle the instances
+    cachedSearxngInstances = instances.sort(() => Math.random() - 0.5);
+    lastSearxngFetch = Date.now();
+    return cachedSearxngInstances;
+  } catch (err) {
+    console.warn(`[SearXNG] Failed to fetch dynamic instances:`, err);
+    return ['https://paulgo.io/', 'https://baresearch.org/', 'https://opnxng.com/'];
+  }
+}
+
+async function searchSearXNG(query: string, numResults: number): Promise<string[]> {
+  const instances = await getSearxngInstances();
+  for (const instance of instances.slice(0, 15)) { // Try up to 15 instances
+    try {
+      const url = new URL(`search`, instance);
+      url.searchParams.set('q', query);
+      url.searchParams.set('format', 'json');
+      url.searchParams.set('categories', 'general');
+      url.searchParams.set('language', 'en');
+      url.searchParams.set('time_range', 'month');
+
+      const res = await fetch(url.toString(), {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!res.ok) continue;
+      
+      const data = await res.json();
+      const results: Array<{ url?: string }> = data?.results ?? [];
+
+      const urls = results
+        .slice(0, numResults)
+        .map(r => r.url)
+        .filter((u): u is string => !!u && !BLOCKED_DOMAINS.some(d => u.includes(d)));
+
+      if (urls.length > 0) {
+        console.log(`[searchSearXNG] ${instance} → ${urls.length} URLs for: "${query}"`);
+        return urls;
+      }
+    } catch (err) {
+      // ignore and try next
+    }
+  }
+  return [];
+}
+
 /**
  * Searches for relevant URLs.
  *
  * Priority order:
  *   1. DuckDuckGo HTML  — direct scraping via Cheerio, free, very reliable
- *   2. Serper.dev       — paid, used if DDG fails and credits are available
+ *   2. SearXNG Dynamic  — loops through 50+ free public instances
+ *   3. Serper.dev       — paid, used if DDG and SearXNG fail and credits are available
  */
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
   // 1. Try DuckDuckGo HTML — completely free, robust
   const ddgUrls = await searchDDGHtml(query, numResults);
   if (ddgUrls.length > 0) return ddgUrls;
-  console.warn(`[searchGoogle] DuckDuckGo HTML returned 0 results — trying Serper`);
+  console.warn(`[searchGoogle] DuckDuckGo HTML returned 0 results — trying SearXNG Dynamic`);
 
-  // 2. Try Serper — fast when credits are available
+  // 2. Try SearXNG dynamic rotating proxies
+  const searxUrls = await searchSearXNG(query, numResults);
+  if (searxUrls.length > 0) return searxUrls;
+  console.warn(`[searchGoogle] SearXNG also returned 0 results — trying Serper`);
+
+  // 3. Try Serper — fast when credits are available
   if (process.env.SERPER_API_KEY) {
     const serperUrls = await searchSerper(query, numResults);
     if (serperUrls.length > 0) return serperUrls;
@@ -372,4 +440,5 @@ export async function discoverJobs(query: string, maxPages: number = 5): Promise
   console.log(`[discoverJobs] Finished. Total jobs discovered: ${allJobs.length}`);
   return allJobs;
 }
+
 
