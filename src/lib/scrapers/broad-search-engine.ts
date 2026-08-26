@@ -406,7 +406,7 @@ export async function discoverJobs(query: string, maxPages: number = 5): Promise
   console.log(`[discoverJobs] Found ${urls.length} viable URLs to scrape.`);
 
   const allJobs: BroadJobResource[] = [];
-  const CONCURRENT = 3; // 3 simultaneous fetches — polite but ~3× faster than sequential
+  const CONCURRENT = 10; // 10 simultaneous fetches — polite but ~3× faster than sequential
   const urlsToProcess = urls.slice(0, maxPages);
 
   for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
@@ -440,5 +440,6 @@ export async function discoverJobs(query: string, maxPages: number = 5): Promise
   console.log(`[discoverJobs] Finished. Total jobs discovered: ${allJobs.length}`);
   return allJobs;
 }
+
 
 
