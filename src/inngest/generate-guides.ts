@@ -62,7 +62,35 @@ const TOPICS = [
   "Agri-tech startups revolutionizing farming in Kenya and Uganda",
   "Renewable energy careers and solar jobs in East Africa",
   "Cybersecurity threats and compliance for Tanzanian banks",
-  "E-commerce logistics and supply chain roles in Rwanda"
+  "E-commerce logistics and supply chain roles in Rwanda",
+
+  // Somalia
+  "Business opportunities and economic recovery in Somalia 2026",
+  "Doing business in Mogadishu — permits, registration, and compliance",
+  "Somalia government tenders and procurement process guide",
+  "Job market and career opportunities in Somalia humanitarian sector",
+  "Somalia telecom and mobile money sector growth",
+
+  // South Sudan
+  "Business registration and compliance in South Sudan Juba",
+  "South Sudan government procurement and tender opportunities",
+  "Working in South Sudan — NGO and humanitarian job opportunities",
+  "South Sudan oil sector jobs and economic development",
+  "Investment opportunities in South Sudan's emerging economy",
+
+  // DRC (Democratic Republic of the Congo)
+  "Doing business in Kinshasa DRC — registration, taxes, compliance",
+  "DRC mining sector jobs and procurement opportunities 2026",
+  "Government tenders in Democratic Republic of the Congo",
+  "DRC digital economy and mobile money growth opportunities",
+  "NGO and development sector jobs in DRC 2026",
+
+  // Burundi
+  "Business setup and compliance in Burundi Bujumbura",
+  "Burundi government procurement and tender opportunities",
+  "Jobs and career opportunities in Burundi 2026",
+  "Burundi economic development and investment climate",
+  "Agriculture and agri-tech opportunities in Burundi",
 ];
 
 const GuideContentSchema = z.object({
@@ -90,7 +118,7 @@ export const generateWeeklyGuidesJob = inngest.createFunction(
     // 3. Generate the guide
     const guideData = await step.run("generate-guide-content", async () => {
       const prompt = `You are the lead editor for AkiliBrain, East Africa's Professional Intelligence Platform.
-Your audience consists of professionals, contractors, health workers, and developers in Kenya, Tanzania, Uganda, Rwanda, and Ethiopia.
+Your audience consists of professionals, contractors, health workers, and developers in Kenya, Tanzania, Uganda, Rwanda, Ethiopia, Somalia, South Sudan, Democratic Republic of the Congo, and Burundi.
 Write a deep-dive, professional guide/article about the following topic: "${topic}".
 
 Use insights that reflect East African realities. 

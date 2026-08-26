@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Required for Docker deployment: emits a minimal standalone server
+  // in .next/standalone that includes only the files needed to run.
+  output: 'standalone',
+
+  // Skip type-checking during `next build` on the production server.
+  // Running it at deploy time OOMs on 1GB RAM because the TS worker spawns a second large Node.js process.
+  typescript: { ignoreBuildErrors: true },
+
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion', '@iconify/react'],
   },
@@ -9,9 +17,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       // www.akilibrain.com/* → akilibrain.com/*
-      // NOTE: Do NOT add a redirect for akilibrain.com → https://akilibrain.com
-      // Vercel handles https upgrades automatically. Adding it here causes
-      // ERR_TOO_MANY_REDIRECTS because the rule matches the canonical domain itself.
+      // NOTE: HTTPS enforcement is handled by Cloudflare "Always Use HTTPS".
+      // Do NOT add an x-forwarded-proto redirect here — Cloudflare terminates
+      // TLS and sends HTTP to the origin, so that rule would loop infinitely.
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.akilibrain.com' }],
@@ -87,6 +95,14 @@ const nextConfig: NextConfig = {
         source: '/tenders/:id/apply',
         headers: [
           { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      },
+      // Disable nginx response buffering so Server Components stream properly.
+      // Required when nginx sits in front of Next.js (Cloudflare → nginx → Next.js).
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Accel-Buffering', value: 'no' },
         ],
       },
     ];

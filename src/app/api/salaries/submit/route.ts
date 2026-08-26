@@ -13,8 +13,8 @@ const submitSchema = z.object({
   experienceLevel: z.enum(["entry", "mid", "senior", "executive"]),
   employmentType: z.enum(["full_time", "part_time", "contract", "consultancy"]),
   currency: z.string().min(3),
-  grossMonthlySalary: z.number().positive("Gross salary must be positive"),
-  netMonthlySalary: z.number().positive().optional(),
+  grossMonthlySalary: z.number().positive("Gross salary must be positive").min(100, "Salary too low").max(100000000, "Salary exceeds plausible maximum"),
+  netMonthlySalary: z.number().positive().min(100).max(100000000).optional(),
   yearsOfExperience: z.number().min(0).optional(),
   // Strategy 3: optional work email for email-domain verification
   workEmail: z.string().email().optional(),

@@ -34,9 +34,17 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
   if (discovered.length === 0) return 0;
 
   // Resolve country dynamically per job and synchronously resolve employer URLs
-  const resolvedJobs = await Promise.all(discovered.map(async job => {
+  const resolvedJobs = (await Promise.all(discovered.map(async job => {
     // If AI found a country, see if we have it in the DB. Otherwise, fallback to the cron's target country.
-    const jobCountryId = job.countryCode ? await getCountryId(job.countryCode) : null;
+    let jobCountryId = null;
+    if (job.countryCode) {
+      jobCountryId = await getCountryId(job.countryCode);
+      // If the AI explicitly found a country code but we don't support it, reject the job!
+      if (!jobCountryId) {
+        console.log(`[scrape-jobs] Rejecting job for unsupported country code: ${job.countryCode}`);
+        return null;
+      }
+    }
     
     // Strict employer-first resolution
     const classification = classifySourceUrl(job.sourceUrl);
@@ -63,7 +71,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
       employerUrl,
       isAggregatorSource
     };
-  }));
+  }))).filter((j): j is NonNullable<typeof j> => j !== null);
 
   // Attempt batch insert first (10-30x faster than one-by-one)
   try {

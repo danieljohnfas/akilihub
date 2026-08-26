@@ -23,10 +23,10 @@ export async function LiveStats({
   ];
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-6 mt-8 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm mx-auto max-w-fit">
+    <div className="flex flex-wrap items-center justify-center gap-6 mt-8 p-4 rounded-2xl bg-card border border-border shadow-sm backdrop-blur-sm mx-auto max-w-fit">
       {stats.map((stat, i) => (
         <div key={stat.label} className="flex items-center gap-3 px-2">
-          <div className={`p-2 rounded-lg bg-black/20 ring-1 ring-white/10 ${stat.color}`}>
+          <div className={`p-2 rounded-lg bg-muted ring-1 ring-border dark:bg-black/20 dark:ring-white/10 ${stat.color}`}>
             <stat.icon className="w-5 h-5" />
           </div>
           <div className="flex flex-col text-left">
@@ -34,7 +34,7 @@ export async function LiveStats({
             <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium mt-1">{stat.label}</span>
           </div>
           {i < stats.length - 1 && (
-            <div className="hidden sm:block w-px h-10 bg-white/10 ml-6" />
+            <div className="hidden sm:block w-px h-10 bg-border ml-6" />
           )}
         </div>
       ))}

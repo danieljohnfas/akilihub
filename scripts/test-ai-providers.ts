@@ -1,99 +1,54 @@
-/**
- * AI Provider Health Check
- * Tests every configured provider with a minimal structured-output request.
- */
+import { config } from 'dotenv';
+config({ path: '.env.local', override: true });
+import dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
+(process.env as any).NODE_ENV = 'production';
+
+import { generateObject } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogle } from '@ai-sdk/google';
 import { createMistral } from '@ai-sdk/mistral';
 import { createCohere } from '@ai-sdk/cohere';
-import { createOpenAI } from '@ai-sdk/openai';
 import { createGroq } from '@ai-sdk/groq';
-import { generateObject, generateText } from 'ai';
 import { z } from 'zod';
 
-const schema = z.object({ capital: z.string() });
-const prompt = 'What is the capital of Kenya? Reply in JSON.';
+const TIMEOUT_MS = 25000;
+const schema = z.object({ answer: z.string() });
+const prompt = 'What is the capital of Kenya? Respond concisely.';
 
-type ProviderResult = { name: string; status: 'ok' | 'fail'; ms?: number; error?: string };
-
-async function testObject(name: string, modelFn: () => any): Promise<ProviderResult> {
-  const start = Date.now();
-  try {
-    const model = modelFn();
-    await generateObject({ model, schema, prompt, mode: 'json' });
-    return { name, status: 'ok', ms: Date.now() - start };
-  } catch (e: any) {
-    return { name, status: 'fail', ms: Date.now() - start, error: e?.message?.slice(0, 120) };
-  }
+function env(name: string): string | undefined {
+  return process.env[name]?.trim();
 }
 
-async function testText(name: string, modelFn: () => any): Promise<ProviderResult> {
-  const start = Date.now();
-  try {
-    const model = modelFn();
-    await generateText({ model, prompt });
-    return { name, status: 'ok', ms: Date.now() - start };
-  } catch (e: any) {
-    return { name, status: 'fail', ms: Date.now() - start, error: e?.message?.slice(0, 120) };
-  }
+interface ProviderDef {
+  name: string;
+  priority: number;
+  build: () => any;
 }
 
-function keys(base: string): string[] {
-  const out: string[] = [];
-  const pat = new RegExp(`^${base}(?:_\\d+)?$`);
-  for (const [k, v] of Object.entries(process.env)) {
-    if (pat.test(k) && v?.trim()) out.push(v.trim());
-  }
-  return out;
-}
+const providers: ProviderDef[] = [];
+
+if (env('CEREBRAS_API_KEY')) providers.push({ name: 'Cerebras Llama 3.3 70B', priority: 1, build: () => createOpenAI({ apiKey: env('CEREBRAS_API_KEY')!, baseURL: 'https://api.cerebras.ai/v1' })('llama-3.3-70b') });
+if (env('SAMBANOVA_API_KEY')) providers.push({ name: 'SambaNova Llama 3.3 70B', priority: 1, build: () => createOpenAI({ apiKey: env('SAMBANOVA_API_KEY')!, baseURL: 'https://api.sambanova.ai/v1', compatibility: 'compatible' })('Meta-Llama-3.3-70B-Instruct') });
+if (env('ZAI_API_KEY')) providers.push({ name: 'Z.ai GLM-5.2', priority: 1, build: () => createOpenAI({ apiKey: env('ZAI_API_KEY')!, baseURL: 'https://open.bigmodel.cn/api/paas/v4/' })('glm-5.2') });
+if (env('GROQ_API_KEY')) providers.push({ name: 'Groq Llama 3 70B', priority: 1, build: () => createGroq({ apiKey: env('GROQ_API_KEY')! })('llama3-70b-8192') });
+if (env('MISTRAL_API_KEY')) providers.push({ name: 'Mistral Small', priority: 2, build: () => createMistral({ apiKey: env('MISTRAL_API_KEY')! })('mistral-small-latest') });
+if (env('GOOGLE_GENERATIVE_AI_API_KEY')) providers.push({ name: 'Google Gemini 2.5 Flash', priority: 3, build: () => createGoogle({ apiKey: env('GOOGLE_GENERATIVE_AI_API_KEY')! })('gemini-2.5-flash') });
+if (env('CLOUDFLARE_API_TOKEN') && env('CLOUDFLARE_ACCOUNT_ID')) providers.push({ name: 'Cloudflare Workers AI', priority: 5, build: () => createOpenAI({ apiKey: env('CLOUDFLARE_API_TOKEN')!, baseURL: `https://api.cloudflare.com/client/v4/accounts/${env('CLOUDFLARE_ACCOUNT_ID')}/ai/v1`, compatibility: 'compatible' })('@cf/meta/llama-3.2-3b-instruct') });
+if (env('HYPERBOLIC_API_KEY')) providers.push({ name: 'Hyperbolic Llama 3.3 70B', priority: 5, build: () => createOpenAI({ apiKey: env('HYPERBOLIC_API_KEY')!, baseURL: 'https://api.hyperbolic.xyz/v1' })('meta-llama/Llama-3.3-70B-Instruct') });
+if (env('OPENROUTER_API_KEY')) providers.push({ name: 'OpenRouter Gemma 2 9B Free', priority: 6, build: () => createOpenAI({ apiKey: env('OPENROUTER_API_KEY')!, baseURL: 'https://openrouter.ai/api/v1', defaultHeaders: { 'HTTP-Referer': 'https://akilibrain.com' } })('google/gemma-2-9b-it:free') });
+if (env('HUGGINGFACE_API_KEY')) providers.push({ name: 'HuggingFace Llama 3.3 70B', priority: 8, build: () => createOpenAI({ apiKey: env('HUGGINGFACE_API_KEY')!, baseURL: 'https://router.huggingface.co/v1' })('meta-llama/Llama-3.3-70B-Instruct') });
+if (env('COHERE_API_KEY')) providers.push({ name: 'Cohere Command R+', priority: 9, build: () => createCohere({ apiKey: env('COHERE_API_KEY')! })('command-r-plus-08-2024') });
 
 async function main() {
-  const tests: (() => Promise<ProviderResult>)[] = [];
-
-  // Groq, Cerebras, SambaNova, OpenRouter are configured as supportsStructured: false in router.ts,
-  // so they will only be used with generateText in the app. We test them with testText.
-
-  for (const [i, k] of keys('GROQ_API_KEY').entries())
-    tests.push(() => testText(`Groq Llama 3.3 70B (${i+1})`, () => createGroq({ apiKey: k })('llama-3.3-70b-versatile')));
-
-  for (const [i, k] of keys('MISTRAL_API_KEY').entries())
-    tests.push(() => testObject(`Mistral Small (${i+1})`, () => createMistral({ apiKey: k })('mistral-small-latest')));
-
-  for (const [i, k] of keys('GOOGLE_GENERATIVE_AI_API_KEY').entries())
-    tests.push(() => testObject(`Gemini 2.5 Flash (${i+1})`, () => createGoogle({ apiKey: k })('gemini-2.5-flash')));
-
-  for (const [i, k] of keys('CEREBRAS_API_KEY').entries())
-    tests.push(() => testText(`Cerebras Llama 3.1 8B (${i+1})`, () => createOpenAI({ apiKey: k, baseURL: 'https://api.cerebras.ai/v1' })('llama3.1-8b')));
-
-  for (const [i, k] of keys('SAMBANOVA_API_KEY').entries())
-    tests.push(() => testText(`SambaNova Llama 3.1 70B (${i+1})`, () => createOpenAI({ apiKey: k, baseURL: 'https://api.sambanova.ai/v1' })('Meta-Llama-3.1-70B-Instruct')));
-
-  for (const [i, k] of keys('DEEPSEEK_API_KEY').entries())
-    tests.push(() => testObject(`DeepSeek Chat (${i+1})`, () => createOpenAI({ apiKey: k, baseURL: 'https://api.deepseek.com/v1' })('deepseek-chat')));
-
-  for (const [i, k] of keys('OPENROUTER_API_KEY').entries())
-    tests.push(() => testText(`OpenRouter Free (${i+1})`, () => createOpenAI({ apiKey: k, baseURL: 'https://openrouter.ai/api/v1' })('openrouter/free')));
-
-  for (const [i, k] of keys('COHERE_API_KEY').entries())
-    tests.push(() => testObject(`Cohere Command R+ (${i+1})`, () => createCohere({ apiKey: k })('command-r-plus-08-2024')));
-
-  for (const [i, k] of keys('HUGGINGFACE_API_KEY').entries())
-    tests.push(() => testText(`HuggingFace Llama 3.3 70B (${i+1})`, () => createOpenAI({ apiKey: k, baseURL: 'https://router.huggingface.co/v1' })('meta-llama/Llama-3.3-70B-Instruct')));
-
-  console.log(`\n🔍 Testing ${tests.length} AI provider(s)...\n`);
-
-  const results = await Promise.all(tests.map(t => t()));
-
-  const ok = results.filter(r => r.status === 'ok');
-  const fail = results.filter(r => r.status === 'fail');
-
-  console.log('='.repeat(70));
-  for (const r of results) {
-    const icon = r.status === 'ok' ? '✅' : '❌';
-    const extra = r.status === 'ok' ? `${r.ms}ms` : r.error;
-    console.log(`${icon}  ${r.name.padEnd(35)} ${extra}`);
+  for (const p of providers) {
+    try {
+      const model = p.build();
+      const { object } = await generateObject({ model, schema, prompt }) as any;
+      console.log(`✅ [P${p.priority}] ${p.name}`);
+    } catch (e: any) {
+      console.log(`❌ [P${p.priority}] ${p.name} — ${String(e?.message || e).slice(0, 150)}`);
+    }
   }
-  console.log('='.repeat(70));
-  console.log(`\n✅ Working: ${ok.length}  |  ❌ Broken: ${fail.length}\n`);
 }
-
-main().catch(console.error);
+main();

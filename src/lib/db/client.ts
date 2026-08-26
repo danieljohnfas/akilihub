@@ -31,18 +31,13 @@ const schema = {
   ...applicationsSchema,
 };
 
-
 // Prevent multiple instances during development HMR
 const globalForDb = globalThis as unknown as { conn: postgres.Sql };
 
 // Provide a robust dummy fallback
-let connectionString = (process.env.DIRECT_URL || process.env.DATABASE_URL) || 'postgres://dummy:dummy@localhost:5432/dummy';
+let connectionString = (process.env.DATABASE_URL || process.env.DIRECT_URL) || 'postgres://dummy:dummy@localhost:5432/dummy';
 
- 
-
-try {
-  new URL(connectionString);
-} catch (e) {
+if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) {
   console.warn('Invalid DATABASE_URL provided. Falling back to dummy for build phase.');
   connectionString = 'postgres://dummy:dummy@localhost:5432/dummy';
 }
@@ -85,8 +80,3 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
     if (timeoutId) clearTimeout(timeoutId);
   }
 }
-
-
-
-
-

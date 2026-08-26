@@ -48,7 +48,7 @@ export async function Navbar() {
           
           <Sheet>
             <SheetTrigger 
-              render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle menu" />}
+              render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Toggle menu" />}
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle menu</span>

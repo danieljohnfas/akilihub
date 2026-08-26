@@ -44,8 +44,8 @@ const modules = [
     bg: 'bg-blue-400/10',
     title: 'Procurement Intelligence',
     description:
-      'Government tender listings aggregated daily from PPRA (Kenya), PPOA (Tanzania), PPDA (Uganda), RPPA (Rwanda), and PPPA (Ethiopia). We surface opportunities that would otherwise require hours of manual checking across dozens of portals.',
-    sources: 'PPRA, PPOA, PPDA, RPPA, PPPA',
+      'Government tender listings aggregated daily from PPRA (Kenya), PPOA (Tanzania), PPDA (Uganda), RPPA (Rwanda), PPPA (Ethiopia), procurement portals in Somalia, South Sudan, Burundi, and DRC. We surface opportunities that would otherwise require hours of manual checking across dozens of portals.',
+    sources: 'PPRA, PPOA, PPDA, RPPA, PPPA, and regional procurement portals',
   },
   {
     icon: Briefcase,
@@ -157,8 +157,9 @@ export default function AboutPage() {
             level of accessibility. AkiliBrain exists to change that. Our
             mission is simple: aggregate every piece of publicly available
             professional intelligence across Kenya, Tanzania, Uganda, Rwanda,
-            Ethiopia, DRC, and the wider region into a single, searchable, always-fresh platform —
-            and make it free to access.
+            Ethiopia, Somalia, South Sudan, Burundi, the Democratic Republic of
+            the Congo, and the wider region into a single, searchable, always-fresh
+            platform — and make it free to access.
           </p>
           <p className="text-muted-foreground leading-relaxed">
             We believe that equal access to information is a prerequisite for

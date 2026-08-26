@@ -8,7 +8,7 @@
 import { config } from 'dotenv';
 config({ path: '.env.local', override: true });
 import dns from 'dns';
-dns.setDefaultResultOrder('ipv4first');
+// dns.setDefaultResultOrder('ipv4first');
 
 // Force NODE_ENV=production so the DB client uses SSL (Supabase requires it even locally)
 (process.env as Record<string, string | undefined>).NODE_ENV = 'production';

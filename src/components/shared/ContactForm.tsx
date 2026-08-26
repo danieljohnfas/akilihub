@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { submitContactForm } from "@/app/actions/contact";
 import { Button } from "@/components/ui/button";
 import { Send, CheckCircle2, AlertCircle } from "lucide-react";
@@ -18,7 +19,7 @@ function SubmitButton() {
 }
 
 export function ContactForm() {
-  const [state, formAction] = useFormState(submitContactForm, null);
+  const [state, formAction] = useActionState(submitContactForm, null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

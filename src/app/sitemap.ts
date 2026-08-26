@@ -4,12 +4,25 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';
 import { guides } from '@/lib/db/schema/guides';
+import { countries } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
 
 const BASE_URL = 'https://akilibrain.com';
 
 // Cache the sitemap on Vercel's edge for 1 hour to prevent DB overload.
 export const revalidate = 3600;
+
+const COUNTRY_SLUGS: Record<string, string> = {
+  Kenya: 'kenya',
+  Tanzania: 'tanzania',
+  Uganda: 'uganda',
+  Rwanda: 'rwanda',
+  Ethiopia: 'ethiopia',
+  Somalia: 'somalia',
+  'South Sudan': 'south-sudan',
+  'Democratic Republic of the Congo': 'democratic-republic-of-the-congo',
+  Burundi: 'burundi',
+};
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -23,6 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/health`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/salaries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/guides`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/countries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/developers`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
@@ -31,11 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // 2. Fetch all active entities, capped to ensure we never breach Next.js 50k limit in a single file
-  const [tenderRows, jobRows, businessRows, guideRows] = await Promise.all([
+  const [tenderRows, jobRows, businessRows, guideRows, countryRows] = await Promise.all([
     safeQuery(db.select({ id: tenders.id, updatedAt: tenders.updatedAt }).from(tenders).limit(15000)),
     safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(eq(jobs.isActive, true)).limit(20000)),
     safeQuery(db.select({ id: businesses.id, updatedAt: businesses.updatedAt }).from(businesses).where(eq(businesses.status, 'active')).limit(10000)),
     safeQuery(db.select({ slug: guides.slug, updatedAt: guides.updatedAt }).from(guides).where(eq(guides.isPublished, true)).limit(5000)),
+    safeQuery(db.select({ name: countries.name, updatedAt: countries.updatedAt }).from(countries)),
   ]);
 
   const tenderPages: MetadataRoute.Sitemap = tenderRows.map((t) => ({
@@ -66,5 +81,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  return [...staticPages, ...tenderPages, ...jobPages, ...businessPages, ...guidePages];
+  const countryPages: MetadataRoute.Sitemap = countryRows
+    .map((c) => {
+      const slug = COUNTRY_SLUGS[c.name] ?? c.name.toLowerCase().replace(/\s+/g, '-');
+      return {
+        url: `${BASE_URL}/countries/${slug}`,
+        lastModified: c.updatedAt,
+        changeFrequency: 'daily' as const,
+        priority: 0.85,
+      };
+    });
+
+  return [...staticPages, ...tenderPages, ...jobPages, ...businessPages, ...guidePages, ...countryPages];
 }

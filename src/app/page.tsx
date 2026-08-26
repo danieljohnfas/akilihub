@@ -154,7 +154,7 @@ export default async function Home() {
               type="text" 
               name="q"
               placeholder="Search jobs, companies, skills or locations..." 
-              className="w-full pl-14 pr-32 py-5 rounded-full bg-white/5 border border-white/20 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 outline-none text-lg backdrop-blur-sm transition-all"
+              className="w-full pl-14 pr-32 py-5 rounded-full bg-background border border-input shadow-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-lg transition-all"
             />
             <button 
               type="submit" 
@@ -180,7 +180,7 @@ export default async function Home() {
             <span className="opacity-30">•</span>
             <Link href="/jobs/south-sudan" className="hover:text-foreground transition-colors">South Sudan</Link>
             <span className="opacity-30">•</span>
-            <Link href="/jobs/djibouti" className="hover:text-foreground transition-colors">Djibouti</Link>
+            <Link href="/jobs/democratic-republic-of-the-congo" className="hover:text-foreground transition-colors">DRC</Link>
           </div>
         </div>
 
@@ -195,16 +195,16 @@ export default async function Home() {
           {/* Make first two cards span more logically if needed, but 2+3 grid usually means 2 rows */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:col-span-3">
             {features.slice(0, 2).map((feature) => (
-              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-white/10">
+              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-border shadow-sm dark:border-white/10">
                 <CardHeader className="text-center flex flex-col items-center">
-                  <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-5 ring-1 ring-white/10 shadow-inner`}>
+                  <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-5 ring-1 ring-border dark:ring-white/10 shadow-inner`}>
                     <feature.icon className={`h-7 w-7 ${feature.color}`} />
                   </div>
                   <CardTitle className="text-2xl font-bold tracking-tight">{feature.title}</CardTitle>
                   <CardDescription className="text-base pt-3 leading-relaxed">{feature.description}</CardDescription>
                 </CardHeader>
                 <CardFooter className="mt-auto pt-8 pb-6 bg-transparent border-t-0 flex justify-center">
-                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-white/5 group" })}>
+                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-muted group" })}>
                     <span className="font-medium">Explore {feature.title}</span> <ArrowRight className="h-5 w-5 ml-2 text-muted-foreground group-hover:translate-x-1 group-hover:text-foreground transition-all" />
                   </Link>
                 </CardFooter>
@@ -214,16 +214,16 @@ export default async function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3">
             {features.slice(2, 6).map((feature) => (
-              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-white/10">
+              <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-border shadow-sm dark:border-white/10">
                 <CardHeader className="text-center flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4 ring-1 ring-white/10 shadow-inner`}>
+                  <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4 ring-1 ring-border dark:ring-white/10 shadow-inner`}>
                     <feature.icon className={`h-6 w-6 ${feature.color}`} />
                   </div>
                   <CardTitle className="text-xl font-bold tracking-tight">{feature.title}</CardTitle>
                   <CardDescription className="pt-2 leading-relaxed">{feature.description}</CardDescription>
                 </CardHeader>
                 <CardFooter className="mt-auto pt-6 pb-6 bg-transparent border-t-0 flex justify-center">
-                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-white/5 group" })}>
+                  <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-muted group" })}>
                     <span className="font-medium">Explore</span> <ArrowRight className="h-4 w-4 ml-2 text-muted-foreground group-hover:translate-x-1 group-hover:text-foreground transition-all" />
                   </Link>
                 </CardFooter>
@@ -253,15 +253,15 @@ export default async function Home() {
             </div>
             <div className="hidden md:flex flex-col gap-4">
               {/* Funnel visual representation */}
-              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-border dark:border-white/10">
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 font-bold">1</div>
                 <div><p className="font-semibold">Upload CV</p><p className="text-xs text-muted-foreground">PDF or Word</p></div>
               </div>
-              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-white/10 ml-6">
+              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-border dark:border-white/10 ml-6">
                 <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 font-bold">2</div>
                 <div><p className="font-semibold">AI Match</p><p className="text-xs text-muted-foreground">&quot;You match 84% of 37 jobs&quot;</p></div>
               </div>
-              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-white/10 ml-12">
+              <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-border dark:border-white/10 ml-12">
                 <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 font-bold">3</div>
                 <div><p className="font-semibold">Apply Instantly</p><p className="text-xs text-muted-foreground">With auto-generated cover letters</p></div>
               </div>
@@ -272,10 +272,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Latest Insights Section */}
-      <section className="container mx-auto px-4 w-full max-w-6xl">
-        <RelatedGuides title="Latest Insights & Guides" />
-      </section>
+      {/* Latest Insights Section — only renders if DB has guides */}
+      <Suspense fallback={null}>
+        <RelatedGuides title="Latest Insights &amp; Guides" className="container mx-auto px-4 w-full max-w-6xl" />
+      </Suspense>
     </div>
     </>
   );

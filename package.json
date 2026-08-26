@@ -82,6 +82,7 @@
     "eslint-config-next": "16.2.9",
     "eslint-plugin-unused-imports": "^4.4.1",
     "lighthouse": "^13.4.1",
+    "puppeteer": "^25.8.0",
     "supabase": "^2.114.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",

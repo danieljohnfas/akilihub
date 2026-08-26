@@ -216,6 +216,7 @@ export async function saveBroadResults(
   for (const t of items) {
     try {
       const { isAggregatorSource, quickEmployerUrl } = classifySourceUrl(t.sourceUrl);
+      const safeBudget = (t.budget && t.budget <= 10000000000) ? t.budget.toString() : null;
       const rows = await db
         .insert(tenders)
         .values({
@@ -224,7 +225,7 @@ export async function saveBroadResults(
           description: t.description ?? null,
           contractingAuthority: t.contractingAuthority,
           category: t.category,
-          budget: t.budget?.toString() ?? null,
+          budget: safeBudget,
           currency: t.currency,
           deadline: t.deadline ?? null,
           sourceUrl: t.sourceUrl,
