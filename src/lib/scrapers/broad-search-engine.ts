@@ -463,10 +463,7 @@ JOB-SPECIFIC EXTRACTION RULES:
       const titleLower = inferredTitle.toLowerCase();
       if (titleLower.startsWith('[link]') || 
           titleLower.startsWith('[image:') || 
-          titleLower.includes('find the job') || 
-          titleLower.includes('skip to') || 
-          titleLower.includes('professional opportunity') ||
-          titleLower.includes('career portal')) {
+          titleLower.includes('skip to')) {
         return [];
       }
 
