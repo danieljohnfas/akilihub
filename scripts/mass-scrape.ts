@@ -30,8 +30,13 @@ import { complianceRequirements } from '../src/lib/db/schema/compliance';
 import { healthIndicators, healthDataPoints } from '../src/lib/db/schema/health';
 import { aiTelemetry } from '../src/lib/db/schema/ai';
 
-// Clear AI cooldowns globally on startup!
-await db.update(aiTelemetry).set({ status: 'active', resetTime: null });
+// Clear AI cooldowns globally on startup! (Using promise to avoid top-level await in CJS)
+db.update(aiTelemetry).set({ status: 'active', resetTime: null }).then(() => {
+  console.log('[Startup] AI cooldowns wiped globally.');
+}).catch(e => {
+  console.error('[Startup] Failed to wipe AI cooldowns:', e);
+});
+
 
 import { countries } from '../src/lib/db/schema/shared';
 import { eq, count } from 'drizzle-orm';
