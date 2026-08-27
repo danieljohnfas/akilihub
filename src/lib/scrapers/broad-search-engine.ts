@@ -434,7 +434,7 @@ JOB-SPECIFIC EXTRACTION RULES:
           description: job.description || deterministic.description,
           requirements: job.requirements,
           regionId: regionId,
-          jobType: (job.jobType || 'full_time').toLowerCase().replace(/[\s-]/g, '_') as BroadJobResource['jobType'],
+          jobType: (job.jobType || 'full_time').toLowerCase().replace(/[s-]/g, '_') as BroadJobResource['jobType'],
           sourceUrl: uniqueSourceUrl,
           postedDate: job.parsedPosted,
           deadline: job.parsedDeadline,
@@ -456,8 +456,8 @@ JOB-SPECIFIC EXTRACTION RULES:
 
     // Graceful Fallback: Build structured record from deterministic extraction + raw text
     if (text.length >= 100 && (deterministic.requirements || deterministic.deadline || deterministic.salaryMin || /job|vacancy|career|position|recruitment|employment|officer|manager|engineer|consultant|developer|assistant|director/i.test(text))) {
-      const titleMatch = /^(?:Job\s*(?:Title|Position)?[:\s]*)?([^\n\r]{5,80})/m.exec(text);
-      const inferredTitle = titleMatch ? titleMatch[1].trim().replace(/^[#*-\s]+/, '') : 'Professional Opportunity';
+      const titleMatch = /^(?:Jobs*(?:Title|Position)?[:s]*)?([^nr]{5,80})/m.exec(text);
+      const inferredTitle = titleMatch ? titleMatch[1].trim().replace(/^[#*-s]+/, '') : 'Professional Opportunity';
       const appUrl = deterministic.applicationUrls[0] || sourceUrl;
       
       const titleLower = inferredTitle.toLowerCase();
@@ -512,7 +512,7 @@ export async function discoverJobs(query: string, maxPages: number = 10): Promis
   console.log(`[discoverJobs] Found ${urls.length} viable URLs to scrape.`);
 
   const allJobs: BroadJobResource[] = [];
-  const CONCURRENT = 5; // 5 simultaneous fetches — avoids hammering Jina rate limits
+  const CONCURRENT = 2; // 5 simultaneous fetches — avoids hammering Jina rate limits
   const urlsToProcess = urls.slice(0, maxPages);
 
   for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
