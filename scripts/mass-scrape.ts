@@ -30,12 +30,6 @@ import { complianceRequirements } from '../src/lib/db/schema/compliance';
 import { healthIndicators, healthDataPoints } from '../src/lib/db/schema/health';
 import { aiTelemetry } from '../src/lib/db/schema/ai';
 
-// Clear AI cooldowns globally on startup! (Using promise to avoid top-level await in CJS)
-db.update(aiTelemetry).set({ status: 'active', resetTime: null }).then(() => {
-  console.log('[Startup] AI cooldowns wiped globally.');
-}).catch(e => {
-  console.error('[Startup] Failed to wipe AI cooldowns:', e);
-});
 
 
 import { countries } from '../src/lib/db/schema/shared';
@@ -74,17 +68,17 @@ const JOB_QUERIES: Record<string, string[]> = {};
 for (const [code, cities] of Object.entries(CITIES)) {
   const queries: string[] = [];
   queries.push(`jobs ${code}`);
-  for (const prof of PROFESSIONS.slice(0, 5)) {
+  for (const prof of PROFESSIONS) {
     queries.push(`${prof} jobs ${code}`);
     queries.push(`${prof} jobs ${cities[0]}`);
   }
-  for (const sec of SECTORS.slice(0, 4)) {
+  for (const sec of SECTORS) {
     queries.push(`${sec} jobs ${code}`);
   }
-  for (const emp of EMPLOYERS.slice(0, 3)) {
+  for (const emp of EMPLOYERS) {
     queries.push(`${emp} jobs ${code}`);
   }
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 50; i++) {
     const rProf = PROFESSIONS[Math.floor(Math.random() * PROFESSIONS.length)];
     const rSec = SECTORS[Math.floor(Math.random() * SECTORS.length)];
     const rCity = cities[Math.floor(Math.random() * cities.length)];
