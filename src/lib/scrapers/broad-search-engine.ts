@@ -130,7 +130,7 @@ async function getSearxngInstances() {
 
 async function searchSearXNG(query: string, numResults: number): Promise<string[]> {
   const instances = await getSearxngInstances();
-  for (const instance of instances.slice(0, 15)) { // Try up to 15 instances
+  for (const instance of instances.slice(0, 5)) { // Try up to 5 instances (was 15 — too slow)
     try {
       const url = new URL(`search`, instance);
       url.searchParams.set('q', query);
@@ -400,17 +400,27 @@ JOB-SPECIFIC EXTRACTION RULES:
   }
 }
 
+// ── Per-URL hard timeout wrapper ─────────────────────────────────────────────
+// Prevents a single hung fetchHtml/Jina call from blocking the entire scrape.
+async function withUrlTimeout<T>(fn: () => Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`[timeout] ${label} exceeded ${timeoutMs}ms`)), timeoutMs);
+    fn().then(v => { clearTimeout(timer); resolve(v); }).catch(e => { clearTimeout(timer); reject(e); });
+  });
+}
+
 /**
  * Master function to run a broad search for jobs and extract them.
- * Processes URLs in concurrent batches of 3 for ~3× throughput vs sequential.
+ * Processes URLs in concurrent batches of 5. Each URL has a 45s hard timeout
+ * to prevent a single hung Jina/fetch call from stalling the entire scrape.
  */
-export async function discoverJobs(query: string, maxPages: number = 5): Promise<BroadJobResource[]> {
+export async function discoverJobs(query: string, maxPages: number = 10): Promise<BroadJobResource[]> {
   console.log(`[discoverJobs] Searching for: "${query}"...`);
   const urls = await searchGoogle(query, 25);
   console.log(`[discoverJobs] Found ${urls.length} viable URLs to scrape.`);
 
   const allJobs: BroadJobResource[] = [];
-  const CONCURRENT = 10; // 10 simultaneous fetches — polite but ~3× faster than sequential
+  const CONCURRENT = 5; // 5 simultaneous fetches — avoids hammering Jina rate limits
   const urlsToProcess = urls.slice(0, maxPages);
 
   for (let i = 0; i < urlsToProcess.length; i += CONCURRENT) {
@@ -419,10 +429,12 @@ export async function discoverJobs(query: string, maxPages: number = 5): Promise
     const results = await Promise.allSettled(
       batch.map(async (url) => {
         console.log(`[discoverJobs] Scraping ${url}...`);
-        const html = await fetchHtml(url);
-        if (!html) return [] as BroadJobResource[];
-        const { text } = await htmlToTextEnriched(html, url);
-        return extractJobsWithAI(text, url);
+        return withUrlTimeout(async () => {
+          const html = await fetchHtml(url);
+          if (!html) return [] as BroadJobResource[];
+          const { text } = await htmlToTextEnriched(html, url);
+          return extractJobsWithAI(text, url);
+        }, 45_000, url);
       })
     );
 
@@ -437,7 +449,7 @@ export async function discoverJobs(query: string, maxPages: number = 5): Promise
 
     // Polite delay between batches (not between individual URLs within a batch)
     if (i + CONCURRENT < urlsToProcess.length) {
-      await new Promise(res => setTimeout(res, 2000));
+      await new Promise(res => setTimeout(res, 1000));
     }
   }
 
