@@ -214,25 +214,73 @@ async function searchExa(query: string, numResults: number): Promise<string[]> {
  *   3. SearXNG Dynamic  — loops through 5 free public instances
  *   4. Serper.dev       — paid fallback
  */
+
+// ── Google Custom Search Engine (CSE) ────────────────────────────────────────
+// Official Google results, 100 queries/day free. Use as first fallback after Exa.
+async function searchGoogleCSE(query: string, numResults: number): Promise<string[]> {
+  const apiKey = process.env.GOOGLE_CSE_API_KEY?.trim();
+  const cx = process.env.GOOGLE_CSE_ID?.trim();
+  if (!apiKey || !cx) return [];
+
+  try {
+    // Google CSE allows max 10 per request; we cap at 10 for the free tier
+    const url = new URL('https://www.googleapis.com/customsearch/v1');
+    url.searchParams.set('key', apiKey);
+    url.searchParams.set('cx', cx);
+    url.searchParams.set('q', query);
+    url.searchParams.set('num', String(Math.min(numResults, 10)));
+
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(12_000) });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[searchGoogleCSE] API failed: ${res.status} — ${errText.slice(0, 120)}`);
+      return [];
+    }
+
+    const data = await res.json();
+    if (!data.items || !Array.isArray(data.items)) return [];
+
+    const finalUrls = data.items
+      .map((item: { link?: string }) => item.link)
+      .filter((link: string | undefined) => !!link && !BLOCKED_DOMAINS.some(d => link!.includes(d)));
+
+    if (finalUrls.length > 0) {
+      console.log(`[searchGoogleCSE] Google CSE returned ${finalUrls.length} URLs for: "${query}"`);
+    }
+    return finalUrls;
+  } catch (error) {
+    console.error('[searchGoogleCSE] Error:', error);
+    return [];
+  }
+}
+
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
-  // 1. Try Exa API
+  // 1. Try Exa API — primary, AI-native, 1000 free searches/month
   if (process.env.EXA_API_KEY) {
     const exaUrls = await searchExa(query, numResults);
     if (exaUrls.length > 0) return exaUrls;
-    console.warn(`[searchGoogle] Exa returned 0 results — falling back to DDG`);
+    console.warn(`[searchGoogle] Exa returned 0 results — trying Google CSE`);
   }
 
-  // 2. Try DuckDuckGo HTML
+  // 2. Try Google Custom Search — official Google results, 100 free/day
+  if (process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_ID) {
+    const cseUrls = await searchGoogleCSE(query, numResults);
+    if (cseUrls.length > 0) return cseUrls;
+    console.warn(`[searchGoogle] Google CSE returned 0 results — trying DDG`);
+  }
+
+  // 3. Try DuckDuckGo HTML
   const ddgUrls = await searchDDGHtml(query, numResults);
   if (ddgUrls.length > 0) return ddgUrls;
   console.warn(`[searchGoogle] DuckDuckGo HTML returned 0 results — trying SearXNG Dynamic`);
 
-  // 3. Try SearXNG dynamic rotating proxies
+  // 4. Try SearXNG dynamic rotating proxies
   const searxUrls = await searchSearXNG(query, numResults);
   if (searxUrls.length > 0) return searxUrls;
   console.warn(`[searchGoogle] SearXNG also returned 0 results — trying Serper`);
 
-  // 4. Try Serper
+  // 5. Try Serper
   if (process.env.SERPER_API_KEY) {
     const serperUrls = await searchSerper(query, numResults);
     if (serperUrls.length > 0) return serperUrls;
