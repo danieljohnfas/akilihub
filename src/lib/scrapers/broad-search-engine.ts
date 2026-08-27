@@ -505,7 +505,7 @@ async function withUrlTimeout<T>(fn: () => Promise<T>, timeoutMs: number, label:
  */
 export async function discoverJobs(query: string, maxPages: number = 10): Promise<BroadJobResource[]> {
   console.log(`[discoverJobs] Searching for: "${query}"...`);
-  const urls = await searchGoogle(query, 25);
+  const urls = await searchGoogle(query, 50);
   console.log(`[discoverJobs] Found ${urls.length} viable URLs to scrape.`);
 
   const allJobs: BroadJobResource[] = [];
