@@ -169,26 +169,70 @@ async function searchSearXNG(query: string, numResults: number): Promise<string[
   return [];
 }
 
+// ── Exa API (Primary, robust AI search) ────────────────────────────────────────
+async function searchExa(query: string, numResults: number): Promise<string[]> {
+  const apiKey = process.env.EXA_API_KEY?.trim();
+  if (!apiKey) return [];
+
+  try {
+    const res = await fetch('https://api.exa.ai/search', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, type: 'auto', numResults: Math.min(Math.max(numResults, 10), 50) }),
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[searchExa] API failed: ${res.status} ${res.statusText} — ${errText}`);
+      return [];
+    }
+
+    const data = await res.json();
+    if (!data.results || !Array.isArray(data.results)) return [];
+
+    const finalUrls = data.results
+      .map((item: { url?: string }) => item.url)
+      .filter((link: string | undefined) => !!link && !BLOCKED_DOMAINS.some(d => link.includes(d)));
+
+    if (finalUrls.length > 0) {
+      console.log(`[searchExa] Exa returned ${finalUrls.length} URLs for: "${query}"`);
+    }
+    return finalUrls;
+  } catch (error) {
+    console.error('[searchExa] Error:', error);
+    return [];
+  }
+}
+
 /**
  * Searches for relevant URLs.
  *
  * Priority order:
- *   1. DuckDuckGo HTML  — direct scraping via Cheerio, free, very reliable
- *   2. SearXNG Dynamic  — loops through 50+ free public instances
- *   3. Serper.dev       — paid, used if DDG and SearXNG fail and credits are available
+ *   1. Exa API          — fast, ultra-reliable search specifically for AI
+ *   2. DuckDuckGo HTML  — direct scraping via Cheerio, free, reliable when not IP-blocked
+ *   3. SearXNG Dynamic  — loops through 5 free public instances
+ *   4. Serper.dev       — paid fallback
  */
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
-  // 1. Try DuckDuckGo HTML — completely free, robust
+  // 1. Try Exa API
+  if (process.env.EXA_API_KEY) {
+    const exaUrls = await searchExa(query, numResults);
+    if (exaUrls.length > 0) return exaUrls;
+    console.warn(`[searchGoogle] Exa returned 0 results — falling back to DDG`);
+  }
+
+  // 2. Try DuckDuckGo HTML
   const ddgUrls = await searchDDGHtml(query, numResults);
   if (ddgUrls.length > 0) return ddgUrls;
   console.warn(`[searchGoogle] DuckDuckGo HTML returned 0 results — trying SearXNG Dynamic`);
 
-  // 2. Try SearXNG dynamic rotating proxies
+  // 3. Try SearXNG dynamic rotating proxies
   const searxUrls = await searchSearXNG(query, numResults);
   if (searxUrls.length > 0) return searxUrls;
   console.warn(`[searchGoogle] SearXNG also returned 0 results — trying Serper`);
 
-  // 3. Try Serper — fast when credits are available
+  // 4. Try Serper
   if (process.env.SERPER_API_KEY) {
     const serperUrls = await searchSerper(query, numResults);
     if (serperUrls.length > 0) return serperUrls;
