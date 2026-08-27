@@ -28,6 +28,11 @@ import { tenders } from '../src/lib/db/schema/tenders';
 import { salarySubmissions } from '../src/lib/db/schema/salaries';
 import { complianceRequirements } from '../src/lib/db/schema/compliance';
 import { healthIndicators, healthDataPoints } from '../src/lib/db/schema/health';
+import { aiTelemetry } from '../src/lib/db/schema/ai';
+
+// Clear AI cooldowns globally on startup!
+await db.update(aiTelemetry).set({ status: 'active', resetTime: null });
+
 import { countries } from '../src/lib/db/schema/shared';
 import { eq, count } from 'drizzle-orm';
 import { discoverJobs, BroadJobResource } from '../src/lib/scrapers/broad-search-engine';

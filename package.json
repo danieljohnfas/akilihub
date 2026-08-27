@@ -41,6 +41,7 @@
     "date-fns": "^4.4.0",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
+    "duck-duck-scrape": "^2.2.7",
     "framer-motion": "^12.42.2",
     "googleapis": "^176.0.0",
     "inngest": "^4.11.0",

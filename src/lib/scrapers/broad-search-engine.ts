@@ -134,29 +134,33 @@ async function searchSearXNG(query: string, numResults: number): Promise<string[
     try {
       const url = new URL(`search`, instance);
       url.searchParams.set('q', query);
-      url.searchParams.set('format', 'json');
       url.searchParams.set('categories', 'general');
       url.searchParams.set('language', 'en');
       url.searchParams.set('time_range', 'month');
 
       const res = await fetch(url.toString(), {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        headers: { 'Accept': 'text/html,application/xhtml+xml', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
         signal: AbortSignal.timeout(10000),
       });
 
       if (!res.ok) continue;
       
-      const data = await res.json();
-      const results: Array<{ url?: string }> = data?.results ?? [];
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      const urls: string[] = [];
 
-      const urls = results
-        .slice(0, numResults)
-        .map(r => r.url)
-        .filter((u): u is string => !!u && !BLOCKED_DOMAINS.some(d => u.includes(d)));
+      $(".result_header a").each((i, el) => {
+        const href = $(el).attr("href");
+        if (href && !BLOCKED_DOMAINS.some(d => href.includes(d))) {
+          urls.push(href);
+        }
+      });
 
-      if (urls.length > 0) {
-        console.log(`[searchSearXNG] ${instance} → ${urls.length} URLs for: "${query}"`);
-        return urls;
+      const finalUrls = urls.slice(0, numResults);
+
+      if (finalUrls.length > 0) {
+        console.log(`[searchSearXNG] ${instance} -> ${finalUrls.length} URLs for: "${query}"`);
+        return finalUrls;
       }
     } catch (err) {
       // ignore and try next
