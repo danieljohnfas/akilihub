@@ -9,9 +9,9 @@ const nextConfig: NextConfig = {
   // Running it at deploy time OOMs on 1GB RAM because the TS worker spawns a second large Node.js process.
   typescript: { ignoreBuildErrors: true },
 
+  serverExternalPackages: ['postgres'],
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion', '@iconify/react'],
-    serverExternalPackages: ['postgres'],
   },
   // Permanently redirect all non-canonical variants so Google knows
   // the one true URL is https://akilibrain.com (no www, no http)
