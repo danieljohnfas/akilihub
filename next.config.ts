@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
 
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion', '@iconify/react'],
+    serverExternalPackages: ['postgres'],
   },
   // Permanently redirect all non-canonical variants so Google knows
   // the one true URL is https://akilibrain.com (no www, no http)
