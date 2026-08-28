@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // Running it at deploy time OOMs on 1GB RAM because the TS worker spawns a second large Node.js process.
   typescript: { ignoreBuildErrors: true },
 
-  serverExternalPackages: ['postgres'],
+  serverExternalPackages: ['postgres', 'drizzle-orm'],
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion', '@iconify/react'],
   },
