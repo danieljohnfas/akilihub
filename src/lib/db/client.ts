@@ -64,16 +64,6 @@ export type DB = typeof db;
  * This prevents a slow DB cold start or connection queue from triggering a Vercel 504 timeout.
  */
 export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 9000, label: string = 'Unnamed Query'): Promise<T> {
-  // Turbopack workaround: bypass db queries during static prerendering to prevent Next.js crashes
-  const isBuild = process.env.IS_BUILD_PHASE === '1' && process.env.NODE_ENV !== 'production';
-  // Note: IS_BUILD_PHASE might be baked into process.env by Next.js, so we also check something that changes
-  const isNextBuild = process.argv.some(arg => arg.includes('next') || arg.includes('build'));
-  
-  if (isNextBuild) {
-    console.info(`[safeQuery] Bypassing ${label} during build phase`);
-    return [] as unknown as T;
-  }
-
   let timeoutId: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(`Query [${label}] timed out after ${timeoutMs}ms`)), timeoutMs);
