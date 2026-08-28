@@ -28,6 +28,8 @@ services:
         NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN:-}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
         NEXT_PUBLIC_ADSENSE_PUB_ID: ${NEXT_PUBLIC_ADSENSE_PUB_ID:-}
+        DATABASE_URL: ${DATABASE_URL}
+        DIRECT_URL: ${DIRECT_URL}
     restart: unless-stopped
     environment:
       NODE_ENV: production
