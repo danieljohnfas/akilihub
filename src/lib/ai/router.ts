@@ -77,8 +77,8 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
   const groq = createGroq({ apiKey: key });
   keyPool.register({
     id: `groq-llama-${i + 1}`,
-    name: `Groq Llama 3.3 70B (${i + 1})`,
-    model: groq('llama-3.3-70b-versatile'),
+    name: `Groq Qwen 3.6 (${i + 1})`,
+    model: groq('qwen/qwen3.6-27b'),
     supportsStructured: true,
     priority: 1,
   });
@@ -347,6 +347,7 @@ export async function generateObjectWithFallback<T = unknown>(
           activeKey.name,
         );
         let text = textResult.text.trim();
+        if (text.includes('<think>')) { text = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim(); }
         if (text.startsWith('```json')) text = text.replace(/^```json/g, '').replace(/```$/g, '').trim();
         if (text.startsWith('```')) text = text.replace(/^```/g, '').replace(/```$/g, '').trim();
         try {

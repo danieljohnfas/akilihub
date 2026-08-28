@@ -384,6 +384,7 @@ JOB-SPECIFIC EXTRACTION RULES:
         }))
       }),
       prompt,
+      maxTokens: 8192,
     });
 
     const rawJobs = object.jobs.map((job: {

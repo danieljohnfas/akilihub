@@ -3,7 +3,7 @@ import { generateObjectWithFallback, extractVisionTextWithFallback } from '../ai
 import { z } from 'zod';
 import { downloadDocument, parsePdf } from './pdf-extract';
 import FirecrawlApp from '@mendable/firecrawl-js';
-
+import TurndownService from 'turndown';
 export interface ComplianceResource {
   title: string;
   description: string;
@@ -350,69 +350,49 @@ export function htmlToText(html: string, baseUrl: string): string {
 
   const $ = cheerio.load(html);
 
-  $('script, style, noscript, nav, footer, header').remove();
+  // Remove noisy elements
+  $('script, style, noscript, nav, footer, header, iframe, svg, canvas').remove();
 
-  const procurementKeywords = [
-    'tender', 'procurement', 'bid', 'appel', 'offre', 'contract', 'award', 'notice', 'closing',
-    'job', 'vacancy', 'kazi', 'ajira', 'tangazo', 'advert', 'qualifications', 'deadline', 'salary'
-  ];
-
-  const weighted: Array<{ line: string; weight: number }> = [];
-
+  // Make links absolute before conversion
   $('a[href]').each((_i, el) => {
-    const text = $(el).text().trim();
     const href = $(el).attr('href') ?? '';
-    if (!text || text.length < 3) return;
-
-    let fullUrl = href;
-    if (href.startsWith('/')) {
-      try {
-        const base = new URL(baseUrl);
-        fullUrl = `${base.origin}${href}`;
-      } catch { /* skip */ }
-    } else if (!href.startsWith('http')) {
-      try {
-        fullUrl = new URL(href, baseUrl).toString();
-      } catch { /* skip */ }
+    if (href.startsWith('/') || !href.startsWith('http')) {
+      try { $(el).attr('href', new URL(href, baseUrl).toString()); } catch { /* skip */ }
     }
-
-    const line = `[LINK] ${text} => ${fullUrl}`;
-    const weight = procurementKeywords.some(k => line.toLowerCase().includes(k)) ? 2 : 1;
-    weighted.push({ line, weight });
   });
 
+  // Make images absolute before conversion
   $('img').each((_i, el) => {
-    const alt = $(el).attr('alt')?.trim() || '';
-    const title = $(el).attr('title')?.trim() || '';
     const src = $(el).attr('src') || $(el).attr('data-src') || '';
-    const desc = alt || title;
-    if (desc && desc.length > 5 && !IGNORE_IMAGE_SIGNALS.some(k => desc.toLowerCase().includes(k))) {
-      let fullUrl = src;
-      if (src.startsWith('/')) {
-        try { fullUrl = `${new URL(baseUrl).origin}${src}`; } catch { /* skip */ }
-      } else if (!src.startsWith('http') && src.length > 0) {
-        try { fullUrl = new URL(src, baseUrl).toString(); } catch { /* skip */ }
-      }
-      const line = `[IMAGE: "${desc}" => ${fullUrl}]`;
-      const weight = procurementKeywords.some(k => line.toLowerCase().includes(k)) ? 3 : 1;
-      weighted.push({ line, weight });
+    if (src.startsWith('/') || (!src.startsWith('http') && src.length > 0)) {
+      try { $(el).attr('src', new URL(src, baseUrl).toString()); } catch { /* skip */ }
     }
   });
 
-  $('p, li, td, th, h1, h2, h3, h4').each((_i, el) => {
-    const text = $(el).text().replace(/\s+/g, ' ').trim();
-    if (text.length > 10) {
-      const weight = procurementKeywords.some(k => text.toLowerCase().includes(k)) ? 2 : 1;
-      weighted.push({ line: text, weight });
-    }
+  // Use Turndown for clean Markdown conversion, preserving order and structure!
+  const turndownService = new TurndownService({
+    headingStyle: 'atx',
+    codeBlockStyle: 'fenced',
+    hr: '---',
   });
+  
+  // Clean up noisy tags but keep their contents
+  turndownService.keep(['table', 'tr', 'td', 'th', 'tbody', 'thead', 'tfoot']);
 
-  weighted.sort((a, b) => b.weight - a.weight);
+  let markdown = '';
+  try {
+    markdown = turndownService.turndown($.html() || '');
+  } catch (err) {
+    console.error('[htmlToText] Turndown failed, falling back to text:', (err as Error).message);
+    markdown = $('body').text() || $.text();
+  }
 
-  return weighted
-    .slice(0, 500)
-    .map(w => w.line)
-    .join('\n');
+  // Fallback if turndown somehow returns empty but body has text
+  if (!markdown.trim()) {
+    markdown = $('body').text() || $.text();
+  }
+
+  return markdown.substring(0, 15000);
 }
 
 export function extractPdfLinksFromHtml(html: string, baseUrl: string): string[] {
