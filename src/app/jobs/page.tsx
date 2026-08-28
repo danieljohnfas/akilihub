@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, or, isNull, gt, count } from 'drizzle-orm';
+import { eq, desc, ilike, and, or, isNull, gt, count, sql } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
 import { GlobalFilterBar } from '@/components/shared/GlobalFilterBar';
 import { buttonVariants } from '@/components/ui/button';
@@ -206,7 +206,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
 
   const activeCondition = and(
     eq(jobs.isActive, true),
-    or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
+    or(isNull(jobs.deadline), gt(jobs.deadline, sql`now()`))
   );
 
   let countryId: string | undefined;
