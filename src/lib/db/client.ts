@@ -75,7 +75,7 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[DB Error] safeQuery caught in [${label}]:`, message);
-    return [] as unknown as T;
+    throw err;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
