@@ -64,6 +64,10 @@ export type DB = typeof db;
  * This prevents a slow DB cold start or connection queue from triggering a Vercel 504 timeout.
  */
 export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 9000, label: string = 'Unnamed Query'): Promise<T> {
+  if (process.env.IS_BUILD_PHASE === '1') {
+    console.log(`[safeQuery] Bypassing ${label} during build phase`);
+    return [] as unknown as T;
+  }
   let timeoutId: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(`Query [${label}] timed out after ${timeoutMs}ms`)), timeoutMs);
