@@ -1,8 +1,28 @@
 import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
-
 import unusedImports from "eslint-plugin-unused-imports";
+
+// eslint-config-next exports flat config arrays
+// Use dynamic import with fallback to handle version differences
+let nextVitals: object[] = [];
+let nextTs: object[] = [];
+try {
+  const vitals = await import("eslint-config-next/core-web-vitals.js");
+  nextVitals = Array.isArray(vitals.default) ? vitals.default : [];
+} catch {
+  try {
+    const vitals = await import("eslint-config-next/core-web-vitals");
+    nextVitals = Array.isArray(vitals.default) ? vitals.default : [];
+  } catch { /* ignore */ }
+}
+try {
+  const ts = await import("eslint-config-next/typescript.js");
+  nextTs = Array.isArray(ts.default) ? ts.default : [];
+} catch {
+  try {
+    const ts = await import("eslint-config-next/typescript");
+    nextTs = Array.isArray(ts.default) ? ts.default : [];
+  } catch { /* ignore */ }
+}
 
 const eslintConfig = defineConfig([
   ...nextVitals,
