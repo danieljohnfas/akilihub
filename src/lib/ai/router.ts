@@ -23,6 +23,18 @@ function getEnvKeys(baseName: string): string[] {
   return keys;
 }
 
+// ── PRIORITY 1: GOOGLE GEMINI ──────────────────────────────────────────────
+getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
+  const google = createGoogle({ apiKey: key });
+  keyPool.register({
+    id: `google-gemini-${i + 1}`,
+    name: `Google Gemini 2.5 Flash (${i + 1})`,
+    model: google('gemini-2.5-flash'),
+    supportsStructured: true,
+    priority: 1,
+  });
+});
+
 // ── PRIORITY 1: CEREBRAS (Llama 3.3 70B) ────────────────────────────────────
 // Ultra-fast free inference · native JSON schema support
 getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
@@ -33,7 +45,7 @@ getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `cerebras-llama-${i + 1}`,
     name: `Cerebras Llama 3.3 70B (${i + 1})`,
-    model: cerebras('llama-3.3-70b'),
+    model: cerebras('llama3.3-70b'),
     supportsStructured: true,
     priority: 1,
   });
@@ -47,9 +59,9 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
     baseURL: 'https://api.sambanova.ai/v1',
   });
   keyPool.register({
-    id: `sambanova-llama-${i + 1}`,
-    name: `SambaNova Llama 3.3 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.3-70B-Instruct'),
+    id: `sambanova-deepseek-${i + 1}`,
+    name: `SambaNova DeepSeek V3.1 (${i + 1})`,
+    model: sambanova('DeepSeek-V3.1'),
     supportsStructured: false, // SambaNova doesn't support the Response API for JSON schema
     priority: 1,
   });
@@ -64,8 +76,8 @@ getEnvKeys('ZAI_API_KEY').forEach((key, i) => {
   });
   keyPool.register({
     id: `zai-glm-${i + 1}`,
-    name: `Z.ai GLM-5.2 (${i + 1})`,
-    model: zai('glm-5.2'),
+    name: `Z.ai GLM-4 Flash (${i + 1})`,
+    model: zai('glm-4-flash'),
     supportsStructured: true,
     priority: 1,
   });
@@ -77,186 +89,31 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
   const groq = createGroq({ apiKey: key });
   keyPool.register({
     id: `groq-llama-${i + 1}`,
-    name: `Groq Qwen 3.6 (${i + 1})`,
-    model: groq('qwen/qwen3.6-27b'),
+    name: `Groq Llama 3.1 8B (${i + 1})`,
+    model: groq('llama-3.1-8b-instant'),
     supportsStructured: true,
     priority: 1,
   });
 });
 
-// ── PRIORITY 2: MISTRAL (Small) ───────────────────────────────────────────────
-// Free tier · native JSON schema · fast
-getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
-  const mistral = createMistral({ apiKey: key });
+
+
+// ── PRIORITY 2: OPENROUTER ────────────────────────────────────────────────────
+getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
+  const openrouter = createOpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1' });
   keyPool.register({
-    id: `mistral-small-${i + 1}`,
-    name: `Mistral Small (${i + 1})`,
-    model: mistral('mistral-small-latest'),
+    id: `openrouter-google-gemini-2.5-flash-${i + 1}`,
+    name: `OpenRouter Gemini 2.5 Flash (${i + 1})`,
+    model: openrouter('google/gemini-2.5-flash'),
     supportsStructured: true,
     priority: 2,
   });
-});
-
-// ── PRIORITY 3: GOOGLE (Gemini 2.5 Flash) ────────────────────────────────────
-// 1,500 req/day free · confirmed working · reliable structured output
-getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
-  const makeGoogle = createGoogle({ apiKey: key });
   keyPool.register({
-    id: `google-flash-${i + 1}`,
-    name: `Google Gemini 2.5 Flash (${i + 1})`,
-    model: makeGoogle('gemini-2.5-flash'),
+    id: `openrouter-llama-3.3-70b-${i + 1}`,
+    name: `OpenRouter Llama 3.3 70B (${i + 1})`,
+    model: openrouter('meta-llama/llama-3.3-70b-instruct'),
     supportsStructured: true,
-    priority: 3,
-  });
-});
-
-// ── PRIORITY 4: GITHUB MODELS (GPT-4o) ───────────────────────────────────────
-// Free via GitHub token · GPT-4o quality · native JSON schema support
-getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
-  const github = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://models.inference.ai.azure.com',
-  });
-  keyPool.register({
-    id: `github-gpt4o-${i + 1}`,
-    name: `GitHub Models GPT-4o (${i + 1})`,
-    model: github('gpt-4o'),
-    supportsStructured: true,
-    priority: 4,
-  });
-  // Also register Llama 3.3 70B on GitHub for additional capacity
-  keyPool.register({
-    id: `github-llama-${i + 1}`,
-    name: `GitHub Models Llama 3.3 70B (${i + 1})`,
-    model: github('meta-llama-3.3-70b-instruct'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 5: CLOUDFLARE WORKERS AI ────────────────────────────────────────
-// Free AI inference · OpenAI-compatible · runs on Cloudflare's global network
-{
-  const cfToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
-  const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
-  if (cfToken && cfAccountId && !cfToken.startsWith('encrypted:')) {
-    const cloudflare = createOpenAI({
-      apiKey: cfToken,
-      baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`,
-    });
-    keyPool.register({
-      id: `cloudflare-llama-1`,
-      name: `Cloudflare Workers AI Llama 3.2 3B`,
-      model: cloudflare('@cf/meta/llama-3.2-3b-instruct'),
-      supportsStructured: false,
-      priority: 5,
-    });
-  }
-}
-
-// ── PRIORITY 5: HYPERBOLIC (Llama 3.3 70B) ───────────────────────────────────
-// Fast OpenAI-compatible inference · competitive free tier
-getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
-  const hyperbolic = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://api.hyperbolic.xyz/v1',
-  });
-  keyPool.register({
-    id: `hyperbolic-llama-${i + 1}`,
-    name: `Hyperbolic Llama 3.3 70B (${i + 1})`,
-    model: hyperbolic('meta-llama/Llama-3.3-70B-Instruct'),
-    supportsStructured: true,
-    priority: 5,
-  });
-});
-
-// ── PRIORITY 6: OPENROUTER (multi-model pool) ─────────────────────────────────
-// Free tier · routes to best available model automatically
-getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
-  const openrouter = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://openrouter.ai/api/v1',
-    headers: {
-      'HTTP-Referer': 'https://akilibrain.com',
-      'X-Title': 'AkiliHub',
-    },
-  });
-  // Primary free model
-  keyPool.register({
-    id: `openrouter-gemma-${i + 1}`,
-    name: `OpenRouter Gemma 2 9B Free (${i + 1})`,
-    model: openrouter('google/gemma-2-9b-it:free'),
-    supportsStructured: false,
-    priority: 6,
-  });
-  // Secondary free model for extra capacity
-  keyPool.register({
-    id: `openrouter-gemma-3-${i + 1}`,
-    name: `OpenRouter Gemma 3 1B Free (${i + 1})`,
-    model: openrouter('google/gemma-3-1b-it:free'),
-    supportsStructured: false,
-    priority: 6,
-  });
-});
-
-// ── PRIORITY 6: MINIMAX (MiniMax-Text-01) ─────────────────────────────────────
-// Large context window · OpenAI-compatible · strong reasoning
-getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
-  const minimax = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://api.minimaxi.chat/v1',
-  });
-  keyPool.register({
-    id: `minimax-text-${i + 1}`,
-    name: `MiniMax Text-01 (${i + 1})`,
-    model: minimax('MiniMax-Text-01'),
-    supportsStructured: true,
-    priority: 6,
-  });
-});
-
-// ── PRIORITY 7: DEEPSEEK ──────────────────────────────────────────────────────
-// OpenAI-compatible · affordable · strong reasoning
-getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
-  const deepseek = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://api.deepseek.com/v1',
-  });
-  keyPool.register({
-    id: `deepseek-chat-${i + 1}`,
-    name: `DeepSeek Chat (${i + 1})`,
-    model: deepseek('deepseek-chat'),
-    supportsStructured: true,
-    priority: 7,
-  });
-});
-
-// ── PRIORITY 8: HUGGING FACE (Llama 3.3 70B Instruct) ───────────────────────
-// Free serverless inference · OpenAI-compatible
-getEnvKeys('HUGGINGFACE_API_KEY').forEach((key, i) => {
-  const hf = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://router.huggingface.co/v1',
-  });
-  keyPool.register({
-    id: `huggingface-llama-${i + 1}`,
-    name: `HuggingFace Llama 3.3 70B (${i + 1})`,
-    model: hf('meta-llama/Llama-3.3-70B-Instruct'),
-    supportsStructured: false,
-    priority: 8,
-  });
-});
-
-// ── PRIORITY 9: COHERE (Command R+) ──────────────────────────────────────────
-// Fallback — trial key may be exhausted; kept for redundancy
-getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
-  const cohere = createCohere({ apiKey: key });
-  keyPool.register({
-    id: `cohere-command-r-${i + 1}`,
-    name: `Cohere Command R+ (${i + 1})`,
-    model: cohere('command-r-plus-08-2024'),
-    supportsStructured: true,
-    priority: 9,
+    priority: 2,
   });
 });
 
@@ -347,7 +204,14 @@ export async function generateObjectWithFallback<T = unknown>(
           activeKey.name,
         );
         let text = textResult.text.trim();
-        if (text.includes('<think>')) { text = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim(); }
+        if (text.includes('<think>')) { 
+            const endThink = text.lastIndexOf('</think>');
+            if (endThink !== -1) {
+                text = text.substring(endThink + 8).trim();
+            } else {
+                throw new Error("Unclosed <think> tag");
+            }
+        }
         if (text.startsWith('```json')) text = text.replace(/^```json/g, '').replace(/```$/g, '').trim();
         if (text.startsWith('```')) text = text.replace(/^```/g, '').replace(/```$/g, '').trim();
         try {
@@ -357,11 +221,18 @@ export async function generateObjectWithFallback<T = unknown>(
         }
       } else {
         // Native generateObject path (with or without json mode).
+        // For OpenRouter, cap maxTokens to stay within credit budget.
+        const openrouterTokenCap = activeKey.id.startsWith('openrouter-google')
+          ? { maxTokens: 700 }
+          : activeKey.id.startsWith('openrouter-')
+          ? { maxTokens: 1800 }
+          : {};
         result = await withHardTimeout(
           (generateObject as any)({
             ...params,
             model: activeKey.model,
             ...(usesJsonMode(activeKey.id) ? { mode: 'json' } : {}),
+            ...openrouterTokenCap,
           }),
           AI_TIMEOUT_MS,
           activeKey.name,
@@ -455,16 +326,13 @@ function getVisionModelPool(): VisionModelCandidate[] {
     });
   });
 
-  // 2. GitHub Models (GPT-4o) — excellent vision capability
-  getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
-    const github = createOpenAI({
-      apiKey: key,
-      baseURL: 'https://models.inference.ai.azure.com',
-    });
+  // 2. OpenRouter (Gemini 2.5 Flash Free)
+  getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
+    const openrouter = createOpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1' });
     pool.push({
-      id: `github-vision-${i + 1}`,
-      name: `GitHub Models GPT-4o Vision (${i + 1})`,
-      model: github('gpt-4o'),
+      id: `openrouter-vision-${i + 1}`,
+      name: `OpenRouter Gemini 2.5 Flash Vision (${i + 1})`,
+      model: openrouter('google/gemini-2.5-flash'),
     });
   });
 

@@ -387,7 +387,7 @@ JOB-SPECIFIC EXTRACTION RULES:
       maxTokens: 8192,
     });
 
-    const rawJobs = object.jobs.map((job: {
+    const rawJobs = (object.jobs || []).map((job: {
       title: string; companyName: string; description: string; requirements: string;
       location: string; jobType: BroadJobResource['jobType']; sourceUrl: string;
       postedDateIsoString: string; deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string; countryCode: string;
@@ -453,39 +453,8 @@ JOB-SPECIFIC EXTRACTION RULES:
       return true;
     });
   } catch (err) {
-    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Engaging deterministic fallback.`);
-
-    // Graceful Fallback: Build structured record from deterministic extraction + raw text
-    if (text.length >= 100 && (deterministic.requirements || deterministic.deadline || deterministic.salaryMin || /job|vacancy|career|position|recruitment|employment|officer|manager|engineer|consultant|developer|assistant|director/i.test(text))) {
-      const titleMatch = /^(?:Jobs*(?:Title|Position)?[:s]*)?([^nr]{5,80})/m.exec(text);
-      const inferredTitle = titleMatch ? titleMatch[1].trim().replace(/^[#*-s]+/, '') : 'Professional Opportunity';
-      const appUrl = deterministic.applicationUrls[0] || sourceUrl;
-      
-      const titleLower = inferredTitle.toLowerCase();
-      if (titleLower.startsWith('[link]') || 
-          titleLower.startsWith('[image:') || 
-          titleLower.includes('skip to')) {
-        return [];
-      }
-
-      return [{
-        title: inferredTitle,
-        companyName: 'Unknown',
-        description: deterministic.description,
-        requirements: deterministic.requirements,
-        regionId: null,
-        jobType: 'full_time',
-        sourceUrl: appUrl,
-        postedDate: new Date(),
-        deadline: deterministic.deadline,
-        salaryMin: deterministic.salaryMin,
-        salaryMax: deterministic.salaryMax,
-        salaryCurrency: deterministic.salaryCurrency,
-        countryCode: deterministic.countryCode,
-        needsAiExtraction: true,
-      }];
-    }
-
+    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}).`);
+    // User requested NO deterministic fallback, only AI.
     return [];
   }
 }
