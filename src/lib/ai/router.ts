@@ -13,7 +13,7 @@ import { keyPool } from './key-pool';
 
 function getEnvKeys(baseName: string): string[] {
   const keys: string[] = [];
-  const pattern = new RegExp(\`^\${baseName}(?:_\\\\d+)?$\`);
+  const pattern = new RegExp(`^${baseName}(?:_\\d+)?$`);
   for (const [key, value] of Object.entries(process.env)) {
     if (pattern.test(key) && value && value.trim() !== '' && !value.trim().startsWith('encrypted:')) {
       keys.push(value.trim());
@@ -26,8 +26,8 @@ function getEnvKeys(baseName: string): string[] {
 getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
   const mistral = createMistral({ apiKey: key });
   keyPool.register({
-    id: \`mistral-small-\${i + 1}\`,
-    name: \`Mistral Small (\${i + 1})\`,
+    id: `mistral-small-${i + 1}`,
+    name: `Mistral Small (${i + 1})`,
     model: mistral('mistral-small-latest'),
     supportsStructured: true,
     priority: 1,
@@ -38,8 +38,8 @@ getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
 getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   const google = createGoogle({ apiKey: key });
   keyPool.register({
-    id: \`google-gemini-\${i + 1}\`,
-    name: \`Google Gemini 2.5 Flash (\${i + 1})\`,
+    id: `google-gemini-${i + 1}`,
+    name: `Google Gemini 2.5 Flash (${i + 1})`,
     model: google('gemini-2.5-flash'),
     supportsStructured: true,
     priority: 2,
@@ -50,8 +50,8 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
 getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
   const openrouter = createOpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1' });
   keyPool.register({
-    id: \`openrouter-google-gemini-2.5-flash-\${i + 1}\`,
-    name: \`OpenRouter Gemini 2.5 Flash (\${i + 1})\`,
+    id: `openrouter-google-gemini-2.5-flash-${i + 1}`,
+    name: `OpenRouter Gemini 2.5 Flash (${i + 1})`,
     model: openrouter('google/gemini-2.5-flash'),
     supportsStructured: true,
     priority: 2,
@@ -61,7 +61,7 @@ getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
 } else {
-  console.log(\`[AI Router] Loaded \${keyPool.size} model(s) into the pool.\`);
+  console.log(`[AI Router] Loaded ${keyPool.size} model(s) into the pool.`);
   keyPool.restoreFromDb().catch(e => console.error('[AI Router] Failed to restore key pool state:', e));
 }
 
@@ -74,7 +74,7 @@ const AI_TIMEOUT_MS = 90_000;
 
 function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(\`[Timeout] \${label} exceeded \${ms}ms\`)), ms);
+    const timer = setTimeout(() => reject(new Error(`[Timeout] ${label} exceeded ${ms}ms`)), ms);
     promise.then(
       (val) => { clearTimeout(timer); resolve(val); },
       (err) => { clearTimeout(timer); reject(err); },
@@ -112,7 +112,7 @@ export async function generateObjectWithFallback<T = unknown>(
       if (!activeKey) break;
     }
 
-    console.log(\`[AI Router] [Attempt \${attempt}/\${MAX_RETRIES}] → \${activeKey.name}\`);
+    console.log(`[AI Router] [Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
       let result;
@@ -138,7 +138,7 @@ export async function generateObjectWithFallback<T = unknown>(
 
     } catch (error: unknown) {
       const err = error as Error & { name?: string };
-      console.warn(\`[AI Router] \${activeKey.name} failed (attempt \${attempt}): \${err.message?.slice(0, 120)}\`);
+      console.warn(`[AI Router] ${activeKey.name} failed (attempt ${attempt}): ${err.message?.slice(0, 120)}`);
       lastError = error;
       if (err.name === 'TypeValidationError' || err.name === 'JSONParseError' || err.message?.includes('No object generated')) {
         continue;
@@ -163,7 +163,7 @@ export async function generateTextWithFallback(params: Record<string, any>) {
     const activeKey = keyPool.getNextKey(requiresStructured);
     if (!activeKey) break;
 
-    console.log(\`[AI Router] [Text][Attempt \${attempt}/\${MAX_RETRIES}] → \${activeKey.name}\`);
+    console.log(`[AI Router] [Text][Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
 
     try {
       const result = await withHardTimeout(
@@ -176,7 +176,7 @@ export async function generateTextWithFallback(params: Record<string, any>) {
 
     } catch (error: unknown) {
       const err = error as Error;
-      console.warn(\`[AI Router] \${activeKey.name} failed: \${err.message?.slice(0, 120)}\`);
+      console.warn(`[AI Router] ${activeKey.name} failed: ${err.message?.slice(0, 120)}`);
       lastError = error;
       keyPool.markFailed(activeKey.id);
     }
@@ -210,8 +210,8 @@ function getVisionModelPool(): VisionModelCandidate[] {
   getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
     const mistral = createMistral({ apiKey: key });
     pool.push({
-      id: \`mistral-pixtral-\${i + 1}\`,
-      name: \`Mistral Pixtral 12B (\${i + 1})\`,
+      id: `mistral-pixtral-${i + 1}`,
+      name: `Mistral Pixtral 12B (${i + 1})`,
       model: mistral('pixtral-12b-2409'),
     });
   });
@@ -220,8 +220,8 @@ function getVisionModelPool(): VisionModelCandidate[] {
   Array.from(new Set(googleKeys)).forEach((key, i) => {
     const makeGoogle = createGoogle({ apiKey: key });
     pool.push({
-      id: \`google-vision-\${i + 1}\`,
-      name: \`Google Gemini 2.5 Flash Vision (\${i + 1})\`,
+      id: `google-vision-${i + 1}`,
+      name: `Google Gemini 2.5 Flash Vision (${i + 1})`,
       model: makeGoogle('gemini-2.5-flash'),
     });
   });
@@ -245,7 +245,7 @@ export async function extractVisionTextWithFallback(
 
   for (const candidate of visionModels) {
     try {
-      console.log(\`[Vision Router] Attempting vision OCR with \${candidate.name}...\`);
+      console.log(`[Vision Router] Attempting vision OCR with ${candidate.name}...`);
       const { text } = await withHardTimeout(
         generateText({
           model: candidate.model,
@@ -264,11 +264,11 @@ export async function extractVisionTextWithFallback(
       );
 
       if (text && text.trim().length > 30) {
-        console.log(\`[Vision Router] \${candidate.name} successfully extracted \${text.length} chars.\`);
+        console.log(`[Vision Router] ${candidate.name} successfully extracted ${text.length} chars.`);
         return text.trim();
       }
     } catch (err) {
-      console.warn(\`[Vision Router] \${candidate.name} failed:\`, (err as Error).message?.slice(0, 120));
+      console.warn(`[Vision Router] ${candidate.name} failed:`, (err as Error).message?.slice(0, 120));
       lastError = err;
     }
   }

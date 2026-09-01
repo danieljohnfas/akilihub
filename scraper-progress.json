@@ -1,286 +1,239 @@
 {
-  "timestamp": "2026-08-03T23:36:37.527Z",
+  "timestamp": "2026-08-27T09:51:03.883Z",
   "stats": {
-    "KE": {
-      "code": "KE",
-      "countryId": "e55fd92f-ee35-4fce-97c2-8f39342d21c9",
-      "before": {
-        "jobs": 747,
-        "tenders": 116,
-        "salaries": 78,
-        "compliance": 305,
-        "health": 45
-      },
-      "inserted": {
-        "jobs": 228,
-        "tenders": 0,
-        "salaries": 165,
-        "compliance": 92,
-        "health": 74
-      },
-      "after": {
-        "jobs": 975,
-        "tenders": 116,
-        "salaries": 243,
-        "compliance": 397,
-        "health": 119
-      },
-      "errors": [
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "[SALARIES][teacher salary Kenya 2026] The operation was aborted due to timeout",
-        "[HEALTH][Kenya health statistics WHO 2026 indicators] The operation was aborted due to timeout",
-        "[HEALTH][maternal mortality Kenya 2026 statistics] The operation was aborted due to timeout"
-      ]
-    },
     "TZ": {
       "code": "TZ",
       "countryId": "28bd1d89-acc4-4142-a6f9-b06b5cfa8435",
       "before": {
-        "jobs": 182,
-        "tenders": 5,
-        "salaries": 102,
-        "compliance": 27,
-        "health": 51
+        "jobs": 374,
+        "tenders": 9,
+        "salaries": 321,
+        "compliance": 178,
+        "health": 94
       },
       "inserted": {
-        "jobs": 201,
+        "jobs": 0,
         "tenders": 0,
-        "salaries": 219,
-        "compliance": 53,
-        "health": 76
+        "salaries": 0,
+        "compliance": 0,
+        "health": 0
       },
       "after": {
-        "jobs": 383,
-        "tenders": 5,
+        "jobs": 375,
+        "tenders": 9,
         "salaries": 321,
-        "compliance": 80,
-        "health": 127
+        "compliance": 178,
+        "health": 94
       },
-      "errors": [
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "[HEALTH][malaria HIV Tanzania health data] The operation was aborted due to timeout"
-      ]
+      "errors": []
+    },
+    "KE": {
+      "code": "KE",
+      "countryId": "e55fd92f-ee35-4fce-97c2-8f39342d21c9",
+      "before": {
+        "jobs": 805,
+        "tenders": 83,
+        "salaries": 374,
+        "compliance": 416,
+        "health": 98
+      },
+      "inserted": {
+        "jobs": 0,
+        "tenders": 0,
+        "salaries": 0,
+        "compliance": 0,
+        "health": 0
+      },
+      "after": {
+        "jobs": 807,
+        "tenders": 83,
+        "salaries": 374,
+        "compliance": 416,
+        "health": 98
+      },
+      "errors": []
     },
     "UG": {
       "code": "UG",
       "countryId": "9d0b65ca-40f9-4a38-b526-25e0d210a824",
       "before": {
-        "jobs": 123,
-        "tenders": 82,
-        "salaries": 14,
-        "compliance": 19,
-        "health": 45
+        "jobs": 332,
+        "tenders": 98,
+        "salaries": 128,
+        "compliance": 137,
+        "health": 80
       },
       "inserted": {
-        "jobs": 219,
+        "jobs": 0,
         "tenders": 0,
-        "salaries": 131,
-        "compliance": 46,
-        "health": 60
+        "salaries": 0,
+        "compliance": 0,
+        "health": 0
       },
       "after": {
-        "jobs": 342,
-        "tenders": 82,
-        "salaries": 145,
-        "compliance": 65,
-        "health": 105
+        "jobs": 333,
+        "tenders": 98,
+        "salaries": 128,
+        "compliance": 137,
+        "health": 80
       },
-      "errors": [
-        "[JOBS][entry level graduate jobs Uganda 2026] The operation was aborted due to timeout",
-        "[TENDERS][government tenders Uganda 2026] The operation was aborted due to timeout",
-        "[HEALTH][Uganda health statistics WHO 2026 indicators] The operation was aborted due to timeout",
-        "[HEALTH][maternal mortality Uganda 2026] The operation was aborted due to timeout"
-      ]
+      "errors": []
     },
     "RW": {
       "code": "RW",
       "countryId": "cca4729b-f072-44db-89c3-4b99227e362a",
       "before": {
-        "jobs": 82,
-        "tenders": 2,
-        "salaries": 15,
-        "compliance": 51,
-        "health": 55
+        "jobs": 294,
+        "tenders": 41,
+        "salaries": 126,
+        "compliance": 251,
+        "health": 45
       },
       "inserted": {
-        "jobs": 247,
-        "tenders": 15,
-        "salaries": 120,
-        "compliance": 77,
+        "jobs": 0,
+        "tenders": 0,
+        "salaries": 0,
+        "compliance": 0,
         "health": 0
       },
       "after": {
-        "jobs": 329,
-        "tenders": 17,
-        "salaries": 135,
-        "compliance": 128,
-        "health": 55
+        "jobs": 296,
+        "tenders": 41,
+        "salaries": 126,
+        "compliance": 251,
+        "health": 45
       },
-      "errors": [
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "[HEALTH][Rwanda health statistics WHO 2026] The operation was aborted due to timeout",
-        "[HEALTH][maternal mortality Rwanda 2026] The operation was aborted due to timeout"
-      ]
+      "errors": []
     },
     "ET": {
       "code": "ET",
       "countryId": "06a9ba00-beca-4d09-926b-6cc5f2013c4a",
       "before": {
-        "jobs": 47,
-        "tenders": 21,
-        "salaries": 47,
-        "compliance": 26,
-        "health": 55
+        "jobs": 257,
+        "tenders": 33,
+        "salaries": 137,
+        "compliance": 62,
+        "health": 87
       },
       "inserted": {
-        "jobs": 190,
-        "tenders": 15,
-        "salaries": 100,
-        "compliance": 20,
-        "health": 75
+        "jobs": 0,
+        "tenders": 0,
+        "salaries": 0,
+        "compliance": 0,
+        "health": 0
       },
       "after": {
-        "jobs": 237,
-        "tenders": 36,
-        "salaries": 147,
-        "compliance": 46,
-        "health": 130
+        "jobs": 257,
+        "tenders": 33,
+        "salaries": 137,
+        "compliance": 62,
+        "health": 87
       },
-      "errors": [
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "[COMPLIANCE][Ministry of Revenues Ethiopia tax compliance 2026] The operation was aborted due to timeout",
-        "Failed query: insert into \"health_data_points\" (\"id\", \"indicator_id\", \"country_i",
-        "Failed query: insert into \"health_data_points\" (\"id\", \"indicator_id\", \"country_i",
-        "DB operation timed out after 30000ms",
-        "DB operation timed out after 30000ms"
-      ]
+      "errors": []
     },
     "CD": {
       "code": "CD",
       "countryId": "3feb39d5-5fcc-4166-8c4a-6bed84441fdf",
       "before": {
+        "jobs": 199,
+        "tenders": 5,
+        "salaries": 122,
+        "compliance": 62,
+        "health": 93
+      },
+      "inserted": {
         "jobs": 0,
         "tenders": 0,
         "salaries": 0,
         "compliance": 0,
         "health": 0
       },
-      "inserted": {
-        "jobs": 182,
-        "tenders": 0,
-        "salaries": 122,
-        "compliance": 62,
-        "health": 65
-      },
       "after": {
-        "jobs": 182,
-        "tenders": 0,
+        "jobs": 200,
+        "tenders": 5,
         "salaries": 122,
         "compliance": 62,
-        "health": 65
+        "health": 93
       },
-      "errors": [
-        "[JOBS-P2][UN UNICEF ONU recrutement RDC 2026] The operation was aborted due to timeout",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description"
-      ]
+      "errors": []
     },
     "BI": {
       "code": "BI",
       "countryId": "a8ebf949-9604-41a9-8acb-4fd23f8321f5",
       "before": {
+        "jobs": 108,
+        "tenders": 5,
+        "salaries": 98,
+        "compliance": 74,
+        "health": 36
+      },
+      "inserted": {
         "jobs": 0,
         "tenders": 0,
         "salaries": 0,
         "compliance": 0,
         "health": 0
       },
-      "inserted": {
-        "jobs": 128,
-        "tenders": 0,
-        "salaries": 108,
-        "compliance": 28,
-        "health": 39
-      },
       "after": {
-        "jobs": 128,
-        "tenders": 0,
-        "salaries": 108,
-        "compliance": 68,
-        "health": 39
+        "jobs": 108,
+        "tenders": 5,
+        "salaries": 98,
+        "compliance": 74,
+        "health": 36
       },
-      "errors": [
-        "[JOBS][jobs vacancies Burundi English 2026] terminated",
-        "[TENDERS][appels d'offres Burundi 2026] The operation was aborted due to timeout",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "DB operation timed out after 30000ms",
-        "[HEALTH][statistiques de santé Burundi OMS 2026] The operation was aborted due to timeout"
-      ]
+      "errors": []
     },
     "SO": {
       "code": "SO",
       "countryId": "48d8cb42-00b6-4390-9e19-60f13bbd1bfa",
       "before": {
+        "jobs": 152,
+        "tenders": 5,
+        "salaries": 47,
+        "compliance": 63,
+        "health": 23
+      },
+      "inserted": {
         "jobs": 0,
         "tenders": 0,
         "salaries": 0,
         "compliance": 0,
         "health": 0
       },
-      "inserted": {
-        "jobs": 159,
-        "tenders": 0,
-        "salaries": 48,
-        "compliance": 50,
-        "health": 30
-      },
       "after": {
-        "jobs": 159,
-        "tenders": 0,
-        "salaries": 48,
-        "compliance": 50,
-        "health": 30
+        "jobs": 152,
+        "tenders": 5,
+        "salaries": 47,
+        "compliance": 63,
+        "health": 23
       },
-      "errors": [
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"salary_submissions\" (\"id\", \"job_title\", \"job_category",
-        "[HEALTH][maternal mortality Somalia 2026] The operation was aborted due to timeout"
-      ]
+      "errors": []
     },
     "SS": {
       "code": "SS",
       "countryId": "2357beb4-7d7b-4e98-b0c5-40b352468800",
       "before": {
+        "jobs": 75,
+        "tenders": 18,
+        "salaries": 60,
+        "compliance": 73,
+        "health": 109
+      },
+      "inserted": {
         "jobs": 0,
         "tenders": 0,
         "salaries": 0,
         "compliance": 0,
         "health": 0
       },
-      "inserted": {
-        "jobs": 92,
-        "tenders": 16,
-        "salaries": 65,
-        "compliance": 60,
-        "health": 124
-      },
       "after": {
-        "jobs": 92,
-        "tenders": 16,
-        "salaries": 65,
-        "compliance": 60,
-        "health": 124
+        "jobs": 75,
+        "tenders": 18,
+        "salaries": 60,
+        "compliance": 73,
+        "health": 109
       },
-      "errors": [
-        "Failed query: insert into \"tenders\" (\"id\", \"reference_no\", \"title\", \"description",
-        "Failed query: insert into \"health_data_points\" (\"id\", \"indicator_id\", \"country_i"
-      ]
+      "errors": []
     }
   }
 }

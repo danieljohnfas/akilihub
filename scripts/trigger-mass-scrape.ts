@@ -2,8 +2,8 @@ import { config } from 'dotenv';
 config({ path: '.env.vercel' });
 
 const COUNTRIES = [
-  'ke', // Kenya
   'tz', // Tanzania
+  'ke', // Kenya
   'ug', // Uganda
   'rw', // Rwanda
   'et', // Ethiopia

@@ -228,7 +228,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
       activeCondition,
       exclude !== 'q' && q ? ilike(jobs.title, `%${q}%`) : undefined,
       exclude !== 'type' && type ? eq(jobs.jobType, type as never) : undefined,
-      exclude !== 'company' && company ? eq(jobs.companyName, company) : undefined,
+      exclude !== 'company' && company ? ilike(jobs.companyName, `%${company}%`) : undefined,
       exclude !== 'country' && countryId ? eq(jobs.countryId, countryId) : undefined,
       exclude !== 'country' && regionId ? eq(jobs.regionId, regionId) : undefined,
       exclude !== 'time' && time === '24h' ? gt(jobs.createdAt, new Date(now - 24 * 60 * 60 * 1000)) : undefined,

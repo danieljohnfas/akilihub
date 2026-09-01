@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { searchGoogle } from '@/lib/scrapers/broad-search-engine';
 import { extractJobsWithAI } from '@/lib/scrapers/broad-search-engine';
 import { extractTendersWithAI } from '@/lib/scrapers/broad-search-engine-tenders';
@@ -56,7 +58,7 @@ async function getCategoryId(_name: string): Promise<string | undefined> {
 // to land on government portals + document-heavy pages rather than news.
 const QUERIES = {
     jobs: [
-        'latest jobs in Kenya 2026', 'software engineer jobs Tanzania',
+        'software engineer jobs Tanzania', 'latest jobs in Kenya 2026', 
         'NGO jobs Uganda', 'remote jobs Rwanda', 'finance jobs Ethiopia',
         'oil and gas jobs DRC', 'teaching jobs Kenya', 'marketing jobs Uganda',
         'healthcare jobs Nairobi', 'engineering jobs East Africa',

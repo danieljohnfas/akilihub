@@ -71,3 +71,5 @@ supabase/.temp/
 
 # production server env (never commit — contains live secrets)
 .env.production
+
+.env*

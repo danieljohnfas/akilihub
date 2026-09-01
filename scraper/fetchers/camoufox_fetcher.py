@@ -68,3 +68,38 @@ async def camoufox_scrape(
     except Exception as exc:
         logger.error("camoufox scrape failed for %s: %s", url, exc, exc_info=True)
         return []
+
+
+async def camoufox_fetch_html(url: str, timeout_ms: int = 45_000) -> str:
+    """
+    Fetch a page with camoufox and return the raw rendered HTML string.
+
+    Unlike camoufox_scrape, this does no tender extraction — it's used by
+    the smart scraper to hand HTML off to an LLM for arbitrary extraction.
+    Returns an empty string on failure.
+    """
+    logger.info("camoufox_fetch_html: fetching %s", url)
+    try:
+        from camoufox.async_api import AsyncCamoufox
+
+        async with AsyncCamoufox(headless=True, geoip=True) as browser:
+            page = await browser.new_page()
+            try:
+                await page.goto(url, wait_until="networkidle", timeout=timeout_ms)
+                html = await page.content()
+            finally:
+                await page.close()
+
+        if not html or len(html) < 200:
+            logger.warning("camoufox_fetch_html: empty/tiny response for %s", url)
+            return ""
+
+        logger.info("camoufox_fetch_html: got %d chars for %s", len(html), url)
+        return html
+
+    except ImportError:
+        logger.error("camoufox is not installed. Run: pip install camoufox[geoip]")
+        return ""
+    except Exception as exc:
+        logger.error("camoufox_fetch_html failed for %s: %s", url, exc, exc_info=True)
+        return ""

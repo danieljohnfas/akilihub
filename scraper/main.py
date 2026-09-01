@@ -9,6 +9,7 @@ Endpoints:
   POST /search          — DuckDuckGo search via ddgs (free, no API key)
   POST /extract_text    — extract clean text from HTML via trafilatura
   POST /crawl4ai        — structured CSS extraction via Crawl4AI
+  POST /smart_scrape    — LLM-powered extraction with a plain-English prompt
 
 Port: 7860
 """
@@ -701,6 +702,80 @@ async def extract_document(req: ExtractDocumentRequest):
             text="",
             file_type=file_type,
             size_bytes=0,
+            duration_ms=int((time.monotonic() - start) * 1000),
+            error=str(exc),
+        )
+
+
+# ── /smart_scrape  (LLM-powered — no selectors needed) ───────────────────────
+
+class SmartScrapeRequest(BaseModel):
+    url: str
+    prompt: str
+    # Optional: pass raw HTML instead of letting the sidecar fetch the page.
+    # Useful when the Next.js app already has the HTML and just needs extraction.
+    html: str | None = None
+
+
+class SmartScrapeResponse(BaseModel):
+    success: bool
+    url: str
+    result: object          # dict or list — whatever the LLM returned
+    strategy_used: str      # "scrapegraph_api" | "camoufox+llm"
+    duration_ms: int
+    error: str | None = None
+
+
+@app.post("/smart_scrape", response_model=SmartScrapeResponse)
+async def smart_scrape_endpoint(req: SmartScrapeRequest):
+    """
+    Extract structured data from a URL using a plain-English prompt.
+
+    No CSS selectors, no XPath — just describe what you want.
+
+    Strategy A: ScrapeGraph cloud API (set SCRAPEGRAPH_API_KEY).
+    Strategy B: Camoufox renders the page → Groq/OpenRouter LLM extracts data.
+
+    Example::
+
+        POST /smart_scrape
+        {
+          "url": "https://ppra.go.tz/tender-list",
+          "prompt": "List all tenders with reference number, title, and deadline"
+        }
+    """
+    start = time.monotonic()
+    logger.info("SmartScrape request: url=%s prompt=%r", req.url, req.prompt[:80])
+
+    try:
+        from fetchers.smart_scrape import smart_scrape, _llm_extract
+
+        if req.html:
+            # Caller supplied HTML — skip fetching, go straight to LLM
+            logger.info("SmartScrape: using caller-provided HTML (%d chars)", len(req.html))
+            result = await _llm_extract(req.html, req.prompt)
+            strategy = "llm_only"
+        else:
+            result, strategy = await smart_scrape(url=req.url, prompt=req.prompt)
+
+        duration = int((time.monotonic() - start) * 1000)
+        logger.info("SmartScrape done in %dms via %s for %s", duration, strategy, req.url)
+
+        return SmartScrapeResponse(
+            success=True,
+            url=req.url,
+            result=result,
+            strategy_used=strategy,
+            duration_ms=duration,
+        )
+
+    except Exception as exc:
+        logger.error("SmartScrape failed for %s: %s", req.url, exc, exc_info=True)
+        return SmartScrapeResponse(
+            success=False,
+            url=req.url,
+            result={},
+            strategy_used="none",
             duration_ms=int((time.monotonic() - start) * 1000),
             error=str(exc),
         )
