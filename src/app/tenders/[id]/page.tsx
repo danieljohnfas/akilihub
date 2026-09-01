@@ -14,6 +14,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { buildTenderSchema, buildBreadcrumbSchema } from '@/components/seo/schemas';
 import { isGeneratedSlug } from '@/lib/utils';
 import { getSourceProvenance } from '@/lib/utils/provenance';
+import { isAggregatorUrl } from '@/lib/sources/aggregators';
 import type { Metadata } from 'next';
 
 // ISR: revalidate every hour. Avoids Googlebot seeing inconsistent content
@@ -287,9 +288,9 @@ export default async function TenderDetailPage({
                   Expired / Closed
                 </div>
               )}
-              {(tender.employerUrl ?? tender.sourceUrl) && (
+              {tender.employerUrl && !isAggregatorUrl(tender.employerUrl) ? (
                 <a 
-                  href={`/api/out?url=${encodeURIComponent(tender.employerUrl ?? tender.sourceUrl!)}&type=tender&id=${tender.id}`} 
+                  href={`/api/out?url=${encodeURIComponent(tender.employerUrl)}&type=tender&id=${tender.id}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className={buttonVariants({ className: "w-full" })}
@@ -297,6 +298,10 @@ export default async function TenderDetailPage({
                   <ExternalLink className="w-4 h-4 mr-2" />
                   {provenance.actionText}
                 </a>
+              ) : !tender.employerUrl && (
+                <div className="w-full text-center py-2 text-sm font-medium text-amber-600 border border-amber-200 bg-amber-50 rounded-md">
+                  Direct authority link pending resolution
+                </div>
               )}
               {tender.documentUrl && (
                 <a 
