@@ -9,6 +9,24 @@ import { classifySourceUrl, resolveEmployerUrl } from "@/lib/sources/employer-re
 // ── Thresholds ────────────────────────────────────────────────────────────────
 const JOB_TARGET = 200; // Minimum new inserts before we skip second pass
 
+// ── Job type sanitizer ────────────────────────────────────────────────────────
+// Clamps any AI-generated job type string to the valid DB enum values.
+// Prevents "invalid input value for enum job_type: intern_hip" errors.
+const VALID_JOB_TYPES = ['full_time', 'part_time', 'contract', 'internship', 'remote'] as const;
+type JobType = typeof VALID_JOB_TYPES[number];
+
+function sanitizeJobType(raw: string | null | undefined): JobType {
+  if (!raw) return 'full_time';
+  const normalized = raw.toLowerCase().replace(/[^a-z_]/g, '').replace(/\s+/g, '_');
+  if ((VALID_JOB_TYPES as readonly string[]).includes(normalized)) return normalized as JobType;
+  // Fuzzy match common AI typos
+  if (normalized.includes('intern')) return 'internship';
+  if (normalized.includes('part')) return 'part_time';
+  if (normalized.includes('contract') || normalized.includes('freelan')) return 'contract';
+  if (normalized.includes('remote')) return 'remote';
+  return 'full_time';
+}
+
 // ── Country lookup ────────────────────────────────────────────────────────────
 const countryCache = new Map<string, string>();
 async function getCountryId(countryHint: string): Promise<string | null> {
@@ -83,7 +101,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
         requirements: job.requirements,
         regionId: job.regionId,
         countryId: job.finalCountryId,
-        jobType: job.jobType,
+        jobType: sanitizeJobType(job.jobType),
         sourceUrl: job.sourceUrl,
         employerUrl: job.employerUrl,
         isAggregatorSource: job.isAggregatorSource,
@@ -110,7 +128,7 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
           requirements: job.requirements,
           regionId: job.regionId,
           countryId: job.finalCountryId,
-          jobType: job.jobType,
+          jobType: sanitizeJobType(job.jobType),
           sourceUrl: job.sourceUrl,
           employerUrl: job.employerUrl,
           isAggregatorSource: job.isAggregatorSource,

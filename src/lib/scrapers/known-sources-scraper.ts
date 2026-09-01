@@ -88,7 +88,6 @@ export async function getKnownEmployerUrlsForCountry(
             eq(jobs.isAggregatorSource, false)
           )
         )
-        .orderBy(sql`random()`)   // randomize so we don't always re-scrape the same ones
         .limit(limit);
       rawUrls = rows.map(r => r.url);
 
@@ -103,7 +102,6 @@ export async function getKnownEmployerUrlsForCountry(
             eq(tenders.isAggregatorSource, false)
           )
         )
-        .orderBy(sql`random()`)
         .limit(limit);
       rawUrls = rows.map(r => r.url);
 
@@ -118,7 +116,6 @@ export async function getKnownEmployerUrlsForCountry(
             isNotNull(complianceRequirements.sourceUrl)
           )
         )
-        .orderBy(sql`random()`)
         .limit(limit);
       rawUrls = rows.map(r => r.url);
     }
