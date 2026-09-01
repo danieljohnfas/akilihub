@@ -36,24 +36,26 @@ async function main() {
   for (const countryCode of COUNTRIES) {
     console.log(`\n--- Processing Country: ${countryCode} ---`);
     
+    let jobsInsertedToday = 0;
+
     // First, always do a known-sources pass
     try {
       console.log(`[${countryCode}] Running known sources pass...`);
       const s = await runKnownSourcesForCountryProxy(countryCode, "daily-s-" + countryCode);
+      jobsInsertedToday += s;
       console.log(`[${countryCode}] Known sources inserted: ${s}`);
     } catch(e) {
       console.error(`[${countryCode}] Error in known sources:`, e);
     }
 
-    let currentCount = await getJobCount(countryCode);
-    console.log(`[${countryCode}] Current job count: ${currentCount} / ${TARGET_JOBS_PER_COUNTRY}`);
+    console.log(`[${countryCode}] Target: ${TARGET_JOBS_PER_COUNTRY} NEW jobs today.`);
 
     // Shuffle industries to get different queries each time
     const shuffledIndustries = [...INDUSTRIES].sort(() => Math.random() - 0.5);
     let industryIndex = 0;
 
-    // Loop until we reach the target or run out of industries
-    while (currentCount < TARGET_JOBS_PER_COUNTRY && industryIndex < shuffledIndustries.length) {
+    // Loop until we reach the target of NEW jobs, or run out of industries
+    while (jobsInsertedToday < TARGET_JOBS_PER_COUNTRY && industryIndex < shuffledIndustries.length) {
       const industry = shuffledIndustries[industryIndex];
       industryIndex++;
 
@@ -67,23 +69,24 @@ async function main() {
 
       try {
         const q = await runQueriesForCountryProxy(queries, countryCode, `daily-q-${countryCode}-${industry}`);
+        jobsInsertedToday += q;
         console.log(`[${countryCode}] Inserted ${q} jobs from ${industry} queries.`);
       } catch(e) {
         console.error(`[${countryCode}] Error in broad queries:`, e);
       }
 
-      currentCount = await getJobCount(countryCode);
-      console.log(`[${countryCode}] Progress: ${currentCount} / ${TARGET_JOBS_PER_COUNTRY}`);
+      console.log(`[${countryCode}] Progress: ${jobsInsertedToday} / ${TARGET_JOBS_PER_COUNTRY} new jobs`);
       
       // Sleep a bit to avoid rate limits
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
     
-    if (currentCount >= TARGET_JOBS_PER_COUNTRY) {
-      console.log(`[${countryCode}] 🎉 Target reached! (${currentCount} jobs)`);
+    if (jobsInsertedToday >= TARGET_JOBS_PER_COUNTRY) {
+      console.log(`[${countryCode}] 🎉 Daily target reached! (${jobsInsertedToday} new jobs)`);
     } else {
-      console.log(`[${countryCode}] ⚠️ Exhausted all industries. Final count: ${currentCount}`);
+      console.log(`[${countryCode}] ⚠️ Exhausted all industries. Final count today: ${jobsInsertedToday}`);
     }
+
   }
 
   console.log("\n=== DAILY MASS SCRAPER DONE ===", new Date().toISOString());
