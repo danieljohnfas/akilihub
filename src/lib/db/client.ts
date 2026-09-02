@@ -70,11 +70,12 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
   });
 
   try {
-    const result = await Promise.race([query, timeoutPromise]);
+    const p = typeof (query as any).execute === 'function' ? (query as any).execute() : Promise.resolve(query);
+    const result = await Promise.race([p, timeoutPromise]);
     return result as T;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[DB Error] safeQuery caught in [${label}]:`, message);
+    console.error(`[DB Error] safeQuery caught in [${label}]:`, message, err instanceof Error ? err.stack : err);
     return [] as unknown as T;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
