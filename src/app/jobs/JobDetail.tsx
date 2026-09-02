@@ -183,7 +183,7 @@ export async function JobDetail({
         jobType: job.jobType,
         postedDate: job.postedDate,
         deadline: job.deadline,
-        sourceUrl: job.sourceUrl,
+        sourceUrl: (job.employerUrl && !isAggregatorUrl(job.employerUrl)) ? job.employerUrl : `https://akilibrain.com/jobs/${job.id}`,
         salaryMin: job.salaryMin ? parseFloat(job.salaryMin) : null,
         salaryMax: job.salaryMax ? parseFloat(job.salaryMax) : null,
         salaryCurrency: job.salaryCurrency,

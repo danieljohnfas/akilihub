@@ -70,7 +70,9 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
   });
 
   try {
-    const p = typeof (query as any).execute === 'function' ? (query as any).execute() : Promise.resolve(query);
+    // Wrap the query in an async IIFE to ensure `await query` is called with the correct `this` context.
+    // Promise.race extracts .then() and loses `this` for Drizzle query builders.
+    const p = (async () => await query)();
     const result = await Promise.race([p, timeoutPromise]);
     return result as T;
   } catch (err: unknown) {
