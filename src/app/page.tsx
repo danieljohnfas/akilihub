@@ -102,10 +102,12 @@ const homeFAQSchema = buildFAQSchema([
   },
 ]);
 
-import { db, safeQuery } from '@/lib/db/client';
+import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { countries } from '@/lib/db/schema/shared';
+import { CVMatcher } from '@/components/home/CVMatcher';
+import { safeQuery } from '@/lib/db/client';
 import { count, eq, or, isNull, gt, and } from 'drizzle-orm';
 
 export default async function Home() {
@@ -186,6 +188,9 @@ export default async function Home() {
           <LiveStats jobsTotal={jobsTotal} tendersTotal={tendersTotal} countriesTotal={countriesTotal} />
         </Suspense>
       </section>
+
+      {/* NEW: CV Matcher Section */}
+      <CVMatcher />
 
       {/* Features Grid */}
       <section className="container mx-auto px-4">
