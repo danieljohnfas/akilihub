@@ -114,7 +114,6 @@ export default async function Home() {
       db.select({ value: count() }).from(jobs).where(
         and(
           eq(jobs.isActive, true),
-          eq(jobs.isAggregatorSource, false),
           or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
         )
       )
