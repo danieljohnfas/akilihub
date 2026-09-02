@@ -32,12 +32,14 @@ export async function POST(req: NextRequest) {
     }
 
     let extractedText = '';
+    let fileBuffer: Buffer | null = null;
 
     if (file.type === 'text/plain') {
       extractedText = await file.text();
     } else {
       const arrayBuffer = await file.arrayBuffer();
-      const pdfData = await pdfParse(Buffer.from(arrayBuffer));
+      fileBuffer = Buffer.from(arrayBuffer);
+      const pdfData = await pdfParse(fileBuffer);
       extractedText = pdfData.text;
     }
 
@@ -50,12 +52,36 @@ export async function POST(req: NextRequest) {
     // Also strip non-printable characters (chars below space except tab)
     cleanText = cleanText.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim();
 
+    // Fallback: If pdf-parse failed (image-based scan), use Gemini AI to read the PDF natively
+    if ((!cleanText || cleanText.length < 50) && file.type === 'application/pdf' && fileBuffer) {
+      console.log(`[CV Upload] Standard parsing failed, falling back to Gemini Vision for PDF...`);
+      try {
+        const aiRes = await generateTextWithFallback({
+          system: 'You are an expert OCR and HR assistant. Read the provided scanned CV document and extract ALL text, skills, experiences, and education precisely as a structured markdown document.',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Extract all text from this CV.' },
+                { type: 'file', data: fileBuffer, mimeType: 'application/pdf' },
+              ]
+            }
+          ],
+          temperature: 0.1
+        });
+        cleanText = (aiRes as { text: string }).text.trim();
+        console.log(`[CV Upload] Gemini extracted ${cleanText.length} chars from scanned PDF.`);
+      } catch (err) {
+        console.error('[CV Upload] Gemini Vision fallback failed:', err);
+      }
+    }
+
     if (!cleanText || cleanText.length < 50) {
       return NextResponse.json(
         {
           error:
             'Could not extract enough text from this PDF. ' +
-            'If your CV was created by scanning a physical document it may be image-only. ' +
+            'If your CV was created by scanning a physical document it may be image-only and our AI fallback failed. ' +
             'Please paste your CV as text instead.',
         },
         { status: 422 }
