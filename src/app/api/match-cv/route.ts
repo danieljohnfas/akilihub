@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
 
     // 3. Query DB using Full-Text Search
     const searchFilter = countryId
-      ? sql\`is_active = true AND country_id = \${countryId} AND to_tsvector('english', title || ' ' || coalesce(description, '')) @@ to_tsquery('english', \${tsQuery})\`
-      : sql\`is_active = true AND to_tsvector('english', title || ' ' || coalesce(description, '')) @@ to_tsquery('english', \${tsQuery})\`;
+      ? sql`is_active = true AND country_id = ${countryId} AND to_tsvector('english', title || ' ' || coalesce(description, '')) @@ to_tsquery('english', ${tsQuery})`
+      : sql`is_active = true AND to_tsvector('english', title || ' ' || coalesce(description, '')) @@ to_tsquery('english', ${tsQuery})`;
 
     let dbQuery = db
       .select({
@@ -74,15 +74,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Score matches
-    const scoringPrompt = \`
-      CV Summary: \${cvText.substring(0, 3000)}
-      Experience Level: \${experienceLevel}
+    const scoringPrompt = `
+      CV Summary: ${cvText.substring(0, 3000)}
+      Experience Level: ${experienceLevel}
       
       Job Candidates:
-      \${candidates.map(c => \`ID: \${c.id}\\nTitle: \${c.title}\\nCompany: \${c.companyName}\\nDescription: \${(c.description || '').substring(0, 300)}\`).join('\\n\\n')}
+      ${candidates.map(c => `ID: ${c.id}\nTitle: ${c.title}\nCompany: ${c.companyName}\nDescription: ${(c.description || '').substring(0, 300)}`).join('\n\n')}
       
       Score each job out of 100 based on how well it fits the CV. Return only the top 5 matches.
-    \`;
+    `;
 
     const aiMatches = await generateObjectWithFallback({
       modelName: "Google Gemini 2.5 Flash",
