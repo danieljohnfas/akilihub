@@ -2,12 +2,16 @@ import { resetPassword } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AlertCircle } from 'lucide-react';
 
 export const metadata = {
   title: 'Set New Password | AkiliBrain',
 };
 
-export default function ResetPasswordPage(props: { searchParams: Promise<{ error?: string }> }) {
+export default async function ResetPasswordPage(props: { searchParams: Promise<{ error?: string }> }) {
+  const searchParams = await props.searchParams;
+  const error = searchParams.error;
+
   return (
     <div className="container relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
@@ -17,7 +21,14 @@ export default function ResetPasswordPage(props: { searchParams: Promise<{ error
             Enter your new password below.
           </p>
         </div>
-        
+
+        {error && (
+          <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
+
         <form action={resetPassword} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="password">New Password</Label>

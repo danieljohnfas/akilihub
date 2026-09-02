@@ -111,14 +111,13 @@ export default async function AccountPage() {
                   <Select 
                     name="countryId" 
                     defaultValue={dbUser?.countryId || ''}
-                    items={allCountries.map(c => ({ value: c.id, label: c.name }))}
                   >
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Select a country" />
                     </SelectTrigger>
                     <SelectContent>
                       {allCountries.map(c => (
-                        <SelectItem key={c.id} value={c.id} label={c.name}>{c.name}</SelectItem>
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -240,38 +239,29 @@ export default async function AccountPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="module">Module</Label>
-                    <Select name="module" required items={[
-                      { value: 'tenders', label: 'Tenders' },
-                      { value: 'jobs', label: 'Jobs' },
-                      { value: 'compliance', label: 'Compliance' },
-                      { value: 'health', label: 'Health Data' }
-                    ]}>
+                    <Select name="module" required>
                       <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select module" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="tenders" label="Tenders">Tenders</SelectItem>
-                        <SelectItem value="jobs" label="Jobs">Jobs</SelectItem>
-                        <SelectItem value="compliance" label="Compliance">Compliance</SelectItem>
-                        <SelectItem value="health" label="Health Data">Health Data</SelectItem>
+                        <SelectItem value="tenders">Tenders</SelectItem>
+                        <SelectItem value="jobs">Jobs</SelectItem>
+                        <SelectItem value="compliance">Compliance</SelectItem>
+                        <SelectItem value="health">Health Data</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="frequency">Frequency</Label>
-                    <Select name="frequency" defaultValue="daily" items={[
-                      { value: 'immediate', label: 'Immediate' },
-                      { value: 'daily', label: 'Daily Digest' },
-                      { value: 'weekly', label: 'Weekly Summary' }
-                    ]}>
+                    <Select name="frequency" defaultValue="daily">
                       <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select frequency" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="immediate" label="Immediate">Immediate</SelectItem>
-                        <SelectItem value="daily" label="Daily Digest">Daily Digest</SelectItem>
-                        <SelectItem value="weekly" label="Weekly Summary">Weekly Summary</SelectItem>
+                        <SelectItem value="immediate">Immediate</SelectItem>
+                        <SelectItem value="daily">Daily Digest</SelectItem>
+                        <SelectItem value="weekly">Weekly Summary</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -290,17 +280,14 @@ export default async function AccountPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="alertCountry">Country Filter (Optional)</Label>
-                  <Select name="countryId" items={[
-                    { value: '', label: 'Any country' },
-                    ...allCountries.map(c => ({ value: c.id, label: c.name }))
-                  ]}>
+                  <Select name="countryId">
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Any country" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="" label="Any country">Any country</SelectItem>
+                      <SelectItem value="">Any country</SelectItem>
                       {allCountries.map(c => (
-                        <SelectItem key={c.id} value={c.id} label={c.name}>{c.name}</SelectItem>
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -279,24 +279,27 @@ async function SalariesList({ params }: { params: ReturnType<typeof parseGlobalS
             <PremiumBanner />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="col-span-1">
-              <AdSlot slotId="salaries-sidebar-1" />
-            </div>
-            {data.map(({ salary, employer, country }) => (
-              <SalaryCard
-                key={salary.id}
-                id={salary.id}
-                jobTitle={salary.jobTitle}
-                employerName={employer?.name}
-                sector={employer?.sector || undefined}
-                country={country || 'Unknown'}
-                experienceLevel={salary.experienceLevel}
-                employmentType={salary.employmentType}
-                grossMonthlySalary={Number(salary.grossMonthlySalary)}
-                currency={salary.currency}
-                isVerified={salary.isVerified}
-                submittedAt={salary.submittedAt}
-              />
+            {data.map(({ salary, employer, country }, idx) => (
+              <React.Fragment key={salary.id}>
+                <SalaryCard
+                  id={salary.id}
+                  jobTitle={salary.jobTitle}
+                  employerName={employer?.name}
+                  sector={employer?.sector || undefined}
+                  country={country || 'Unknown'}
+                  experienceLevel={salary.experienceLevel}
+                  employmentType={salary.employmentType}
+                  grossMonthlySalary={Number(salary.grossMonthlySalary)}
+                  currency={salary.currency}
+                  isVerified={salary.isVerified}
+                  submittedAt={salary.submittedAt}
+                />
+                {idx === 8 && (
+                  <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                    <AdSlot slotId="salaries-sidebar-1" />
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         </>

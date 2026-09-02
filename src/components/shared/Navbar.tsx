@@ -72,9 +72,14 @@ export async function Navbar() {
                       </form>
                     </div>
                   ) : (
-                    <Link href="/login" className="block w-full">
-                      <Button className="w-full" variant="outline">Sign In</Button>
-                    </Link>
+                    <div className="flex flex-col gap-3">
+                      <Link href="/login" className="block w-full">
+                        <Button className="w-full" variant="outline">Sign In</Button>
+                      </Link>
+                      <Link href="/pricing" className="block w-full">
+                        <Button className="w-full" variant="default">Upgrade Pro</Button>
+                      </Link>
+                    </div>
                   )}
                 </div>
               </div>

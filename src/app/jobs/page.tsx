@@ -176,15 +176,15 @@ export default async function JobsPage({
             { label: 'Remote Jobs in Africa', href: '/jobs?type=remote' },
             { label: 'Contract Jobs', href: '/jobs?type=contract' },
             { label: 'Internships & Graduate Jobs', href: '/jobs?type=internship' },
-            { label: 'Jobs in Kenya', href: '/jobs?location=Kenya' },
-            { label: 'Jobs in Tanzania', href: '/jobs?location=Tanzania' },
-            { label: 'Jobs in Uganda', href: '/jobs?location=Uganda' },
-            { label: 'Jobs in Rwanda', href: '/jobs?location=Rwanda' },
-            { label: 'Jobs in Ethiopia', href: '/jobs?location=Ethiopia' },
-            { label: 'Jobs in Somalia', href: '/jobs?location=Somalia' },
-            { label: 'Jobs in South Sudan', href: '/jobs?location=South Sudan' },
-            { label: 'Jobs in DRC', href: '/jobs?location=Democratic Republic of the Congo' },
-            { label: 'Jobs in Burundi', href: '/jobs?location=Burundi' },
+            { label: 'Jobs in Kenya', href: '/jobs?country=Kenya' },
+            { label: 'Jobs in Tanzania', href: '/jobs?country=Tanzania' },
+            { label: 'Jobs in Uganda', href: '/jobs?country=Uganda' },
+            { label: 'Jobs in Rwanda', href: '/jobs?country=Rwanda' },
+            { label: 'Jobs in Ethiopia', href: '/jobs?country=Ethiopia' },
+            { label: 'Jobs in Somalia', href: '/jobs?country=Somalia' },
+            { label: 'Jobs in South Sudan', href: '/jobs?country=South Sudan' },
+            { label: 'Jobs in DRC', href: '/jobs?country=Democratic Republic of the Congo' },
+            { label: 'Jobs in Burundi', href: '/jobs?country=Burundi' },
           ].map(({ label, href }) => (
             <Link
               key={href}
@@ -381,13 +381,13 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
 
       {/* Pagination */}
       {data.length > 0 && (() => {
-        const baseParams = {
+        const baseParams: Record<string, string> = {
           ...(q ? { q } : {}),
           ...(type ? { type } : {}),
           ...(company ? { company } : {}),
           ...(country ? { country } : {}),
           ...(time ? { time } : {}),
-          layout,
+          ...(layout ? { layout } : {}),
         };
         return (
           <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">

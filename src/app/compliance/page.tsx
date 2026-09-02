@@ -156,11 +156,24 @@ export default async function CompliancePage({
 
         <TabsContent value="resources" className="space-y-6">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {['all', 'form', 'calculator', 'guideline', 'notice'].map((t) => (
-              <Button key={t} variant="secondary" size="sm" className="rounded-full capitalize">
-                {t}
-              </Button>
-            ))}
+            {(['all', 'form', 'calculator', 'guideline', 'notice'] as const).map((t) => {
+              const isActive = (params.type || 'all') === t;
+              const sp = new URLSearchParams();
+              if (params.q) sp.set('q', params.q);
+              if (t !== 'all') sp.set('type', t);
+              if (params.country && params.country !== 'all') sp.set('country', params.country);
+              return (
+                <Link key={t} href={`/compliance${sp.toString() ? `?${sp.toString()}` : ''}`}>
+                  <Button
+                    variant={isActive ? 'default' : 'secondary'}
+                    size="sm"
+                    className="rounded-full capitalize"
+                  >
+                    {t}
+                  </Button>
+                </Link>
+              );
+            })}
           </div>
           <Suspense fallback={
             <DataLoadingState 
@@ -305,27 +318,38 @@ async function ResourcesList({ params }: { params: ReturnType<typeof parseGlobal
       </div>
 
       {/* Pagination */}
-      {resources.length > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
-          {page > 1 && (
-            <Link
-              href={`/compliance?q=${q || ''}&country=${country || ''}&type=${type || ''}&page=${page - 1}`}
-              className={buttonVariants({ variant: 'outline' })}
-            >
-              ← Previous
-            </Link>
-          )}
-          <span className="text-sm text-muted-foreground">Page {page}</span>
-          {resources.length === PAGE_SIZE && (
-            <Link
-              href={`/compliance?q=${q || ''}&country=${country || ''}&type=${type || ''}&page=${page + 1}`}
-              className={buttonVariants({ variant: 'outline' })}
-            >
-              Next →
-            </Link>
-          )}
-        </div>
-      )}
+      {resources.length > 0 && (() => {
+        const getPageUrl = (newPage: number) => {
+          const sp = new URLSearchParams();
+          if (q) sp.set('q', q);
+          if (type && type !== 'all') sp.set('type', type);
+          if (country && country !== 'all') sp.set('country', country);
+          if (newPage > 1) sp.set('page', newPage.toString());
+          const qs = sp.toString();
+          return `/compliance${qs ? `?${qs}` : ''}`;
+        };
+        return (
+          <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
+            {page > 1 && (
+              <Link
+                href={getPageUrl(page - 1)}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                ← Previous
+              </Link>
+            )}
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            {resources.length === PAGE_SIZE && (
+              <Link
+                href={getPageUrl(page + 1)}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                Next →
+              </Link>
+            )}
+          </div>
+        );
+      })()}
       
       {/* SEO-rich static content for Googlebot */}
       <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">
@@ -474,27 +498,39 @@ async function BusinessesList({ params }: { params: ReturnType<typeof parseGloba
       )}
 
       {/* Pagination */}
-      {data.length > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
-          {page > 1 && (
-            <Link
-              href={`/compliance?q=${q || ''}&status=${status || ''}&country=${country || ''}&type=${type || ''}&page=${page - 1}`}
-              className={buttonVariants({ variant: 'outline' })}
-            >
-              ← Previous
-            </Link>
-          )}
-          <span className="text-sm text-muted-foreground">Page {page}</span>
-          {data.length === PAGE_SIZE && (
-            <Link
-              href={`/compliance?q=${q || ''}&status=${status || ''}&country=${country || ''}&type=${type || ''}&page=${page + 1}`}
-              className={buttonVariants({ variant: 'outline' })}
-            >
-              Next →
-            </Link>
-          )}
-        </div>
-      )}
+      {data.length > 0 && (() => {
+        const getPageUrl = (newPage: number) => {
+          const sp = new URLSearchParams();
+          if (q) sp.set('q', q);
+          if (status && status !== 'all') sp.set('status', status);
+          if (country && country !== 'all') sp.set('country', country);
+          if (type && type !== 'all') sp.set('type', type);
+          if (newPage > 1) sp.set('page', newPage.toString());
+          const qs = sp.toString();
+          return `/compliance${qs ? `?${qs}` : ''}`;
+        };
+        return (
+          <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">
+            {page > 1 && (
+              <Link
+                href={getPageUrl(page - 1)}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                ← Previous
+              </Link>
+            )}
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            {data.length === PAGE_SIZE && (
+              <Link
+                href={getPageUrl(page + 1)}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                Next →
+              </Link>
+            )}
+          </div>
+        );
+      })()}
 
       {/* SEO-rich static content for Googlebot */}
       <section className="mt-16 space-y-8 text-muted-foreground border-t border-white/5 pt-12">

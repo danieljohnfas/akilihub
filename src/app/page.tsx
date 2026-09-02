@@ -10,7 +10,6 @@ import { buildFAQSchema } from "@/components/seo/schemas";
 const MagicCard = nextDynamic(() => import('@/components/ui/magic-card').then(mod => mod.MagicCard), { ssr: true });
 const RelatedGuides = nextDynamic(() => import('@/components/guides/RelatedGuides').then(mod => mod.RelatedGuides), { ssr: true });
 const LiveStats = nextDynamic(() => import('@/components/home/LiveStats').then(mod => mod.LiveStats), { ssr: true });
-import { LeadCapture } from '@/components/home/ClientWidgets';
 
 
 

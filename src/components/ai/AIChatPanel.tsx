@@ -119,10 +119,10 @@ export function AIChatPanel() {
     return () => clearTimeout(timer);
   }, [pathname, isOpen]);
 
-  // Keyboard shortcut (Cmd+K / Ctrl+K)
+  // Keyboard shortcut (Cmd+J / Ctrl+J)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'j') {
         e.preventDefault();
         setIsOpen((prev) => {
           if (!prev) setProactiveMessage(null);
