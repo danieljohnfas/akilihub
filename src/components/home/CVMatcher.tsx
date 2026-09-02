@@ -31,7 +31,12 @@ export function CVMatcher() {
       });
 
       if (!uploadRes.ok) {
-        throw new Error('Failed to parse CV document.');
+        let errMessage = 'Failed to parse CV document.';
+        try {
+          const errData = await uploadRes.json();
+          if (errData.error) errMessage = errData.error;
+        } catch(e) {}
+        throw new Error(errMessage);
       }
 
       const uploadData = await uploadRes.json();
