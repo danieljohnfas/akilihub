@@ -95,6 +95,9 @@ import { summarizeTenderDocumentJob } from "@/inngest/tender-summarizer";
 // Massive Data Verification & Cleanup Loop
 import { dataCleanupOrchestratorJob } from "@/inngest/data-cleanup-worker";
 
+// Deduplication
+import { deduplicateJobsJob } from "@/inngest/deduplicate-jobs";
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
@@ -203,6 +206,9 @@ export const { GET, POST, PUT } = serve({
 
     // AI Massive Data Verification Loop (Event Driven)
     dataCleanupOrchestratorJob,
+
+    // Deduplication (03:00 UTC)
+    deduplicateJobsJob,
   ],
 });
 
