@@ -27,12 +27,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: [
-      'https://akilibrain.com/sitemap/0.xml',
-      'https://akilibrain.com/sitemap/1.xml',
-      'https://akilibrain.com/sitemap/2.xml',
-      'https://akilibrain.com/sitemap/3.xml',
-      'https://akilibrain.com/sitemap/4.xml',
-    ],
+    sitemap: 'https://akilibrain.com/sitemap_index.xml',
   };
 }
