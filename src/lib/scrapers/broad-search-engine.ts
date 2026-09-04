@@ -11,6 +11,11 @@ export interface BroadJobResource {
   companyName: string;
   description: string;
   requirements: string | null;
+  sector: string | null;
+  profession: string | null;
+  experienceLevel: string | null;
+  educationLevel: string | null;
+  skills: string[] | null;
   regionId: string | null;
   jobType: 'full_time' | 'part_time' | 'contract' | 'internship' | 'remote';
   sourceUrl: string;
