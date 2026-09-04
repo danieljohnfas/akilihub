@@ -10,6 +10,13 @@ export default function robots(): MetadataRoute.Robots {
           '/api/docs',
         ],
         disallow: [
+          // Auth and Account pages
+          '/login',
+          '/signup',
+          '/forgot-password',
+          '/account',
+          // Outbound redirect tracker
+          '/api/out',
           // Search/filter state URLs that duplicate listing pages
           '/jobs?*',
           '/tenders?*',
