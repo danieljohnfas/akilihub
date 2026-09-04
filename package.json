@@ -22,7 +22,7 @@
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
     "@react-oauth/google": "^0.13.5",
-    "@sentry/nextjs": "^10.63.0",
+    "@sentry/nextjs": "^10.70.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
     "@types/cheerio": "^0.22.35",
