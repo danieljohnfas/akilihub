@@ -3,13 +3,8 @@ dotenv.config({ path: '.env' });
 
 import { discoverJobs } from '../src/lib/scrapers/broad-search-engine';
 import { saveJobs } from '../src/inngest/scrape-jobs';
-import { db } from '../src/lib/db/client';
-import { jobs } from '../src/lib/db/schema/jobs';
-import { countries } from '../src/lib/db/schema/shared';
-import { eq, sql } from 'drizzle-orm';
 
-const TARGET_JOBS = 2000;
-const COUNTRY_CODE = process.argv[2] || 'TZ';
+const TARGET_NEW_JOBS = 2000;
 
 const countriesMap: Record<string, { cities: string[], keywords: string[] }> = {
   'TZ': {
@@ -62,59 +57,53 @@ const titles = [
   'data analyst', 'graphic designer', 'social worker', 'operations manager'
 ];
 
-const config = countriesMap[COUNTRY_CODE.toUpperCase()];
-if (!config) {
-  console.error(`Unknown country code: ${COUNTRY_CODE}`);
-  process.exit(1);
-}
-
-const queries: string[] = [];
-
-for (const title of titles) {
-  for (const city of config.cities) {
-    for (const keyword of config.keywords) {
-      queries.push(`${title} ${city} ${keyword} 2026`);
-    }
-  }
-}
-
-// Shuffle queries
-queries.sort(() => Math.random() - 0.5);
-
-async function getJobCount() {
-  const result = await db
-    .select({ count: sql`count(*)`.mapWith(Number) })
-    .from(jobs)
-    .innerJoin(countries, eq(jobs.countryId, countries.id))
-    .where(eq(countries.code, COUNTRY_CODE.toUpperCase()));
-  return result[0].count;
-}
-
 async function run() {
-  let count = await getJobCount();
-  console.log(`Initial job count for ${COUNTRY_CODE}: ${count}`);
+  const allCountries = Object.keys(countriesMap);
   
-  for (const query of queries) {
-    if (count >= TARGET_JOBS) {
-      console.log(`Reached target of ${TARGET_JOBS} jobs for ${COUNTRY_CODE}. Stopping.`);
-      break;
-    }
-    
-    console.log(`\n--- Running query: "${query}" ---`);
-    try {
-      const discovered = await discoverJobs(query, 5);
-      if (discovered.length > 0) {
-        const inserted = await saveJobs(discovered, COUNTRY_CODE);
-        console.log(`Inserted ${inserted} new jobs out of ${discovered.length} discovered.`);
-      } else {
-        console.log(`No jobs discovered for query.`);
+  for (const countryCode of allCountries) {
+    const config = countriesMap[countryCode];
+    const queries: string[] = [];
+
+    for (const title of titles) {
+      for (const city of config.cities) {
+        for (const keyword of config.keywords) {
+          queries.push(`${title} ${city} ${keyword} 2026`);
+        }
       }
-    } catch (e) {
-      console.error(`Error during query "${query}":`, e);
     }
-    
-    count = await getJobCount();
-    console.log(`Current job count for ${COUNTRY_CODE}: ${count}`);
+
+    // Shuffle queries
+    queries.sort(() => Math.random() - 0.5);
+
+    console.log(`\n======================================================`);
+    console.log(`Starting mass scrape for ${countryCode}`);
+    console.log(`Target: ${TARGET_NEW_JOBS} NEW jobs`);
+    console.log(`Total queries generated: ${queries.length}`);
+    console.log(`======================================================\n`);
+
+    let newlyInserted = 0;
+
+    for (const query of queries) {
+      if (newlyInserted >= TARGET_NEW_JOBS) {
+        console.log(`Reached target of ${TARGET_NEW_JOBS} NEW jobs for ${countryCode}. Moving to next country.`);
+        break;
+      }
+      
+      console.log(`\n--- [${countryCode}] Running query: "${query}" ---`);
+      try {
+        const discovered = await discoverJobs(query, 5);
+        if (discovered.length > 0) {
+          const inserted = await saveJobs(discovered, countryCode);
+          newlyInserted += inserted;
+          console.log(`Inserted ${inserted} new jobs out of ${discovered.length} discovered.`);
+          console.log(`Progress for ${countryCode}: ${newlyInserted} / ${TARGET_NEW_JOBS} NEW jobs`);
+        } else {
+          console.log(`No jobs discovered for query.`);
+        }
+      } catch (e) {
+        console.error(`Error during query "${query}":`, e);
+      }
+    }
   }
 }
 
