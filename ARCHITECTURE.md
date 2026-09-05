@@ -16,7 +16,7 @@ AkiliBrain is a robust Next.js application that serves as a central intelligence
 ## 2. Hosting & Infrastructure
 
 ### Production Stack (Linode)
-- **Server:** Linode VPS at `172.105.58.237`
+- **Server:** Linode VPS (address kept private)
 - **App Directory:** `/opt/akilibrain`
 - **Docker Compose:** `docker-compose.prod.yml`
   - `akilibrain-web-1` — Next.js standalone (port 3000, internal)

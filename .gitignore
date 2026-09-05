@@ -73,3 +73,44 @@ supabase/.temp/
 .env.production
 
 .env*
+
+# --- security/hygiene (added) ---
+*.log
+run*.log
+local-run.log
+job_logs.txt
+jobs_*.txt
+lint-*.txt
+lh-report.json
+vercel-logs*.txt
+sysinfo.txt
+temp*.html
+temp_*.py
+screenshot_*.png
+src.tar.gz
+scraper-progress.json
+auth_config.json
+/test-linode*.mjs
+/check-db-live.mjs
+/scratch_*.mjs
+/scratch_*.js
+/audit_tmp.js
+/patch_*.py
+/screenshot_loop.js
+/scrape_akilibrain.js
+/check.js
+/test-*.mjs
+/test-*.js
+/playwright-report/
+/test-results/
+*.tar.gz
+
+# scripts that historically embedded secrets
+/scripts/debug-*.mjs
+/scripts/test-supabase.mjs
+/scripts/db-audit.mjs
+/scripts/country-audit.mjs
+/scripts/fix-data.mjs
+/scripts/fix-foreign-jobs.mjs
+/scripts/migrate-direct.ts
+/scripts/test-conn.mjs
