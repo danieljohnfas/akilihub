@@ -3,15 +3,6 @@ import { db } from "@/lib/db/client";
 import { outboundClicks } from "@/lib/db/schema/analytics";
 import { appendTrackingTag } from "@/lib/utils";
 
-function isSafeHttpUrl(raw: string): boolean {
-  try {
-    const u = new URL(raw);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const targetUrl = searchParams.get("url");

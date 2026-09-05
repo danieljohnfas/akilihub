@@ -347,7 +347,9 @@ export default async function SlugRoute({
                 location={region || null}
                 country={country || 'Africa'}
                 jobType={job.jobType ?? 'full_time'}
-                sourceUrl={job.sourceUrl}
+                isAggregatorSource={job.isAggregatorSource}
+                  employerUrl={job.employerUrl}
+                  sourceUrl={job.sourceUrl}
                 postedDate={job.postedDate}
                 deadline={job.deadline}
                 createdAt={job.createdAt}

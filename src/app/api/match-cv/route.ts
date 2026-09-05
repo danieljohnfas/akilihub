@@ -5,6 +5,7 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { eq, sql } from 'drizzle-orm';
 import { generateObjectWithFallback } from '@/lib/ai/router';
 import { z } from 'zod';
+import { enforceRateLimit } from '@/lib/security/rate-limit';
 
 export const maxDuration = 60; // 60 seconds
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,9 @@ const MatchSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { prefix: 'match-cv', max: 10, window: '1 m' });
+  if (limited) return limited;
+
   try {
     const { documentId, countryId } = await req.json();
 

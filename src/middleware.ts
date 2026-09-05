@@ -94,28 +94,24 @@ export async function middleware(request: NextRequest) {
     }
 
 
-    // 2. Upstash Rate Limiting Logic (only for /api/chat)
-    if (request.nextUrl.pathname.startsWith('/api/chat') && ratelimit) {
+    // 2. Upstash Rate Limiting for expensive public APIs
+    const rateLimitedPrefixes = ['/api/chat', '/api/upload-cv', '/api/match-cv', '/api/subscribe'];
+    const needsLimit = rateLimitedPrefixes.some((p) => pathname.startsWith(p));
+    if (needsLimit && ratelimit) {
       const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
-      
       try {
-        const { success, limit, reset, remaining } = await ratelimit.limit(ip);
-        
+        const { success, limit, reset, remaining } = await ratelimit.limit(`${pathname}:${ip}`);
         if (!success) {
           return NextResponse.json(
             { error: 'Too Many Requests', message: 'You have exceeded the rate limit. Please try again later.' },
             { status: 429 }
           );
         }
-
-        // Add rate limit headers to the supabase response
         supabaseResponse.headers.set('X-RateLimit-Limit', limit.toString());
         supabaseResponse.headers.set('X-RateLimit-Remaining', remaining.toString());
         supabaseResponse.headers.set('X-RateLimit-Reset', reset.toString());
-        
       } catch (error) {
         console.error('Rate Limiter Error:', error);
-        // Fail open if Redis fails, so the app doesn't go down
       }
     }
 

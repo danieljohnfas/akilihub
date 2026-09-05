@@ -320,7 +320,9 @@ export async function JobDetail({
                     location={sj.region || null}
                     country={sj.country || 'Africa'}
                     jobType={sj.job.jobType ?? 'full_time'}
-                    sourceUrl={sj.job.sourceUrl}
+                    isAggregatorSource={job.isAggregatorSource}
+                  employerUrl={job.employerUrl}
+                  sourceUrl={sj.job.sourceUrl}
                     postedDate={sj.job.postedDate}
                     deadline={sj.job.deadline}
                     createdAt={sj.job.createdAt}
