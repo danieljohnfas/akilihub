@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, or, isNull, gt, count, sql } from 'drizzle-orm';
+import { eq, desc, ilike, and, or, isNull, isNotNull, gt, count, sql } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
 import { GlobalFilterBar } from '@/components/shared/GlobalFilterBar';
 import { buttonVariants } from '@/components/ui/button';
@@ -201,13 +201,20 @@ export default async function JobsPage({
 }
 
 async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearchParams> }) {
-  const { q, type, company, country, time, layout, page } = params;
+  const { q, type, company, country, time, layout, page, includeExpired } = params;
   const offset = (page - 1) * PAGE_SIZE;
 
-  const activeCondition = and(
-    eq(jobs.isActive, true),
-    or(isNull(jobs.deadline), gt(jobs.deadline, sql`now()`))
-  );
+  // Fresh by default: active + not past deadline + not stale (no deadline & older than 45 days).
+  // Opt in with ?includeExpired=1 to surface expired/stale listings.
+  const STALE_DAYS = 45;
+  const staleCutoff = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000);
+  const activeCondition = includeExpired
+    ? eq(jobs.isActive, true)
+    : and(
+        eq(jobs.isActive, true),
+        or(isNull(jobs.deadline), gt(jobs.deadline, sql`now()`)),
+        or(isNotNull(jobs.deadline), gt(jobs.createdAt, staleCutoff))
+      );
 
   let countryId: string | undefined;
   let regionId: string | undefined;
@@ -279,6 +286,16 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
   const totalCount = totalCountResult?.[0]?.value || 0;
 
   const hasFilters = q || type || company || country || time;
+  const freshnessParams: Record<string, string> = {
+    ...(q ? { q } : {}),
+    ...(type ? { type } : {}),
+    ...(company ? { company } : {}),
+    ...(country ? { country } : {}),
+    ...(time ? { time } : {}),
+    ...(layout ? { layout } : {}),
+  };
+  const includeExpiredHref = `/jobs?${new URLSearchParams({ ...freshnessParams, includeExpired: '1' }).toString()}`;
+  const hideExpiredHref = `/jobs?${new URLSearchParams(freshnessParams).toString()}`;
 
   const itemListSchema = buildItemListSchema(
     'Jobs & Careers in East Africa',
@@ -303,42 +320,63 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
       <JsonLd schema={breadcrumbSchema} />
       
       {totalCount > 0 && (
-        <div className="flex justify-center -mt-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 -mt-4 mb-8">
           <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
-            Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span> active positions
+            Showing <span className="text-white mx-1">{data.length}</span> of <span className="text-white mx-1">{totalCount}</span>{' '}
+            {includeExpired ? 'positions (incl. expired/stale)' : 'fresh positions'}
           </div>
+          <Link
+            href={includeExpired ? hideExpiredHref : includeExpiredHref}
+            className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
+          >
+            {includeExpired ? 'Hide expired & stale' : 'Include expired & stale'}
+          </Link>
         </div>
       )}
 
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 px-4 text-center border border-white/10 rounded-xl bg-white/5 border-dashed">
           <EmptyStateLottie />
-          <h3 className="text-xl font-semibold mb-2">No active jobs found</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            {includeExpired ? 'No jobs found' : 'No fresh jobs found'}
+          </h3>
           <p className="text-muted-foreground max-w-md">
-            We couldn&apos;t find any active job postings matching your criteria. Try adjusting your filters or check back later.
+            {includeExpired
+              ? 'We couldn’t find any job postings matching your criteria. Try adjusting your filters or check back later.'
+              : 'No open, recently listed roles match these filters. Fresh listings hide expired deadlines and roles older than 45 days without a deadline.'}
           </p>
-          {hasFilters && (
-            <Link
-              href="/jobs"
-              className={buttonVariants({ variant: 'outline', className: 'mt-6' })}
-            >
-              Clear all filters
-            </Link>
-          )}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+            {!includeExpired && (
+              <Link
+                href={includeExpiredHref}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                Show expired & stale listings
+              </Link>
+            )}
+            {hasFilters && (
+              <Link
+                href="/jobs"
+                className={buttonVariants({ variant: includeExpired ? 'outline' : 'ghost' })}
+              >
+                Clear all filters
+              </Link>
+            )}
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
           <div className="flex justify-end mb-2">
             <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-lg">
               <Link
-                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(country ? { country } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'grid' }).toString()}`}
+                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(country ? { country } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), ...(includeExpired ? { includeExpired: '1' } : {}), layout: 'grid' }).toString()}`}
                 className={`p-1.5 rounded-md transition-colors ${layout === 'grid' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                 title="Grid View"
               >
                 <LayoutGrid className="w-4 h-4" />
               </Link>
               <Link
-                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(country ? { country } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), layout: 'list' }).toString()}`}
+                href={`/jobs?${new URLSearchParams({ ...(q ? { q } : {}), ...(company ? { company } : {}), ...(country ? { country } : {}), ...(time ? { time } : {}), ...(type ? { type } : {}), ...(includeExpired ? { includeExpired: '1' } : {}), layout: 'list' }).toString()}`}
                 className={`p-1.5 rounded-md transition-colors ${layout === 'list' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                 title="List View"
               >
@@ -391,6 +429,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
           ...(country ? { country } : {}),
           ...(time ? { time } : {}),
           ...(layout ? { layout } : {}),
+          ...(includeExpired ? { includeExpired: '1' } : {}),
         };
         return (
           <div className="flex items-center justify-center gap-4 pt-6 border-t border-white/5 mt-8">

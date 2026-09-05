@@ -63,16 +63,16 @@ export function JobCard({
 
   if (layout === 'list') {
     return (
-      <Card className="group relative hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col md:flex-row items-start md:items-center p-4 gap-4 focus-within:ring-2 focus-within:ring-primary/50">
+      <Card className={`group relative transition-all duration-300 backdrop-blur-sm flex flex-col md:flex-row items-start md:items-center p-4 gap-4 focus-within:ring-2 focus-within:ring-primary/50 ${isExpired ? 'opacity-55 grayscale-[35%] border-dashed border-destructive/30 bg-destructive/5 hover:border-destructive/40' : 'hover:border-primary/50 bg-white/5 border-white/10'}`}>
         <Link href={`/jobs/${id}`} className="absolute inset-0 z-10">
           <span className="sr-only">View Details for {title}</span>
         </Link>
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+            <h3 className={`text-base font-semibold transition-colors underline-offset-4 group-hover:underline ${isExpired ? 'text-muted-foreground group-hover:text-muted-foreground' : 'group-hover:text-primary'}`}>
               {title}
             </h3>
-            {isExpired && <Badge variant="secondary" className="text-[10px] h-4 px-1 z-20 relative">Expired</Badge>}
+            {isExpired && <Badge variant="secondary" className="text-[10px] h-4 px-1 z-20 relative bg-destructive/20 text-destructive border-destructive/30">Closed</Badge>}
             {hasDirectEmployer && <Badge variant="outline" className="text-[10px] h-4 px-1 z-20 relative border-emerald-500/40 text-emerald-400">Direct</Badge>}
             {!hasDirectEmployer && isAggregatorSource && <Badge variant="outline" className="text-[10px] h-4 px-1 z-20 relative border-amber-500/40 text-amber-400">Board</Badge>}
           </div>
@@ -107,7 +107,7 @@ export function JobCard({
   }
 
   return (
-    <Card className="group relative hover:border-primary/50 transition-all duration-300 bg-white/5 backdrop-blur-sm border-white/10 flex flex-col focus-within:ring-2 focus-within:ring-primary/50">
+    <Card className={`group relative transition-all duration-300 backdrop-blur-sm flex flex-col focus-within:ring-2 focus-within:ring-primary/50 ${isExpired ? 'opacity-55 grayscale-[35%] border-dashed border-destructive/30 bg-destructive/5 hover:border-destructive/40' : 'hover:border-primary/50 bg-white/5 border-white/10'}`}>
       <Link href={`/jobs/${id}`} className="absolute inset-0 z-10">
         <span className="sr-only">View Details for {title}</span>
       </Link>
@@ -122,7 +122,7 @@ export function JobCard({
           </Badge>
           <div className="flex flex-wrap gap-1 justify-end relative z-20">
             {isExpired && (
-              <Badge variant="secondary" className="text-xs">Expired</Badge>
+              <Badge variant="secondary" className="text-xs bg-destructive/20 text-destructive border-destructive/30">Closed</Badge>
             )}
             {hasDirectEmployer ? (
               <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-400">Direct employer</Badge>
@@ -131,7 +131,7 @@ export function JobCard({
             ) : null}
           </div>
         </div>
-        <h3 className="text-lg font-semibold group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+        <h3 className={`text-lg font-semibold transition-colors underline-offset-4 group-hover:underline ${isExpired ? 'text-muted-foreground group-hover:text-muted-foreground' : 'group-hover:text-primary'}`}>
           {title}
         </h3>
       </CardHeader>

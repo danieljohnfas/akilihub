@@ -10,6 +10,8 @@ export interface GlobalSearchParams {
   source?: string; // Health
   organization?: string; // Tenders
   layout?: 'grid' | 'list'; // View mode (grid/list)
+  /** When true, include deadline-expired and stale (no-deadline, older than 45d) jobs */
+  includeExpired?: boolean;
   page: number; // Parsed to integer, defaults to 1
 }
 
@@ -20,6 +22,11 @@ export function parseGlobalSearchParams(
     if (typeof val === 'string' && val !== 'all' && val !== '') return val;
     return undefined;
   };
+
+  const includeExpiredRaw = typeof searchParams.includeExpired === 'string'
+    ? searchParams.includeExpired
+    : undefined;
+  const includeExpired = includeExpiredRaw === '1' || includeExpiredRaw === 'true';
 
   const params: GlobalSearchParams = {
     q: getParam(searchParams.q),
@@ -33,6 +40,7 @@ export function parseGlobalSearchParams(
     source: getParam(searchParams.source),
     organization: getParam(searchParams.organization),
     layout: (getParam(searchParams.layout) === 'list' ? 'list' : 'grid'),
+    includeExpired: includeExpired || undefined,
     page: typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) || 1 : 1,
   };
   return params;
