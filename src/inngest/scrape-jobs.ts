@@ -5,9 +5,10 @@ import { jobs } from "@/lib/db/schema/jobs";
 import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
 import { classifySourceUrl, resolveEmployerUrl } from "@/lib/sources/employer-resolver";
+import { scrapersDisabled, jobInsertTarget, jobSecondPassEnabled } from '@/lib/scrapers/cost-controls';
 
 // ── Thresholds ────────────────────────────────────────────────────────────────
-const JOB_TARGET = 200; // Minimum new inserts before we skip second pass
+const JOB_TARGET = jobInsertTarget(); // env SCRAPE_JOB_TARGET
 
 // ── Job type sanitizer ────────────────────────────────────────────────────────
 // Clamps any AI-generated job type string to the valid DB enum values.
@@ -216,6 +217,10 @@ function makeJobScraper(
   return inngest.createFunction(
     { id, name, triggers: [{ cron }, { event: "manual.scrape.jobs" }] },
     async ({ step }) => {
+      if (scrapersDisabled()) {
+        return { message: 'Scrapers disabled via SCRAPE_DISABLED', totalInserted: 0, hitTarget: false, skipped: true };
+      }
+
       // Pass 0 — known sources (cleanest, highest priority)
       const pass0 = await step.run(`execute-job-scraper-known`, async () => {
         return await runKnownSourcesForCountry(countryCode, `${id}-known`);
@@ -231,7 +236,7 @@ function makeJobScraper(
       totalInserted += pass1;
 
       // Pass 2 — only if we fell short of the target (retry on under-performance)
-      if (pass1 < JOB_TARGET) {
+      if (jobSecondPassEnabled() && pass1 < JOB_TARGET) {
         console.log(`[${id}] Pass 1 yielded ${pass1} — under target ${JOB_TARGET}. Running second pass...`);
         const pass2 = await step.run(`execute-job-scraper-pass2`, async () => {
           return await runQueriesForCountry(queries, countryCode, `${id}-p2`);

@@ -1,21 +1,14 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
-import { sql } from 'drizzle-orm';
+import { NextRequest, NextResponse } from "next/server";
+import { SESSION_COOKIE, verifyAdminSession } from "@/lib/admin/session";
 
-export async function GET() {
-  try {
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS "admin_config" (
-        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-        "password_hash" text NOT NULL,
-        "totp_secret" text NOT NULL,
-        "is_setup" boolean DEFAULT false NOT NULL,
-        "created_at" timestamp DEFAULT now() NOT NULL,
-        "updated_at" timestamp DEFAULT now() NOT NULL
-      );
-    `);
-    return NextResponse.json({ success: true, message: 'Admin table created successfully' });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  if (!token || !(await verifyAdminSession(token))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  return NextResponse.json(
+    { error: "Gone", message: "Use drizzle migrations; this ad-hoc migrate endpoint is disabled." },
+    { status: 410 }
+  );
 }

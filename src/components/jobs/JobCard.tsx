@@ -20,6 +20,8 @@ export interface JobCardProps {
   deadline: Date | null;
   createdAt: Date;
   layout?: 'grid' | 'list';
+  isAggregatorSource?: boolean;
+  employerUrl?: string | null;
 }
 
 const jobTypeLabels: Record<JobCardProps['jobType'], string> = {
@@ -52,8 +54,12 @@ export function JobCard({
   deadline,
   createdAt,
   layout = 'grid',
+  isAggregatorSource = false,
+  employerUrl = null,
 }: JobCardProps) {
   const isExpired = deadline ? deadline < new Date() : false;
+  const hasDirectEmployer = Boolean(employerUrl) && !isAggregatorSource;
+  const listedAgo = formatDistanceToNow(createdAt, { addSuffix: true });
 
   if (layout === 'list') {
     return (
@@ -67,6 +73,8 @@ export function JobCard({
               {title}
             </h3>
             {isExpired && <Badge variant="secondary" className="text-[10px] h-4 px-1 z-20 relative">Expired</Badge>}
+            {hasDirectEmployer && <Badge variant="outline" className="text-[10px] h-4 px-1 z-20 relative border-emerald-500/40 text-emerald-400">Direct</Badge>}
+            {!hasDirectEmployer && isAggregatorSource && <Badge variant="outline" className="text-[10px] h-4 px-1 z-20 relative border-amber-500/40 text-amber-400">Board</Badge>}
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
@@ -112,9 +120,16 @@ export function JobCard({
           >
             {jobTypeLabels[jobType]}
           </Badge>
-          {isExpired && (
-            <Badge variant="secondary" className="text-xs relative z-20">Expired</Badge>
-          )}
+          <div className="flex flex-wrap gap-1 justify-end relative z-20">
+            {isExpired && (
+              <Badge variant="secondary" className="text-xs">Expired</Badge>
+            )}
+            {hasDirectEmployer ? (
+              <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-400">Direct employer</Badge>
+            ) : isAggregatorSource ? (
+              <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-400">Via board</Badge>
+            ) : null}
+          </div>
         </div>
         <h3 className="text-lg font-semibold group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
           {title}
@@ -161,7 +176,7 @@ export function JobCard({
           ) : postedDate ? (
             <span>Posted {formatDistanceToNow(postedDate, { addSuffix: true })}</span>
           ) : (
-            <span>Found {formatDistanceToNow(createdAt, { addSuffix: true })}</span>
+            <span>Listed {listedAgo}</span>
           )}
         </div>
         <div className="flex items-center gap-2">

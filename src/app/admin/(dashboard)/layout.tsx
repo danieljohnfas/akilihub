@@ -1,22 +1,28 @@
-import Link from 'next/link';
-import { LayoutDashboard, FileText, ShieldCheck, Activity, Banknote, Settings, LogOut } from 'lucide-react';
-import { Logo } from '@/components/shared/Logo';
+import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { LayoutDashboard, FileText, ShieldCheck, Activity, Banknote, Settings, LogOut } from "lucide-react";
+import { Logo } from "@/components/shared/Logo";
+import { SESSION_COOKIE, verifyAdminSession } from "@/lib/admin/session";
 
 const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/tenders', label: 'Tenders', icon: FileText },
-  { href: '/admin/compliance', label: 'Compliance', icon: ShieldCheck },
-  { href: '/admin/health', label: 'Health Data', icon: Activity },
-  { href: '/admin/salaries', label: 'Salaries', icon: Banknote },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/tenders", label: "Tenders", icon: FileText },
+  { href: "/admin/compliance", label: "Compliance", icon: ShieldCheck },
+  { href: "/admin/health", label: "Health Data", icon: Activity },
+  { href: "/admin/salaries", label: "Salaries", icon: Banknote },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token || !(await verifyAdminSession(token))) {
+    redirect("/admin/login");
+  }
+
   return (
     <div className="flex h-screen bg-[#0a0a0f] text-white overflow-hidden">
-      {/* Sidebar */}
       <aside className="w-60 flex-shrink-0 flex flex-col border-r border-white/[0.06] bg-[#0d0d14]">
-        {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/[0.06]">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
             <Logo className="w-5 h-5 text-white drop-shadow" />
@@ -27,7 +33,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link
@@ -41,7 +46,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        {/* Logout */}
         <div className="px-3 pb-4 border-t border-white/[0.06] pt-3">
           <form action="/api/admin/logout" method="POST">
             <button
@@ -55,10 +59,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

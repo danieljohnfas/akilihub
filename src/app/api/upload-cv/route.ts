@@ -4,10 +4,14 @@ import { userDocuments } from '@/lib/db/schema/documents';
 import { generateTextWithFallback } from '@/lib/ai/router';
 import pdfParse from 'pdf-parse';
 import crypto from 'crypto';
+import { enforceRateLimit } from '@/lib/security/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { prefix: 'upload-cv', max: 5, window: '1 m' });
+  if (limited) return limited;
+
   try {
     const formData = await req.formData();
     const file = formData.get('cv') as File | null;

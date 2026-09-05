@@ -261,7 +261,8 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
             deadline: jobs.deadline,
             createdAt: jobs.createdAt,
             isActive: jobs.isActive,
-            isAggregatorSource: jobs.isAggregatorSource
+            isAggregatorSource: jobs.isAggregatorSource,
+            employerUrl: jobs.employerUrl
           },
           country: countries.name,
           region: regions.name,
@@ -357,6 +358,8 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
                   location={region || null}
                   country={country || 'Africa'}
                   jobType={job.jobType ?? 'full_time'}
+                  isAggregatorSource={job.isAggregatorSource}
+                  employerUrl={job.employerUrl}
                   sourceUrl={job.sourceUrl}
                   postedDate={job.postedDate}
                   deadline={job.deadline}

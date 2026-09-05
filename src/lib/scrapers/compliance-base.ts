@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { downloadDocument, parsePdf } from './pdf-extract';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import TurndownService from 'turndown';
+import { assertPublicHttpUrl } from '@/lib/security/safe-url';
 export interface ComplianceResource {
   title: string;
   description: string;
@@ -79,6 +80,12 @@ async function extractTextViaSidecar(
 }
 
 export async function fetchHtml(url: string): Promise<string | null> {
+  try {
+    assertPublicHttpUrl(url);
+  } catch (err) {
+    console.warn("[fetchHtml] blocked URL:", url, err);
+    return null;
+  }
   const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
   // 1. Direct fetch with realistic browser headers

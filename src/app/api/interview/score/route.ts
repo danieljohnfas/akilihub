@@ -29,6 +29,11 @@ export async function POST(req: Request) {
     }
     const app = apps[0];
 
+    // Ownership check — prevent IDOR across users applications / CVs
+    if (app.userId && app.userId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const jobRows = await db.select().from(jobs).where(eq(jobs.id, app.jobId)).limit(1);
     const job = jobRows[0];
 

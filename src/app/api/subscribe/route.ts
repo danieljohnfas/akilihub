@@ -3,10 +3,14 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema/users";
 import { eq } from "drizzle-orm";
+import { enforceRateLimit } from '@/lib/security/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_123");
 
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimit(req, { prefix: 'subscribe', max: 5, window: '10 m' });
+  if (limited) return limited;
+
   try {
     const { email, fullName } = await req.json();
 
