@@ -229,11 +229,57 @@ export async function JobDetail({
           <Badge variant="outline" className={`border ${typeColor}`}>
             {typeLabel}
           </Badge>
+          {job.isAggregatorSource ? (
+            <Badge variant="outline" className="text-xs border-amber-500/40 text-amber-400">Via aggregator</Badge>
+          ) : (job.employerUrl && !isAggregatorUrl(job.employerUrl)) ? (
+            <Badge variant="outline" className="text-xs border-emerald-500/40 text-emerald-400">Direct employer</Badge>
+          ) : null}
         </div>
         
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
           {job.title}
         </h1>
+
+        {/* Trust / freshness strip */}
+        <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted-foreground">
+          {job.postedDate && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>
+                <span className="text-white/40 mr-1">Posted</span>
+                {format(job.postedDate, 'PP')}
+                <span className="text-white/30 ml-1">({formatDistanceToNow(job.postedDate, { addSuffix: true })})</span>
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span>
+              <span className="text-white/40 mr-1">Listed</span>
+              {format(job.createdAt, 'PP')}
+              <span className="text-white/30 ml-1">({formatDistanceToNow(job.createdAt, { addSuffix: true })})</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span>
+              <span className="text-white/40 mr-1">Last seen</span>
+              {format(job.updatedAt, 'PP')}
+              <span className="text-white/30 ml-1">({formatDistanceToNow(job.updatedAt, { addSuffix: true })})</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span>
+              <span className="text-white/40 mr-1">Source</span>
+              {job.isAggregatorSource
+                ? 'Aggregator / job board'
+                : (job.employerUrl && !isAggregatorUrl(job.employerUrl))
+                  ? 'Direct employer'
+                  : provenance.label}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -275,7 +321,22 @@ export async function JobDetail({
                 </p>
               </div>
             )}
-
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
+              <p className="text-sm text-muted-foreground mb-1">Listed on AkiliBrain</p>
+              <p className="font-medium flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary" />
+                {format(job.createdAt, 'PPP')}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(job.createdAt, { addSuffix: true })}</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
+              <p className="text-sm text-muted-foreground mb-1">Last seen</p>
+              <p className="font-medium flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary" />
+                {format(job.updatedAt, 'PPP')}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(job.updatedAt, { addSuffix: true })}</p>
+            </div>
           </section>
 
           {/* Editorial Context — Google AdSense content quality requirement */}
@@ -377,18 +438,34 @@ export async function JobDetail({
               </p>
             </div>
 
-            {job.deadline && (
-              <div className="space-y-1 pt-4 border-t border-white/10">
-                <p className="text-sm text-muted-foreground">Deadline</p>
-                <p className={`font-semibold flex items-center gap-2 text-lg ${isExpired ? 'text-destructive/80' : 'text-amber-400'}`}>
-                  <Calendar className="w-5 h-5 shrink-0" />
-                  {format(job.deadline, 'PPP')}
-                </p>
-                <p className="text-xs text-muted-foreground pl-7">
-                  {formatDistanceToNow(job.deadline, { addSuffix: true })}
-                </p>
+            <div className="space-y-3 pt-4 border-t border-white/10">
+              {job.postedDate && (
+                <div className="space-y-0.5">
+                  <p className="text-sm text-muted-foreground">Posted</p>
+                  <p className="font-medium text-sm">{format(job.postedDate, 'PP')}</p>
+                </div>
+              )}
+              <div className="space-y-0.5">
+                <p className="text-sm text-muted-foreground">Listed</p>
+                <p className="font-medium text-sm">{format(job.createdAt, 'PP')} · {formatDistanceToNow(job.createdAt, { addSuffix: true })}</p>
               </div>
-            )}
+              <div className="space-y-0.5">
+                <p className="text-sm text-muted-foreground">Last seen</p>
+                <p className="font-medium text-sm">{format(job.updatedAt, 'PP')} · {formatDistanceToNow(job.updatedAt, { addSuffix: true })}</p>
+              </div>
+              {job.deadline && (
+                <div className="space-y-1 pt-2">
+                  <p className="text-sm text-muted-foreground">Deadline</p>
+                  <p className={`font-semibold flex items-center gap-2 text-lg ${isExpired ? 'text-destructive/80' : 'text-amber-400'}`}>
+                    <Calendar className="w-5 h-5 shrink-0" />
+                    {format(job.deadline, 'PPP')}
+                  </p>
+                  <p className="text-xs text-muted-foreground pl-7">
+                    {formatDistanceToNow(job.deadline, { addSuffix: true })}
+                  </p>
+                </div>
+              )}
+            </div>
 
             <div className="pt-6 space-y-3">
               {isExpired && (
