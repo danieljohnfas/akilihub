@@ -1,33 +1,38 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
-import { outboundClicks } from '@/lib/db/schema/analytics';
-import { appendTrackingTag } from '@/lib/utils';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db/client";
+import { outboundClicks } from "@/lib/db/schema/analytics";
+import { appendTrackingTag } from "@/lib/utils";
+
+function isSafeHttpUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const targetUrl = searchParams.get('url');
-  const entityType = searchParams.get('type'); // 'job', 'tender', 'compliance_resource'
-  const entityId = searchParams.get('id');
+  const targetUrl = searchParams.get("url");
+  const entityType = searchParams.get("type");
+  const entityId = searchParams.get("id");
 
-  if (!targetUrl) {
-    return new NextResponse('Missing url parameter', { status: 400 });
+  if (!targetUrl || !isSafeHttpUrl(targetUrl)) {
+    return new NextResponse("Invalid or missing url parameter", { status: 400 });
   }
 
-  // Fire and forget analytics logging
   if (entityType && entityId) {
     try {
-      // Don't await this, let it run in the background
-      db.insert(outboundClicks).values({
-        entityType,
-        entityId,
-        targetUrl,
-      }).execute().catch(console.error);
+      db.insert(outboundClicks)
+        .values({ entityType, entityId, targetUrl })
+        .execute()
+        .catch(console.error);
     } catch (error) {
-      console.error('Failed to log outbound click:', error);
+      console.error("Failed to log outbound click:", error);
     }
   }
 
   const finalUrl = appendTrackingTag(targetUrl) || targetUrl;
-
   return NextResponse.redirect(finalUrl);
 }
