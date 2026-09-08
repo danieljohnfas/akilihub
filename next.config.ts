@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Required for Docker deployment: emits a minimal standalone server
-  // in .next/standalone that includes only the files needed to run.
-  output: 'standalone',
+  // NOTE: output: 'standalone' was removed — it is only for Docker/self-hosted
+  // deployments. Vercel builds Next.js natively and does not use the standalone
+  // server. Keeping it here would break the Vercel build.
 
   // Skip type-checking during `next build` on the production server.
   // Running it at deploy time OOMs on 1GB RAM because the TS worker spawns a second large Node.js process.
