@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 import { db } from '../src/lib/db/client';
 import { jobs } from '../src/lib/db/schema/jobs';
 import { tenders } from '../src/lib/db/schema/tenders';

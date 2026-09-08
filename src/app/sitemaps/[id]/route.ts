@@ -20,16 +20,16 @@ const COUNTRY_SLUGS: Record<string, string> = {
 function buildUrlSet(urls: { url: string; lastModified?: Date; changeFrequency?: string; priority?: number }[]) {
   const xmlUrls = urls.map((u) => {
     return `<url>
-  <loc>\${u.url}</loc>
-  \${u.lastModified ? \`<lastmod>\${u.lastModified.toISOString()}</lastmod>\` : ''}
-  \${u.changeFrequency ? \`<changefreq>\${u.changeFrequency}</changefreq>\` : ''}
-  \${u.priority ? \`<priority>\${u.priority}</priority>\` : ''}
+  <loc>${u.url}</loc>
+  ${u.lastModified ? `<lastmod>${u.lastModified.toISOString()}</lastmod>` : ''}
+  ${u.changeFrequency ? `<changefreq>${u.changeFrequency}</changefreq>` : ''}
+  ${u.priority ? `<priority>${u.priority}</priority>` : ''}
 </url>`;
-  }).join('\\n');
+  }).join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-\${xmlUrls}
+${xmlUrls}
 </urlset>`;
 }
 
@@ -41,18 +41,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (id === 0) {
     const staticPages = [
       { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
-      { url: \`\${BASE_URL}/tenders\`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
-      { url: \`\${BASE_URL}/jobs\`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
-      { url: \`\${BASE_URL}/compliance\`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
-      { url: \`\${BASE_URL}/health\`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-      { url: \`\${BASE_URL}/salaries\`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-      { url: \`\${BASE_URL}/guides\`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-      { url: \`\${BASE_URL}/countries\`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-      { url: \`\${BASE_URL}/developers\`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-      { url: \`\${BASE_URL}/about\`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-      { url: \`\${BASE_URL}/contact\`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-      { url: \`\${BASE_URL}/privacy\`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-      { url: \`\${BASE_URL}/terms\`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+      { url: `${BASE_URL}/tenders`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+      { url: `${BASE_URL}/jobs`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
+      { url: `${BASE_URL}/compliance`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
+      { url: `${BASE_URL}/health`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+      { url: `${BASE_URL}/salaries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+      { url: `${BASE_URL}/guides`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+      { url: `${BASE_URL}/countries`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+      { url: `${BASE_URL}/developers`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+      { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+      { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+      { url: `${BASE_URL}/privacy`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+      { url: `${BASE_URL}/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     ];
 
     const [tenderRows, guideRows, countryRows] = await Promise.all([
@@ -62,15 +62,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     ]);
 
     const tenderPages = tenderRows.map((t) => ({
-      url: \`\${BASE_URL}/tenders/\${t.id}\`, lastModified: t.updatedAt || now, changeFrequency: 'daily', priority: 0.7
+      url: `${BASE_URL}/tenders/${t.id}`, lastModified: t.updatedAt || now, changeFrequency: 'daily', priority: 0.7
     }));
 
     const guidePages = guideRows.map((g) => ({
-      url: \`\${BASE_URL}/guides/\${g.slug}\`, lastModified: g.updatedAt || now, changeFrequency: 'monthly', priority: 0.9
+      url: `${BASE_URL}/guides/${g.slug}`, lastModified: g.updatedAt || now, changeFrequency: 'monthly', priority: 0.9
     }));
 
     const countryPages = countryRows.map((c) => ({
-      url: \`\${BASE_URL}/countries/\${COUNTRY_SLUGS[c.name] ?? c.name.toLowerCase().replace(/\\s+/g, '-')}\`,
+      url: `${BASE_URL}/countries/${COUNTRY_SLUGS[c.name] ?? c.name.toLowerCase().replace(/\s+/g, '-')}`,
       lastModified: c.updatedAt || now, changeFrequency: 'daily', priority: 0.85
     }));
 
@@ -83,7 +83,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const jobRows = await safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(eq(jobs.isActive, true)).limit(25000).offset(offset));
     
     const pages = jobRows.map((j) => ({
-      url: \`\${BASE_URL}/jobs/\${j.id}\`, lastModified: j.updatedAt || now, changeFrequency: 'hourly', priority: 0.8
+      url: `${BASE_URL}/jobs/${j.id}`, lastModified: j.updatedAt || now, changeFrequency: 'hourly', priority: 0.8
     }));
     return new NextResponse(buildUrlSet(pages), { headers: { 'Content-Type': 'application/xml' } });
   }
@@ -93,7 +93,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const businessRows = await safeQuery(db.select({ id: businesses.id, updatedAt: businesses.updatedAt }).from(businesses).where(eq(businesses.status, 'active')).limit(25000).offset(offset));
     
     const pages = businessRows.map((b) => ({
-      url: \`\${BASE_URL}/compliance/\${b.id}\`, lastModified: b.updatedAt || now, changeFrequency: 'weekly', priority: 0.6
+      url: `${BASE_URL}/compliance/${b.id}`, lastModified: b.updatedAt || now, changeFrequency: 'weekly', priority: 0.6
     }));
     return new NextResponse(buildUrlSet(pages), { headers: { 'Content-Type': 'application/xml' } });
   }

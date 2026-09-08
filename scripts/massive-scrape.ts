@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' }); // Load API keys
 import { searchGoogle } from '@/lib/scrapers/broad-search-engine';
 import { extractJobsWithAI } from '@/lib/scrapers/broad-search-engine';
 import { extractTendersWithAI } from '@/lib/scrapers/broad-search-engine-tenders';
@@ -56,74 +57,45 @@ async function getCategoryId(_name: string): Promise<string | undefined> {
 // ── Queries ───────────────────────────────────────────────────────────────────
 // Queries are intentionally domain-targeted for Tenders/Compliance/Health
 // to land on government portals + document-heavy pages rather than news.
+// ── Dynamic Query Generation ────────────────────────────────────────────────
+const COUNTRIES = ['Kenya', 'Tanzania', 'Uganda', 'Rwanda', 'Ethiopia', 'DRC', 'Burundi', 'Somalia', 'South Sudan'];
+const PROFESSIONS = ['software engineer', 'doctor', 'nurse', 'teacher', 'accountant', 'manager', 'driver', 'plumber', 'electrician', 'lawyer', 'pharmacist', 'social worker', 'sales', 'marketing'];
+const DOMAINS_TENDERS = ['site:ppra.go.ke', 'site:ppra.go.tz', 'site:ppda.go.ug', 'site:rppa.gov.rw', 'site:ethiopiaprocurement.gov.et'];
+const DOMAINS_COMPLIANCE = ['site:kra.go.ke', 'site:tra.go.tz', 'site:ura.go.ug', 'site:rra.gov.rw', 'site:erca.gov.et'];
+const DOMAINS_HEALTH = ['site:who.int', 'site:health.go.ke', 'site:moh.go.tz', 'site:health.go.ug', 'site:unicef.org'];
+
 const QUERIES = {
-    jobs: [
-        'software engineer jobs Tanzania', 'latest jobs in Kenya 2026', 
-        'NGO jobs Uganda', 'remote jobs Rwanda', 'finance jobs Ethiopia',
-        'oil and gas jobs DRC', 'teaching jobs Kenya', 'marketing jobs Uganda',
-        'healthcare jobs Nairobi', 'engineering jobs East Africa',
-    ],
-    tenders: [
-        // Targeted government procurement portals — return PDFs & structured notices
-        'site:ppra.go.ke tender notice 2026',
-        'site:ppra.go.tz open tender 2026',
-        'site:ppda.go.ug procurement notice',
-        'site:rppa.gov.rw appel offres 2026',
-        'site:mercure.gouv.cd tender',
-        'site:ethiopiaprocurement.gov.et bid',
-        // Filetype-targeted searches return PDF tender documents directly
-        'government tender Kenya 2026 filetype:pdf',
-        'procurement notice Tanzania filetype:pdf',
-        'bid documents Uganda 2026 filetype:pdf',
-        'tender announcement Rwanda filetype:pdf',
-        'open tender Africa 2026 procurement authority',
-        'invitation to tender East Africa construction works 2026',
-    ],
-    compliance: [
-        // Revenue authorities and registrar portals
-        'site:kra.go.ke tax filing guide',
-        'site:tra.go.tz business registration',
-        'site:ura.go.ug tax compliance forms',
-        'site:rra.gov.rw business license',
-        'site:erca.gov.et tax requirements',
-        // Filetype searches for official compliance documents
-        'business registration requirements Kenya filetype:pdf',
-        'tax compliance certificate Tanzania 2026 filetype:pdf',
-        'employment law Uganda 2026 filetype:pdf',
-        'PAYE guide East Africa filetype:pdf',
-        'data protection compliance Africa 2026',
-        'environmental compliance requirements Kenya 2026',
-    ],
-    health: [
-        // WHO, Ministry of Health, and DHIS2 portals
-        'site:who.int/countries/ken health statistics 2024',
-        'site:who.int/countries/tza health data',
-        'site:health.go.ke health bulletin filetype:pdf',
-        'site:moh.go.tz health report filetype:pdf',
-        'site:health.go.ug health indicators filetype:pdf',
-        // Targeted statistical reports
-        'Kenya health statistics 2024 filetype:pdf',
-        'malaria prevalence East Africa 2024 report filetype:pdf',
-        'maternal mortality Africa 2024 statistics filetype:pdf',
-        'HIV prevalence sub-Saharan Africa 2024 filetype:pdf',
-        '"health indicators" "2024" Kenya OR Tanzania OR Uganda filetype:pdf',
-        'DHIS2 health data Africa 2024',
-    ],
-    salaries: [
-        'software engineer salary Kenya 2026', 'doctor salary Tanzania',
-        'teacher salary Uganda', 'accountant salary Rwanda',
-        'nurse salary Ethiopia', 'engineer salary DRC',
-        'NGO salary scale Kenya 2026', 'civil servant salary Tanzania',
-        'bank salary Uganda', 'consultant salary East Africa',
-    ],
+    jobs: COUNTRIES.flatMap(c => PROFESSIONS.flatMap(p => [
+        `${p} jobs ${c} 2026`, `${p} vacancies ${c}`, `latest ${p} careers ${c}`
+    ])),
+    tenders: COUNTRIES.flatMap(c => [
+        `open tender ${c} 2026`, `procurement notice ${c} filetype:pdf`, `bid documents ${c} filetype:pdf`
+    ]).concat(DOMAINS_TENDERS.flatMap(d => [`${d} tender notice 2026`, `${d} open tender`, `${d} procurement`])),
+    compliance: COUNTRIES.flatMap(c => [
+        `business registration requirements ${c} filetype:pdf`, `tax compliance certificate ${c} filetype:pdf`, `employment law ${c} filetype:pdf`, `environmental compliance ${c} filetype:pdf`
+    ]).concat(DOMAINS_COMPLIANCE.flatMap(d => [`${d} tax filing guide`, `${d} business registration`, `${d} compliance forms`])),
+    health: COUNTRIES.flatMap(c => [
+        `${c} health statistics 2024 filetype:pdf`, `malaria prevalence ${c} report filetype:pdf`, `maternal mortality ${c} statistics filetype:pdf`, `HIV prevalence ${c} filetype:pdf`, `DHIS2 health data ${c}`
+    ]).concat(DOMAINS_HEALTH.flatMap(d => [`${d} health statistics`, `${d} health data`, `${d} health report filetype:pdf`])),
+    salaries: COUNTRIES.flatMap(c => PROFESSIONS.flatMap(p => [
+        `${p} salary ${c} 2026`, `${p} pay scale ${c}`, `average ${p} salary ${c}`
+    ]))
 };
+
+// Shuffle all queries
+for (const k of Object.keys(QUERIES)) {
+    (QUERIES as any)[k].sort(() => Math.random() - 0.5);
+}
 
 // ── URL deduplication ─────────────────────────────────────────────────────────
 async function getExistingUrls(table: any): Promise<Set<string>> {
     try {
+        console.log(`[DEBUG] Fetching existing URLs for ${table._.name}...`);
         const rows = await db.select({ url: table.sourceUrl }).from(table);
+        console.log(`[DEBUG] Fetched ${rows.length} existing URLs.`);
         return new Set(rows.map((r: any) => r.url).filter(Boolean));
-    } catch {
+    } catch (e) {
+        console.error(`[DEBUG] Error fetching existing URLs:`, e);
         return new Set();
     }
 }
@@ -144,16 +116,21 @@ async function scrapeModule(
     const existingUrls = await getExistingUrls(table);
     const targetUrls = new Set<string>();
 
-    // 1. DISCOVERY — collect 300 new URLs
-    console.log(`Discovering up to 300 new URLs for ${moduleName}...`);
+    // 1. DISCOVERY — collect 35000 new URLs
+    console.log(`Discovering up to 35000 new URLs for ${moduleName}...`);
     for (const q of queries) {
-        if (targetUrls.size >= 300) break;
+        if (targetUrls.size >= 35000) break;
         const urls = await searchGoogle(q, 50);
+        let added = 0;
         for (const u of urls) {
             if (!existingUrls.has(u) && !targetUrls.has(u)) {
                 targetUrls.add(u);
-                if (targetUrls.size >= 300) break;
+                added++;
+                if (targetUrls.size >= 35000) break;
             }
+        }
+        if (added > 0) {
+            console.log(`[DEBUG] Query "${q}" yielded ${added} new URLs. Total targetUrls: ${targetUrls.size}`);
         }
         await new Promise(r => setTimeout(r, 1000));
     }
