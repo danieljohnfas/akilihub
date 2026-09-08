@@ -82,7 +82,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.0.3",
+    "eslint-config-next": "15.1.8",
     "eslint-plugin-unused-imports": "^4.4.1",
     "lighthouse": "^13.4.1",
     "puppeteer": "^25.8.0",
