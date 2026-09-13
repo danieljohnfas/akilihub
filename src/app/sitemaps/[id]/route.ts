@@ -5,7 +5,7 @@ import { tenders } from '@/lib/db/schema/tenders';
 import { businesses } from '@/lib/db/schema/compliance';
 import { guides } from '@/lib/db/schema/guides';
 import { countries } from '@/lib/db/schema/shared';
-import { eq } from 'drizzle-orm';
+import { eq, or, and, isNull, gt } from 'drizzle-orm';
 
 const BASE_URL = 'https://akilibrain.com';
 
@@ -56,7 +56,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     ];
 
     const [tenderRows, guideRows, countryRows] = await Promise.all([
-      safeQuery(db.select({ id: tenders.id, updatedAt: tenders.updatedAt }).from(tenders).limit(20000)),
+      safeQuery(db.select({ id: tenders.id, updatedAt: tenders.updatedAt }).from(tenders).where(and(eq(tenders.status, 'open'), or(isNull(tenders.deadline), gt(tenders.deadline, new Date())))).limit(20000)),
       safeQuery(db.select({ slug: guides.slug, updatedAt: guides.updatedAt }).from(guides).where(eq(guides.isPublished, true)).limit(5000)),
       safeQuery(db.select({ name: countries.name, updatedAt: countries.updatedAt }).from(countries)),
     ]);
@@ -80,7 +80,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   if (id === 1 || id === 2) {
     const offset = id === 1 ? 0 : 25000;
-    const jobRows = await safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(eq(jobs.isActive, true)).limit(25000).offset(offset));
+    const jobRows = await safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(and(eq(jobs.isActive, true), or(isNull(jobs.deadline), gt(jobs.deadline, new Date())))).limit(25000).offset(offset));
     
     const pages = jobRows.map((j) => ({
       url: `${BASE_URL}/jobs/${j.id}`, lastModified: j.updatedAt || now, changeFrequency: 'hourly', priority: 0.8
