@@ -452,7 +452,8 @@ JOB-SPECIFIC EXTRACTION RULES:
           salaryMin: job.salaryMin,
           salaryMax: job.salaryMax,
           salaryCurrency: job.salaryCurrency,
-          countryCode: job.countryCode?.trim().toUpperCase() || null,
+          countryCode: job.countryCode || '',
+          needsAiExtraction: false
         };
       })
     );
@@ -460,33 +461,11 @@ JOB-SPECIFIC EXTRACTION RULES:
     return normalizedJobs.filter(job => {
       const titleLower = (job.title || '').toLowerCase().trim();
       if (titleLower.startsWith('[link]') || titleLower.startsWith('[image:')) return false;
+      if (titleLower.includes('vacancies') || titleLower.includes('opportunities') || titleLower.includes('unknown') || titleLower.includes('job listing')) return false;
       return true;
     });
   } catch (err) {
-    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Falling back.`);
-    if (deterministic && text.length > 100) {
-      return [{
-        title: "Job Listing",
-        companyName: "Unknown",
-        description: text.substring(0, 5000),
-        requirements: deterministic.requirements || null,
-        sector: "Other",
-        profession: "Professionals",
-        experienceLevel: "mid",
-        educationLevel: "Upper Secondary Education",
-        skills: [],
-        regionId: null,
-        jobType: "full_time",
-        sourceUrl: sourceUrl,
-        postedDate: new Date(),
-        deadline: deterministic.deadline || null,
-        salaryMin: deterministic.salaryMin || 0,
-        salaryMax: deterministic.salaryMax || 0,
-        salaryCurrency: deterministic.salaryCurrency || '',
-        countryCode: deterministic.countryCode || '',
-        needsAiExtraction: true
-      }];
-    }
+    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Dropping jobs.`);
     return [];
   }
 }
