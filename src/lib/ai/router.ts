@@ -352,10 +352,15 @@ if (keyPool.size === 0) {
 const MAX_RETRIES = 20;
 const AI_TIMEOUT_MS = 90_000;
 
-function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+function withHardTimeout<T>(promiseFn: (signal: AbortSignal) => Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`[Timeout] ${label} exceeded ${ms}ms`)), ms);
-    promise.then(
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`[Timeout] ${label} exceeded ${ms}ms`));
+    }, ms);
+    
+    promiseFn(controller.signal).then(
       (val) => { clearTimeout(timer); resolve(val); },
       (err) => { clearTimeout(timer); reject(err); },
     );
@@ -403,11 +408,12 @@ export async function generateObjectWithFallback<T = unknown>(
         : {};
       
       result = await withHardTimeout(
-        (generateObject as any)({
+        (signal) => (generateObject as any)({
           ...params,
           model: activeKey.model,
           ...(usesJsonMode(activeKey.id) ? { mode: 'json' } : {}),
           ...openrouterTokenCap,
+          abortSignal: signal
         }),
         AI_TIMEOUT_MS,
         activeKey.name,
@@ -447,7 +453,7 @@ export async function generateTextWithFallback(params: Record<string, any>) {
 
     try {
       const result = await withHardTimeout(
-        (generateText as any)({ ...params, model: activeKey.model }),
+        (signal) => (generateText as any)({ ...params, model: activeKey.model, abortSignal: signal }),
         AI_TIMEOUT_MS,
         activeKey.name,
       );
@@ -527,8 +533,9 @@ export async function extractVisionTextWithFallback(
     try {
       console.log(`[Vision Router] Attempting vision OCR with ${candidate.name}...`);
       const { text } = await withHardTimeout(
-        generateText({
+        (signal) => generateText({
           model: candidate.model,
+          abortSignal: signal,
           messages: [
             {
               role: 'user',
