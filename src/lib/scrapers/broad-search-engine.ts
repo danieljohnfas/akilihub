@@ -432,11 +432,19 @@ JOB-SPECIFIC EXTRACTION RULES:
       };
     });
 
+    const isAggregatorList = rawJobs.length > 1;
+
     const normalizedJobs = await Promise.all(
       rawJobs.map(async (job: any, idx: number) => {
         const regionId = await normalizeLocationAndGetRegionId(job.location);
         const slug = `${job.title || 'job'}-${job.companyName || ''}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 45).replace(/^-|-$/g, '');
         const hasSpecificUrl = job.sourceUrl && job.sourceUrl.startsWith('http') && job.sourceUrl !== sourceUrl;
+        
+        // If it's a list of jobs, and this job has no outbound link, DROP IT. We do not want aggregator dead-ends.
+        if (isAggregatorList && !hasSpecificUrl) {
+          return null;
+        }
+
         const uniqueSourceUrl = hasSpecificUrl ? job.sourceUrl : `${sourceUrl}#${slug}-${idx + 1}`;
 
         return {
@@ -459,11 +467,12 @@ JOB-SPECIFIC EXTRACTION RULES:
     );
 
     return normalizedJobs.filter(job => {
+      if (!job) return false;
       const titleLower = (job.title || '').toLowerCase().trim();
       if (titleLower.startsWith('[link]') || titleLower.startsWith('[image:')) return false;
       if (titleLower.includes('vacancies') || titleLower.includes('opportunities') || titleLower.includes('unknown') || titleLower.includes('job listing')) return false;
       return true;
-    });
+    }) as BroadJobResource[];
   } catch (err) {
     console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Dropping jobs.`);
     return [];
