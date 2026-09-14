@@ -54,7 +54,7 @@ export async function executeParser(hash: string, html: string): Promise<any[]> 
 }
 
 export async function generateParserWithAI(hash: string, html: string, previousError?: string): Promise<void> {
-  const sampleHtml = html.length > 25000 ? html.slice(0, 25000) : html;
+  const sampleHtml = html.length > 6000 ? html.slice(0, 6000) : html;
   const prompt = `You are an expert Node.js scraper. Write a deterministic Cheerio script to extract jobs from this specific HTML structure.
 
 The script will be executed in a Node.js VM context where the following variables are already available:

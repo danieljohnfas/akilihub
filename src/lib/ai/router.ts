@@ -45,15 +45,15 @@ getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
       keyPool.register({
         id: `cf-llama-3.3-70b-${i + 1}`,
         name: `Cloudflare Llama 3.3 70B (${i + 1})`,
-        model: cf('@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
-        supportsStructured: true,
+        model: cf.chat('@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
+        supportsStructured: false,
         priority: 1, 
       });
       keyPool.register({
         id: `cf-qwen-coder-32b-${i + 1}`,
         name: `Cloudflare Qwen 2.5 Coder 32B (${i + 1})`,
-        model: cf('@cf/qwen/qwen2.5-coder-32b-instruct'),
-        supportsStructured: true,
+        model: cf.chat('@cf/qwen/qwen2.5-coder-32b-instruct'),
+        supportsStructured: false,
         priority: 2, 
       });
     }
@@ -80,33 +80,51 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
     keyPool.register({
       id: `openrouter-free-${i + 1}`,
       name: `OpenRouter Free (${i + 1})`,
-      model: openrouter('openrouter/free'),
+      model: openrouter.chat('openrouter/free'),
       supportsStructured: true,
       priority: 1, // SET PRIORITY HIGH BECAUSE IT'S FREE
     });
   });
 
-// ── PRIORITY 3: GROQ ────────────────────────────────────────────────────// 🚀 PRIORITY 3: GROQ 
-  getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
-    const groq = createGroq({ apiKey: key });
+// 🚀 PRIORITY 3: GROQ
+getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
+  const groq = createGroq({ apiKey: key });
+  keyPool.register({
+    id: `groq-gpt-oss-120b-${i + 1}`,
+    name: `Groq GPT OSS 120B (${i + 1})`,
+    model: groq('openai/gpt-oss-120b'),
+    supportsStructured: false,
+    priority: 0, 
+  });
+});
+
+// 🚀 PRIORITY 1: SAMBANOVA
+  getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
+    const sambanova = createOpenAI({
+      baseURL: 'https://api.sambanova.ai/v1',
+      apiKey: key,
+    });
     keyPool.register({
-      id: `groq-llama-3-${i + 1}`,
-      name: `Groq Llama 3.1 70B (${i + 1})`,
-      model: groq('llama-3.1-70b-versatile'),
+      id: `sambanova-llama-3.3-70b-${i + 1}`,
+      name: `SambaNova Llama 3.3 70B (${i + 1})`,
+      model: sambanova.chat('Meta-Llama-3.3-70B-Instruct'),
       supportsStructured: true,
-      priority: 1, // SET PRIORITY TO 1 since it's the only one that might work
+      priority: 1, 
     });
   });
 
-// 🚀 PRIORITY 3: CEREBRAS 
+// 🚀 PRIORITY 1: CEREBRAS (Ultra fast)
   getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
-    const cerebras = createOpenAI({ apiKey: key, baseURL: 'https://api.cerebras.ai/v1' });
+    const cerebras = createOpenAI({
+      baseURL: 'https://api.cerebras.ai/v1',
+      apiKey: key,
+    });
     keyPool.register({
-      id: `cerebras-llama3-${i + 1}`,
-      name: `Cerebras Llama 3.1 8B (${i + 1})`,
-      model: cerebras('llama3.1-8b'),
-      supportsStructured: true,
-      priority: 2,
+      id: `cerebras-gpt-oss-120b-${i + 1}`,
+      name: `Cerebras GPT OSS 120B (${i + 1})`,
+      model: cerebras.chat('gpt-oss-120b'),
+      supportsStructured: false,
+      priority: 0, 
     });
   });
 
@@ -116,7 +134,7 @@ getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `deepseek-chat-${i + 1}`,
     name: `DeepSeek Chat (${i + 1})`,
-    model: deepseek('deepseek-chat'),
+    model: deepseek.chat('deepseek-chat'),
     supportsStructured: true,
     priority: 3,
   });
@@ -128,7 +146,7 @@ getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `sambanova-llama3-${i + 1}`,
     name: `SambaNova Llama 3.1 70B (${i + 1})`,
-    model: sambanova('Meta-Llama-3.1-70B-Instruct'),
+    model: sambanova.chat('Meta-Llama-3.1-70B-Instruct'),
     supportsStructured: true,
     priority: 4,
   });
@@ -152,7 +170,7 @@ getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `hyperbolic-llama3-${i + 1}`,
     name: `Hyperbolic Llama 3.1 70B (${i + 1})`,
-    model: hyperbolic('meta-llama/Meta-Llama-3.1-70B-Instruct'),
+    model: hyperbolic.chat('meta-llama/Meta-Llama-3.1-70B-Instruct'),
     supportsStructured: true,
     priority: 4,
   });
@@ -164,7 +182,7 @@ getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `minimax-text-${i + 1}`,
     name: `MiniMax (${i + 1})`,
-    model: minimax('minimax-text-01'),
+    model: minimax.chat('minimax-text-01'),
     supportsStructured: true,
     priority: 4,
   });
@@ -236,7 +254,7 @@ getEnvKeys('NOVITA_API_KEY').forEach((key, i) => {
   keyPool.register({
     id: `novita-llama3-${i + 1}`,
     name: `Novita Llama 3.1 70B (${i + 1})`,
-    model: novita('meta-llama/llama-3.1-70b-instruct'),
+    model: novita.chat('meta-llama/llama-3.1-70b-instruct'),
     supportsStructured: true,
     priority: 4,
   });
@@ -286,7 +304,7 @@ getEnvKeys('CLOUDFLARE_AI_TOKEN').forEach((key, i) => {
   keyPool.register({
     id: `cloudflare-llama3-${i + 1}`,
     name: `Cloudflare Llama 3 8B (${i + 1})`,
-    model: cf('@cf/meta/llama-3-8b-instruct'),
+    model: cf.chat('@cf/meta/llama-3-8b-instruct'),
     supportsStructured: true,
     priority: 5,
   });
