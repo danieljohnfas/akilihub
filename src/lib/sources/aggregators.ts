@@ -298,6 +298,7 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'quantumfluxgrid4.baby',     name: 'SEO Spam',                 type: 'aggregator', category: 'jobs' },
   { domain: 'profdir.com',               name: 'SEO Spam',                 type: 'aggregator', category: 'jobs' },
   { domain: 'ajiraport.com',             name: 'AjiraPort Aggregator',     type: 'aggregator', category: 'jobs' },
+  { domain: 'dyampaye.co.tz',            name: 'Dyampaye Aggregator',      type: 'aggregator', category: 'jobs' },
 ];
 
 // ── Lookup helpers ────────────────────────────────────────────────────────────
