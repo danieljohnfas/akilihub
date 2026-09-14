@@ -371,6 +371,13 @@ export async function extractJobsWithAI(text: string, sourceUrl: string, html: s
     if (!parsedDeadline && deterministic.deadline) {
       parsedDeadline = deterministic.deadline;
     }
+    
+    // STRICT RULE: If there is still no deadline, DROP the job
+    if (!parsedDeadline) {
+      console.log(`[extractJobsWithAI] Dropping job without a deadline: ${job.title}`);
+      return false;
+    }
+
     const salaryMin = (typeof job.salaryMin === 'number' && job.salaryMin > 0) ? job.salaryMin : (deterministic.salaryMin ?? null);
     const salaryMax = (typeof job.salaryMax === 'number' && job.salaryMax > 0) ? job.salaryMax : (deterministic.salaryMax ?? null);
     const salaryCurrency = job.salaryCurrency?.trim() || deterministic.salaryCurrency || null;
