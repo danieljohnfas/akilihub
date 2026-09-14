@@ -34,7 +34,32 @@ getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
   });
 });
 
-// ── PRIORITY 2: GOOGLE GEMINI (Region blocked on Linode, but fallback) ────
+// 🚀 PRIORITY 1: CLOUDFLARE WORKERS AI
+  getEnvKeys('CLOUDFLARE_API_TOKEN').forEach((key, i) => {
+    const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    if (cfAccountId) {
+      const cf = createOpenAI({
+        apiKey: key,
+        baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`
+      });
+      keyPool.register({
+        id: `cf-llama-3.3-70b-${i + 1}`,
+        name: `Cloudflare Llama 3.3 70B (${i + 1})`,
+        model: cf('@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
+        supportsStructured: true,
+        priority: 1, 
+      });
+      keyPool.register({
+        id: `cf-qwen-coder-32b-${i + 1}`,
+        name: `Cloudflare Qwen 2.5 Coder 32B (${i + 1})`,
+        model: cf('@cf/qwen/qwen2.5-coder-32b-instruct'),
+        supportsStructured: true,
+        priority: 2, 
+      });
+    }
+  });
+
+// 🚀 PRIORITY 3: GOOGLE GEMINI (Region blocked on Linode, but fallback) 🚀────
 getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   const google = createGoogle({ apiKey: key });
   keyPool.register({
@@ -46,17 +71,20 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
   });
 });
 
-// ── PRIORITY 2: OPENROUTER ────────────────────────────────────────────────
-getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
-  const openrouter = createOpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1' });
-  keyPool.register({
-    id: `openrouter-google-gemini-2.5-flash-${i + 1}`,
-    name: `OpenRouter Gemini 2.5 Flash (${i + 1})`,
-    model: openrouter('google/gemini-2.5-flash'),
-    supportsStructured: true,
-    priority: 2,
+// ── PRIORITY 2: OPENROUTER ────────────────────────────────────────────────// 🚀 PRIORITY 4: OPENROUTER (Gemini 2.5 Flash Free)
+  getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
+    const openrouter = createOpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: key,
+    });
+    keyPool.register({
+      id: `openrouter-free-${i + 1}`,
+      name: `OpenRouter Free (${i + 1})`,
+      model: openrouter('openrouter/free'),
+      supportsStructured: true,
+      priority: 1, // SET PRIORITY HIGH BECAUSE IT'S FREE
+    });
   });
-});
 
 // ── PRIORITY 3: GROQ ────────────────────────────────────────────────────// 🚀 PRIORITY 3: GROQ 
   getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
@@ -277,43 +305,18 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
 });
 
 // 🚀 PRIORITY 5: HUGGING FACE (DE-PRIORITIZED DUE TO CLOUDFLARE BANS)
-let hfFetch;
-try {
-  const { ProxyAgent, fetch: undiciFetch } = require('undici');
-  const fs = require('fs');
-
-  hfFetch = (url: any, options: any) => {
-    let proxyList = [];
-    try {
-      if (fs.existsSync('scripts/proxies.json')) {
-        proxyList = JSON.parse(fs.readFileSync('scripts/proxies.json', 'utf8'));
-      }
-    } catch(e) {}
-    
-    if (proxyList.length > 0) {
-      const proxy = proxyList[Math.floor(Math.random() * proxyList.length)];
-      const proxyAgent = new ProxyAgent('http://' + proxy);
-      return undiciFetch(url, { ...options, dispatcher: proxyAgent });
-    }
-    return undiciFetch(url, options);
-  };
-} catch (e) {
-  console.warn('Could not initialize rotating proxy fetcher, using default.');
-}
-
 getEnvKeys('HUGGINGFACE_API_KEY').forEach((key, i) => {
   // We use the openai compatible endpoint for HF serverless Inference API
   const hf = createOpenAI({
     apiKey: key,
-    baseURL: 'https://api-inference.huggingface.co/v1/',
-    fetch: hfFetch
+    baseURL: 'https://api-inference.huggingface.co/v1/'
   });
   keyPool.register({
-    id: `hf-qwen2.5-${i + 1}`,
+    id: `hf-qwen-72b-${i + 1}`,
     name: `HuggingFace Qwen 2.5 72B (${i + 1})`,
     model: hf('Qwen/Qwen2.5-72B-Instruct'),
     supportsStructured: true,
-    priority: 1,
+    priority: 5,
   });
 });
 
