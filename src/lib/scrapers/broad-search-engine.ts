@@ -471,6 +471,13 @@ JOB-SPECIFIC EXTRACTION RULES:
       const titleLower = (job.title || '').toLowerCase().trim();
       if (titleLower.startsWith('[link]') || titleLower.startsWith('[image:')) return false;
       if (titleLower.includes('vacancies') || titleLower.includes('opportunities') || titleLower.includes('unknown') || titleLower.includes('job listing')) return false;
+      
+      // Drop jobs that are already expired
+      if (job.deadline && job.deadline.getTime() < Date.now()) {
+        console.log(`[extractJobsWithAI] Dropping expired job: ${job.title} (Deadline: ${job.deadline.toISOString()})`);
+        return false;
+      }
+      
       return true;
     }) as BroadJobResource[];
   } catch (err) {
