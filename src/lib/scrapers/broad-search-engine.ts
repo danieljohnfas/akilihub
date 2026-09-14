@@ -1,9 +1,9 @@
+import { extractDeterministicJobFields } from './deterministic-extractor';
 import { generateObjectWithFallback } from '../ai/router';
 import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { getAllAggregatorDomains } from '../sources/aggregators';
-import { extractDeterministicJobFields } from './deterministic-extractor';
 import * as cheerio from 'cheerio';
 
 export interface BroadJobResource {
@@ -323,114 +323,69 @@ GENERAL EXTRACTION QUALITY GUIDELINES (apply to every field):
    not just the first one or the most prominent.
 `;
 
-import { extractDeterministicJobFields } from './deterministic-extractor';
+import { getStructuralFingerprint, executeParser, generateParserWithAI } from './dom-cluster';
 
 /**
  * Uses AI to extract Job postings from scraped text.
  * Applies shared SCRAPING_GUIDELINES for comprehensive, non-shallow extraction.
  */
-export async function extractJobsWithAI(text: string, sourceUrl: string): Promise<BroadJobResource[]> {
-  if (!text || text.length < 50) return [];
+export async function extractJobsWithAI(text: string, sourceUrl: string, html: string = ''): Promise<BroadJobResource[]> {
+  if (!html || html.length < 50) return [];
 
-  const prompt = `You are a specialized AI assistant that extracts job postings from raw website text.
-Source URL: ${sourceUrl}
+  const hash = getStructuralFingerprint(html);
+  
+  let rawParsedJobs: any[] = [];
+  try {
+    try {
+      rawParsedJobs = await executeParser(hash, html);
+    } catch (e: any) {
+      if (e.message.includes('Parser not found')) {
+        console.log(`[DOM Cluster] Unknown structure detected (${hash}). Generating new parser...`);
+        await generateParserWithAI(hash, html);
+        rawParsedJobs = await executeParser(hash, html);
+      } else {
+        console.warn(`[DOM Cluster] Parser ${hash} failed: ${e.message}. Attempting self-heal...`);
+        await generateParserWithAI(hash, html, e.message);
+        rawParsedJobs = await executeParser(hash, html);
+      }
+    }
+  } catch (err) {
+    console.warn(`[extractJobsWithAI] AI extraction failed on ${sourceUrl} (${(err as Error).message}). Dropping jobs.`);
+    return [];
+  }
 
-${SCRAPING_GUIDELINES}
-
-Scraped content:
-${text.substring(0, 20000)}
-
-JOB-SPECIFIC EXTRACTION RULES:
-- Extract up to 15 real job postings found in the text. Extract ALL jobs visible, not just the first.
-- For 'companyName': DO NOT use the name of job boards or aggregators. Find the actual hiring
-  organization or company. If completely unknown, return 'Unknown'.
-- For 'description': Provide the FULL, comprehensive original content of the role as found in the source text. Do NOT summarize or truncate. Include all paragraphs detailing primary duties, responsibilities, reporting line, deliverables, work environment, and any other relevant information. We need the full comprehensive text to provide maximum value to the user.
-  Infer from context: "volunteer" → contract, "attaché" → internship, "CDI/permanent" → full_time.
-- For 'sourceUrl': If this page is an aggregator or job board, look for an "Apply Here",
-  "Visit Website", or original employer link in the [LINK] sections and return the TRUE origin URL.
-  If it's already the employer's site or no origin link exists, return the provided Source URL.
-- For 'postedDateIsoString': ISO 8601 date when the job was posted if found, otherwise empty string.
-- For 'deadlineIsoString': ISO 8601 deadline/closing date if found, otherwise empty string.
-  Look for: "deadline", "closing date", "apply by", "date limite", "tarehe ya mwisho".
-- For 'salaryMin': Minimum salary as a plain number (no currency symbol) if stated, otherwise 0.
-- For 'salaryMax': Maximum salary as a plain number (no currency symbol) if stated, otherwise 0. If only one salary
-  figure is given, use it for BOTH min and max.
-  - For 'salaryCurrency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "CDF", "USD").
-    Infer from context, country, or organization name if not stated explicitly.
-    Use empty string ONLY if salary is completely absent from the text.
-  - For 'sector': Must be a valid GICS (Global Industry Classification Standard) sector (e.g. 'Information Technology', 'Health Care', 'Financials', 'Industrials', 'Consumer Discretionary', 'Energy').
-  - For 'profession': Must be a valid ISCO-08 major group (e.g. 'Professionals', 'Managers', 'Technicians and Associate Professionals', 'Clerical Support Workers', 'Service and Sales Workers').
-  - For 'experienceLevel': Must be strictly one of: 'entry', 'mid', 'senior', 'executive'.
-  - For 'educationLevel': Must be a valid ISCED-11 level (e.g. 'Doctoral or Equivalent Level', 'Master\'s or Equivalent Level', 'Bachelor\'s or Equivalent Level', 'Short-cycle Tertiary Education', 'Upper Secondary Education').
-  - For 'skills': Array of key skills required.
-  - Return empty array if no real job postings found.
-  `;
-
-  // Fast-path deterministic pre-extraction
   const deterministic = extractDeterministicJobFields(text, sourceUrl);
 
-  try {
-    const { object } = await generateObjectWithFallback({
-      schema: z.object({
-        jobs: z.array(z.object({
-          title: z.string(),
-          companyName: z.string(),
-          description: z.string(),
-          requirements: z.string(),
-          sector: z.string().default('Industrials'),
-          profession: z.string().default('Professionals'),
-          experienceLevel: z.enum(['entry', 'mid', 'senior', 'executive']).default('mid'),
-          educationLevel: z.string().default('Upper Secondary Education'),
-          skills: z.array(z.string()).default([]),
-          location: z.string(),
-          jobType: z.enum(['full_time', 'part_time', 'contract', 'internship', 'remote']),
-          sourceUrl: z.string(),
-          postedDateIsoString: z.string(),
-          deadlineIsoString: z.string(),
-          salaryMin: z.number().default(0),
-          salaryMax: z.number().default(0),
-          salaryCurrency: z.string().default(''),
-          countryCode: z.string().default(''),
-        }))
-      }),
-      prompt,
-      maxTokens: 8192,
-    });
+  const rawJobs = rawParsedJobs.map((job: any) => {
+    let parsedPosted = null;
+    if (job.postedDateIsoString && typeof job.postedDateIsoString === 'string' && job.postedDateIsoString.trim()) {
+      const d = new Date(job.postedDateIsoString);
+      if (!isNaN(d.getTime())) parsedPosted = d;
+    }
+    let parsedDeadline = null;
+    if (job.deadlineIsoString && typeof job.deadlineIsoString === 'string' && job.deadlineIsoString.trim()) {
+      const d = new Date(job.deadlineIsoString);
+      if (!isNaN(d.getTime())) parsedDeadline = d;
+    }
+    // Merge deterministic deadline or salary if AI missed them
+    if (!parsedDeadline && deterministic.deadline) {
+      parsedDeadline = deterministic.deadline;
+    }
+    const salaryMin = (typeof job.salaryMin === 'number' && job.salaryMin > 0) ? job.salaryMin : (deterministic.salaryMin ?? null);
+    const salaryMax = (typeof job.salaryMax === 'number' && job.salaryMax > 0) ? job.salaryMax : (deterministic.salaryMax ?? null);
+    const salaryCurrency = job.salaryCurrency?.trim() || deterministic.salaryCurrency || null;
+    const requirements = (job.requirements && job.requirements.trim()) || deterministic.requirements || null;
 
-    const rawJobs = (object.jobs || []).map((job: {
-      title: string; companyName: string; description: string; requirements: string;
-      location: string; jobType: BroadJobResource['jobType']; sourceUrl: string;
-      postedDateIsoString: string; deadlineIsoString: string; salaryMin: number; salaryMax: number; salaryCurrency: string; countryCode: string;
-    }) => {
-      let parsedPosted = null;
-      if (job.postedDateIsoString && job.postedDateIsoString.trim()) {
-        const d = new Date(job.postedDateIsoString);
-        if (!isNaN(d.getTime())) parsedPosted = d;
-      }
-      let parsedDeadline = null;
-      if (job.deadlineIsoString && job.deadlineIsoString.trim()) {
-        const d = new Date(job.deadlineIsoString);
-        if (!isNaN(d.getTime())) parsedDeadline = d;
-      }
-      // Merge deterministic deadline or salary if AI missed them
-      if (!parsedDeadline && deterministic.deadline) {
-        parsedDeadline = deterministic.deadline;
-      }
-      const salaryMin = job.salaryMin > 0 ? job.salaryMin : (deterministic.salaryMin ?? null);
-      const salaryMax = job.salaryMax > 0 ? job.salaryMax : (deterministic.salaryMax ?? null);
-      const salaryCurrency = job.salaryCurrency?.trim() || deterministic.salaryCurrency || null;
-      const requirements = (job.requirements && job.requirements.trim()) || deterministic.requirements || null;
-
-      return {
-        ...job,
-        requirements,
-        parsedPosted,
-        parsedDeadline,
-        salaryMin,
-        salaryMax,
-        salaryCurrency,
-      };
-    });
+    return {
+      ...job,
+      requirements,
+      parsedPosted,
+      parsedDeadline,
+      salaryMin,
+      salaryMax,
+      salaryCurrency,
+    };
+  });
 
     const isAggregatorList = rawJobs.length > 1;
 
@@ -480,10 +435,6 @@ JOB-SPECIFIC EXTRACTION RULES:
       
       return true;
     }) as BroadJobResource[];
-  } catch (err) {
-    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Dropping jobs.`);
-    return [];
-  }
 }
 
 // ── Per-URL hard timeout wrapper ─────────────────────────────────────────────
@@ -519,7 +470,7 @@ export async function discoverJobs(query: string, maxPages: number = 10): Promis
           const html = await fetchHtml(url);
           if (!html) return [] as BroadJobResource[];
           const { text } = await htmlToTextEnriched(html, url);
-          return extractJobsWithAI(text, url);
+          return extractJobsWithAI(text, url, html);
         }, 45_000, url);
       })
     );
@@ -542,6 +493,7 @@ export async function discoverJobs(query: string, maxPages: number = 10): Promis
   console.log(`[discoverJobs] Finished. Total jobs discovered: ${allJobs.length}`);
   return allJobs;
 }
+
 
 
 
