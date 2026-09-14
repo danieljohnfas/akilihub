@@ -290,6 +290,14 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'gaa.go.ke',                 name: 'GAA Kenya Portal',         type: 'government_portal', category: 'jobs' },
   { domain: 'lmis.rw',                   name: 'LMIS Rwanda Portal',       type: 'government_portal', category: 'jobs' },
   { domain: 'ajira.go.tz',               name: 'Ajira Tanzania Portal',    type: 'government_portal', category: 'jobs' },
+  
+  // Fake SEO spam networks & aggressive aggregators
+  { domain: 'orbitdatasync3.homes',      name: 'SEO Spam',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'orbitdatasync4.homes',      name: 'SEO Spam',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'quantumfluxgrid2.lol',      name: 'SEO Spam',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'quantumfluxgrid4.baby',     name: 'SEO Spam',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'profdir.com',               name: 'SEO Spam',                 type: 'aggregator', category: 'jobs' },
+  { domain: 'ajiraport.com',             name: 'AjiraPort Aggregator',     type: 'aggregator', category: 'jobs' },
 ];
 
 // ── Lookup helpers ────────────────────────────────────────────────────────────
@@ -456,7 +464,13 @@ export function isEmployerUrl(url: string | null | undefined): boolean {
       domain.includes('akilibrain.com') ||
       domain.includes('recruit.net') ||
       domain.includes('kaziconnect') ||
-      domain.includes('devnetjobs')
+      domain.includes('devnetjobs') ||
+      domain.endsWith('.homes') ||
+      domain.endsWith('.lol') ||
+      domain.endsWith('.baby') ||
+      domain.includes('orbitdatasync') ||
+      domain.includes('quantumfluxgrid') ||
+      domain.includes('ajiraport.com')
     ) {
       return false;
     }
