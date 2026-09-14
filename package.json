@@ -42,7 +42,7 @@
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "duck-duck-scrape": "^2.2.7",
-    "framer-motion": "^12.42.2",
+    "framer-motion": "^13.2.0",
     "googleapis": "^176.0.0",
     "inngest": "^4.11.0",
     "lucide-react": "^1.22.0",
