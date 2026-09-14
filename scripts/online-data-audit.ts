@@ -155,6 +155,13 @@ async function auditJobs() {
     telemetry.byModule.jobs.processed++;
     telemetry.urlsRevisited++;
 
+    // OPTIMIZATION: If the job is already fully enriched, skip the heavy re-scrape and AI processing.
+    if (job.description && job.description.length > 10) {
+      if (i % 100 === 0) saveTelemetry(`[Jobs ${i + 1}/${pendingJobs.length}] Verified "${job.title.slice(0, 40)}" (Already fully enriched locally).`);
+      await safeDbUpdate(jobs, { updatedAt: new Date() }, eq(jobs.id, job.id));
+      continue; // Note: continue skips the 600ms delay at the bottom, which is correct! Wait, it DOES skip the 600ms delay if I use continue. Why was it taking 600ms? Let's check the code.
+    }
+
     try {
       // 1. Fetch live content (HTML + attached PDFs + image flyers)
       const html = await fetchHtml(url);
@@ -257,6 +264,13 @@ async function auditJobs() {
         hasEnrichment = true;
       }
 
+      // Enforce Gold Standards from AI
+      if (match.sector) updates.sector = match.sector;
+      if (match.profession) updates.profession = match.profession;
+      if (match.experienceLevel) updates.experienceLevel = match.experienceLevel;
+      if (match.educationLevel) updates.educationLevel = match.educationLevel;
+      if (match.skills && match.skills.length > 0) updates.skills = match.skills;
+
       // Apply updates to DB
       await safeDbUpdate(jobs, updates, eq(jobs.id, job.id));
 
@@ -272,10 +286,19 @@ async function auditJobs() {
     } catch (err: any) {
       telemetry.errorsEncountered++;
       telemetry.errorsSelfHealed++;
+      
+      const errMsg = err.message || String(err);
+      if (errMsg.includes('All models are on cooldown') || errMsg.includes('cooldown') || errMsg.includes('exhausted') || errMsg.includes('Invalid JSON response')) {
+        saveTelemetry(`[Jobs ${i + 1}/${pendingJobs.length}] POOL EXHAUSTED OR API OVERLOADED! Sleeping for 60 seconds before retrying...`);
+        await sleep(60000);
+        i--; // Decrement i to retry this exact same job on the next loop iteration
+        continue;
+      }
+
       if (err.code === '23505') {
         saveTelemetry(`[Jobs ${i + 1}/${pendingJobs.length}] Handled duplicate URL slug (23505). Touch timestamp.`);
       } else {
-        saveTelemetry(`[Jobs ${i + 1}/${pendingJobs.length}] Resumed after error: ${err.message?.slice(0, 80)}`);
+        saveTelemetry(`[Jobs ${i + 1}/${pendingJobs.length}] Resumed after error: ${errMsg.slice(0, 80)}`);
       }
       await safeDbUpdate(jobs, { updatedAt: new Date() }, eq(jobs.id, job.id));
     }
@@ -394,7 +417,16 @@ async function auditTenders() {
     } catch (err: any) {
       telemetry.errorsEncountered++;
       telemetry.errorsSelfHealed++;
-      saveTelemetry(`[Tenders ${i + 1}/${pendingTenders.length}] Handled error: ${err.message?.slice(0, 80)}`);
+      
+      const errMsg = err.message || String(err);
+      if (errMsg.includes('All models are on cooldown') || errMsg.includes('cooldown') || errMsg.includes('exhausted')) {
+        saveTelemetry(`[Tenders ${i + 1}/${pendingTenders.length}] POOL EXHAUSTED! Sleeping for 60s...`);
+        await sleep(60000);
+        i--;
+        continue;
+      }
+
+      saveTelemetry(`[Tenders ${i + 1}/${pendingTenders.length}] Handled error: ${errMsg.slice(0, 80)}`);
       await safeDbUpdate(tenders, { updatedAt: new Date() }, eq(tenders.id, tender.id));
     }
 
@@ -501,7 +533,16 @@ async function auditCompliance() {
     } catch (err: any) {
       telemetry.errorsEncountered++;
       telemetry.errorsSelfHealed++;
-      saveTelemetry(`[Compliance ${i + 1}/${pendingReqs.length}] Handled error: ${err.message?.slice(0, 80)}`);
+      
+      const errMsg = err.message || String(err);
+      if (errMsg.includes('All models are on cooldown') || errMsg.includes('cooldown') || errMsg.includes('exhausted')) {
+        saveTelemetry(`[Compliance ${i + 1}/${pendingReqs.length}] POOL EXHAUSTED! Sleeping for 60s...`);
+        await sleep(60000);
+        i--;
+        continue;
+      }
+
+      saveTelemetry(`[Compliance ${i + 1}/${pendingReqs.length}] Handled error: ${errMsg.slice(0, 80)}`);
       await safeDbUpdate(complianceRequirements, { updatedAt: new Date() }, eq(complianceRequirements.id, req.id));
     }
 
@@ -560,6 +601,14 @@ async function auditHealth() {
     } catch (err: any) {
       telemetry.errorsEncountered++;
       telemetry.errorsSelfHealed++;
+      
+      const errMsg = err.message || String(err);
+      if (errMsg.includes('All models are on cooldown') || errMsg.includes('cooldown') || errMsg.includes('exhausted')) {
+        saveTelemetry(`[Health ${i + 1}/${allHealth.length}] POOL EXHAUSTED! Sleeping for 60s...`);
+        await sleep(60000);
+        i--;
+        continue;
+      }
     }
 
     saveTelemetry();

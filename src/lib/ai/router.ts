@@ -58,6 +58,265 @@ getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
   });
 });
 
+// ── PRIORITY 3: GROQ ────────────────────────────────────────────────────// 🚀 PRIORITY 3: GROQ 
+  getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
+    const groq = createGroq({ apiKey: key });
+    keyPool.register({
+      id: `groq-llama-3-${i + 1}`,
+      name: `Groq Llama 3.1 70B (${i + 1})`,
+      model: groq('llama-3.1-70b-versatile'),
+      supportsStructured: true,
+      priority: 1, // SET PRIORITY TO 1 since it's the only one that might work
+    });
+  });
+
+// 🚀 PRIORITY 3: CEREBRAS 
+  getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
+    const cerebras = createOpenAI({ apiKey: key, baseURL: 'https://api.cerebras.ai/v1' });
+    keyPool.register({
+      id: `cerebras-llama3-${i + 1}`,
+      name: `Cerebras Llama 3.1 8B (${i + 1})`,
+      model: cerebras('llama3.1-8b'),
+      supportsStructured: true,
+      priority: 2,
+    });
+  });
+
+// ── PRIORITY 3: DEEPSEEK ────────────────────────────────────────────────
+getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
+  const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com' });
+  keyPool.register({
+    id: `deepseek-chat-${i + 1}`,
+    name: `DeepSeek Chat (${i + 1})`,
+    model: deepseek('deepseek-chat'),
+    supportsStructured: true,
+    priority: 3,
+  });
+});
+
+// ── PRIORITY 4: SAMBANOVA ────────────────────────────────────────────────
+getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
+  const sambanova = createOpenAI({ apiKey: key, baseURL: 'https://api.sambanova.ai/v1' });
+  keyPool.register({
+    id: `sambanova-llama3-${i + 1}`,
+    name: `SambaNova Llama 3.1 70B (${i + 1})`,
+    model: sambanova('Meta-Llama-3.1-70B-Instruct'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: COHERE ────────────────────────────────────────────────
+getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
+  const cohere = createCohere({ apiKey: key });
+  keyPool.register({
+    id: `cohere-command-r-plus-${i + 1}`,
+    name: `Cohere Command R+ (${i + 1})`,
+    model: cohere('command-r-plus'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: HYPERBOLIC ────────────────────────────────────────────────
+getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
+  const hyperbolic = createOpenAI({ apiKey: key, baseURL: 'https://api.hyperbolic.xyz/v1' });
+  keyPool.register({
+    id: `hyperbolic-llama3-${i + 1}`,
+    name: `Hyperbolic Llama 3.1 70B (${i + 1})`,
+    model: hyperbolic('meta-llama/Meta-Llama-3.1-70B-Instruct'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: MINIMAX ────────────────────────────────────────────────
+getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
+  const minimax = createOpenAI({ apiKey: key, baseURL: 'https://api.minimax.chat/v1' });
+  keyPool.register({
+    id: `minimax-text-${i + 1}`,
+    name: `MiniMax (${i + 1})`,
+    model: minimax('minimax-text-01'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: TOGETHER AI ────────────────────────────────────────────────
+getEnvKeys('TOGETHER_API_KEY').forEach((key, i) => {
+  const together = createOpenAI({ apiKey: key, baseURL: 'https://api.together.xyz/v1' });
+  keyPool.register({
+    id: `together-llama3-${i + 1}`,
+    name: `Together Llama 3.3 70B (${i + 1})`,
+    model: together('meta-llama/Llama-3.3-70B-Instruct-Turbo'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: FIREWORKS AI ────────────────────────────────────────────────
+getEnvKeys('FIREWORKS_API_KEY').forEach((key, i) => {
+  const fireworks = createOpenAI({ apiKey: key, baseURL: 'https://api.fireworks.ai/inference/v1' });
+  keyPool.register({
+    id: `fireworks-llama3-${i + 1}`,
+    name: `Fireworks Llama 3.1 70B (${i + 1})`,
+    model: fireworks('accounts/fireworks/models/llama-v3p1-70b-instruct'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: NVIDIA NIM ────────────────────────────────────────────────
+getEnvKeys('NVIDIA_API_KEY').forEach((key, i) => {
+  const nvidia = createOpenAI({ apiKey: key, baseURL: 'https://integrate.api.nvidia.com/v1' });
+  keyPool.register({
+    id: `nvidia-llama3-${i + 1}`,
+    name: `NVIDIA Llama 3.1 70B (${i + 1})`,
+    model: nvidia('meta/llama-3.1-70b-instruct'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: XAI GROK ────────────────────────────────────────────────
+getEnvKeys('XAI_API_KEY').forEach((key, i) => {
+  const xai = createOpenAI({ apiKey: key, baseURL: 'https://api.x.ai/v1' });
+  keyPool.register({
+    id: `xai-grok-${i + 1}`,
+    name: `xAI Grok Beta (${i + 1})`,
+    model: xai('grok-beta'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: PERPLEXITY ────────────────────────────────────────────────
+getEnvKeys('PERPLEXITY_API_KEY').forEach((key, i) => {
+  const perplexity = createOpenAI({ apiKey: key, baseURL: 'https://api.perplexity.ai' });
+  keyPool.register({
+    id: `perplexity-sonar-${i + 1}`,
+    name: `Perplexity Sonar 70B (${i + 1})`,
+    model: perplexity('llama-3.1-sonar-large-128k-chat'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: NOVITA AI ────────────────────────────────────────────────
+getEnvKeys('NOVITA_API_KEY').forEach((key, i) => {
+  const novita = createOpenAI({ apiKey: key, baseURL: 'https://api.novita.ai/v3/openai' });
+  keyPool.register({
+    id: `novita-llama3-${i + 1}`,
+    name: `Novita Llama 3.1 70B (${i + 1})`,
+    model: novita('meta-llama/llama-3.1-70b-instruct'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: AI21 JAMBA ────────────────────────────────────────────────
+getEnvKeys('AI21_API_KEY').forEach((key, i) => {
+  const ai21 = createOpenAI({ apiKey: key, baseURL: 'https://api.ai21.com/studio/v1' });
+  keyPool.register({
+    id: `ai21-jamba-${i + 1}`,
+    name: `AI21 Jamba 1.5 Large (${i + 1})`,
+    model: ai21('jamba-1.5-large'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: LEPTON AI ────────────────────────────────────────────────
+getEnvKeys('LEPTON_API_KEY').forEach((key, i) => {
+  const lepton = createOpenAI({ apiKey: key, baseURL: 'https://llama3-1-70b.lepton.run/api/v1' });
+  keyPool.register({
+    id: `lepton-llama3-${i + 1}`,
+    name: `Lepton Llama 3.1 70B (${i + 1})`,
+    model: lepton('llama3-1-70b'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 4: ALIBABA QWEN (DASHSCOPE) ────────────────────────────────────────────────
+getEnvKeys('DASHSCOPE_API_KEY').forEach((key, i) => {
+  const qwen = createOpenAI({ apiKey: key, baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' });
+  keyPool.register({
+    id: `qwen-plus-${i + 1}`,
+    name: `Alibaba Qwen Plus (${i + 1})`,
+    model: qwen('qwen-plus'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// ── PRIORITY 5: CLOUDFLARE WORKERS AI ────────────────────────────────────────────────
+const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+getEnvKeys('CLOUDFLARE_AI_TOKEN').forEach((key, i) => {
+  if (!cfAccountId) return;
+  const cf = createOpenAI({ apiKey: key, baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1` });
+  keyPool.register({
+    id: `cloudflare-llama3-${i + 1}`,
+    name: `Cloudflare Llama 3 8B (${i + 1})`,
+    model: cf('@cf/meta/llama-3-8b-instruct'),
+    supportsStructured: true,
+    priority: 5,
+  });
+});
+
+// 🚀 PRIORITY 1: GOOGLE GEMINI (Working perfectly without Rate limits)
+getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
+  const google = createGoogle({ apiKey: key });
+  keyPool.register({
+    id: `google-gemini-${i + 1}`,
+    name: `Google Gemini 2.5 Flash (${i + 1})`,
+    model: google('gemini-2.5-flash'),
+    supportsStructured: true,
+    priority: 1, // SET TO PRIORITY 1
+  });
+});
+
+// 🚀 PRIORITY 5: HUGGING FACE (DE-PRIORITIZED DUE TO CLOUDFLARE BANS)
+let hfFetch;
+try {
+  const { ProxyAgent, fetch: undiciFetch } = require('undici');
+  const fs = require('fs');
+
+  hfFetch = (url: any, options: any) => {
+    let proxyList = [];
+    try {
+      if (fs.existsSync('scripts/proxies.json')) {
+        proxyList = JSON.parse(fs.readFileSync('scripts/proxies.json', 'utf8'));
+      }
+    } catch(e) {}
+    
+    if (proxyList.length > 0) {
+      const proxy = proxyList[Math.floor(Math.random() * proxyList.length)];
+      const proxyAgent = new ProxyAgent('http://' + proxy);
+      return undiciFetch(url, { ...options, dispatcher: proxyAgent });
+    }
+    return undiciFetch(url, options);
+  };
+} catch (e) {
+  console.warn('Could not initialize rotating proxy fetcher, using default.');
+}
+
+getEnvKeys('HUGGINGFACE_API_KEY').forEach((key, i) => {
+  // We use the openai compatible endpoint for HF serverless Inference API
+  const hf = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api-inference.huggingface.co/v1/',
+    fetch: hfFetch
+  });
+  keyPool.register({
+    id: `hf-qwen2.5-${i + 1}`,
+    name: `HuggingFace Qwen 2.5 72B (${i + 1})`,
+    model: hf('Qwen/Qwen2.5-72B-Instruct'),
+    supportsStructured: true,
+    priority: 1,
+  });
+});
+
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
 } else {
@@ -69,7 +328,7 @@ if (keyPool.size === 0) {
 // 2. GENERATION WITH FALLBACK
 // ------------------------------------------------------------------
 
-const MAX_RETRIES = 6;
+const MAX_RETRIES = 20;
 const AI_TIMEOUT_MS = 90_000;
 
 function withHardTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {

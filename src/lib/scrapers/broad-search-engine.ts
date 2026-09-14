@@ -323,6 +323,8 @@ GENERAL EXTRACTION QUALITY GUIDELINES (apply to every field):
    not just the first one or the most prominent.
 `;
 
+import { extractDeterministicJobFields } from './deterministic-extractor';
+
 /**
  * Uses AI to extract Job postings from scraped text.
  * Applies shared SCRAPING_GUIDELINES for comprehensive, non-shallow extraction.
@@ -330,7 +332,7 @@ GENERAL EXTRACTION QUALITY GUIDELINES (apply to every field):
 export async function extractJobsWithAI(text: string, sourceUrl: string): Promise<BroadJobResource[]> {
   if (!text || text.length < 50) return [];
 
-    const prompt = `You are a specialized AI assistant that extracts job postings from raw website text.
+  const prompt = `You are a specialized AI assistant that extracts job postings from raw website text.
 Source URL: ${sourceUrl}
 
 ${SCRAPING_GUIDELINES}
@@ -343,13 +345,6 @@ JOB-SPECIFIC EXTRACTION RULES:
 - For 'companyName': DO NOT use the name of job boards or aggregators. Find the actual hiring
   organization or company. If completely unknown, return 'Unknown'.
 - For 'description': Provide the FULL, comprehensive original content of the role as found in the source text. Do NOT summarize or truncate. Include all paragraphs detailing primary duties, responsibilities, reporting line, deliverables, work environment, and any other relevant information. We need the full comprehensive text to provide maximum value to the user.
-- For 'requirements': Extract ALL qualifications and experience required: education level, years
-  of experience, specific skills, certifications, software tools, languages, and any other
-  criteria. Separate requirements with semicolons. Use empty string ONLY if truly none stated.
-- For 'location': City or region (e.g., "Nairobi", "Dar es Salaam"). Use empty string if none.
-- For 'countryCode': The 2-letter ISO country code where the job is located (e.g. "TZ", "MG", "KE"). 
-  Infer from text, location, or currency. Use empty string ONLY if completely unknown.
-- For 'jobType': Must be one of: full_time, part_time, contract, internship, remote.
   Infer from context: "volunteer" → contract, "attaché" → internship, "CDI/permanent" → full_time.
 - For 'sourceUrl': If this page is an aggregator or job board, look for an "Apply Here",
   "Visit Website", or original employer link in the [LINK] sections and return the TRUE origin URL.
@@ -358,13 +353,18 @@ JOB-SPECIFIC EXTRACTION RULES:
 - For 'deadlineIsoString': ISO 8601 deadline/closing date if found, otherwise empty string.
   Look for: "deadline", "closing date", "apply by", "date limite", "tarehe ya mwisho".
 - For 'salaryMin': Minimum salary as a plain number (no currency symbol) if stated, otherwise 0.
-- For 'salaryMax': Maximum salary as a plain number if stated, otherwise 0. If only one salary
+- For 'salaryMax': Maximum salary as a plain number (no currency symbol) if stated, otherwise 0. If only one salary
   figure is given, use it for BOTH min and max.
-- For 'salaryCurrency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "CDF", "USD").
-  Infer from context, country, or organization name if not stated explicitly.
-  Use empty string ONLY if salary is completely absent from the text.
-- Return empty array if no real job postings found.
-`;
+  - For 'salaryCurrency': ISO 4217 code (e.g. "KES", "TZS", "UGX", "RWF", "ETB", "CDF", "USD").
+    Infer from context, country, or organization name if not stated explicitly.
+    Use empty string ONLY if salary is completely absent from the text.
+  - For 'sector': Must be a valid GICS (Global Industry Classification Standard) sector (e.g. 'Information Technology', 'Health Care', 'Financials', 'Industrials', 'Consumer Discretionary', 'Energy').
+  - For 'profession': Must be a valid ISCO-08 major group (e.g. 'Professionals', 'Managers', 'Technicians and Associate Professionals', 'Clerical Support Workers', 'Service and Sales Workers').
+  - For 'experienceLevel': Must be strictly one of: 'entry', 'mid', 'senior', 'executive'.
+  - For 'educationLevel': Must be a valid ISCED-11 level (e.g. 'Doctoral or Equivalent Level', 'Master\'s or Equivalent Level', 'Bachelor\'s or Equivalent Level', 'Short-cycle Tertiary Education', 'Upper Secondary Education').
+  - For 'skills': Array of key skills required.
+  - Return empty array if no real job postings found.
+  `;
 
   // Fast-path deterministic pre-extraction
   const deterministic = extractDeterministicJobFields(text, sourceUrl);
@@ -377,6 +377,11 @@ JOB-SPECIFIC EXTRACTION RULES:
           companyName: z.string(),
           description: z.string(),
           requirements: z.string(),
+          sector: z.string().default('Industrials'),
+          profession: z.string().default('Professionals'),
+          experienceLevel: z.enum(['entry', 'mid', 'senior', 'executive']).default('mid'),
+          educationLevel: z.string().default('Upper Secondary Education'),
+          skills: z.array(z.string()).default([]),
           location: z.string(),
           jobType: z.enum(['full_time', 'part_time', 'contract', 'internship', 'remote']),
           sourceUrl: z.string(),
@@ -458,8 +463,30 @@ JOB-SPECIFIC EXTRACTION RULES:
       return true;
     });
   } catch (err) {
-    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}).`);
-    // User requested NO deterministic fallback, only AI.
+    console.warn(`[extractJobsWithAI] AI extraction unavailable on ${sourceUrl} (${(err as Error).message}). Falling back.`);
+    if (deterministic && text.length > 100) {
+      return [{
+        title: "Job Listing",
+        companyName: "Unknown",
+        description: text.substring(0, 5000),
+        requirements: deterministic.requirements || null,
+        sector: "Other",
+        profession: "Professionals",
+        experienceLevel: "mid",
+        educationLevel: "Upper Secondary Education",
+        skills: [],
+        regionId: null,
+        jobType: "full_time",
+        sourceUrl: sourceUrl,
+        postedDate: new Date(),
+        deadline: deterministic.deadline || null,
+        salaryMin: deterministic.salaryMin || 0,
+        salaryMax: deterministic.salaryMax || 0,
+        salaryCurrency: deterministic.salaryCurrency || '',
+        countryCode: deterministic.countryCode || '',
+        needsAiExtraction: true
+      }];
+    }
     return [];
   }
 }
