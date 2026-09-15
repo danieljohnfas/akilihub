@@ -75,7 +75,8 @@ class KeyPool {
     key.errorCount++;
     key.totalErrors++;
     key.totalCalls++;
-    const backoffSec = Math.min(10 * Math.pow(2, key.errorCount - 1), 60);
+    // Exponential backoff, capping at 7200 seconds (2 hours) instead of 60 seconds
+    const backoffSec = Math.min(10 * Math.pow(2, key.errorCount - 1), 7200);
     key.coolUntil = Date.now() + backoffSec * 1000;
     console.warn(`[KeyPool] ${key.name} cooling for ${backoffSec}s (error #${key.errorCount})`);
     // Fire-and-forget telemetry write (doesn't block)
@@ -184,7 +185,10 @@ class KeyPool {
       // Non-critical — silently ignore. The pool remains functional without restored state.
     }
   }
+
+  getAllKeys(): KeyEntry[] {
+    return Array.from(this.keys.values());
+  }
 }
 
 export const keyPool = new KeyPool();
-

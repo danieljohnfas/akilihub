@@ -57,7 +57,12 @@ export async function generateParserWithAI(hash: string, html: string, previousE
   const sampleHtml = html.length > 6000 ? html.slice(0, 6000) : html;
   const prompt = `You are an expert Node.js scraper. Write a deterministic Cheerio script to extract jobs from this specific HTML structure.
 
-The script will be executed in a Node.js VM context where the following variables are already available:
+CRITICAL INSTRUCTIONS:
+1. DO NOT use require(), imports, or module.exports. 
+2. If this HTML does NOT contain real job postings (e.g., if it is a directory of companies, a list of categories, or just a generic article), you MUST leave the result array empty. Do NOT extract companies as jobs.
+3. Only extract actual job listings with a clear job title.
+
+The script will be executed in a Node.js VM context where the following variables are ALREADY available globally:
 - html: a string containing the raw HTML
 - $: a cheerio instance pre-loaded with the html (cheerio.load(html))
 - result: an empty array that you MUST populate with the extracted job objects.

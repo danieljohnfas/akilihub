@@ -1,0 +1,1 @@
+// No job postings found on this page; result remains empty.

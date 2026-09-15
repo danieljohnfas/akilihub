@@ -329,29 +329,72 @@ import { getStructuralFingerprint, executeParser, generateParserWithAI } from '.
  * Uses AI to extract Job postings from scraped text.
  * Applies shared SCRAPING_GUIDELINES for comprehensive, non-shallow extraction.
  */
+function extractJsonLdJobs(html: string, sourceUrl: string): any[] {
+  const $ = cheerio.load(html);
+  const jobs: any[] = [];
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      const content = $(el).html();
+      if (!content) return;
+      let data = JSON.parse(content);
+      if (!Array.isArray(data)) data = [data];
+      
+      for (const item of data) {
+        const items = item['@graph'] ? item['@graph'] : [item];
+        for (const obj of items) {
+          if (obj['@type'] === 'JobPosting') {
+            jobs.push({
+              title: obj.title,
+              companyName: obj.hiringOrganization?.name || '',
+              description: obj.description || '',
+              location: obj.jobLocation?.address?.addressLocality || obj.jobLocation?.address?.addressRegion || obj.jobLocation?.address?.addressCountry || '',
+              jobType: obj.employmentType ? (String(obj.employmentType).toLowerCase().includes('full') ? 'full_time' : 'contract') : 'full_time',
+              sourceUrl: sourceUrl,
+              postedDateIsoString: obj.datePosted || null,
+              deadlineIsoString: obj.validThrough || null,
+              salaryMin: obj.baseSalary?.value?.minValue || obj.baseSalary?.value || null,
+              salaryMax: obj.baseSalary?.value?.maxValue || null,
+              salaryCurrency: obj.baseSalary?.currency || null
+            });
+          }
+        }
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+  });
+  return jobs;
+}
+
 export async function extractJobsWithAI(text: string, sourceUrl: string, html: string = ''): Promise<BroadJobResource[]> {
   if (!html || html.length < 50) return [];
 
-  const hash = getStructuralFingerprint(html);
+  // 1. FAST PATH: JSON-LD Structured Data
+  let rawParsedJobs = extractJsonLdJobs(html, sourceUrl);
   
-  let rawParsedJobs: any[] = [];
-  try {
+  if (rawParsedJobs.length > 0) {
+    console.log(`[extractJobsWithAI] Intercepted ${rawParsedJobs.length} jobs natively via JSON-LD! Bypassing AI entirely.`);
+  } else {
+    // 2. FALLBACK PATH: DOM Clustering & AI
+    const hash = getStructuralFingerprint(html);
     try {
-      rawParsedJobs = await executeParser(hash, html);
-    } catch (e: any) {
-      if (e.message.includes('Parser not found')) {
-        console.log(`[DOM Cluster] Unknown structure detected (${hash}). Generating new parser...`);
-        await generateParserWithAI(hash, html);
+      try {
         rawParsedJobs = await executeParser(hash, html);
-      } else {
-        console.warn(`[DOM Cluster] Parser ${hash} failed: ${e.message}. Attempting self-heal...`);
-        await generateParserWithAI(hash, html, e.message);
-        rawParsedJobs = await executeParser(hash, html);
+      } catch (e: any) {
+        if (e.message.includes('Parser not found')) {
+          console.log(`[DOM Cluster] Unknown structure detected (${hash}). Generating new parser...`);
+          await generateParserWithAI(hash, html);
+          rawParsedJobs = await executeParser(hash, html);
+        } else {
+          console.warn(`[DOM Cluster] Parser ${hash} failed: ${e.message}. Attempting self-heal...`);
+          await generateParserWithAI(hash, html, e.message);
+          rawParsedJobs = await executeParser(hash, html);
+        }
       }
+    } catch (err) {
+      console.warn(`[extractJobsWithAI] AI extraction failed on ${sourceUrl} (${(err as Error).message}). Dropping jobs.`);
+      return [];
     }
-  } catch (err) {
-    console.warn(`[extractJobsWithAI] AI extraction failed on ${sourceUrl} (${(err as Error).message}). Dropping jobs.`);
-    return [];
   }
 
   const deterministic = extractDeterministicJobFields(text, sourceUrl);

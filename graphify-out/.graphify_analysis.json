@@ -1,0 +1,3116 @@
+{
+  "communities": {
+    "0": [
+      "crypto",
+      "src_app_account_actions",
+      "src_app_account_actions_createalert",
+      "src_app_account_actions_deletealert",
+      "src_app_account_actions_togglealert",
+      "src_app_account_actions_toggleemailupdates",
+      "src_app_account_actions_updateprofile",
+      "src_app_account_page_accountpage",
+      "src_app_actions_bookmarks",
+      "src_app_actions_bookmarks_checkbookmarkstatus",
+      "src_app_actions_tracking",
+      "src_app_actions_tracking_trackuseractivity",
+      "src_app_api_applications_evaluate_route",
+      "src_app_api_applications_evaluate_route_post",
+      "src_app_api_interview_generate_questions_route",
+      "src_app_api_interview_generate_questions_route_post",
+      "src_app_api_interview_score_route",
+      "src_app_api_interview_score_route_post",
+      "src_app_api_subscribe_route",
+      "src_app_api_subscribe_route_post",
+      "src_app_api_subscribe_route_resend",
+      "src_app_api_unsubscribe_route",
+      "src_app_api_unsubscribe_route_dynamic",
+      "src_app_api_unsubscribe_route_get",
+      "src_app_auth_actions",
+      "src_app_auth_actions_login",
+      "src_app_auth_actions_signinwithgoogle",
+      "src_app_auth_actions_signup",
+      "src_app_auth_callback_route",
+      "src_app_auth_callback_route_get",
+      "src_app_auth_reset_password_actions",
+      "src_app_auth_reset_password_actions_resetpassword",
+      "src_app_forgot_password_actions",
+      "src_app_forgot_password_actions_forgotpassword",
+      "src_app_layout",
+      "src_app_layout_inter",
+      "src_app_layout_metadata",
+      "src_app_layout_rootlayout",
+      "src_app_unsubscribe_page",
+      "src_app_unsubscribe_page_dynamic",
+      "src_app_unsubscribe_page_unsubscribepage",
+      "src_app_unsubscribe_page_unsubscribepageprops",
+      "src_components_analytics_activitytracker",
+      "src_components_analytics_activitytracker_activitytracker",
+      "src_components_analytics_clarity",
+      "src_components_analytics_clarity_clarityanalytics",
+      "src_components_providers_posthogprovider",
+      "src_components_providers_posthogprovider_posthogprovider",
+      "src_components_providers_themeprovider",
+      "src_components_providers_themeprovider_themeprovider",
+      "src_components_seo_schemas_buildorganizationschema",
+      "src_components_seo_schemas_buildwebsiteschema",
+      "src_components_shared_footer_footer",
+      "src_components_shared_navbar_navbar",
+      "src_lib_db_schema_applications",
+      "src_lib_db_schema_applications_applicationstatusenum",
+      "src_lib_db_schema_applications_jobapplications",
+      "src_lib_db_schema_applications_mockinterviews",
+      "src_lib_db_schema_users",
+      "src_lib_db_schema_users_alertfrequencyenum",
+      "src_lib_db_schema_users_bookmarkitemtypeenum",
+      "src_lib_db_schema_users_bookmarks",
+      "src_lib_db_schema_users_useralerts",
+      "src_lib_db_schema_users_users",
+      "src_lib_supabase_server",
+      "src_lib_supabase_server_createclient"
+    ],
+    "1": [
+      "src_app_api_search_route_searchresult",
+      "src_app_dashboard_interviews_applicationid_page_interviewpage",
+      "src_components_shared_globalsearch",
+      "src_components_shared_globalsearch_moduleicons",
+      "src_components_shared_globalsearch_modulelabels",
+      "src_components_ui_avatar",
+      "src_components_ui_avatar_avatar",
+      "src_components_ui_avatar_avatarbadge",
+      "src_components_ui_avatar_avatarfallback",
+      "src_components_ui_avatar_avatargroup",
+      "src_components_ui_avatar_avatargroupcount",
+      "src_components_ui_avatar_avatarimage",
+      "src_components_ui_breadcrumb",
+      "src_components_ui_breadcrumb_breadcrumb",
+      "src_components_ui_breadcrumb_breadcrumbellipsis",
+      "src_components_ui_breadcrumb_breadcrumbitem",
+      "src_components_ui_breadcrumb_breadcrumblink",
+      "src_components_ui_breadcrumb_breadcrumblist",
+      "src_components_ui_breadcrumb_breadcrumbpage",
+      "src_components_ui_breadcrumb_breadcrumbseparator",
+      "src_components_ui_card_cardaction",
+      "src_components_ui_command",
+      "src_components_ui_command_command",
+      "src_components_ui_command_commanddialog",
+      "src_components_ui_command_commandempty",
+      "src_components_ui_command_commandgroup",
+      "src_components_ui_command_commandinput",
+      "src_components_ui_command_commanditem",
+      "src_components_ui_command_commandlist",
+      "src_components_ui_command_commandseparator",
+      "src_components_ui_command_commandshortcut",
+      "src_components_ui_input_group",
+      "src_components_ui_input_group_inputgroup",
+      "src_components_ui_input_group_inputgroupaddon",
+      "src_components_ui_input_group_inputgroupaddonvariants",
+      "src_components_ui_input_group_inputgroupbutton",
+      "src_components_ui_input_group_inputgroupbuttonvariants",
+      "src_components_ui_input_group_inputgroupinput",
+      "src_components_ui_input_group_inputgrouptext",
+      "src_components_ui_input_group_inputgrouptextarea",
+      "src_components_ui_scroll_area",
+      "src_components_ui_scroll_area_scrollarea",
+      "src_components_ui_scroll_area_scrollbar",
+      "src_components_ui_separator",
+      "src_components_ui_separator_separator",
+      "src_components_ui_skeleton",
+      "src_components_ui_skeleton_skeleton",
+      "src_components_ui_table",
+      "src_components_ui_table_table",
+      "src_components_ui_table_tablebody",
+      "src_components_ui_table_tablecaption",
+      "src_components_ui_table_tablecell",
+      "src_components_ui_table_tablefooter",
+      "src_components_ui_table_tablehead",
+      "src_components_ui_table_tableheader",
+      "src_components_ui_table_tablerow",
+      "src_components_ui_textarea",
+      "src_components_ui_textarea_textarea",
+      "src_lib_utils",
+      "src_lib_utils_appendtrackingtag",
+      "src_lib_utils_cn"
+    ],
+    "2": [
+      "scratch_analyze_tenders",
+      "scratch_analyze_tenders_main",
+      "scratch_debug_drizzle",
+      "scratch_debug_drizzle_main",
+      "scratch_test_drizzle",
+      "scratch_test_drizzle_main",
+      "scripts_fix_historical_countries",
+      "scripts_stats",
+      "scripts_stats_main",
+      "scripts_test_drizzle_query",
+      "scripts_test_drizzle_query_db",
+      "scripts_test_drizzle_query_dburl",
+      "scripts_test_drizzle_query_main",
+      "scripts_test_drizzle_query_sql",
+      "scripts_test_jobs_query_ts_scripts_test_jobs_query",
+      "scripts_test_jobs_query_ts_scripts_test_jobs_query_db",
+      "scripts_test_jobs_query_ts_scripts_test_jobs_query_dburl",
+      "scripts_test_jobs_query_ts_scripts_test_jobs_query_main",
+      "scripts_test_jobs_query_ts_scripts_test_jobs_query_sql",
+      "src_app_admin_resolve_actions",
+      "src_app_countries_country_page",
+      "src_app_countries_country_page_generatemetadata",
+      "src_app_countries_country_page_props",
+      "src_app_feed_xml_route",
+      "src_app_feed_xml_route_escapexml",
+      "src_app_feed_xml_route_get",
+      "src_app_tenders_calendar_page",
+      "src_app_tenders_calendar_page_metadata",
+      "src_app_tenders_id_opengraph_image",
+      "src_app_tenders_id_opengraph_image_alt",
+      "src_app_tenders_id_opengraph_image_contenttype",
+      "src_app_tenders_id_opengraph_image_robots",
+      "src_app_tenders_id_opengraph_image_size",
+      "src_app_tenders_id_page",
+      "src_app_tenders_id_page_revalidate",
+      "src_components_home_livestats",
+      "src_components_home_livestats_livestats",
+      "src_inngest_send_alerts",
+      "src_inngest_tender_summarizer",
+      "src_inngest_whatsapp_broadcast",
+      "src_lib_db_schema_shared",
+      "src_lib_db_schema_shared_countries",
+      "src_lib_db_schema_shared_districts",
+      "src_lib_db_schema_shared_regions",
+      "src_lib_db_schema_tenders",
+      "src_lib_db_schema_tenders_tendercategoryenum",
+      "src_lib_db_schema_tenders_tenders",
+      "src_lib_db_schema_tenders_tendersectors",
+      "src_lib_db_schema_tenders_tenderstatusenum",
+      "src_lib_db_seed",
+      "src_lib_db_seed_seed"
+    ],
+    "3": [
+      "activate",
+      "activate_update",
+      "check_run",
+      "check_ts_check",
+      "deactivate",
+      "deactivate2",
+      "deactivate2_calculateseoscore",
+      "deactivate2_run",
+      "deactivate_calculateseoscore",
+      "deactivate_run",
+      "scratch_analyze_jobs",
+      "scratch_analyze_jobs_main",
+      "scratch_check_job_dates",
+      "scratch_check_job_dates_main",
+      "scratch_check_locations",
+      "scratch_check_locations_main",
+      "scratch_test_query",
+      "scratch_test_query2",
+      "scratch_test_query2_main",
+      "scratch_test_query_main",
+      "scratch_update_job_dates",
+      "scratch_update_job_dates_main",
+      "scripts_check_counts",
+      "scripts_check_counts_run",
+      "scripts_check_generic_jobs",
+      "scripts_check_generic_jobs_run",
+      "scripts_check_job",
+      "scripts_check_job_run",
+      "scripts_check_last_run",
+      "scripts_check_last_run_main",
+      "scripts_clean_employer_urls",
+      "scripts_clean_employer_urls_conn",
+      "scripts_clean_employer_urls_db",
+      "scripts_clean_employer_urls_junk_or_aggregator_patterns",
+      "scripts_clean_employer_urls_runsanitization",
+      "scripts_cleanup_bad_jobs",
+      "scripts_cleanup_bad_jobs_run",
+      "scripts_count_main",
+      "scripts_count_ts_scripts_count",
+      "scripts_fix_expired_jobs",
+      "scripts_fix_expired_jobs_main",
+      "src_inngest_enforce_freshness",
+      "src_lib_db_schema_health",
+      "src_lib_db_schema_health_healthdatapoints",
+      "src_lib_db_schema_jobs",
+      "src_lib_db_schema_jobs_jobs",
+      "src_lib_db_schema_jobs_jobtypeenum"
+    ],
+    "4": [
+      "chalk",
+      "commander",
+      "ora",
+      "package_package",
+      "package_package_author",
+      "package_package_bin",
+      "package_package_bin_zai_cli",
+      "package_package_contributors",
+      "package_package_dependencies",
+      "package_package_dependencies_chalk",
+      "package_package_dependencies_commander",
+      "package_package_dependencies_ora",
+      "package_package_description",
+      "package_package_engines",
+      "package_package_engines_node",
+      "package_package_files",
+      "package_package_homepage",
+      "package_package_license",
+      "package_package_main",
+      "package_package_name",
+      "package_package_packagemanager",
+      "package_package_publishconfig",
+      "package_package_publishconfig_access",
+      "package_package_repository",
+      "package_package_repository_type",
+      "package_package_repository_url",
+      "package_package_scripts",
+      "package_package_scripts_build",
+      "package_package_scripts_clean",
+      "package_package_scripts_dev",
+      "package_package_scripts_lint",
+      "package_package_scripts_lint_fix",
+      "package_package_scripts_prepublishonly",
+      "package_package_scripts_smoke",
+      "package_package_scripts_smoke_full",
+      "package_package_scripts_start",
+      "package_package_scripts_test",
+      "package_package_scripts_test_ci",
+      "package_package_scripts_test_watch",
+      "package_package_type",
+      "package_package_version",
+      "ref_chao_gong_https_github_com_tomsun28",
+      "ref_dist",
+      "ref_license",
+      "ref_readme_md",
+      "ref_skills"
+    ],
+    "5": [
+      "src_app_admin_ai_status_page",
+      "src_app_admin_ai_status_page_aistatusdashboard",
+      "src_app_admin_ai_status_page_keystatus",
+      "src_app_admin_ai_status_page_poolstatus",
+      "src_app_dashboard_interviews_applicationid_page",
+      "src_app_dashboard_interviews_applicationid_page_message",
+      "src_app_jobs_apply_id_page",
+      "src_app_jobs_apply_id_page_applypage",
+      "src_app_login_page",
+      "src_app_login_page_loginpage",
+      "src_app_login_page_metadata",
+      "src_app_pricing_page",
+      "src_app_pricing_page_metadata",
+      "src_app_pricing_page_pricingpage",
+      "src_app_signup_page",
+      "src_app_signup_page_metadata",
+      "src_app_signup_page_signuppage",
+      "src_components_auth_googlesigninbutton",
+      "src_components_auth_googlesigninbutton_googlesigninbutton",
+      "src_components_auth_googlesigninbutton_googlesigninbuttoninner",
+      "src_components_compliance_businesscard",
+      "src_components_compliance_businesscard_businesscardprops",
+      "src_components_compliance_resourcecard",
+      "src_components_compliance_resourcecard_resourcecardprops",
+      "src_components_compliance_resourcecard_typeconfig",
+      "src_components_health_healthcard",
+      "src_components_health_healthcard_healthcardprops",
+      "src_components_jobs_jobcard",
+      "src_components_jobs_jobcard_jobcardprops",
+      "src_components_jobs_jobcard_jobtypecolors",
+      "src_components_jobs_jobcard_jobtypelabels",
+      "src_components_salaries_salarycard",
+      "src_components_salaries_salarycard_salarycardprops",
+      "src_components_ui_badge",
+      "src_components_ui_badge_badge",
+      "src_components_ui_badge_badgevariants",
+      "src_components_ui_card",
+      "src_components_ui_card_card",
+      "src_components_ui_card_cardcontent",
+      "src_components_ui_card_carddescription",
+      "src_components_ui_card_cardfooter",
+      "src_components_ui_card_cardheader",
+      "src_components_ui_card_cardtitle",
+      "src_lib_supabase_client",
+      "src_lib_supabase_client_createclient"
+    ],
+    "6": [
+      "deactivate_sql",
+      "deactivate_sql_run",
+      "scripts_add_column_ts_scripts_add_column",
+      "scripts_add_column_ts_scripts_add_column_main",
+      "scripts_ai_perf",
+      "scripts_ai_perf_main",
+      "scripts_count2",
+      "scripts_count2_main",
+      "scripts_count3",
+      "scripts_count3_main",
+      "scripts_db_stats_cron",
+      "scripts_db_stats_cron_run",
+      "scripts_dedup_tenders",
+      "scripts_dedup_tenders_run",
+      "scripts_fix_ai_schema",
+      "scripts_fix_ai_schema_main",
+      "scripts_get_counts",
+      "scripts_get_counts_main",
+      "scripts_reset_cooldowns",
+      "scripts_reset_cooldowns_main",
+      "scripts_scraper_perf",
+      "scripts_scraper_perf_main",
+      "src_app_admin_resolve_page",
+      "src_app_admin_resolve_page_adminresolvepage",
+      "src_app_admin_resolve_page_dynamic",
+      "src_app_admin_resolve_page_revalidate",
+      "src_app_api_admin_migrate_route",
+      "src_app_api_admin_migrate_route_get",
+      "src_app_api_admin_run_sql_route",
+      "src_app_api_admin_run_sql_route_get",
+      "src_app_api_admin_send_report_route",
+      "src_app_api_admin_send_report_route_dynamic",
+      "src_app_api_admin_send_report_route_get",
+      "src_app_api_debug_db_route",
+      "src_app_api_debug_db_route_dynamic",
+      "src_app_api_debug_db_route_get",
+      "src_lib_db_client",
+      "src_lib_db_client_db",
+      "src_lib_db_client_globalfordb",
+      "src_lib_db_client_schema",
+      "src_lib_jobs_cleanup",
+      "src_lib_jobs_cleanup_cleanupexpiredjobs",
+      "src_lib_jobs_cleanup_cleanupexpiredtenders",
+      "src_lib_jobs_cleanup_runcleanup"
+    ],
+    "7": [
+      "src_app_about_page",
+      "src_app_about_page_aboutpage",
+      "src_app_about_page_dataprinciples",
+      "src_app_about_page_metadata",
+      "src_app_about_page_modules",
+      "src_app_companies_employer_page",
+      "src_app_companies_employer_page_dynamic",
+      "src_app_companies_employer_page_employerhub",
+      "src_app_companies_employer_page_generatemetadata",
+      "src_app_companies_employer_page_totitlecase",
+      "src_app_developers_page_developerspage",
+      "src_app_editorial_policy_page",
+      "src_app_editorial_policy_page_editorialpolicypage",
+      "src_app_editorial_policy_page_principles",
+      "src_app_editorial_policy_page_sources",
+      "src_app_guides_page",
+      "src_app_guides_page_guidesindexpage",
+      "src_app_guides_page_metadata",
+      "src_app_guides_page_revalidate",
+      "src_app_privacy_page",
+      "src_app_privacy_page_metadata",
+      "src_app_privacy_page_privacypage",
+      "src_app_salaries_slug_page",
+      "src_app_salaries_slug_page_dynamic",
+      "src_app_salaries_slug_page_generatemetadata",
+      "src_app_salaries_slug_page_salaryhub",
+      "src_app_salaries_slug_page_totitlecase",
+      "src_app_terms_page",
+      "src_app_terms_page_metadata",
+      "src_app_terms_page_termspage",
+      "src_components_jobs_jobcard_jobcard",
+      "src_components_seo_jsonld",
+      "src_components_seo_jsonld_jsonld",
+      "src_components_seo_schemas",
+      "src_components_seo_schemas_buildbreadcrumbschema",
+      "src_components_seo_schemas_businessinput",
+      "src_components_seo_schemas_country_postal_code",
+      "src_components_seo_schemas_faqentry",
+      "src_components_seo_schemas_itemlistentry",
+      "src_components_seo_schemas_jobpostinginput",
+      "src_components_seo_schemas_salaryentry",
+      "src_components_seo_schemas_tenderinput"
+    ],
+    "8": [
+      "scripts_comprehensive_scrape",
+      "scripts_comprehensive_scrape_compliance_queries",
+      "scripts_comprehensive_scrape_getcountryid",
+      "scripts_comprehensive_scrape_health_queries",
+      "scripts_comprehensive_scrape_job_queries",
+      "scripts_comprehensive_scrape_main",
+      "scripts_comprehensive_scrape_portals",
+      "scripts_comprehensive_scrape_salary_queries",
+      "src_inngest_scrape_tenders_buildstrategyengine",
+      "src_inngest_scrape_tenders_savetenderresults",
+      "src_lib_strategies_engine",
+      "src_lib_strategies_engine_strategy",
+      "src_lib_strategies_engine_strategyengine",
+      "src_lib_strategies_engine_strategyengine_constructor",
+      "src_lib_strategies_engine_strategyengine_executewithfallback",
+      "src_lib_strategies_pdf_strategies",
+      "src_lib_strategies_pdf_strategies_pdfinput",
+      "src_lib_strategies_pdf_strategies_pdfparsestrategy",
+      "src_lib_strategies_pdf_strategies_pdfparsestrategy_execute",
+      "src_lib_strategies_pdf_strategies_pdfresult",
+      "src_lib_strategies_pdf_strategies_stirlingpdfstrategy",
+      "src_lib_strategies_pdf_strategies_stirlingpdfstrategy_execute",
+      "src_lib_strategies_scraper_strategies",
+      "src_lib_strategies_scraper_strategies_crawl4aistrategy",
+      "src_lib_strategies_scraper_strategies_crawl4aistrategy_execute",
+      "src_lib_strategies_scraper_strategies_extractfromhtml",
+      "src_lib_strategies_scraper_strategies_fallback_selectors",
+      "src_lib_strategies_scraper_strategies_firecrawlstrategy",
+      "src_lib_strategies_scraper_strategies_firecrawlstrategy_execute",
+      "src_lib_strategies_scraper_strategies_portal_selectors",
+      "src_lib_strategies_scraper_strategies_portaltype",
+      "src_lib_strategies_scraper_strategies_scraperinput",
+      "src_lib_strategies_scraper_strategies_scraplingstrategy",
+      "src_lib_strategies_scraper_strategies_scraplingstrategy_constructor",
+      "src_lib_strategies_scraper_strategies_scraplingstrategy_execute",
+      "src_lib_strategies_scraper_strategies_selectormap",
+      "src_lib_strategies_scraper_strategies_tenderresult"
+    ],
+    "9": [
+      "src_app_account_page",
+      "src_app_account_page_dynamic",
+      "src_app_account_page_maxduration",
+      "src_app_account_page_metadata",
+      "src_app_compliance_page",
+      "src_app_compliance_page_dynamic",
+      "src_app_compliance_page_metadata",
+      "src_app_compliance_page_revalidate",
+      "src_app_developers_page",
+      "src_app_developers_page_metadata",
+      "src_components_developers_codesnippet",
+      "src_components_developers_codesnippet_codesnippet",
+      "src_components_developers_codesnippet_codesnippetprops",
+      "src_components_shared_globalfilterbar",
+      "src_components_shared_globalfilterbar_filterconfig",
+      "src_components_shared_globalfilterbar_filteroption",
+      "src_components_shared_globalfilterbar_filtertype",
+      "src_components_shared_globalfilterbar_globalfilterbarprops",
+      "src_components_ui_button",
+      "src_components_ui_button_button",
+      "src_components_ui_select",
+      "src_components_ui_select_selectcontent",
+      "src_components_ui_select_selectgroup",
+      "src_components_ui_select_selectitem",
+      "src_components_ui_select_selectlabel",
+      "src_components_ui_select_selectscrolldownbutton",
+      "src_components_ui_select_selectscrollupbutton",
+      "src_components_ui_select_selectseparator",
+      "src_components_ui_select_selecttrigger",
+      "src_components_ui_select_selectvalue",
+      "src_components_ui_tabs",
+      "src_components_ui_tabs_tabs",
+      "src_components_ui_tabs_tabscontent",
+      "src_components_ui_tabs_tabslist",
+      "src_components_ui_tabs_tabslistvariants",
+      "src_components_ui_tabs_tabstrigger"
+    ],
+    "10": [
+      "src_app_api_inngest_route",
+      "src_app_api_inngest_route_dynamic",
+      "src_app_api_inngest_route_get_post_put",
+      "src_app_api_inngest_route_maxduration",
+      "src_inngest_check_data_status_checkdatastatusjob",
+      "src_inngest_enforce_freshness_enforcedatafreshnessjob",
+      "src_inngest_scrape_health",
+      "src_inngest_scrape_health_getcountryid",
+      "src_inngest_scrape_health_makehealthscraper",
+      "src_inngest_scrape_health_runhealthqueries",
+      "src_inngest_scrape_health_savehealthdata",
+      "src_inngest_scrape_health_scrapehealthburundijob",
+      "src_inngest_scrape_health_scrapehealthdrcjob",
+      "src_inngest_scrape_health_scrapehealthethiopiajob",
+      "src_inngest_scrape_health_scrapehealthkenyajob",
+      "src_inngest_scrape_health_scrapehealthrwandajob",
+      "src_inngest_scrape_health_scrapehealthsomaliajob",
+      "src_inngest_scrape_health_scrapehealthsouthsudanjob",
+      "src_inngest_scrape_health_scrapehealthtanzaniajob",
+      "src_inngest_scrape_health_scrapehealthugandajob",
+      "src_inngest_scrape_salaries",
+      "src_inngest_scrape_salaries_makesalaryscraper",
+      "src_inngest_scrape_salaries_runsalaryqueries",
+      "src_inngest_scrape_salaries_scrapesalariesburundijob",
+      "src_inngest_scrape_salaries_scrapesalariesdrcjob",
+      "src_inngest_scrape_salaries_scrapesalariesethiopiajob",
+      "src_inngest_scrape_salaries_scrapesalarieskenyajob",
+      "src_inngest_scrape_salaries_scrapesalariesrwandajob",
+      "src_inngest_scrape_salaries_scrapesalariessomaliajob",
+      "src_inngest_scrape_salaries_scrapesalariessouthsudanjob",
+      "src_inngest_scrape_salaries_scrapesalariestanzaniajob",
+      "src_inngest_scrape_salaries_scrapesalariesugandajob",
+      "src_inngest_tender_summarizer_summarizetenderdocumentjob",
+      "src_inngest_whatsapp_broadcast_whatsappbroadcastjob",
+      "src_lib_scrapers_broad_search_engine_health_broadhealthresource",
+      "src_lib_scrapers_broad_search_engine_salaries_broadsalaryresource"
+    ],
+    "11": [
+      "scripts_clean_bad_employer_urls",
+      "scripts_clean_bad_employer_urls_cleanbademployerurls",
+      "scripts_clean_bad_employer_urls_conn",
+      "scripts_clean_bad_employer_urls_db",
+      "scripts_run_production_backfill",
+      "scripts_run_production_backfill_conn",
+      "scripts_run_production_backfill_db",
+      "scripts_run_production_backfill_runbackfill",
+      "scripts_run_production_backfill_sleep",
+      "scripts_test_batch_resolver",
+      "scripts_test_batch_resolver_conn",
+      "scripts_test_batch_resolver_db",
+      "scripts_test_batch_resolver_testresolution",
+      "scripts_test_serper_resolver",
+      "scripts_test_serper_resolver_run",
+      "scripts_test_serper_resolver_searchdirectemployer",
+      "src_lib_sources_aggregators",
+      "src_lib_sources_aggregators_extractdomain",
+      "src_lib_sources_aggregators_getallaggregatordomains",
+      "src_lib_sources_aggregators_getknownsource",
+      "src_lib_sources_aggregators_getsourcename",
+      "src_lib_sources_aggregators_isaggregatorurl",
+      "src_lib_sources_aggregators_isatsplatform",
+      "src_lib_sources_aggregators_isemployerurl",
+      "src_lib_sources_aggregators_isgovernmentportal",
+      "src_lib_sources_aggregators_known_sources",
+      "src_lib_sources_aggregators_knownsource",
+      "src_lib_sources_aggregators_sourcecategory",
+      "src_lib_sources_aggregators_sourcetype",
+      "src_lib_sources_employer_resolver",
+      "src_lib_sources_employer_resolver_employerresolvermetadata",
+      "src_lib_sources_employer_resolver_extractcandidatelinks",
+      "src_lib_sources_employer_resolver_resolvedemployerurl",
+      "src_lib_sources_employer_resolver_resolveemployerurl",
+      "src_lib_sources_employer_resolver_searchemployerviaserper"
+    ],
+    "12": [
+      "dotlottie_react",
+      "src_app_actions_tracking_tracklastsearch",
+      "src_app_jobs_page",
+      "src_app_jobs_page_dynamic",
+      "src_app_jobs_page_fallback_countries",
+      "src_app_jobs_page_getsortedcountries",
+      "src_app_jobs_page_jobslist",
+      "src_app_jobs_page_jobspage",
+      "src_app_jobs_page_metadata",
+      "src_app_jobs_slug_page",
+      "src_app_jobs_slug_page_dynamic",
+      "src_app_jobs_slug_page_generatemetadata",
+      "src_app_jobs_slug_page_isuuid",
+      "src_app_jobs_slug_page_slugroute",
+      "src_app_jobs_slug_page_totitlecase",
+      "src_app_tenders_page",
+      "src_app_tenders_page_dynamic",
+      "src_app_tenders_page_fallback_countries",
+      "src_app_tenders_page_getuniquecountries",
+      "src_app_tenders_page_metadata",
+      "src_app_tenders_page_tenderslist",
+      "src_app_tenders_page_tenderspage",
+      "src_components_analytics_searchtracker",
+      "src_components_analytics_searchtracker_searchtracker",
+      "src_components_analytics_searchtracker_searchtrackerprops",
+      "src_components_seo_schemas_builditemlistschema",
+      "src_components_shared_adslot",
+      "src_components_shared_adslot_adslot",
+      "src_components_shared_adslot_adslotprops",
+      "src_components_shared_premiumbanner",
+      "src_components_shared_premiumbanner_premiumbanner",
+      "src_components_ui_empty_state_lottie",
+      "src_components_ui_empty_state_lottie_dotlottiereact",
+      "src_components_ui_empty_state_lottie_emptystatelottie"
+    ],
+    "13": [
+      "scripts_fix_historical_countries_main",
+      "scripts_test_deterministic_extractor",
+      "scripts_test_deterministic_extractor_runtests",
+      "scripts_test_deterministic_extractor_runtests_assert",
+      "src_lib_ai_location",
+      "src_lib_ai_location_common_regions",
+      "src_lib_ai_location_normalizelocationandgetregionid",
+      "src_lib_ai_location_preloadregions",
+      "src_lib_ai_location_regioncache",
+      "src_lib_scrapers_broad_search_engine_tenders",
+      "src_lib_scrapers_broad_search_engine_tenders_extracttenderswithai",
+      "src_lib_scrapers_deterministic_extractor",
+      "src_lib_scrapers_deterministic_extractor_banned_employer_domains",
+      "src_lib_scrapers_deterministic_extractor_country_hints",
+      "src_lib_scrapers_deterministic_extractor_currency_patterns",
+      "src_lib_scrapers_deterministic_extractor_detecttendercategory",
+      "src_lib_scrapers_deterministic_extractor_deterministicjobresult",
+      "src_lib_scrapers_deterministic_extractor_deterministictenderresult",
+      "src_lib_scrapers_deterministic_extractor_extractapplicationdetails",
+      "src_lib_scrapers_deterministic_extractor_extractcountrycode",
+      "src_lib_scrapers_deterministic_extractor_extractdeadlinefromtext",
+      "src_lib_scrapers_deterministic_extractor_extractdeterministicjobfields",
+      "src_lib_scrapers_deterministic_extractor_extractdeterministictenderfields",
+      "src_lib_scrapers_deterministic_extractor_extractsalaryfromtext",
+      "src_lib_scrapers_deterministic_extractor_extractstructuredrequirements",
+      "src_lib_scrapers_deterministic_extractor_extracttenderreference",
+      "src_lib_scrapers_deterministic_extractor_islegitimateemployerurl",
+      "src_lib_scrapers_deterministic_extractor_month_map",
+      "src_lib_scrapers_deterministic_extractor_normalizecurrency",
+      "src_lib_scrapers_deterministic_extractor_parsedsalary",
+      "src_lib_scrapers_deterministic_extractor_parsenumbertoken"
+    ],
+    "14": [
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_esnext",
+      "ref_mts",
+      "ref_next_dev_types_ts",
+      "ref_next_env_d_ts",
+      "ref_next_types_ts",
+      "ref_node_modules",
+      "ref_scripts",
+      "ref_ts",
+      "ref_tsx",
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_allowjs",
+      "tsconfig_compileroptions_esmoduleinterop",
+      "tsconfig_compileroptions_incremental",
+      "tsconfig_compileroptions_isolatedmodules",
+      "tsconfig_compileroptions_jsx",
+      "tsconfig_compileroptions_lib",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_paths",
+      "tsconfig_compileroptions_plugins",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target",
+      "tsconfig_exclude",
+      "tsconfig_include"
+    ],
+    "15": [
+      "src_app_compliance_page_compliancepage",
+      "src_app_compliance_page_getuniquecountries",
+      "src_app_health_page",
+      "src_app_health_page_dynamic",
+      "src_app_health_page_getuniquecountries",
+      "src_app_health_page_healthpage",
+      "src_app_health_page_metadata",
+      "src_app_salaries_page",
+      "src_app_salaries_page_dynamic",
+      "src_app_salaries_page_getallcountries",
+      "src_app_salaries_page_metadata",
+      "src_app_salaries_page_revalidate",
+      "src_app_salaries_page_salarieslist",
+      "src_app_salaries_page_salariespage",
+      "src_components_health_healthcard_healthcard",
+      "src_components_salaries_salarycard_salarycard",
+      "src_components_salaries_submitsalarymodal_submitsalarymodal",
+      "src_components_salaries_submitsalarymodal_submitsalarymodal_onsubmit",
+      "src_components_seo_schemas_builddatasetschema",
+      "src_components_seo_schemas_buildsalarylistschema",
+      "src_components_shared_dataloadingstate",
+      "src_components_shared_dataloadingstate_dataloadingstate",
+      "src_components_shared_dataloadingstate_dataloadingstateprops",
+      "src_components_shared_globalfilterbar_globalfilterbar",
+      "src_lib_filters",
+      "src_lib_filters_globalsearchparams",
+      "src_lib_filters_parseglobalsearchparams"
+    ],
+    "16": [
+      "get",
+      "scraper_main",
+      "scraper_main_crawl4ai_extract",
+      "scraper_main_crawl4airequest",
+      "scraper_main_crawl4airesponse",
+      "scraper_main_extract_document",
+      "scraper_main_extract_text",
+      "scraper_main_extractdocumentrequest",
+      "scraper_main_extractdocumentresponse",
+      "scraper_main_extracttextrequest",
+      "scraper_main_extracttextresponse",
+      "scraper_main_fetch_html",
+      "scraper_main_health",
+      "scraper_main_htmlfetchrequest",
+      "scraper_main_htmlfetchresponse",
+      "scraper_main_is_allowed",
+      "scraper_main_py_basemodel",
+      "scraper_main_py_post",
+      "scraper_main_rationale_1",
+      "scraper_main_rationale_592",
+      "scraper_main_rationale_60",
+      "scraper_main_search",
+      "scraper_main_searchrequest",
+      "scraper_main_searchresponse",
+      "scraper_main_searchresult",
+      "scraper_main_tenderitem"
+    ],
+    "17": [
+      "scratch_rescrape_jobs",
+      "scratch_rescrape_jobs_istitlematch",
+      "scratch_rescrape_jobs_loadrescrapedids",
+      "scratch_rescrape_jobs_main",
+      "scratch_rescrape_jobs_processjob",
+      "scratch_rescrape_jobs_saverescrapedids",
+      "scratch_rescrape_jobs_state_file",
+      "scripts_reprocess_fallback_jobs",
+      "scripts_reprocess_fallback_jobs_main",
+      "scripts_rescrape_historical",
+      "scripts_rescrape_historical_geturls",
+      "scripts_rescrape_historical_main",
+      "scripts_rescrape_historical_rescrapemodule",
+      "src_inngest_rescrape_all",
+      "src_inngest_rescrape_all_rescrapecompliancejob",
+      "src_inngest_rescrape_all_rescrapejobsjob",
+      "src_inngest_rescrape_all_rescrapetendersjob",
+      "src_lib_db_schema_health_healthindicators",
+      "src_lib_scrapers_broad_search_engine_compliance",
+      "src_lib_scrapers_broad_search_engine_compliance_discovercompliance",
+      "src_lib_scrapers_broad_search_engine_compliance_extractcompliancewithai",
+      "src_lib_scrapers_broad_search_engine_extractjobswithai",
+      "src_lib_scrapers_broad_search_engine_tenders_discovertenders",
+      "src_lib_scrapers_compliance_base_fetchhtml",
+      "src_lib_scrapers_compliance_base_htmltotextenriched",
+      "src_lib_scrapers_known_sources_scraper_scrapeknownurls"
+    ],
+    "18": [
+      "scripts_test_newsletter",
+      "scripts_test_newsletter_testnewsletter",
+      "src_inngest_send_alerts_chunkarray",
+      "src_inngest_send_alerts_senddailydigestjob",
+      "src_inngest_send_alerts_sendreengagementalertsjob",
+      "src_inngest_send_alerts_sendtenderalertsjob",
+      "src_inngest_send_alerts_sendweeklynewsletterjob",
+      "src_lib_email_templates",
+      "src_lib_email_templates_dailydigestemail",
+      "src_lib_email_templates_dailydigestemailprops",
+      "src_lib_email_templates_digestitem",
+      "src_lib_email_templates_emailwrapper",
+      "src_lib_email_templates_jobalertemail",
+      "src_lib_email_templates_jobalertemailprops",
+      "src_lib_email_templates_jobalertitem",
+      "src_lib_email_templates_passwordresetemail",
+      "src_lib_email_templates_passwordresetemailprops",
+      "src_lib_email_templates_reengagementemail",
+      "src_lib_email_templates_reengagementemailprops",
+      "src_lib_email_templates_reengagementitem",
+      "src_lib_email_templates_tenderalertemail",
+      "src_lib_email_templates_tenderalertemailprops",
+      "src_lib_email_templates_tenderalertitem",
+      "src_lib_email_templates_weeklynewsletteremail",
+      "src_lib_email_templates_weeklynewsletteremailprops",
+      "src_lib_email_templates_welcomeemailprops"
+    ],
+    "19": [
+      "scripts_mass_scrape_native",
+      "scripts_mass_scrape_native_countries",
+      "scripts_mass_scrape_native_job_queries",
+      "scripts_mass_scrape_native_runmassscrape",
+      "scripts_scrape_known",
+      "scripts_scrape_known_run",
+      "src_inngest_scrape_jobs",
+      "src_inngest_scrape_jobs_countrycache",
+      "src_inngest_scrape_jobs_getcountryid",
+      "src_inngest_scrape_jobs_makejobscraper",
+      "src_inngest_scrape_jobs_runknownsourcesforcountry",
+      "src_inngest_scrape_jobs_runknownsourcesforcountryproxy",
+      "src_inngest_scrape_jobs_runqueriesforcountry",
+      "src_inngest_scrape_jobs_runqueriesforcountryproxy",
+      "src_inngest_scrape_jobs_savejobs",
+      "src_inngest_scrape_jobs_scrapejobsburundijob",
+      "src_inngest_scrape_jobs_scrapejobsdrcjob",
+      "src_inngest_scrape_jobs_scrapejobsethiopiajob",
+      "src_inngest_scrape_jobs_scrapejobskenyajob",
+      "src_inngest_scrape_jobs_scrapejobsrwandajob",
+      "src_inngest_scrape_jobs_scrapejobssomaliajob",
+      "src_inngest_scrape_jobs_scrapejobssouthsudanjob",
+      "src_inngest_scrape_jobs_scrapejobstanzaniajob",
+      "src_inngest_scrape_jobs_scrapejobsugandajob",
+      "src_lib_scrapers_broad_search_engine_broadjobresource"
+    ],
+    "20": [
+      "scripts_seed_businesses",
+      "scripts_seed_businesses_businessseed",
+      "scripts_seed_businesses_client",
+      "scripts_seed_businesses_db",
+      "scripts_seed_businesses_seed",
+      "scripts_seed_businesses_seed_data",
+      "src_app_compliance_id_opengraph_image",
+      "src_app_compliance_id_opengraph_image_alt",
+      "src_app_compliance_id_opengraph_image_contenttype",
+      "src_app_compliance_id_opengraph_image_size",
+      "src_app_compliance_id_page",
+      "src_app_compliance_id_page_businessdetailpage",
+      "src_app_compliance_id_page_generatemetadata",
+      "src_components_seo_schemas_buildbusinessschema",
+      "src_inngest_check_data_status",
+      "src_lib_db_schema_compliance",
+      "src_lib_db_schema_compliance_businesses",
+      "src_lib_db_schema_compliance_businesstypes",
+      "src_lib_db_schema_compliance_compliancecategoryenum",
+      "src_lib_db_schema_compliance_compliancerequirements",
+      "src_lib_db_schema_compliance_complianceresourcetypeenum",
+      "src_lib_scrapers_known_sources_scraper",
+      "src_lib_scrapers_known_sources_scraper_derivelistingbaseurl",
+      "src_lib_scrapers_known_sources_scraper_getknownemployerurlsforcountry",
+      "src_lib_scrapers_known_sources_scraper_rationale_6"
+    ],
+    "21": [
+      "src_app_admin_dashboard_layout",
+      "src_app_admin_dashboard_layout_adminlayout",
+      "src_app_admin_dashboard_layout_navitems",
+      "src_components_shared_footer",
+      "src_components_shared_globalsearch_globalsearch",
+      "src_components_shared_logo",
+      "src_components_shared_logo_logo",
+      "src_components_shared_navbar",
+      "src_components_shared_navlinks",
+      "src_components_shared_navlinks_desktopnav",
+      "src_components_shared_navlinks_mobilenavlinks",
+      "src_components_shared_navlinks_navlinks",
+      "src_components_shared_themetoggle",
+      "src_components_shared_themetoggle_themetoggle",
+      "src_components_ui_sheet",
+      "src_components_ui_sheet_sheet",
+      "src_components_ui_sheet_sheetclose",
+      "src_components_ui_sheet_sheetcontent",
+      "src_components_ui_sheet_sheetdescription",
+      "src_components_ui_sheet_sheetfooter",
+      "src_components_ui_sheet_sheetheader",
+      "src_components_ui_sheet_sheetoverlay",
+      "src_components_ui_sheet_sheetportal",
+      "src_components_ui_sheet_sheettitle",
+      "src_components_ui_sheet_sheettrigger"
+    ],
+    "22": [
+      "src_app_api_admin_setup_route",
+      "src_app_api_admin_setup_route_get",
+      "src_app_api_admin_setup_route_post",
+      "src_app_api_health_route_get",
+      "src_app_compliance_id_opengraph_image_ogimage",
+      "src_app_countries_page",
+      "src_app_countries_page_countriespage",
+      "src_app_countries_page_country_flags",
+      "src_app_countries_page_country_slugs",
+      "src_app_countries_page_country_taglines",
+      "src_app_countries_page_metadata",
+      "src_app_countries_page_revalidate",
+      "src_app_guides_slug_page",
+      "src_app_guides_slug_page_generatemetadata",
+      "src_app_guides_slug_page_guidedetailpage",
+      "src_app_guides_slug_page_revalidate",
+      "src_app_guides_slug_page_sanitize_options",
+      "src_app_sitemap_sitemap",
+      "src_app_tenders_id_opengraph_image_ogimage",
+      "src_app_tenders_id_page_generatemetadata",
+      "src_inngest_data_cleanup_worker_datacleanuporchestratorjob",
+      "src_inngest_data_cleanup_worker_getstats",
+      "src_inngest_data_cleanup_worker_sendprogressemail",
+      "src_lib_db_client_safequery",
+      "src_lib_db_schema_admin_adminconfig"
+    ],
+    "23": [
+      "scripts_fix_all_data",
+      "src_app_admin_dashboard_page",
+      "src_app_admin_dashboard_page_admindashboardpage",
+      "src_app_admin_dashboard_page_dynamic",
+      "src_app_admin_dashboard_page_getchartdata",
+      "src_app_admin_dashboard_page_getstats",
+      "src_app_api_salaries_submit_route",
+      "src_app_api_salaries_submit_route_post",
+      "src_app_api_salaries_submit_route_submitschema",
+      "src_app_api_salaries_verify_route",
+      "src_app_api_salaries_verify_route_patch",
+      "src_app_api_salaries_verify_route_verifyschema",
+      "src_app_api_search_route",
+      "src_app_api_search_route_dynamic",
+      "src_app_api_search_route_get",
+      "src_lib_db_schema_salaries",
+      "src_lib_db_schema_salaries_employers",
+      "src_lib_db_schema_salaries_employmenttypeenum",
+      "src_lib_db_schema_salaries_experiencelevelenum",
+      "src_lib_db_schema_salaries_jobcategories",
+      "src_lib_db_schema_salaries_salarysubmissions",
+      "src_lib_salaries_verify_plausibility",
+      "src_lib_salaries_verify_plausibility_checksalaryplausibility",
+      "src_lib_salaries_verify_plausibility_plausibilityresult"
+    ],
+    "24": [
+      "src_lib_db_schema_attachments",
+      "src_lib_db_schema_attachments_attachmenttypeenum",
+      "src_lib_db_schema_attachments_tenderattachments",
+      "src_lib_scrapers_compliance_base",
+      "src_lib_scrapers_compliance_base_announcement_image_signals",
+      "src_lib_scrapers_compliance_base_complianceresource",
+      "src_lib_scrapers_compliance_base_downloadimage",
+      "src_lib_scrapers_compliance_base_extractannouncementimagesfromhtml",
+      "src_lib_scrapers_compliance_base_extractpdflinksfromhtml",
+      "src_lib_scrapers_compliance_base_extracttextfromimage",
+      "src_lib_scrapers_compliance_base_extracttextviasidecar",
+      "src_lib_scrapers_compliance_base_fetchwithretry",
+      "src_lib_scrapers_compliance_base_htmltotext",
+      "src_lib_scrapers_compliance_base_ignore_image_signals",
+      "src_lib_scrapers_compliance_base_sleep",
+      "src_lib_scrapers_compliance_base_user_agents",
+      "src_lib_scrapers_pdf_extract",
+      "src_lib_scrapers_pdf_extract_doc_extensions",
+      "src_lib_scrapers_pdf_extract_downloaddocument",
+      "src_lib_scrapers_pdf_extract_extractandsaveattachments",
+      "src_lib_scrapers_pdf_extract_extractdocumentlinks",
+      "src_lib_scrapers_pdf_extract_getfiletype",
+      "src_lib_scrapers_pdf_extract_parsepdf",
+      "test_htmltotext"
+    ],
+    "25": [
+      "scratch_generate_50_guides",
+      "scratch_generate_50_guides_guidecontentschema",
+      "scratch_generate_50_guides_main",
+      "scratch_generate_50_guides_tropics",
+      "scripts_drc_stress_test",
+      "scripts_drc_stress_test_aiusage",
+      "scripts_drc_stress_test_runstresstest",
+      "src_inngest_generate_guides",
+      "src_inngest_generate_guides_generateweeklyguidesjob",
+      "src_inngest_generate_guides_guidecontentschema",
+      "src_inngest_generate_guides_topics",
+      "src_lib_ai_router",
+      "src_lib_ai_router_detectimagemimetype",
+      "src_lib_ai_router_extractvisiontextwithfallback",
+      "src_lib_ai_router_generateobjectwithfallback",
+      "src_lib_ai_router_getenvkeys",
+      "src_lib_ai_router_getvisionmodelpool",
+      "src_lib_ai_router_native_structured_ids",
+      "src_lib_ai_router_usesjsonmode",
+      "src_lib_ai_router_usestextmodefallback",
+      "src_lib_ai_router_visionmodelcandidate",
+      "src_lib_ai_router_withhardtimeout",
+      "src_lib_scrapers_compliance_base_extractresourceswithai"
+    ],
+    "26": [
+      "src_app_actions_bookmarks_togglebookmark",
+      "src_components_salaries_submitsalarymodal",
+      "src_components_shared_bookmarkbutton",
+      "src_components_shared_bookmarkbutton_bookmarkbutton",
+      "src_components_shared_bookmarkbutton_bookmarkbuttonprops",
+      "src_components_shared_sharebutton",
+      "src_components_shared_sharebutton_sharebutton",
+      "src_components_shared_sharebutton_sharebuttonprops",
+      "src_components_tenders_tendercard",
+      "src_components_tenders_tendercard_tendercard",
+      "src_components_tenders_tendercard_tendercardprops",
+      "src_components_ui_dialog",
+      "src_components_ui_dialog_dialog",
+      "src_components_ui_dialog_dialogclose",
+      "src_components_ui_dialog_dialogcontent",
+      "src_components_ui_dialog_dialogdescription",
+      "src_components_ui_dialog_dialogfooter",
+      "src_components_ui_dialog_dialogheader",
+      "src_components_ui_dialog_dialogoverlay",
+      "src_components_ui_dialog_dialogportal",
+      "src_components_ui_dialog_dialogtitle",
+      "src_components_ui_dialog_dialogtrigger",
+      "src_lib_utils_isgeneratedslug"
+    ],
+    "27": [
+      "src_app_jobs_jobdetail",
+      "src_app_jobs_jobdetail_generatemetadata",
+      "src_app_jobs_jobdetail_jobdetail",
+      "src_app_jobs_jobdetail_jobtypecolors",
+      "src_app_jobs_jobdetail_jobtypelabels",
+      "src_app_jobs_jobdetail_revalidate",
+      "src_components_compliance_resourcecard_resourcecard",
+      "src_components_seo_autolinker",
+      "src_components_seo_autolinker_autolinker",
+      "src_components_seo_autolinker_autolinkerprops",
+      "src_components_seo_schemas_buildjobpostingschema",
+      "src_lib_seo_autolinks",
+      "src_lib_seo_autolinks_auto_link_regex",
+      "src_lib_seo_autolinks_auto_link_rules",
+      "src_lib_seo_autolinks_autolinkrule",
+      "src_lib_utils_provenance",
+      "src_lib_utils_provenance_ats_domains",
+      "src_lib_utils_provenance_getsourceprovenance",
+      "src_lib_utils_provenance_known_advisories",
+      "src_lib_utils_provenance_known_agencies",
+      "src_lib_utils_provenance_known_aggregators",
+      "src_lib_utils_provenance_sourceprovenance",
+      "src_lib_utils_provenance_sourceprovenancetype"
+    ],
+    "28": [
+      "components",
+      "components_aliases",
+      "components_aliases_components",
+      "components_aliases_hooks",
+      "components_aliases_lib",
+      "components_aliases_ui",
+      "components_aliases_utils",
+      "components_iconlibrary",
+      "components_menuaccent",
+      "components_menucolor",
+      "components_registries",
+      "components_rsc",
+      "components_rtl",
+      "components_schema",
+      "components_style",
+      "components_tailwind",
+      "components_tailwind_basecolor",
+      "components_tailwind_config",
+      "components_tailwind_css",
+      "components_tailwind_cssvariables",
+      "components_tailwind_prefix",
+      "components_tsx"
+    ],
+    "29": [
+      "scripts_deep_seo_audit",
+      "scripts_deep_seo_audit_auditresult",
+      "scripts_deep_seo_audit_rundeepaudit",
+      "scripts_deep_seo_audit_securityheadersresult",
+      "scripts_seed_guides",
+      "scripts_seed_guides_2",
+      "scripts_seed_guides_2_articles",
+      "scripts_seed_guides_2_seedguides",
+      "scripts_seed_guides_articles",
+      "scripts_seed_guides_seedguides",
+      "src_app_api_health_route",
+      "src_app_api_health_route_dynamic",
+      "src_app_api_health_route_runtime",
+      "src_app_sitemap",
+      "src_app_sitemap_country_slugs",
+      "src_app_sitemap_revalidate",
+      "src_lib_db_schema_analytics",
+      "src_lib_db_schema_analytics_outboundclicks",
+      "src_lib_db_schema_guides",
+      "src_lib_db_schema_guides_guidecategoryenum",
+      "src_lib_db_schema_guides_guides"
+    ],
+    "30": [
+      "response",
+      "scraper_css_selectors",
+      "scraper_css_selectors_rationale_1",
+      "scraper_fetchers_extract",
+      "scraper_fetchers_extract_build_tender",
+      "scraper_fetchers_extract_clean",
+      "scraper_fetchers_extract_extract_tenders",
+      "scraper_fetchers_extract_is_adaptive_ready",
+      "scraper_fetchers_extract_now_plus_days",
+      "scraper_fetchers_extract_rationale_1",
+      "scraper_fetchers_extract_rationale_117",
+      "scraper_fetchers_extract_rationale_43",
+      "scraper_fetchers_extract_rationale_50",
+      "scraper_fetchers_extract_rationale_81",
+      "scraper_fetchers_extract_rationale_87",
+      "scraper_fetchers_extract_scrapling_db_path",
+      "scraper_spiders_tenders",
+      "scraper_spiders_tenders_rationale_1",
+      "scraper_spiders_tenders_rationale_105",
+      "scraper_spiders_tenders_tenderspider_parse"
+    ],
+    "31": [
+      "scripts_trigger_mass_scrape",
+      "scripts_trigger_mass_scrape_countries",
+      "scripts_trigger_mass_scrape_modules",
+      "scripts_trigger_mass_scrape_triggermassscrape",
+      "src_app_api_admin_start_cleanup_route",
+      "src_app_api_admin_start_cleanup_route_get",
+      "src_app_api_trigger_scrape_route",
+      "src_app_api_trigger_scrape_route_get",
+      "src_inngest_client",
+      "src_inngest_client_appevents",
+      "src_inngest_client_inngest",
+      "src_inngest_keep_alive",
+      "src_inngest_keep_alive_keepdatabasealivejob",
+      "src_inngest_keep_alive_keepscraperalivejob",
+      "src_inngest_salary_consensus",
+      "src_inngest_salary_consensus_salaryconsensusverificationjob",
+      "src_inngest_send_welcome",
+      "src_inngest_send_welcome_chunkarray",
+      "src_inngest_send_welcome_sendwelcomeemailsjob",
+      "src_lib_email_templates_welcomeemail"
+    ],
+    "32": [
+      "src_app_auth_actions_logout",
+      "src_components_shared_navusermenu",
+      "src_components_shared_navusermenu_navusermenu",
+      "src_components_shared_navusermenu_navusermenuprops",
+      "src_components_ui_dropdown_menu",
+      "src_components_ui_dropdown_menu_dropdownmenu",
+      "src_components_ui_dropdown_menu_dropdownmenucheckboxitem",
+      "src_components_ui_dropdown_menu_dropdownmenucontent",
+      "src_components_ui_dropdown_menu_dropdownmenugroup",
+      "src_components_ui_dropdown_menu_dropdownmenuitem",
+      "src_components_ui_dropdown_menu_dropdownmenulabel",
+      "src_components_ui_dropdown_menu_dropdownmenuportal",
+      "src_components_ui_dropdown_menu_dropdownmenuradiogroup",
+      "src_components_ui_dropdown_menu_dropdownmenuradioitem",
+      "src_components_ui_dropdown_menu_dropdownmenuseparator",
+      "src_components_ui_dropdown_menu_dropdownmenushortcut",
+      "src_components_ui_dropdown_menu_dropdownmenusub",
+      "src_components_ui_dropdown_menu_dropdownmenusubcontent",
+      "src_components_ui_dropdown_menu_dropdownmenusubtrigger",
+      "src_components_ui_dropdown_menu_dropdownmenutrigger"
+    ],
+    "33": [
+      "src_app_page",
+      "src_app_page_dynamic",
+      "src_app_page_features",
+      "src_app_page_home",
+      "src_app_page_homefaqschema",
+      "src_app_page_livestats",
+      "src_app_page_magiccard",
+      "src_app_page_metadata",
+      "src_app_page_relatedguides",
+      "src_components_guides_relatedguides",
+      "src_components_guides_relatedguides_relatedguides",
+      "src_components_guides_relatedguides_relatedguidesprops",
+      "src_components_home_clientwidgets",
+      "src_components_home_clientwidgets_leadcapture",
+      "src_components_seo_schemas_buildfaqschema",
+      "src_components_ui_magic_card",
+      "src_components_ui_magic_card_magiccard",
+      "src_components_ui_magic_card_magiccard_handlemousemove",
+      "src_components_ui_magic_card_magiccardprops"
+    ],
+    "34": [
+      "scratch_test",
+      "scripts_test_search",
+      "scripts_test_search_run",
+      "src_lib_scrapers_broad_search_engine",
+      "src_lib_scrapers_broad_search_engine_blocked_domains",
+      "src_lib_scrapers_broad_search_engine_discoverjobs",
+      "src_lib_scrapers_broad_search_engine_getsearxnginstances",
+      "src_lib_scrapers_broad_search_engine_searchddghtml",
+      "src_lib_scrapers_broad_search_engine_searchexa",
+      "src_lib_scrapers_broad_search_engine_searchgoogle",
+      "src_lib_scrapers_broad_search_engine_searchgooglecse",
+      "src_lib_scrapers_broad_search_engine_searchsearxng",
+      "src_lib_scrapers_broad_search_engine_searchserper",
+      "src_lib_scrapers_broad_search_engine_withurltimeout",
+      "src_lib_scrapers_test_broad_search",
+      "src_lib_scrapers_test_broad_search_testbroadsearch",
+      "test_discover",
+      "test_discover_main"
+    ],
+    "35": [
+      "scripts_fix_all_data_main",
+      "scripts_rescrape_health_salaries",
+      "scripts_rescrape_health_salaries_main",
+      "scripts_rescrape_health_salaries_salary_queries",
+      "src_inngest_fetch_health",
+      "src_inngest_fetch_health_fetchhealthdatajob",
+      "src_inngest_scrape_salaries_getcountryid",
+      "src_inngest_scrape_salaries_savesalaries",
+      "src_lib_scrapers_health_world_bank",
+      "src_lib_scrapers_health_world_bank_countries",
+      "src_lib_scrapers_health_world_bank_fetchallhealthindicators",
+      "src_lib_scrapers_health_world_bank_fetchwhofallbackindicator",
+      "src_lib_scrapers_health_world_bank_fetchworldbankindicator",
+      "src_lib_scrapers_health_world_bank_iso2_to_iso3",
+      "src_lib_scrapers_health_world_bank_iso3_to_iso2",
+      "src_lib_scrapers_health_world_bank_upserthealthpoints",
+      "src_lib_scrapers_health_world_bank_wb_indicators",
+      "src_lib_scrapers_health_world_bank_who_fallback_indicators"
+    ],
+    "36": [
+      "src_inngest_scrape_tenders",
+      "src_inngest_scrape_tenders_getcountryid",
+      "src_inngest_scrape_tenders_makeportaljob",
+      "src_inngest_scrape_tenders_portals",
+      "src_inngest_scrape_tenders_runbroadqueriesforcountry",
+      "src_inngest_scrape_tenders_runknowntendersourcesforcountry",
+      "src_inngest_scrape_tenders_savebroadresults",
+      "src_inngest_scrape_tenders_scrapearmpburundijob",
+      "src_inngest_scrape_tenders_scrapearmpcongodrcjob",
+      "src_inngest_scrape_tenders_scrapegpocsouthsudanjob",
+      "src_inngest_scrape_tenders_scrapemofsomaliajob",
+      "src_inngest_scrape_tenders_scrapeppdaugandajob",
+      "src_inngest_scrape_tenders_scrapepppaethiopiajob",
+      "src_inngest_scrape_tenders_scrapepprakenyajob",
+      "src_inngest_scrape_tenders_scrapeppratanzaniajob",
+      "src_inngest_scrape_tenders_scraperpparwandajob",
+      "src_lib_scrapers_broad_search_engine_tenders_broadtenderresource"
+    ],
+    "37": [
+      "scripts_check_db",
+      "scripts_check_db_client",
+      "scripts_check_db_db",
+      "scripts_check_db_main",
+      "src_app_api_admin_cron_verify_route",
+      "src_app_api_admin_cron_verify_route_classificationschema",
+      "src_app_api_admin_cron_verify_route_dynamic",
+      "src_app_api_admin_cron_verify_route_generateobjectwithfallback",
+      "src_app_api_admin_cron_verify_route_get",
+      "src_app_api_admin_cron_verify_route_maxduration",
+      "src_app_api_admin_cron_verify_route_resend",
+      "src_inngest_data_cleanup_worker",
+      "src_inngest_data_cleanup_worker_classificationschema",
+      "src_inngest_data_cleanup_worker_resend",
+      "src_lib_db_schema_admin",
+      "src_lib_db_schema_admin_dataverificationlog"
+    ],
+    "38": [
+      "scripts_massive_scrape",
+      "scripts_massive_scrape_getcategoryid",
+      "scripts_massive_scrape_getcountryid",
+      "scripts_massive_scrape_getexistingurls",
+      "scripts_massive_scrape_infercountryfromurl",
+      "scripts_massive_scrape_main",
+      "scripts_massive_scrape_normalizeapplyurl",
+      "scripts_massive_scrape_queries",
+      "scripts_massive_scrape_scrapemodule",
+      "src_lib_scrapers_broad_search_engine_health",
+      "src_lib_scrapers_broad_search_engine_health_discoverhealth",
+      "src_lib_scrapers_broad_search_engine_health_extracthealthwithai",
+      "src_lib_scrapers_broad_search_engine_salaries",
+      "src_lib_scrapers_broad_search_engine_salaries_discoversalaries",
+      "src_lib_scrapers_broad_search_engine_salaries_extractsalarieswithai",
+      "src_lib_scrapers_broad_search_engine_scraping_guidelines"
+    ],
+    "39": [
+      "src_app_compliance_page_businesseslist",
+      "src_app_compliance_page_resourceslist",
+      "src_app_countries_country_page_countrypage",
+      "src_app_error",
+      "src_app_error_globalerror",
+      "src_app_jobs_slug_not_found",
+      "src_app_jobs_slug_not_found_jobnotfound",
+      "src_app_not_found",
+      "src_app_not_found_notfound",
+      "src_app_tenders_calendar_page_tenderscalendarpage",
+      "src_app_tenders_id_not_found",
+      "src_app_tenders_id_not_found_tendernotfound",
+      "src_app_tenders_id_page_tenderdetailpage",
+      "src_components_compliance_businesscard_businesscard",
+      "src_components_seo_schemas_buildtenderschema",
+      "src_components_ui_button_buttonvariants"
+    ],
+    "40": [
+      "ai",
+      "ai_sdk_groq",
+      "mendable_firecrawl_js",
+      "package_dependencies",
+      "package_dependencies_ai",
+      "package_dependencies_ai_sdk_groq",
+      "package_dependencies_mendable_firecrawl_js",
+      "package_dependencies_sentry_nextjs",
+      "package_dependencies_supabase_ssr",
+      "package_dependencies_types_pdf_parse",
+      "package_dependencies_upstash_ratelimit",
+      "sentry_nextjs",
+      "supabase_ssr",
+      "types_pdf_parse",
+      "upstash_ratelimit"
+    ],
+    "41": [
+      "axe_core_playwright",
+      "eslint_config_next",
+      "lighthouse",
+      "package_devdependencies",
+      "package_devdependencies_axe_core_playwright",
+      "package_devdependencies_eslint_config_next",
+      "package_devdependencies_lighthouse",
+      "package_devdependencies_supabase",
+      "package_devdependencies_ts_node",
+      "package_devdependencies_types_bcryptjs",
+      "package_devdependencies_types_react",
+      "supabase",
+      "ts_node",
+      "types_bcryptjs",
+      "types_react"
+    ],
+    "42": [
+      "src_app_admin_resolve_actions_resolvemanuallink",
+      "src_app_admin_resolve_resolve_item",
+      "src_app_admin_resolve_resolve_item_resolveitem",
+      "src_app_auth_reset_password_page",
+      "src_app_auth_reset_password_page_metadata",
+      "src_app_auth_reset_password_page_resetpasswordpage",
+      "src_app_forgot_password_page",
+      "src_app_forgot_password_page_forgotpasswordpage",
+      "src_app_forgot_password_page_metadata",
+      "src_components_home_leadcapture",
+      "src_components_home_leadcapture_leadcapture",
+      "src_components_ui_input",
+      "src_components_ui_input_input",
+      "src_components_ui_label",
+      "src_components_ui_label_label"
+    ],
+    "43": [
+      "src_inngest_scrape_compliance",
+      "src_inngest_scrape_compliance_getcountryid",
+      "src_inngest_scrape_compliance_makecompliancescraper",
+      "src_inngest_scrape_compliance_runcompliancequeries",
+      "src_inngest_scrape_compliance_savecompliance",
+      "src_inngest_scrape_compliance_scrapecomplianceburundijob",
+      "src_inngest_scrape_compliance_scrapecompliancedrcjob",
+      "src_inngest_scrape_compliance_scrapecomplianceethiopiajob",
+      "src_inngest_scrape_compliance_scrapecompliancekenyajob",
+      "src_inngest_scrape_compliance_scrapecompliancerwandajob",
+      "src_inngest_scrape_compliance_scrapecompliancesomaliajob",
+      "src_inngest_scrape_compliance_scrapecompliancesouthsudanjob",
+      "src_inngest_scrape_compliance_scrapecompliancetanzaniajob",
+      "src_inngest_scrape_compliance_scrapecomplianceugandajob",
+      "src_lib_scrapers_broad_search_engine_compliance_broadcomplianceresource"
+    ],
+    "44": [
+      "monitor",
+      "monitor_c",
+      "monitor_colorstatus",
+      "monitor_http",
+      "monitor_https",
+      "monitor_incidents",
+      "monitor_latencycolor",
+      "monitor_main",
+      "monitor_ping",
+      "monitor_runmonitorcycle",
+      "monitor_services",
+      "monitor_ts",
+      "monitor_updateincident"
+    ],
+    "45": [
+      "package_devdependencies_typescript",
+      "package_json_typescript",
+      "package_package_devdependencies",
+      "package_package_devdependencies_tsx",
+      "package_package_devdependencies_typescript",
+      "package_package_devdependencies_typescript_eslint",
+      "package_package_devdependencies_vitest",
+      "package_package_devdependencies_vitest_coverage_v8",
+      "tsx",
+      "typescript_eslint",
+      "vitest",
+      "vitest_coverage_v8"
+    ],
+    "46": [
+      "scripts_online_data_audit",
+      "scripts_online_data_audit_auditcompliance",
+      "scripts_online_data_audit_audithealth",
+      "scripts_online_data_audit_auditjobs",
+      "scripts_online_data_audit_audittelemetry",
+      "scripts_online_data_audit_audittenders",
+      "scripts_online_data_audit_main",
+      "scripts_online_data_audit_safedbupdate",
+      "scripts_online_data_audit_savetelemetry",
+      "scripts_online_data_audit_sleep",
+      "scripts_online_data_audit_telemetry",
+      "scripts_online_data_audit_telemetry_file"
+    ],
+    "47": [
+      "src_app_api_admin_login_route",
+      "src_app_api_admin_login_route_post",
+      "src_app_api_admin_logout_route",
+      "src_app_api_admin_logout_route_post",
+      "src_lib_admin_session",
+      "src_lib_admin_session_getsecret",
+      "src_lib_admin_session_session_cookie",
+      "src_lib_admin_session_signadminsession",
+      "src_lib_admin_session_verifyadminsession",
+      "src_proxy",
+      "src_proxy_config",
+      "src_proxy_proxy"
+    ],
+    "48": [
+      "src_app_api_chat_route",
+      "src_app_api_chat_route_maxduration",
+      "src_app_api_chat_route_post",
+      "src_app_api_upload_cv_route",
+      "src_app_api_upload_cv_route_decodepdfstring",
+      "src_app_api_upload_cv_route_extracttextfrompdfbuffer",
+      "src_app_api_upload_cv_route_gathertext",
+      "src_app_api_upload_cv_route_post",
+      "src_app_api_upload_cv_route_runtime",
+      "src_lib_ai_router_generatetextwithfallback",
+      "src_lib_db_schema_documents",
+      "src_lib_db_schema_documents_userdocuments"
+    ],
+    "49": [
+      "scripts_country_audit",
+      "scripts_country_audit_analyzepageforcountries",
+      "scripts_country_audit_countmentions",
+      "scripts_country_audit_countries",
+      "scripts_country_audit_fw",
+      "scripts_country_audit_hr",
+      "scripts_country_audit_main",
+      "scripts_country_audit_row",
+      "scripts_country_audit_sb",
+      "scripts_country_audit_section",
+      "scripts_country_audit_sub"
+    ],
+    "50": [
+      "scripts_db_audit",
+      "scripts_db_audit_count",
+      "scripts_db_audit_fetchall",
+      "scripts_db_audit_fw",
+      "scripts_db_audit_groupby",
+      "scripts_db_audit_hr",
+      "scripts_db_audit_main",
+      "scripts_db_audit_row",
+      "scripts_db_audit_sb",
+      "scripts_db_audit_section",
+      "scripts_db_audit_sub"
+    ],
+    "51": [
+      "src_inngest_enrich_shallow_data",
+      "src_inngest_enrich_shallow_data_enrichcomplianceworker",
+      "src_inngest_enrich_shallow_data_enrichjobworker",
+      "src_inngest_enrich_shallow_data_enrichtenderworker",
+      "src_inngest_enrich_shallow_data_isdirectdocumenturl",
+      "src_inngest_enrich_shallow_data_refetchandextractcompliance",
+      "src_inngest_enrich_shallow_data_refetchandextractjobs",
+      "src_inngest_enrich_shallow_data_refetchandextracttenders",
+      "src_inngest_enrich_shallow_data_richer",
+      "src_inngest_enrich_shallow_data_tokenoverlap",
+      "src_lib_scrapers_compliance_base_fetchandparsedocument"
+    ],
+    "52": [
+      "scraper_fetchers_proxies",
+      "scraper_fetchers_proxies_fetch_geonode",
+      "scraper_fetchers_proxies_fetch_proxyscrape",
+      "scraper_fetchers_proxies_get_proxies",
+      "scraper_fetchers_proxies_get_random_proxy",
+      "scraper_fetchers_proxies_rationale_1",
+      "scraper_fetchers_proxies_rationale_120",
+      "scraper_fetchers_proxies_rationale_185",
+      "scraper_fetchers_proxies_rationale_62",
+      "scraper_fetchers_proxies_rationale_91"
+    ],
+    "53": [
+      "scripts_audit_urls_and_employers",
+      "scripts_audit_urls_and_employers_ats_domains",
+      "scripts_audit_urls_and_employers_audit",
+      "scripts_audit_urls_and_employers_classifydomain",
+      "scripts_audit_urls_and_employers_conn",
+      "scripts_audit_urls_and_employers_db",
+      "scripts_audit_urls_and_employers_domainstats",
+      "scripts_audit_urls_and_employers_extractdomain",
+      "scripts_audit_urls_and_employers_gov_tlds",
+      "scripts_audit_urls_and_employers_known_aggregators"
+    ],
+    "54": [
+      "scripts_deep_url_audit",
+      "scripts_deep_url_audit_ats_domains",
+      "scripts_deep_url_audit_conn",
+      "scripts_deep_url_audit_db",
+      "scripts_deep_url_audit_deepaudit",
+      "scripts_deep_url_audit_extractdomain",
+      "scripts_deep_url_audit_gov_tlds",
+      "scripts_deep_url_audit_known_aggregators",
+      "scripts_deep_url_audit_social_share_domains",
+      "scripts_deep_url_audit_tender_commercial_aggregators"
+    ],
+    "55": [
+      "scripts_test_jobs_query_countries_regions",
+      "scripts_test_jobs_query_drizzle",
+      "scripts_test_jobs_query_eq_desc_isnull_gt_or_and",
+      "scripts_test_jobs_query_jobs",
+      "scripts_test_jobs_query_js_scripts_test_jobs_query",
+      "scripts_test_jobs_query_js_scripts_test_jobs_query_db",
+      "scripts_test_jobs_query_js_scripts_test_jobs_query_dburl",
+      "scripts_test_jobs_query_js_scripts_test_jobs_query_main",
+      "scripts_test_jobs_query_js_scripts_test_jobs_query_sql",
+      "scripts_test_jobs_query_postgres"
+    ],
+    "56": [
+      "src_app_actions_contact",
+      "src_app_actions_contact_resend",
+      "src_app_actions_contact_submitcontactform",
+      "src_app_contact_page",
+      "src_app_contact_page_contactpage",
+      "src_app_contact_page_contacts",
+      "src_app_contact_page_metadata",
+      "src_components_shared_contactform",
+      "src_components_shared_contactform_contactform",
+      "src_components_shared_contactform_submitbutton"
+    ],
+    "57": [
+      "src_inngest_enrich_shallow_data_enrichshallowdatajob",
+      "src_inngest_enrich_shallow_data_isrealurl",
+      "src_inngest_resolve_employer_urls",
+      "src_inngest_resolve_employer_urls_resolveemployerurlsjob",
+      "src_inngest_resolve_employer_urls_resolveurlworker",
+      "src_lib_db_query_resilience",
+      "src_lib_db_query_resilience_chunkarray",
+      "src_lib_db_query_resilience_executewithretry",
+      "src_lib_db_query_resilience_retryoptions",
+      "src_lib_sources_employer_resolver_classifysourceurl"
+    ],
+    "58": [
+      "package",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_start",
+      "package_version"
+    ],
+    "59": [
+      "scraper_main_scrape",
+      "scraper_main_scraperequest",
+      "scraper_main_scraperesponse",
+      "scraper_spiders_tenders_rationale_198",
+      "scraper_spiders_tenders_rationale_45",
+      "scraper_spiders_tenders_tenderspider",
+      "scraper_spiders_tenders_tenderspider_init",
+      "scraper_spiders_tenders_tenderspider_run",
+      "spider"
+    ],
+    "60": [
+      "scripts_seed_salaries",
+      "scripts_seed_salaries_employmenttype",
+      "scripts_seed_salaries_experiencelevel",
+      "scripts_seed_salaries_main",
+      "scripts_seed_salaries_main_catid",
+      "scripts_seed_salaries_pick",
+      "scripts_seed_salaries_rand",
+      "scripts_seed_salaries_salaryrow",
+      "scripts_seed_salaries_sql"
+    ],
+    "61": [
+      "scripts_test_enhanced_pipeline",
+      "scripts_test_enhanced_pipeline_ats_domains",
+      "scripts_test_enhanced_pipeline_conn",
+      "scripts_test_enhanced_pipeline_db",
+      "scripts_test_enhanced_pipeline_iscleanemployerurl",
+      "scripts_test_enhanced_pipeline_junk_domains",
+      "scripts_test_enhanced_pipeline_resolveenhanced",
+      "scripts_test_enhanced_pipeline_searchemployerviaserper",
+      "scripts_test_enhanced_pipeline_testcases"
+    ],
+    "62": [
+      "scripts_test_random_batch",
+      "scripts_test_random_batch_ats_domains",
+      "scripts_test_random_batch_conn",
+      "scripts_test_random_batch_db",
+      "scripts_test_random_batch_iscleanemployerurl",
+      "scripts_test_random_batch_junk_domains",
+      "scripts_test_random_batch_resolvejob",
+      "scripts_test_random_batch_runbatch",
+      "scripts_test_random_batch_searchemployerviaserper"
+    ],
+    "63": [
+      "src_components_ai_aichatpanel",
+      "src_components_ai_aichatpanel_aichatpanel",
+      "src_components_ai_aichatpanel_cvstate",
+      "src_components_ai_aichatpanel_dotlottiereact",
+      "src_components_ai_aichatpanel_suggested_prompts",
+      "src_components_ai_chatmessage",
+      "src_components_ai_chatmessage_chatmessage",
+      "src_components_ai_chatmessage_chatmessageprops",
+      "src_components_ai_chatmessage_message"
+    ],
+    "64": [
+      "src_components_dashboard_tenderschart",
+      "src_components_dashboard_tenderschart_bar",
+      "src_components_dashboard_tenderschart_barchart",
+      "src_components_dashboard_tenderschart_chartdata",
+      "src_components_dashboard_tenderschart_responsivecontainer",
+      "src_components_dashboard_tenderschart_tenderschart",
+      "src_components_dashboard_tenderschart_tooltip",
+      "src_components_dashboard_tenderschart_xaxis",
+      "src_components_dashboard_tenderschart_yaxis"
+    ],
+    "65": [
+      "src_inngest_sync_health_data",
+      "src_inngest_sync_health_data_dhis2_countries",
+      "src_inngest_sync_health_data_eac_countries",
+      "src_inngest_sync_health_data_fetchdhis2indicator",
+      "src_inngest_sync_health_data_fetchwhoindicator",
+      "src_inngest_sync_health_data_indicators",
+      "src_inngest_sync_health_data_synchealthdatajob",
+      "src_inngest_sync_health_data_who_country_map",
+      "src_inngest_sync_health_data_who_indicator_map"
+    ],
+    "66": [
+      "src_lib_ai_key_pool_keypool",
+      "src_lib_ai_key_pool_keypool_getavailablecount",
+      "src_lib_ai_key_pool_keypool_getnextkey",
+      "src_lib_ai_key_pool_keypool_getstatus",
+      "src_lib_ai_key_pool_keypool_markfailed",
+      "src_lib_ai_key_pool_keypool_marksuccess",
+      "src_lib_ai_key_pool_keypool_persistasync",
+      "src_lib_ai_key_pool_keypool_register",
+      "src_lib_ai_key_pool_keypool_size"
+    ],
+    "67": [
+      "ref_ai",
+      "scripts_benchmark_ai",
+      "scripts_benchmark_ai_main",
+      "scripts_test_ai_pool",
+      "scripts_test_ai_pool_getenvkeys",
+      "scripts_test_ai_pool_runtests",
+      "src_lib_ai_key_pool",
+      "src_lib_ai_key_pool_keyentry"
+    ],
+    "68": [
+      "scraper_fetchers_stealthy",
+      "scraper_fetchers_stealthy_fetch",
+      "scraper_fetchers_stealthy_rationale_1",
+      "scraper_fetchers_stealthy_rationale_34",
+      "scraper_fetchers_stealthy_rationale_52",
+      "scraper_fetchers_stealthy_rationale_64",
+      "scraper_fetchers_stealthy_stealthy_fetch_html",
+      "scraper_fetchers_stealthy_stealthy_scrape"
+    ],
+    "69": [
+      "scripts_send_status_email",
+      "scripts_send_status_email_client",
+      "scripts_send_status_email_db",
+      "scripts_send_status_email_drizzle",
+      "scripts_send_status_email_main",
+      "scripts_send_status_email_postgres",
+      "scripts_send_status_email_resend",
+      "scripts_send_status_email_sql"
+    ],
+    "70": [
+      "scraper_fast_main",
+      "scraper_fast_main_extract_text",
+      "scraper_fast_main_extractrequest",
+      "scraper_fast_main_py_basemodel",
+      "scraper_fast_main_py_post",
+      "scraper_fast_main_search_ddgs",
+      "scraper_fast_main_searchrequest"
+    ],
+    "71": [
+      "scripts_mass_scrape_tz",
+      "scripts_mass_scrape_tz_cities",
+      "scripts_mass_scrape_tz_extramodifiers",
+      "scripts_mass_scrape_tz_getjobcount",
+      "scripts_mass_scrape_tz_queries",
+      "scripts_mass_scrape_tz_run",
+      "scripts_mass_scrape_tz_titles"
+    ],
+    "72": [
+      "src_app_api_og_jobs_id_route",
+      "src_app_api_og_jobs_id_route_alt",
+      "src_app_api_og_jobs_id_route_contenttype",
+      "src_app_api_og_jobs_id_route_get",
+      "src_app_api_og_jobs_id_route_jobtypelabels",
+      "src_app_api_og_jobs_id_route_robots",
+      "src_app_api_og_jobs_id_route_size"
+    ],
+    "73": [
+      "audit_tmp",
+      "audit_tmp_fs",
+      "audit_tmp_pages",
+      "audit_tmp_path",
+      "audit_tmp_puppeteer",
+      "audit_tmp_results"
+    ],
+    "74": [
+      "package_package_keywords",
+      "ref_agent",
+      "ref_cli",
+      "ref_glm",
+      "ref_llm",
+      "ref_zai"
+    ],
+    "75": [
+      "scratch_check",
+      "scratch_telemetry",
+      "scratch_telemetry_run",
+      "src_lib_ai_key_pool_keypool_restorefromdb",
+      "src_lib_db_schema_ai",
+      "src_lib_db_schema_ai_aitelemetry"
+    ],
+    "76": [
+      "scripts_mass_scrape",
+      "scripts_mass_scrape_countriesmap",
+      "scripts_mass_scrape_getjobcount",
+      "scripts_mass_scrape_queries",
+      "scripts_mass_scrape_run",
+      "scripts_mass_scrape_titles"
+    ],
+    "77": [
+      "scripts_test_ai_providers",
+      "scripts_test_ai_providers_env",
+      "scripts_test_ai_providers_main",
+      "scripts_test_ai_providers_providerdef",
+      "scripts_test_ai_providers_providers",
+      "scripts_test_ai_providers_schema"
+    ],
+    "78": [
+      "namespace",
+      "scraper_mcp_server",
+      "scraper_mcp_server_main",
+      "scraper_mcp_server_parse_args",
+      "scraper_mcp_server_rationale_1"
+    ],
+    "79": [
+      "scratch_local_build",
+      "scratch_local_build_buildargs",
+      "scratch_local_build_envlocal",
+      "scratch_local_build_execsync",
+      "scratch_local_build_fs"
+    ],
+    "80": [
+      "scripts_add_column_config",
+      "scripts_add_column_js_scripts_add_column",
+      "scripts_add_column_js_scripts_add_column_main",
+      "scripts_add_column_path",
+      "scripts_add_column_postgres"
+    ],
+    "81": [
+      "scripts_check_stats",
+      "scripts_check_stats_dburl",
+      "scripts_check_stats_main",
+      "scripts_check_stats_postgres",
+      "scripts_check_stats_sql"
+    ],
+    "82": [
+      "scripts_comprehensive_data_url_review",
+      "scripts_comprehensive_data_url_review_conn",
+      "scripts_comprehensive_data_url_review_db",
+      "scripts_comprehensive_data_url_review_isvalidhttpurl",
+      "scripts_comprehensive_data_url_review_reviewalldata"
+    ],
+    "83": [
+      "check_checkandscreenshot",
+      "check_execsync",
+      "check_js_check",
+      "check_puppeteer"
+    ],
+    "84": [
+      "fix2_conn",
+      "fix2_js_fix2",
+      "fix2_routerscript",
+      "fix2_searchscript"
+    ],
+    "85": [
+      "push_full_env",
+      "push_full_env_b64",
+      "push_full_env_conn",
+      "push_full_env_lines"
+    ],
+    "86": [
+      "query_db_temp",
+      "query_db_temp_db",
+      "query_db_temp_main",
+      "query_db_temp_queryclient"
+    ],
+    "87": [
+      "scraper_fetchers_camoufox_fetcher",
+      "scraper_fetchers_camoufox_fetcher_camoufox_scrape",
+      "scraper_fetchers_camoufox_fetcher_rationale_1",
+      "scraper_fetchers_camoufox_fetcher_rationale_27"
+    ],
+    "88": [
+      "scripts_analyze_unresolved",
+      "scripts_analyze_unresolved_analyzejobsandtenders",
+      "scripts_analyze_unresolved_conn",
+      "scripts_analyze_unresolved_db"
+    ],
+    "89": [
+      "scripts_check_cols",
+      "scripts_check_cols_main",
+      "scripts_check_cols_postgres",
+      "scripts_check_cols_sql"
+    ],
+    "90": [
+      "scripts_create_table",
+      "scripts_create_table_client",
+      "scripts_create_table_db",
+      "scripts_create_table_main"
+    ],
+    "91": [
+      "scripts_debug_single_job",
+      "scripts_debug_single_job_checkjob",
+      "scripts_debug_single_job_conn",
+      "scripts_debug_single_job_db"
+    ],
+    "92": [
+      "scripts_fix_data",
+      "scripts_fix_data_isgarbled",
+      "scripts_fix_data_main",
+      "scripts_fix_data_sb"
+    ],
+    "93": [
+      "scripts_inspect_aggregators",
+      "scripts_inspect_aggregators_conn",
+      "scripts_inspect_aggregators_db",
+      "scripts_inspect_aggregators_inspectaggregators"
+    ],
+    "94": [
+      "scripts_inspect_mjm_jir",
+      "scripts_inspect_mjm_jir_conn",
+      "scripts_inspect_mjm_jir_db",
+      "scripts_inspect_mjm_jir_inspectmyjobmagandjobinrwanda"
+    ],
+    "95": [
+      "scripts_test_fixes",
+      "scripts_test_fixes_run",
+      "scripts_test_fixes_schema",
+      "scripts_test_fixes_test"
+    ],
+    "96": [
+      "scripts_test_modes",
+      "scripts_test_modes_main",
+      "scripts_test_modes_schema",
+      "scripts_test_modes_test"
+    ],
+    "97": [
+      "scripts_verify_all_data_urls",
+      "scripts_verify_all_data_urls_conn",
+      "scripts_verify_all_data_urls_db",
+      "scripts_verify_all_data_urls_runreview"
+    ],
+    "98": [
+      "src_lib_scrapers_test_apis",
+      "src_lib_scrapers_test_apis_endpoints",
+      "src_lib_scrapers_test_apis_main",
+      "src_lib_scrapers_test_apis_testendpoint"
+    ],
+    "99": [
+      "test_auto",
+      "test_auto_groq",
+      "test_auto_run",
+      "test_auto_samba"
+    ],
+    "100": [
+      "fix_router_fs",
+      "fix_router_js_fix_router_02ee77",
+      "fix_router_js_fix_router_code_02ee77"
+    ],
+    "101": [
+      "fix_router_idxstart",
+      "fix_router_js_fix_router_6fa42a",
+      "fix_router_js_fix_router_code_6fa42a"
+    ],
+    "102": [
+      "migrate",
+      "migrate_postgres",
+      "migrate_run"
+    ],
+    "103": [
+      "next_config",
+      "next_config_nextconfig",
+      "next_config_rationale_21"
+    ],
+    "104": [
+      "package_devdependencies_eslint",
+      "package_json_eslint",
+      "package_package_devdependencies_eslint"
+    ],
+    "105": [
+      "package_devdependencies_types_node",
+      "package_json_types_node",
+      "package_package_devdependencies_types_node"
+    ],
+    "106": [
+      "query_db_raw",
+      "query_db_raw_main",
+      "query_db_raw_queryclient"
+    ],
+    "107": [
+      "scraper_mock_sidecar",
+      "scraper_mock_sidecar_http",
+      "scraper_mock_sidecar_server"
+    ],
+    "108": [
+      "scraper_poll_server",
+      "scraper_poll_server_check",
+      "scraper_poll_server_http"
+    ],
+    "109": [
+      "scratch_check_active",
+      "scratch_check_active_main",
+      "scratch_check_active_sql"
+    ],
+    "110": [
+      "scratch_check_db",
+      "scratch_check_db_main",
+      "scratch_check_db_sql"
+    ],
+    "111": [
+      "scratch_db_cjs_scratch_db",
+      "scratch_db_postgres",
+      "scratch_db_sql"
+    ],
+    "112": [
+      "scratch_db_counts",
+      "scratch_db_counts_main",
+      "scratch_db_counts_queryclient"
+    ],
+    "113": [
+      "scratch_db_main",
+      "scratch_db_mjs_scratch_db",
+      "scratch_db_queryclient"
+    ],
+    "114": [
+      "scripts_cd_count",
+      "scripts_cd_count_run",
+      "scripts_cd_count_sql"
+    ],
+    "115": [
+      "scripts_check_email_status",
+      "scripts_check_email_status_main",
+      "scripts_check_email_status_resend"
+    ],
+    "116": [
+      "scripts_check_resend",
+      "scripts_check_resend_main",
+      "scripts_check_resend_resend"
+    ],
+    "117": [
+      "scripts_cleanup_fake_data",
+      "scripts_cleanup_fake_data_main",
+      "scripts_cleanup_fake_data_sql"
+    ],
+    "118": [
+      "scripts_count_js_scripts_count",
+      "scripts_count_run",
+      "scripts_count_sql"
+    ],
+    "119": [
+      "scripts_count_sitemap_urls",
+      "scripts_count_sitemap_urls_run",
+      "scripts_count_sitemap_urls_sql"
+    ],
+    "120": [
+      "scripts_debug_countries",
+      "scripts_debug_countries_main",
+      "scripts_debug_countries_sb"
+    ],
+    "121": [
+      "scripts_debug_counts",
+      "scripts_debug_counts_main",
+      "scripts_debug_counts_sb"
+    ],
+    "122": [
+      "scripts_debug_counts_fixed",
+      "scripts_debug_counts_fixed_main",
+      "scripts_debug_counts_fixed_sb"
+    ],
+    "123": [
+      "scripts_debug_foreign",
+      "scripts_debug_foreign_main",
+      "scripts_debug_foreign_sb"
+    ],
+    "124": [
+      "scripts_debug_nulls",
+      "scripts_debug_nulls_main",
+      "scripts_debug_nulls_sb"
+    ],
+    "125": [
+      "scripts_debug_total",
+      "scripts_debug_total_main",
+      "scripts_debug_total_sb"
+    ],
+    "126": [
+      "scripts_fix_foreign_jobs",
+      "scripts_fix_foreign_jobs_main",
+      "scripts_fix_foreign_jobs_sb"
+    ],
+    "127": [
+      "scripts_fix_security",
+      "scripts_fix_security_fixsecurity",
+      "scripts_fix_security_sql"
+    ],
+    "128": [
+      "scripts_list_emails",
+      "scripts_list_emails_main",
+      "scripts_list_emails_resend"
+    ],
+    "129": [
+      "scripts_probe_models",
+      "scripts_probe_models_main",
+      "scripts_probe_models_testmodel"
+    ],
+    "130": [
+      "scripts_run_migrations_direct",
+      "scripts_run_migrations_direct_run",
+      "scripts_run_migrations_direct_sql"
+    ],
+    "131": [
+      "scripts_scrape_master",
+      "scripts_scrape_master_countries",
+      "scripts_scrape_master_run"
+    ],
+    "132": [
+      "scripts_test_db",
+      "scripts_test_db_main",
+      "scripts_test_db_sql"
+    ],
+    "133": [
+      "scripts_test_email",
+      "scripts_test_email_main",
+      "scripts_test_email_resend"
+    ],
+    "134": [
+      "scripts_test_groq_openai",
+      "scripts_test_groq_openai_run",
+      "scripts_test_groq_openai_schema"
+    ],
+    "135": [
+      "scripts_test_nvidia",
+      "scripts_test_nvidia_run",
+      "scripts_test_nvidia_schema"
+    ],
+    "136": [
+      "scripts_test_openrouter_json",
+      "scripts_test_openrouter_json_run",
+      "scripts_test_openrouter_json_schema"
+    ],
+    "137": [
+      "scripts_tz_jobs_count",
+      "scripts_tz_jobs_count_run",
+      "scripts_tz_jobs_count_sql"
+    ],
+    "138": [
+      "scripts_verify_job",
+      "scripts_verify_job_check",
+      "scripts_verify_job_conn"
+    ],
+    "139": [
+      "src_app_admin_login_page",
+      "src_app_admin_login_page_adminloginpage",
+      "src_app_admin_login_page_step"
+    ],
+    "140": [
+      "src_app_admin_setup_page",
+      "src_app_admin_setup_page_adminsetuppage",
+      "src_app_admin_setup_page_step"
+    ],
+    "141": [
+      "src_app_api_admin_ai_status_route",
+      "src_app_api_admin_ai_status_route_dynamic",
+      "src_app_api_admin_ai_status_route_get"
+    ],
+    "142": [
+      "src_lib_db_run_employer_url_migration",
+      "src_lib_db_run_employer_url_migration_main",
+      "src_lib_db_run_employer_url_migration_sql"
+    ],
+    "143": [
+      "src_lib_db_run_migrations",
+      "src_lib_db_run_migrations_main",
+      "src_lib_db_run_migrations_sql"
+    ],
+    "144": [
+      "src_lib_db_setup_auth_trigger",
+      "src_lib_db_setup_auth_trigger_main",
+      "src_lib_db_setup_auth_trigger_sql"
+    ],
+    "145": [
+      "test_searxng",
+      "test_searxng_run",
+      "test_searxng_searxng_instances"
+    ],
+    "146": [
+      "vercel",
+      "vercel_headers",
+      "vercel_redirects"
+    ],
+    "147": [
+      "ai_sdk_cohere",
+      "package_dependencies_ai_sdk_cohere"
+    ],
+    "148": [
+      "ai_sdk_google",
+      "package_dependencies_ai_sdk_google"
+    ],
+    "149": [
+      "ai_sdk_mistral",
+      "package_dependencies_ai_sdk_mistral"
+    ],
+    "150": [
+      "ai_sdk_openai",
+      "package_dependencies_ai_sdk_openai"
+    ],
+    "151": [
+      "base_ui_react",
+      "package_dependencies_base_ui_react"
+    ],
+    "152": [
+      "bcryptjs",
+      "package_dependencies_bcryptjs"
+    ],
+    "153": [
+      "calc_score",
+      "calc_score_tokenoverlap"
+    ],
+    "154": [
+      "check_db_live",
+      "check_db_live_conn"
+    ],
+    "155": [
+      "check_server",
+      "check_server_conn"
+    ],
+    "156": [
+      "cheerio",
+      "package_dependencies_cheerio"
+    ],
+    "157": [
+      "class_variance_authority",
+      "package_dependencies_class_variance_authority"
+    ],
+    "158": [
+      "clear_cooldowns",
+      "clear_cooldowns_main"
+    ],
+    "159": [
+      "clsx",
+      "package_dependencies_clsx"
+    ],
+    "160": [
+      "cmdk",
+      "package_dependencies_cmdk"
+    ],
+    "161": [
+      "d3",
+      "package_dependencies_d3"
+    ],
+    "162": [
+      "date_fns",
+      "package_dependencies_date_fns"
+    ],
+    "163": [
+      "drizzle_kit",
+      "package_dependencies_drizzle_kit"
+    ],
+    "164": [
+      "duck_duck_scrape",
+      "package_dependencies_duck_duck_scrape"
+    ],
+    "165": [
+      "e2e_comprehensive_spec",
+      "e2e_comprehensive_spec_publicpaths"
+    ],
+    "166": [
+      "eslint_config",
+      "eslint_config_eslintconfig"
+    ],
+    "167": [
+      "eslint_plugin_unused_imports",
+      "package_devdependencies_eslint_plugin_unused_imports"
+    ],
+    "168": [
+      "faker_js_faker",
+      "package_devdependencies_faker_js_faker"
+    ],
+    "169": [
+      "fix3",
+      "fix3_conn"
+    ],
+    "170": [
+      "fix_conn",
+      "fix_js_fix"
+    ],
+    "171": [
+      "framer_motion",
+      "package_dependencies_framer_motion"
+    ],
+    "172": [
+      "googleapis",
+      "package_dependencies_googleapis"
+    ],
+    "173": [
+      "iconify_react",
+      "package_dependencies_iconify_react"
+    ],
+    "174": [
+      "inngest",
+      "package_dependencies_inngest"
+    ],
+    "175": [
+      "lottiefiles_dotlottie_react",
+      "package_dependencies_lottiefiles_dotlottie_react"
+    ],
+    "176": [
+      "lucide_react",
+      "package_dependencies_lucide_react"
+    ],
+    "177": [
+      "microsoft_clarity",
+      "package_dependencies_microsoft_clarity"
+    ],
+    "178": [
+      "next",
+      "package_dependencies_next"
+    ],
+    "179": [
+      "next_themes",
+      "package_dependencies_next_themes"
+    ],
+    "180": [
+      "otpauth",
+      "package_dependencies_otpauth"
+    ],
+    "181": [
+      "package_dependencies_drizzle_orm",
+      "package_json_drizzle_orm"
+    ],
+    "182": [
+      "package_dependencies_pdf_parse",
+      "package_json_pdf_parse"
+    ],
+    "183": [
+      "package_dependencies_postgres",
+      "postgres"
+    ],
+    "184": [
+      "package_dependencies_posthog_js",
+      "posthog_js"
+    ],
+    "185": [
+      "package_dependencies_qrcode",
+      "qrcode"
+    ],
+    "186": [
+      "package_dependencies_react",
+      "react"
+    ],
+    "187": [
+      "package_dependencies_react_dom",
+      "react_dom"
+    ],
+    "188": [
+      "package_dependencies_react_email_components",
+      "react_email_components"
+    ],
+    "189": [
+      "package_dependencies_react_email_render",
+      "react_email_render"
+    ],
+    "190": [
+      "package_dependencies_react_markdown",
+      "react_markdown"
+    ],
+    "191": [
+      "package_dependencies_react_oauth_google",
+      "react_oauth_google"
+    ],
+    "192": [
+      "package_dependencies_recharts",
+      "package_json_recharts"
+    ],
+    "193": [
+      "package_dependencies_remark_gfm",
+      "remark_gfm"
+    ],
+    "194": [
+      "package_dependencies_resend",
+      "resend"
+    ],
+    "195": [
+      "package_dependencies_sanitize_html",
+      "sanitize_html"
+    ],
+    "196": [
+      "package_dependencies_shadcn",
+      "shadcn"
+    ],
+    "197": [
+      "package_dependencies_slugify",
+      "slugify"
+    ],
+    "198": [
+      "package_dependencies_sonner",
+      "sonner"
+    ],
+    "199": [
+      "package_dependencies_ssh2",
+      "ssh2"
+    ],
+    "200": [
+      "package_dependencies_supabase_supabase_js",
+      "supabase_supabase_js"
+    ],
+    "201": [
+      "package_dependencies_tailwind_merge",
+      "tailwind_merge"
+    ],
+    "202": [
+      "package_dependencies_turndown",
+      "turndown"
+    ],
+    "203": [
+      "package_dependencies_tw_animate_css",
+      "tw_animate_css"
+    ],
+    "204": [
+      "package_dependencies_types_cheerio",
+      "types_cheerio"
+    ],
+    "205": [
+      "package_dependencies_types_d3",
+      "types_d3"
+    ],
+    "206": [
+      "package_dependencies_types_sanitize_html",
+      "types_sanitize_html"
+    ],
+    "207": [
+      "package_dependencies_upstash_redis",
+      "upstash_redis"
+    ],
+    "208": [
+      "package_dependencies_zod",
+      "zod"
+    ],
+    "209": [
+      "package_dependencies_zod_to_json_schema",
+      "zod_to_json_schema"
+    ],
+    "210": [
+      "package_devdependencies_playwright_test",
+      "playwright_test"
+    ],
+    "211": [
+      "package_devdependencies_puppeteer",
+      "puppeteer"
+    ],
+    "212": [
+      "package_devdependencies_tailwindcss",
+      "tailwindcss"
+    ],
+    "213": [
+      "package_devdependencies_tailwindcss_postcss",
+      "tailwindcss_postcss"
+    ],
+    "214": [
+      "package_devdependencies_types_qrcode",
+      "types_qrcode"
+    ],
+    "215": [
+      "package_devdependencies_types_react_dom",
+      "types_react_dom"
+    ],
+    "216": [
+      "postcss_config",
+      "postcss_config_config"
+    ],
+    "217": [
+      "scrape_akilibrain",
+      "scrape_akilibrain_puppeteer"
+    ],
+    "218": [
+      "scraper_start",
+      "scraper_start_sh__entry"
+    ],
+    "219": [
+      "scratch_add_swap",
+      "scratch_add_swap_conn"
+    ],
+    "220": [
+      "scratch_alter_table",
+      "scratch_alter_table_sql"
+    ],
+    "221": [
+      "scratch_check_dummy",
+      "scratch_check_dummy_conn"
+    ],
+    "222": [
+      "scratch_check_env",
+      "scratch_check_env_conn"
+    ],
+    "223": [
+      "scratch_check_logs",
+      "scratch_check_logs_conn"
+    ],
+    "224": [
+      "scratch_countries",
+      "scratch_countries_queryclient"
+    ],
+    "225": [
+      "scratch_curl",
+      "scratch_curl_conn"
+    ],
+    "226": [
+      "scratch_db_audit",
+      "scratch_db_audit_sql"
+    ],
+    "227": [
+      "scratch_db_check",
+      "scratch_db_check_urls"
+    ],
+    "228": [
+      "scratch_db_container",
+      "scratch_db_container_conn"
+    ],
+    "229": [
+      "scratch_db_container2",
+      "scratch_db_container2_conn"
+    ],
+    "230": [
+      "scratch_db_container3",
+      "scratch_db_container3_conn"
+    ],
+    "231": [
+      "scratch_deploy",
+      "scratch_deploy_conn"
+    ],
+    "232": [
+      "scratch_deploy_final",
+      "scratch_deploy_final_conn"
+    ],
+    "233": [
+      "scratch_dns",
+      "scratch_dns_conn"
+    ],
+    "234": [
+      "scratch_docker_ps",
+      "scratch_docker_ps_conn"
+    ],
+    "235": [
+      "scratch_fix_db_build",
+      "scratch_fix_db_build_conn"
+    ],
+    "236": [
+      "scratch_fix_deploy",
+      "scratch_fix_deploy_conn"
+    ],
+    "237": [
+      "scratch_fix_env",
+      "scratch_fix_env_conn"
+    ],
+    "238": [
+      "scratch_fix_env_2",
+      "scratch_fix_env_2_conn"
+    ],
+    "239": [
+      "scratch_fix_env_b64",
+      "scratch_fix_env_b64_conn"
+    ],
+    "240": [
+      "scratch_free",
+      "scratch_free_conn"
+    ],
+    "241": [
+      "scratch_grep_logs",
+      "scratch_grep_logs_conn"
+    ],
+    "242": [
+      "scratch_logs",
+      "scratch_logs_conn"
+    ],
+    "243": [
+      "scratch_patch",
+      "scratch_patch_conn"
+    ],
+    "244": [
+      "scratch_rebuild",
+      "scratch_rebuild_conn"
+    ],
+    "245": [
+      "scratch_redeploy",
+      "scratch_redeploy_conn"
+    ],
+    "246": [
+      "scratch_run_migration",
+      "scratch_run_migration_run"
+    ],
+    "247": [
+      "scratch_tail_logs",
+      "scratch_tail_logs_conn"
+    ],
+    "248": [
+      "scratch_tcp",
+      "scratch_tcp_conn"
+    ],
+    "249": [
+      "scratch_top",
+      "scratch_top_conn"
+    ],
+    "250": [
+      "scratch_verify",
+      "scratch_verify_conn"
+    ],
+    "251": [
+      "screenshot_loop",
+      "screenshot_loop_puppeteer"
+    ],
+    "252": [
+      "scripts_check_markdown_titles",
+      "scripts_check_markdown_titles_run"
+    ],
+    "253": [
+      "scripts_fix_compliance_urls",
+      "scripts_fix_compliance_urls_main"
+    ],
+    "254": [
+      "scripts_list_models",
+      "scripts_list_models_main"
+    ],
+    "255": [
+      "scripts_migrate_direct",
+      "scripts_migrate_direct_run"
+    ],
+    "256": [
+      "scripts_test_browser",
+      "scripts_test_browser_puppeteer"
+    ],
+    "257": [
+      "scripts_test_conn",
+      "scripts_test_conn_configs"
+    ],
+    "258": [
+      "scripts_test_supabase",
+      "scripts_test_supabase_supabase"
+    ],
+    "259": [
+      "scripts_trigger",
+      "scripts_trigger_trigger"
+    ],
+    "260": [
+      "src_app_admin_login_layout",
+      "src_app_admin_login_layout_adminauthlayout"
+    ],
+    "261": [
+      "src_app_admin_setup_layout",
+      "src_app_admin_setup_layout_adminauthlayout"
+    ],
+    "262": [
+      "src_app_api_docs_route",
+      "src_app_api_docs_route_get"
+    ],
+    "263": [
+      "src_app_dashboard_page",
+      "src_app_dashboard_page_dashboardredirect"
+    ],
+    "264": [
+      "src_app_robots",
+      "src_app_robots_robots"
+    ],
+    "265": [
+      "src_components_modernshowcase",
+      "src_components_modernshowcase_modernshowcase"
+    ],
+    "266": [
+      "src_lib_scrapers_salaries",
+      "src_lib_scrapers_salaries_scrapesalariesdata"
+    ],
+    "267": [
+      "src_lib_seo_indexing",
+      "src_lib_seo_indexing_submittogoogleindexing"
+    ],
+    "268": [
+      "test_ddg",
+      "test_ddg_searchddghtml"
+    ],
+    "269": [
+      "test_ddg2",
+      "test_ddg2_searchddghtml"
+    ],
+    "270": [
+      "test_dds",
+      "test_dds_run"
+    ],
+    "271": [
+      "test_env",
+      "test_env_conn"
+    ],
+    "272": [
+      "test_linode",
+      "test_linode_conn"
+    ],
+    "273": [
+      "test_linode_2",
+      "test_linode_2_conn"
+    ],
+    "274": [
+      "test_lite",
+      "test_lite_searchddglite"
+    ],
+    "275": [
+      "test_searxng_space",
+      "test_searxng_space_run"
+    ],
+    "276": [
+      "drizzle_config"
+    ],
+    "277": [
+      "drizzle_orm_drizzle_orm"
+    ],
+    "278": [
+      "fix2_py_fix2"
+    ],
+    "279": [
+      "fix_py_fix"
+    ],
+    "280": [
+      "patch_indexing"
+    ],
+    "281": [
+      "patch_mass_scrape"
+    ],
+    "282": [
+      "pdf_parse_pdf_parse"
+    ],
+    "283": [
+      "playwright_config"
+    ],
+    "284": [
+      "recharts_recharts"
+    ],
+    "285": [
+      "scraper_fetchers_init"
+    ],
+    "286": [
+      "scraper_spiders_init"
+    ],
+    "287": [
+      "scripts_process_monitor"
+    ],
+    "288": [
+      "sentry_client_config"
+    ],
+    "289": [
+      "sentry_edge_config"
+    ],
+    "290": [
+      "sentry_server_config"
+    ],
+    "291": [
+      "src_lib_apis_dhis2"
+    ],
+    "292": [
+      "src_lib_apis_icd11"
+    ],
+    "293": [
+      "src_lib_apis_who_afro"
+    ],
+    "294": [
+      "src_lib_seo_metadata"
+    ],
+    "295": [
+      "src_lib_seo_structured_data"
+    ],
+    "296": [
+      "temp_replacer"
+    ],
+    "297": [
+      "test_browser"
+    ]
+  },
+  "cohesion": {
+    "0": 0.05454545454545454,
+    "1": 0.06721311475409836,
+    "2": 0.0784313725490196,
+    "3": 0.0666049953746531,
+    "4": 0.043478260869565216,
+    "5": 0.11818181818181818,
+    "6": 0.06553911205073996,
+    "7": 0.08478513356562137,
+    "8": 0.0915915915915916,
+    "9": 0.10793650793650794,
+    "10": 0.09047619047619047,
+    "11": 0.1226890756302521,
+    "12": 0.1051693404634581,
+    "13": 0.13548387096774195,
+    "14": 0.06666666666666667,
+    "15": 0.10256410256410256,
+    "16": 0.16615384615384615,
+    "17": 0.19692307692307692,
+    "18": 0.09230769230769231,
+    "19": 0.12666666666666668,
+    "20": 0.11333333333333333,
+    "21": 0.11,
+    "22": 0.1,
+    "23": 0.11956521739130435,
+    "24": 0.11956521739130435,
+    "25": 0.13438735177865613,
+    "26": 0.14624505928853754,
+    "27": 0.11067193675889328,
+    "28": 0.09090909090909091,
+    "29": 0.12380952380952381,
+    "30": 0.1631578947368421,
+    "31": 0.14210526315789473,
+    "32": 0.13157894736842105,
+    "33": 0.12280701754385964,
+    "34": 0.20915032679738563,
+    "35": 0.17647058823529413,
+    "36": 0.16911764705882354,
+    "37": 0.15,
+    "38": 0.25,
+    "39": 0.15833333333333333,
+    "40": 0.13333333333333333,
+    "41": 0.13333333333333333,
+    "42": 0.20952380952380953,
+    "43": 0.1619047619047619,
+    "44": 0.23076923076923078,
+    "45": 0.16666666666666666,
+    "46": 0.45454545454545453,
+    "47": 0.30303030303030304,
+    "48": 0.2878787878787879,
+    "49": 0.36363636363636365,
+    "50": 0.32727272727272727,
+    "51": 0.45454545454545453,
+    "52": 0.26666666666666666,
+    "53": 0.24444444444444444,
+    "54": 0.2222222222222222,
+    "55": 0.2,
+    "56": 0.26666666666666666,
+    "57": 0.35555555555555557,
+    "58": 0.2222222222222222,
+    "59": 0.25,
+    "60": 0.2777777777777778,
+    "61": 0.3333333333333333,
+    "62": 0.3333333333333333,
+    "63": 0.2777777777777778,
+    "64": 0.2222222222222222,
+    "65": 0.2777777777777778,
+    "66": 0.2777777777777778,
+    "67": 0.32142857142857145,
+    "68": 0.32142857142857145,
+    "69": 0.25,
+    "70": 0.47619047619047616,
+    "71": 0.3333333333333333,
+    "72": 0.2857142857142857,
+    "73": 0.3333333333333333,
+    "74": 0.3333333333333333,
+    "75": 0.4666666666666667,
+    "76": 0.4,
+    "77": 0.3333333333333333,
+    "78": 0.5,
+    "79": 0.4,
+    "80": 0.5,
+    "81": 0.5,
+    "82": 0.5,
+    "83": 0.5,
+    "84": 0.5,
+    "85": 0.5,
+    "86": 0.5,
+    "87": 0.5,
+    "88": 0.5,
+    "89": 0.6666666666666666,
+    "90": 0.5,
+    "91": 0.5,
+    "92": 0.6666666666666666,
+    "93": 0.5,
+    "94": 0.5,
+    "95": 0.6666666666666666,
+    "96": 0.6666666666666666,
+    "97": 0.5,
+    "98": 0.6666666666666666,
+    "99": 0.8333333333333334,
+    "100": 0.6666666666666666,
+    "101": 0.6666666666666666,
+    "102": 1.0,
+    "103": 0.6666666666666666,
+    "104": 0.6666666666666666,
+    "105": 0.6666666666666666,
+    "106": 1.0,
+    "107": 0.6666666666666666,
+    "108": 0.6666666666666666,
+    "109": 1.0,
+    "110": 1.0,
+    "111": 0.6666666666666666,
+    "112": 1.0,
+    "113": 1.0,
+    "114": 1.0,
+    "115": 0.6666666666666666,
+    "116": 0.6666666666666666,
+    "117": 1.0,
+    "118": 1.0,
+    "119": 1.0,
+    "120": 0.6666666666666666,
+    "121": 0.6666666666666666,
+    "122": 0.6666666666666666,
+    "123": 0.6666666666666666,
+    "124": 0.6666666666666666,
+    "125": 0.6666666666666666,
+    "126": 0.6666666666666666,
+    "127": 1.0,
+    "128": 0.6666666666666666,
+    "129": 1.0,
+    "130": 1.0,
+    "131": 0.6666666666666666,
+    "132": 1.0,
+    "133": 0.6666666666666666,
+    "134": 0.6666666666666666,
+    "135": 0.6666666666666666,
+    "136": 0.6666666666666666,
+    "137": 1.0,
+    "138": 1.0,
+    "139": 0.6666666666666666,
+    "140": 0.6666666666666666,
+    "141": 0.6666666666666666,
+    "142": 0.6666666666666666,
+    "143": 0.6666666666666666,
+    "144": 0.6666666666666666,
+    "145": 0.6666666666666666,
+    "146": 0.6666666666666666,
+    "147": 1.0,
+    "148": 1.0,
+    "149": 1.0,
+    "150": 1.0,
+    "151": 1.0,
+    "152": 1.0,
+    "153": 1.0,
+    "154": 1.0,
+    "155": 1.0,
+    "156": 1.0,
+    "157": 1.0,
+    "158": 1.0,
+    "159": 1.0,
+    "160": 1.0,
+    "161": 1.0,
+    "162": 1.0,
+    "163": 1.0,
+    "164": 1.0,
+    "165": 1.0,
+    "166": 1.0,
+    "167": 1.0,
+    "168": 1.0,
+    "169": 1.0,
+    "170": 1.0,
+    "171": 1.0,
+    "172": 1.0,
+    "173": 1.0,
+    "174": 1.0,
+    "175": 1.0,
+    "176": 1.0,
+    "177": 1.0,
+    "178": 1.0,
+    "179": 1.0,
+    "180": 1.0,
+    "181": 1.0,
+    "182": 1.0,
+    "183": 1.0,
+    "184": 1.0,
+    "185": 1.0,
+    "186": 1.0,
+    "187": 1.0,
+    "188": 1.0,
+    "189": 1.0,
+    "190": 1.0,
+    "191": 1.0,
+    "192": 1.0,
+    "193": 1.0,
+    "194": 1.0,
+    "195": 1.0,
+    "196": 1.0,
+    "197": 1.0,
+    "198": 1.0,
+    "199": 1.0,
+    "200": 1.0,
+    "201": 1.0,
+    "202": 1.0,
+    "203": 1.0,
+    "204": 1.0,
+    "205": 1.0,
+    "206": 1.0,
+    "207": 1.0,
+    "208": 1.0,
+    "209": 1.0,
+    "210": 1.0,
+    "211": 1.0,
+    "212": 1.0,
+    "213": 1.0,
+    "214": 1.0,
+    "215": 1.0,
+    "216": 1.0,
+    "217": 1.0,
+    "218": 1.0,
+    "219": 1.0,
+    "220": 1.0,
+    "221": 1.0,
+    "222": 1.0,
+    "223": 1.0,
+    "224": 1.0,
+    "225": 1.0,
+    "226": 1.0,
+    "227": 1.0,
+    "228": 1.0,
+    "229": 1.0,
+    "230": 1.0,
+    "231": 1.0,
+    "232": 1.0,
+    "233": 1.0,
+    "234": 1.0,
+    "235": 1.0,
+    "236": 1.0,
+    "237": 1.0,
+    "238": 1.0,
+    "239": 1.0,
+    "240": 1.0,
+    "241": 1.0,
+    "242": 1.0,
+    "243": 1.0,
+    "244": 1.0,
+    "245": 1.0,
+    "246": 1.0,
+    "247": 1.0,
+    "248": 1.0,
+    "249": 1.0,
+    "250": 1.0,
+    "251": 1.0,
+    "252": 1.0,
+    "253": 1.0,
+    "254": 1.0,
+    "255": 1.0,
+    "256": 1.0,
+    "257": 1.0,
+    "258": 1.0,
+    "259": 1.0,
+    "260": 1.0,
+    "261": 1.0,
+    "262": 1.0,
+    "263": 1.0,
+    "264": 1.0,
+    "265": 1.0,
+    "266": 1.0,
+    "267": 1.0,
+    "268": 1.0,
+    "269": 1.0,
+    "270": 1.0,
+    "271": 1.0,
+    "272": 1.0,
+    "273": 1.0,
+    "274": 1.0,
+    "275": 1.0,
+    "276": 1.0,
+    "277": 1.0,
+    "278": 1.0,
+    "279": 1.0,
+    "280": 1.0,
+    "281": 1.0,
+    "282": 1.0,
+    "283": 1.0,
+    "284": 1.0,
+    "285": 1.0,
+    "286": 1.0,
+    "287": 1.0,
+    "288": 1.0,
+    "289": 1.0,
+    "290": 1.0,
+    "291": 1.0,
+    "292": 1.0,
+    "293": 1.0,
+    "294": 1.0,
+    "295": 1.0,
+    "296": 1.0,
+    "297": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_lib_db_client_db",
+      "label": "DB",
+      "degree": 124
+    },
+    {
+      "id": "src_lib_utils_cn",
+      "label": "cn()",
+      "degree": 116
+    },
+    {
+      "id": "src_lib_db_client_safequery",
+      "label": "safeQuery()",
+      "degree": 77
+    },
+    {
+      "id": "src_lib_db_schema_jobs_jobs",
+      "label": "jobs",
+      "degree": 68
+    },
+    {
+      "id": "src_lib_db_schema_shared_countries",
+      "label": "countries",
+      "degree": 57
+    },
+    {
+      "id": "src_lib_db_schema_tenders_tenders",
+      "label": "tenders",
+      "degree": 44
+    },
+    {
+      "id": "src_components_seo_schemas_buildbreadcrumbschema",
+      "label": "buildBreadcrumbSchema()",
+      "degree": 42
+    },
+    {
+      "id": "src_lib_scrapers_compliance_base_htmltotextenriched",
+      "label": "htmlToTextEnriched()",
+      "degree": 40
+    },
+    {
+      "id": "src_components_ui_button_buttonvariants",
+      "label": "buttonVariants",
+      "degree": 40
+    },
+    {
+      "id": "src_lib_scrapers_compliance_base_fetchhtml",
+      "label": "fetchHtml()",
+      "degree": 37
+    }
+  ],
+  "surprises": [
+    {
+      "source": "testNewsletter()",
+      "target": "WeeklyNewsletterEmail()",
+      "source_files": [
+        "scripts/test-newsletter.ts",
+        "src/lib/email/templates.tsx"
+      ],
+      "confidence": "INFERRED",
+      "relation": "indirect_call",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `testNewsletter()` unexpectedly reaches hub `WeeklyNewsletterEmail()`"
+    },
+    {
+      "source": "main()",
+      "target": "saveHealthData()",
+      "source_files": [
+        "scripts/comprehensive-scrape.ts",
+        "src/inngest/scrape-health.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "cleanBadEmployerUrls()",
+      "target": "isEmployerUrl()",
+      "source_files": [
+        "scripts/clean-bad-employer-urls.ts",
+        "src/lib/sources/aggregators.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; peripheral node `cleanBadEmployerUrls()` unexpectedly reaches hub `isEmployerUrl()`"
+    },
+    {
+      "source": "testResolution()",
+      "target": "resolveEmployerUrl()",
+      "source_files": [
+        "scripts/test-batch-resolver.ts",
+        "src/lib/sources/employer-resolver.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; peripheral node `testResolution()` unexpectedly reaches hub `resolveEmployerUrl()`"
+    },
+    {
+      "source": "auditCompliance()",
+      "target": "resolveEmployerUrl()",
+      "source_files": [
+        "scripts/online-data-audit.ts",
+        "src/lib/sources/employer-resolver.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `ai` connect `ai` to `test-modes.ts`, `probe-models.ts`, `shared.ts`, `test-auto.ts`, `data-cleanup-worker.ts`, `test-groq-openai.ts`, `test-nvidia.ts`, `test-openrouter-json.ts`, `keywords`, `test-ai-providers.ts`, `router.ts`, `test-fixes.ts`?",
+      "why": "High betweenness centrality (0.136) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `keywords` connect `keywords` to `ai`, `package/package.json`?",
+      "why": "High betweenness centrality (0.116) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `devDependencies` connect `devDependencies` to `eslint`, `@types/node`, `package/package.json`?",
+      "why": "High betweenness centrality (0.099) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `UnsubscribePageProps`, `KnownSource`, `SourceCategory` to the rest of the system?",
+      "why": "617 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `createClient` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.05454545454545454 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `cn` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06721311475409836 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `shared.ts` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.0784313725490196 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

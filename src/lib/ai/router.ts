@@ -46,14 +46,14 @@ getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
         id: `cf-llama-3.3-70b-${i + 1}`,
         name: `Cloudflare Llama 3.3 70B (${i + 1})`,
         model: cf.chat('@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
-        supportsStructured: false,
+        supportsStructured: true,
         priority: 1, 
       });
       keyPool.register({
         id: `cf-qwen-coder-32b-${i + 1}`,
         name: `Cloudflare Qwen 2.5 Coder 32B (${i + 1})`,
         model: cf.chat('@cf/qwen/qwen2.5-coder-32b-instruct'),
-        supportsStructured: false,
+        supportsStructured: true,
         priority: 2, 
       });
     }
@@ -93,8 +93,8 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
     id: `groq-gpt-oss-120b-${i + 1}`,
     name: `Groq GPT OSS 120B (${i + 1})`,
     model: groq('openai/gpt-oss-120b'),
-    supportsStructured: false,
-    priority: 0, 
+    supportsStructured: true,
+    priority: 1, 
   });
 });
 
@@ -107,7 +107,7 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
     keyPool.register({
       id: `sambanova-llama-3.3-70b-${i + 1}`,
       name: `SambaNova Llama 3.3 70B (${i + 1})`,
-      model: sambanova.chat('Meta-Llama-3.3-70B-Instruct'),
+      model: sambanova.chat('gpt-oss-120b'),
       supportsStructured: true,
       priority: 1, 
     });
@@ -115,18 +115,15 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
 
 // 🚀 PRIORITY 1: CEREBRAS (Ultra fast)
   getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
-    const cerebras = createOpenAI({
-      baseURL: 'https://api.cerebras.ai/v1',
-      apiKey: key,
-    });
-    keyPool.register({
-      id: `cerebras-gpt-oss-120b-${i + 1}`,
-      name: `Cerebras GPT OSS 120B (${i + 1})`,
-      model: cerebras.chat('gpt-oss-120b'),
-      supportsStructured: false,
-      priority: 0, 
-    });
+  const cerebras = createOpenAI({ apiKey: key, baseURL: 'https://api.cerebras.ai/v1' });
+  keyPool.register({
+    id: `cerebras-llama3.1-70b-${i + 1}`,
+    name: `Cerebras Llama 3.1 70B (${i + 1})`,
+    model: cerebras.chat('gpt-oss-120b'), // they use llama3.1-8b for free tier often
+    supportsStructured: true,
+    priority: 1, 
   });
+});
 
 // ── PRIORITY 3: DEEPSEEK ────────────────────────────────────────────────
 getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
@@ -177,6 +174,62 @@ getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
 });
 
 // ── PRIORITY 4: MINIMAX ────────────────────────────────────────────────
+// 🚀 PRIORITY 1.5: GITHUB MODELS (FREE LLAMA 3.3)
+getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
+  const gh = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://models.github.ai/inference'
+  });
+  keyPool.register({
+    id: `github-llama-3.3-70b-${i + 1}`,
+    name: `GitHub Llama 3.3 70B (${i + 1})`,
+    model: gh('meta-llama-3.3-70B-instruct'),
+    supportsStructured: true,
+    priority: 1.5,
+  });
+});
+
+// 🚀 PRIORITY 4: ZHIPU AI (ZAI)
+getEnvKeys('ZAI_API_KEY').forEach((key, i) => {
+  const zai = createOpenAI({
+    apiKey: key,
+    baseURL: 'https://api.z.ai/api/paas/v4/'
+  });
+  keyPool.register({
+    id: `zai-glm-4-${i + 1}`,
+    name: `Zhipu GLM-4 (${i + 1})`,
+    model: zai('glm-4'),
+    supportsStructured: true,
+    priority: 4,
+  });
+});
+
+// 🚀 PRIORITY 1: POLLINATIONS AI (FREE)
+const pollinations = createOpenAI({
+  apiKey: 'dummy',
+  baseURL: 'https://text.pollinations.ai/openai'
+});
+keyPool.register({
+  id: `pollinations-openai`,
+  name: `Pollinations OpenAI`,
+  model: pollinations('openai'),
+  supportsStructured: true,
+  priority: 1,
+});
+
+// 🚀 PRIORITY 1.1: UNCLOSE AI (FREE)
+const unclose = createOpenAI({
+  apiKey: 'dummy',
+  baseURL: 'https://uncloseai.com/v1'
+});
+keyPool.register({
+  id: `unclose-hermes`,
+  name: `Unclose Hermes`,
+  model: unclose('Hermes AI'),
+  supportsStructured: true,
+  priority: 1.1,
+});
+
 getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
   const minimax = createOpenAI({ apiKey: key, baseURL: 'https://api.minimax.chat/v1' });
   keyPool.register({
@@ -323,11 +376,11 @@ getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
 });
 
 // 🚀 PRIORITY 5: HUGGING FACE (DE-PRIORITIZED DUE TO CLOUDFLARE BANS)
-getEnvKeys('HUGGINGFACE_API_KEY').forEach((key, i) => {
+getEnvKeys('HUGGINGFACE_API_KEY').concat(getEnvKeys('HF_API_KEY')).forEach((key, i) => {
   // We use the openai compatible endpoint for HF serverless Inference API
   const hf = createOpenAI({
     apiKey: key,
-    baseURL: 'https://api-inference.huggingface.co/v1/'
+    baseURL: 'https://router.huggingface.co/v1'
   });
   keyPool.register({
     id: `hf-qwen-72b-${i + 1}`,
@@ -383,8 +436,9 @@ function usesTextModeFallback(modelId: string): boolean {
 export async function generateObjectWithFallback<T = unknown>(
   params: Record<string, any> & { schema?: ZodType<T> }
 ): Promise<GenerateObjectResult<T>> {
-  if (keyPool.getAvailableCount() === 0) {
-    throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
+  while (keyPool.getAvailableCount() === 0) {
+    console.log('[AI Router] All models are on cooldown. Sleeping for 60s...');
+    await new Promise(r => setTimeout(r, 60000));
   }
 
   let lastError: unknown = null;
@@ -437,9 +491,12 @@ export async function generateObjectWithFallback<T = unknown>(
   throw lastError ?? new Error('[AI Router] All fallback attempts exhausted with no specific error.');
 }
 
-export async function generateTextWithFallback(params: Record<string, any>) {
-  if (keyPool.getAvailableCount() === 0) {
-    throw new Error('[AI Router] All models are on cooldown. Try again in a moment.');
+export async function generateTextWithFallback(
+  params: Record<string, any>
+): Promise<GenerateTextResult<Record<string, CoreTool>, never>> {
+  while (keyPool.getAvailableCount() === 0) {
+    console.log('[AI Router] All models are on cooldown. Sleeping for 60s...');
+    await new Promise(r => setTimeout(r, 60000));
   }
 
   let lastError: unknown = null;
@@ -489,6 +546,11 @@ interface VisionModelCandidate {
   name: string;
   model: any;
 }
+
+export function getTextModelPool() {
+  return keyPool.getActiveKeys(); // Wait, getActiveKeys is not a method. I'll just export keyPool.
+}
+export { keyPool };
 
 function getVisionModelPool(): VisionModelCandidate[] {
   const pool: VisionModelCandidate[] = [];

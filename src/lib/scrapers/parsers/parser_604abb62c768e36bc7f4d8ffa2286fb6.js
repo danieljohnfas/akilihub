@@ -1,0 +1,10 @@
+var job = {};
+job.title = $('meta[property="og:title"]').attr('content');
+job.companyName = 'Buildmart Limited (BML)';
+job.description = $('meta[property="og:description"]').attr('content');
+job.location = 'Tanzania';
+job.jobType = 'full_time';
+job.sourceUrl = $('meta[property="og:url"]').attr('content');
+job.postedDateIsoString = $('meta[property="article:published_time"]').attr('content');
+var resultObject = Object.assign({}, job);
+result.push(resultObject);
