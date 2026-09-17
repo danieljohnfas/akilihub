@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # start.sh — Launch both the FastAPI sidecar and the Scrapling MCP server.
 # Both processes run concurrently; the container exits if either dies.
 
