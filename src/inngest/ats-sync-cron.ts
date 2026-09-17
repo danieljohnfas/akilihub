@@ -10,10 +10,9 @@ export const atsSyncCronJob = inngest.createFunction(
   { 
     id: "ats-sync-daily",
     name: "Daily Direct ATS Synchronization",
-    // Prevent overlapping runs
-    concurrency: 1
+    concurrency: 1,
+    triggers: [{ cron: "0 0 * * *" }]
   },
-  { cron: "0 0 * * *" }, // Run daily at midnight UTC
   async ({ step }) => {
     await step.run("sync-ats-apis", async () => {
       const insertedCount = await runAtsSync();
