@@ -1,0 +1,57 @@
+# AkiliHub Self-Hosted Open-Source Stack
+# 
+# This docker-compose file defines the open-source alternatives we use
+# to replace expensive SaaS products. It is designed to be managed by 
+# Coolify on a bare-metal server (e.g. Hetzner) or run locally.
+
+version: '3.8'
+
+services:
+  # Twenty CRM - Replaces Salesforce/Hubspot
+  twenty:
+    image: twentycrm/twenty:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - PG_DATABASE_URL=postgres://twenty:twenty@db:5432/twenty
+      - FRONT_END_URL=http://localhost:3000
+    depends_on:
+      - db
+
+  # Documenso - Replaces DocuSign
+  documenso:
+    image: documenso/documenso:latest
+    ports:
+      - "3002:3000"
+    environment:
+      - DATABASE_URL=postgres://documenso:documenso@db:5432/documenso
+      - NEXTAUTH_URL=http://localhost:3002
+    depends_on:
+      - db
+
+  # OpenVoice TTS - Replaces ElevenLabs
+  openvoice:
+    image: myshellai/openvoice:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./models/openvoice:/app/models
+    # Requires a GPU for optimal generation speeds
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Shared Database for Self-Hosted Tools
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:

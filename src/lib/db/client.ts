@@ -14,6 +14,7 @@ import * as guidesSchema from './schema/guides';
 import * as documentsSchema from './schema/documents';
 import * as analyticsSchema from './schema/analytics';
 import * as applicationsSchema from './schema/applications';
+import * as professionsSchema from './schema/professions';
 
 const schema = {
   ...sharedSchema,
@@ -29,6 +30,7 @@ const schema = {
   ...documentsSchema,
   ...analyticsSchema,
   ...applicationsSchema,
+  ...professionsSchema,
 };
 
 // Prevent multiple instances during development HMR

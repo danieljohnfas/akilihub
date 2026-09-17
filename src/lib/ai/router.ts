@@ -107,7 +107,7 @@ getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
     keyPool.register({
       id: `sambanova-llama-3.3-70b-${i + 1}`,
       name: `SambaNova Llama 3.3 70B (${i + 1})`,
-      model: sambanova.chat('gpt-oss-120b'),
+      model: sambanova.chat('Meta-Llama-3.3-70B-Instruct'),
       supportsStructured: true,
       priority: 1, 
     });
@@ -165,27 +165,11 @@ getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
 getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
   const hyperbolic = createOpenAI({ apiKey: key, baseURL: 'https://api.hyperbolic.xyz/v1' });
   keyPool.register({
-    id: `hyperbolic-llama3-${i + 1}`,
-    name: `Hyperbolic Llama 3.1 70B (${i + 1})`,
-    model: hyperbolic.chat('meta-llama/Meta-Llama-3.1-70B-Instruct'),
+    id: `hyperbolic-llama33-${i + 1}`,
+    name: `Hyperbolic Llama 3.3 70B (${i + 1})`,
+    model: hyperbolic.chat('meta-llama/Llama-3.3-70B-Instruct'),
     supportsStructured: true,
     priority: 4,
-  });
-});
-
-// ── PRIORITY 4: MINIMAX ────────────────────────────────────────────────
-// 🚀 PRIORITY 1.5: GITHUB MODELS (FREE LLAMA 3.3)
-getEnvKeys('GITHUB_MODELS_TOKEN').forEach((key, i) => {
-  const gh = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://models.github.ai/inference'
-  });
-  keyPool.register({
-    id: `github-llama-3.3-70b-${i + 1}`,
-    name: `GitHub Llama 3.3 70B (${i + 1})`,
-    model: gh('meta-llama-3.3-70B-instruct'),
-    supportsStructured: true,
-    priority: 1.5,
   });
 });
 
