@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install patchright chromium (used by scrapling[all]) — must come AFTER pip install
+RUN patchright install --with-deps chromium
+
 # Install Playwright browsers and dependencies (Chromium for Scrapling)
 RUN playwright install --with-deps chromium
 
@@ -35,4 +38,4 @@ EXPOSE 7860
 EXPOSE 8765
 
 # Startup script launches both services concurrently
-CMD ["sh", "/app/start.sh"]
+CMD ["bash", "/app/start.sh"]
