@@ -1,92 +1,25 @@
 [
-  {
-    "company": "Uganda Breweries Limited",
-    "country": "Uganda",
-    "sector": "Manufacturing Companies",
-    "url": "https://www.ugandabreweries.com/careers"
-  },
-  {
-    "company": "Nile Breweries Limited",
-    "country": "Uganda",
-    "sector": "Manufacturing Companies",
-    "url": "https://www.nilebreweries.com/"
-  },
-  {
-    "company": "Tororo Cement Limited",
-    "country": "Uganda",
-    "sector": "Manufacturing Companies",
-    "url": "https://www.tororocement.com/careers/"
-  },
-  {
-    "company": "Children's Hospital of Zambia",
-    "country": "Zambia",
-    "sector": "Hospitals",
-    "url": "zambia.cure.org/about/careers/"
-  },
-  {
-    "company": "University of Zambia",
-    "country": "Zambia",
-    "sector": "Universities",
-    "url": "https://www.unza.zm/vacancies"
-  },
-  {
-    "company": "Copperbelt University",
-    "country": "Zambia",
-    "sector": "Universities",
-    "url": "https://www.cbu.ac.zm/"
-  },
-  {
-    "company": "Mulungushi University",
-    "country": "Zambia",
-    "sector": "Universities",
-    "url": "https://www.mu.ac.zm/careers/jobs/"
-  },
-  {
-    "company": "Rusangu University",
-    "country": "Zambia",
-    "sector": "Universities",
-    "url": "https://ru.edu.zm/wp-content/uploads/2021/11/CMIS-LECTURER.pdf"
-  },
-  {
-    "company": "Cavendish University Zambia",
-    "country": "Zambia",
-    "sector": "Universities",
-    "url": "https://www.cavendishza.org/"
-  },
-  {
-    "company": "Texila American University Zambia",
-    "country": "Zambia",
-    "sector": "Universities",
-    "url": "https://tau.edu.zm/"
-  },
-  {
-    "company": "Vodacom",
-    "country": "South Africa",
-    "sector": "Telecommunications",
-    "url": "https://vodacom.com/careers.php"
-  },
-  {
-    "company": "Telkom",
-    "country": "South Africa",
-    "sector": "Telecommunications",
-    "url": "https://jobs.telkom.co.za"
-  },
-  {
-    "company": "Amref Health Africa",
-    "country": "Kenya",
-    "sector": "NGOs",
-    "url": "https://amref.org/careers/"
-  },
-  {
-    "company": "CRDB Bank Plc",
-    "country": "Tanzania",
-    "sector": "Banks",
-    "url": "https://crdbbank.co.tz/en/about-us/careers"
-  },
-  {
-    "company": "NMB Bank Plc",
-    "country": "Tanzania",
-    "sector": "Banks",
-    "url": "https://careers.nmbbank.co.tz"
-  }
+  {"company": "Safaricom", "country": "Kenya", "url": "https://www.safaricom.co.ke/careers/"},
+  {"company": "KCB Group", "country": "Kenya", "url": "https://kcbgroup.com/careers"},
+  {"company": "Equity Group", "country": "Kenya", "url": "https://equitygroupholdings.com/careers/"},
+  {"company": "EABL", "country": "Kenya", "url": "https://www.eabl.com/en/careers"},
+  {"company": "Dangote Group", "country": "Nigeria", "url": "https://www.dangote.com/careers/"},
+  {"company": "MTN Nigeria", "country": "Nigeria", "url": "https://www.mtn.ng/careers/"},
+  {"company": "Access Bank", "country": "Nigeria", "url": "https://www.accessbankplc.com/careers/"},
+  {"company": "Zenith Bank", "country": "Nigeria", "url": "https://www.zenithbank.com/careers/"},
+  {"company": "Standard Bank", "country": "South Africa", "url": "https://www.standardbank.com/sbg/standard-bank-group/careers"},
+  {"company": "FirstRand", "country": "South Africa", "url": "https://www.firstrand.co.za/careers/"},
+  {"company": "Vodacom", "country": "South Africa", "url": "https://www.vodacom.com/careers.php"},
+  {"company": "Sasol", "country": "South Africa", "url": "https://www.sasol.com/careers"},
+  {"company": "Tullow Oil", "country": "Ghana", "url": "https://www.tullowoil.com/careers/"},
+  {"company": "MTN Ghana", "country": "Ghana", "url": "https://mtn.com.gh/careers/"},
+  {"company": "MTN Uganda", "country": "Uganda", "url": "https://www.mtn.co.ug/careers/"},
+  {"company": "MTN Zambia", "country": "Zambia", "url": "https://www.mtn.zm/careers/"},
+  {"company": "Ethio Telecom", "country": "Ethiopia", "url": "https://www.ethiotelecom.et/careers/"},
+  {"company": "NMB Bank", "country": "Tanzania", "url": "https://www.nmbbank.co.tz/careers"},
+  {"company": "CRDB Bank", "country": "Tanzania", "url": "https://crdbbank.co.tz/careers"},
+  {"company": "Absa Bank Kenya", "country": "Kenya", "url": "https://www.absabank.co.ke/about-us/careers/"},
+  {"company": "Bank of Kigali", "country": "Rwanda", "url": "https://bk.rw/about-us/careers"},
+  {"company": "Stanbic Bank Uganda", "country": "Uganda", "url": "https://www.stanbicbank.co.ug/uganda/personal/about-us/careers"},
+  {"company": "Airtel Nigeria", "country": "Nigeria", "url": "https://www.airtel.com.ng/about_airtel/careers"}
 ]

@@ -170,8 +170,9 @@ async function runQueriesForCountry(queries: string[], countryCode: string, labe
       const inserted = await saveJobs(discovered, countryCode);
       total += inserted;
       console.log(`[${label}] q${i}: "${query}" → +${inserted} (running: ${total})`);
-    } catch (e) {
-      console.error(`[${label}] q${i} failed: ${(e as Error).message}`);
+    } catch (e: any) {
+      if (e.message?.includes("QUOTA_EXCEEDED")) throw e;
+      console.error(`[${label}] q${i} failed: ${e.message}`);
     }
   }
   return total;
@@ -221,15 +222,31 @@ function makeJobScraper(
         return { message: 'Scrapers disabled via SCRAPE_DISABLED', totalInserted: 0, hitTarget: false, skipped: true };
       }
 
+      const runWithQuotaCheck = async (stepId: string, action: () => Promise<number>) => {
+        try {
+          return await step.run(stepId, action);
+        } catch (e: any) {
+          if (e.message?.includes("QUOTA_EXCEEDED")) {
+            console.warn(`[${id}] Exa quota exceeded. Monitoring self and sleeping until midnight UTC reset...`);
+            const now = new Date();
+            const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 5, 0));
+            await step.sleepUntil(`${stepId}-wait-quota`, nextMidnight);
+            console.log(`[${id}] Waking up after quota reset! Retrying...`);
+            return await step.run(`${stepId}-retry`, action);
+          }
+          throw e;
+        }
+      };
+
       // Pass 0 — known sources (cleanest, highest priority)
-      const pass0 = await step.run(`execute-job-scraper-known`, async () => {
+      const pass0 = await runWithQuotaCheck(`execute-job-scraper-known`, async () => {
         return await runKnownSourcesForCountry(countryCode, `${id}-known`);
       });
 
       let totalInserted = pass0;
 
       // Pass 1 — run all broad queries
-      const pass1 = await step.run(`execute-job-scraper-pass1`, async () => {
+      const pass1 = await runWithQuotaCheck(`execute-job-scraper-pass1`, async () => {
         return await runQueriesForCountry(queries, countryCode, `${id}-p1`);
       });
 
@@ -238,7 +255,7 @@ function makeJobScraper(
       // Pass 2 — only if we fell short of the target (retry on under-performance)
       if (jobSecondPassEnabled() && pass1 < JOB_TARGET) {
         console.log(`[${id}] Pass 1 yielded ${pass1} — under target ${JOB_TARGET}. Running second pass...`);
-        const pass2 = await step.run(`execute-job-scraper-pass2`, async () => {
+        const pass2 = await runWithQuotaCheck(`execute-job-scraper-pass2`, async () => {
           return await runQueriesForCountry(queries, countryCode, `${id}-p2`);
         });
         totalInserted += pass2;

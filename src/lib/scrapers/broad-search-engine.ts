@@ -190,6 +190,9 @@ async function searchExa(query: string, numResults: number): Promise<string[]> {
     if (!res.ok) {
       const errText = await res.text();
       console.error(`[searchExa] API failed: ${res.status} ${res.statusText} — ${errText}`);
+      if (res.status === 402 || res.status === 429) {
+        throw new Error("EXA_QUOTA_EXCEEDED");
+      }
       return [];
     }
 
@@ -204,7 +207,8 @@ async function searchExa(query: string, numResults: number): Promise<string[]> {
       console.log(`[searchExa] Exa returned ${finalUrls.length} URLs for: "${query}"`);
     }
     return finalUrls;
-  } catch (error) {
+    } catch (error: any) {
+    if (error.message === "EXA_QUOTA_EXCEEDED") throw error;
     console.error('[searchExa] Error:', error);
     return [];
   }
@@ -415,10 +419,9 @@ export async function extractJobsWithAI(text: string, sourceUrl: string, html: s
       parsedDeadline = deterministic.deadline;
     }
     
-    // STRICT RULE: If there is still no deadline, DROP the job
+    // Soft rule: keep jobs even if they don't have a deadline.
     if (!parsedDeadline) {
-      console.log(`[extractJobsWithAI] Dropping job without a deadline: ${job.title}`);
-      return false;
+      console.log(`[extractJobsWithAI] Warning: Job extracted without a deadline: ${job.title || 'Unknown'}`);
     }
 
     const salaryMin = (typeof job.salaryMin === 'number' && job.salaryMin > 0) ? job.salaryMin : (deterministic.salaryMin ?? null);
@@ -473,9 +476,14 @@ export async function extractJobsWithAI(text: string, sourceUrl: string, html: s
 
     return normalizedJobs.filter(job => {
       if (!job) return false;
-      const titleLower = (job.title || '').toLowerCase().trim();
+      if (!job.title || job.title.trim() === '') {
+        console.log(`[extractJobsWithAI] Dropping job without a title.`);
+        return false;
+      }
+      
+      const titleLower = job.title.toLowerCase().trim();
       if (titleLower.startsWith('[link]') || titleLower.startsWith('[image:')) return false;
-      if (titleLower.includes('vacancies') || titleLower.includes('opportunities') || titleLower.includes('unknown') || titleLower.includes('job listing')) return false;
+      if (titleLower.includes('vacancies') || titleLower.includes('opportunities') || titleLower.includes('unknown') || titleLower.includes('job listing') || titleLower.includes('cookie') || titleLower.includes('privacy policy')) return false;
       
       // Drop jobs that are already expired
       if (job.deadline && job.deadline.getTime() < Date.now()) {

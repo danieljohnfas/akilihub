@@ -1,0 +1,68 @@
+[
+  {
+    "companyName": "KCB Group",
+    "atsType": "oracle_hcm",
+    "endpoint": "https://eoin.fa.em3.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_3001,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=100",
+    "defaultCountryCode": "KE",
+    "sector": "Banking & Finance",
+    "employerUrl": "https://kcbgroup.com/careers"
+  },
+  {
+    "companyName": "United Nations (UNFPA)",
+    "atsType": "oracle_hcm",
+    "endpoint": "https://estm.fa.em2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_2001,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200",
+    "defaultCountryCode": "US",
+    "sector": "NGO / Humanitarian",
+    "employerUrl": "https://www.unfpa.org/jobs"
+  },
+  {
+    "companyName": "Absa Bank",
+    "atsType": "workday",
+    "endpoint": "https://absa.wd3.myworkdayjobs.com/wday/cxs/absa/AbsaCareers/jobs",
+    "defaultCountryCode": "ZA",
+    "sector": "Banking & Finance",
+    "employerUrl": "https://absa.africa/careers",
+    "siteUrl": "https://absa.wd3.myworkdayjobs.com/AbsaCareers"
+  },
+  {
+    "companyName": "Safaricom",
+    "atsType": "workday",
+    "endpoint": "https://safaricom.wd3.myworkdayjobs.com/wday/cxs/safaricom/Safaricom_Careers/jobs",
+    "defaultCountryCode": "KE",
+    "sector": "Telecommunications",
+    "employerUrl": "https://www.safaricom.co.ke/careers",
+    "siteUrl": "https://safaricom.wd3.myworkdayjobs.com/Safaricom_Careers"
+  },
+  {
+    "companyName": "Flutterwave",
+    "atsType": "greenhouse",
+    "boardToken": "flutterwave",
+    "defaultCountryCode": "NG",
+    "sector": "Fintech / Technology",
+    "employerUrl": "https://flutterwave.com/us/careers"
+  },
+  {
+    "companyName": "M-KOPA",
+    "atsType": "greenhouse",
+    "boardToken": "mkopa",
+    "defaultCountryCode": "KE",
+    "sector": "Solar / Fintech",
+    "employerUrl": "https://m-kopa.com/careers"
+  },
+  {
+    "companyName": "Chipper Cash",
+    "atsType": "lever",
+    "accountName": "chippercash",
+    "defaultCountryCode": "GH",
+    "sector": "Fintech",
+    "employerUrl": "https://chippercash.com/careers"
+  },
+  {
+    "companyName": "Andela",
+    "atsType": "greenhouse",
+    "boardToken": "andela",
+    "defaultCountryCode": "RW",
+    "sector": "Technology",
+    "employerUrl": "https://andela.com/careers/"
+  }
+]

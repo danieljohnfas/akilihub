@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -87,9 +88,7 @@ export default async function SignupPage({
                 className="bg-white/5 border-white/10"
               />
             </div>
-            <Button type="submit" className="w-full mt-4">
-              Sign Up
-            </Button>
+            <SubmitButton className="w-full mt-4" defaultText="Sign Up" pendingText="Signing Up..." />
           </form>
         </CardContent>
         <CardFooter className="flex justify-center border-t border-white/10 pt-6">

@@ -19,12 +19,14 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import json
 import time
 import urllib.robotparser
-from typing import Literal
+from typing import Literal, Dict, Any, Optional
+from urllib.parse import urlparse
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -146,6 +148,20 @@ class HtmlFetchResponse(BaseModel):
     robots_allowed: bool
     duration_ms: int
     error: str | None = None
+
+
+class ApiProxyRequest(BaseModel):
+    url: str
+    method: str = "GET"
+    headers: Optional[Dict[str, str]] = None
+    json_body: Optional[Dict[str, Any]] = None
+
+
+class ApiProxyResponse(BaseModel):
+    success: bool
+    status_code: int
+    data: Optional[Any] = None
+    error: Optional[str] = None
 
 
 # ── /search models ────────────────────────────────────────────────────────────
@@ -778,4 +794,39 @@ async def smart_scrape_endpoint(req: SmartScrapeRequest):
             strategy_used="none",
             duration_ms=int((time.monotonic() - start) * 1000),
             error=str(exc),
+        )
+
+@app.post("/proxy_api", response_model=ApiProxyResponse)
+async def proxy_api(req: ApiProxyRequest, request: Request):
+    try:
+        async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
+            # Reconstruct headers nicely
+            h = dict(req.headers) if req.headers else {}
+            if "user-agent" not in {k.lower() for k in h.keys()}:
+                h["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                
+            res = await client.request(
+                method=req.method.upper(),
+                url=req.url,
+                headers=h,
+                json=req.json_body,
+                follow_redirects=True
+            )
+            
+            try:
+                data = res.json()
+            except Exception:
+                data = res.text
+                
+            return ApiProxyResponse(
+                success=res.is_success,
+                status_code=res.status_code,
+                data=data
+            )
+    except Exception as exc:
+        logger.error("API Proxy failed for %s: %s", req.url, exc)
+        return ApiProxyResponse(
+            success=False,
+            status_code=500,
+            error=str(exc)
         )

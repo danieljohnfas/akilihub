@@ -31,6 +31,7 @@ import {
 } from "@/inngest/scrape-compliance";
 
 // Jobs (new daily automation)
+import { atsSyncCronJob } from "@/inngest/ats-sync-cron";
 import {
   scrapeJobsKenyaJob,
   scrapeJobsTanzaniaJob,
@@ -124,6 +125,7 @@ export const { GET, POST, PUT } = serve({
     scrapeComplianceSouthSudanJob,
 
     // Jobs – 6-country daily broad search
+    atsSyncCronJob,
     scrapeJobsKenyaJob,
     scrapeJobsTanzaniaJob,
     scrapeJobsUgandaJob,
