@@ -25,6 +25,17 @@ from urllib.parse import urlparse
 
 import httpx
 
+try:
+    from dotenv import load_dotenv
+    _root_env = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env.local"))
+    _scraper_env = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+    if os.path.exists(_root_env):
+        load_dotenv(_root_env)
+    if os.path.exists(_scraper_env):
+        load_dotenv(_scraper_env)
+except Exception:
+    pass
+
 logger = logging.getLogger("dom-agent")
 
 AgentEngine = Literal["native", "browser_use", "typesafe"]
@@ -168,6 +179,49 @@ async def _call_llm_decision(
         f"INTERACTIVE PAGE ELEMENTS:\n{elements_table}\n\n"
         "Decision JSON:"
     )
+
+    # 0. Primary: TypeSafe AI Jev System One (sub-second typed probabilistic decision)
+    typesafe_key = os.environ.get("TYPESAFE_API_KEY")
+    if typesafe_key and elements:
+        try:
+            from typesafe_sdk import TypeSafeClient, Choice
+
+            state = (
+                f"GOAL: {goal}\n"
+                f"CURRENT URL: {current_url}\n"
+                f"HISTORY: {history_str}"
+            )
+            criteria: Dict[str, str] = {}
+            for e in elements[:35]:
+                label = (e.get("text") or e.get("placeholder") or e.get("name") or e.get("role") or "").strip()[:50]
+                criteria[f"elem_{e['id']}"] = f"<{e.get('tag', 'elem')}> {label}"
+            criteria["scroll_down"] = "Scroll down the page to find more content or links"
+            criteria["done"] = "Target goal is already achieved or final content reached"
+
+            client = TypeSafeClient(api_key=typesafe_key)
+            result = client.system_one(
+                state=state,
+                questions={
+                    "next_step": Choice(
+                        instructions="Which element should the browser interact with next to achieve the goal?",
+                        criteria=criteria,
+                    )
+                },
+            )
+            chosen = result.choices["next_step"].choice
+            logger.info("DOM Agent: TypeSafe Jev System One selected: %s", chosen)
+            if chosen == "scroll_down":
+                return {"action": "SCROLL_DOWN", "target_id": None, "thought": "TypeSafe Jev: scroll down for more content"}
+            elif chosen == "done":
+                return {"action": "DONE", "target_id": None, "thought": "TypeSafe Jev: goal accomplished"}
+            elif chosen.startswith("elem_"):
+                elem_id = int(chosen.split("_")[1])
+                matched = next((e for e in elements if e["id"] == elem_id), None)
+                if matched and matched.get("tag") in ("input", "textarea"):
+                    return {"action": "TYPE", "target_id": elem_id, "value": goal, "thought": f"TypeSafe Jev: typing into element {elem_id}"}
+                return {"action": "CLICK", "target_id": elem_id, "thought": f"TypeSafe Jev: clicking element {elem_id}"}
+        except Exception as ts_err:
+            logger.warning("DOM Agent: TypeSafe decision fallback triggered: %s", ts_err)
 
     for env_var, base_url, model in _LLM_PROVIDERS:
         api_key = os.environ.get(env_var)
