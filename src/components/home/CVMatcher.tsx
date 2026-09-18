@@ -44,7 +44,7 @@ export function CVMatcher() {
 
       setIsUploading(false);
       setIsMatching(true);
-      setStatusText('AI scanning 20,000+ jobs for perfect matches...');
+      setStatusText('AI scanning active jobs for perfect matches...');
 
       // 2. Match CV
       const matchRes = await fetch('/api/match-cv', {

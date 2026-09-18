@@ -24,30 +24,33 @@ export async function runAtsSync() {
   let totalInserted = 0;
 
   for (const config of registry) {
-    console.log(`[ATS Sync Engine] Syncing ${config.companyName} (${config.atsType})...`);
+    const companyName = config.companyName || config.company;
+    const atsType = (config.atsType || "").toLowerCase();
+    
+    console.log(`[ATS Sync Engine] Syncing ${companyName} (${atsType})...`);
     
     let scrapedJobs: any[] = [];
     
     try {
-      if (config.atsType === 'oracle_hcm') {
+      if (atsType === 'oracle_hcm') {
         scrapedJobs = await fetchOracleJobs(config);
-      } else if (config.atsType === 'workday') {
+      } else if (atsType === 'workday') {
         scrapedJobs = await fetchWorkdayJobs(config);
-      } else if (config.atsType === 'greenhouse') {
+      } else if (atsType === 'greenhouse') {
         scrapedJobs = await fetchGreenhouseJobs(config);
-      } else if (config.atsType === 'lever') {
+      } else if (atsType === 'lever') {
         scrapedJobs = await fetchLeverJobs(config);
-      } else if (config.atsType === 'smartrecruiters') {
+      } else if (atsType === 'smartrecruiters') {
         scrapedJobs = await fetchSmartRecruitersJobs(config);
       } else {
-        console.warn(`[ATS Sync Engine] Unsupported ATS type: ${config.atsType}`);
+        console.warn(`[ATS Sync Engine] Unsupported ATS type: ${atsType}`);
       }
     } catch (e) {
-      console.error(`[ATS Sync Engine] Handler failed for ${config.companyName}:`, e);
+      console.error(`[ATS Sync Engine] Handler failed for ${companyName}:`, e);
     }
 
     if (scrapedJobs.length > 0) {
-      console.log(`[ATS Sync Engine] ${config.companyName}: Fetched ${scrapedJobs.length} active jobs. Inserting...`);
+      console.log(`[ATS Sync Engine] ${companyName}: Fetched ${scrapedJobs.length} active jobs. Inserting...`);
       
       // Batch insert with conflict ignore to prevent duplicates
       for (let i = 0; i < scrapedJobs.length; i += 50) {

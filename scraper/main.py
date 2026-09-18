@@ -238,6 +238,39 @@ class ExtractDocumentResponse(BaseModel):
     error: str | None = None
 
 
+# ── /browser_agent & /resolve_ats models ──────────────────────────────────────
+class BrowserAgentRequest(BaseModel):
+    url: str
+    goal: str
+    engine: Literal["native", "browser_use", "typesafe"] = "native"
+    max_steps: int = 5
+    timeout_seconds: float = 45.0
+
+
+class BrowserAgentResponse(BaseModel):
+    success: bool
+    final_url: str
+    actions_taken: list[str] = []
+    engine_used: str = "native"
+    duration_ms: int
+    html: str = ""
+    error: str | None = None
+
+
+class ResolveAtsRequest(BaseModel):
+    url: str
+    max_clicks: int = 3
+    timeout_seconds: float = 25.0
+
+
+class ResolveAtsResponse(BaseModel):
+    success: bool
+    source_url: str
+    employer_url: str | None = None
+    duration_ms: int
+    error: str | None = None
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
@@ -829,4 +862,76 @@ async def proxy_api(req: ApiProxyRequest, request: Request):
             success=False,
             status_code=500,
             error=str(exc)
+        )
+
+
+# ── /browser_agent ─────────────────────────────────────────────────────────────
+@app.post("/browser_agent", response_model=BrowserAgentResponse)
+async def browser_agent_endpoint(req: BrowserAgentRequest):
+    """
+    Run fast DOM-indexed browser navigation.
+    Engines: 'native' (default, Playwright + Groq/Gemini), 'browser_use', or 'typesafe'.
+    """
+    start = time.monotonic()
+    logger.info("BrowserAgent request: url=%s goal=%r engine=%s", req.url, req.goal[:80], req.engine)
+
+    try:
+        from fetchers.dom_agent import run_browser_agent
+        result = await run_browser_agent(
+            url=req.url,
+            goal=req.goal,
+            engine=req.engine,
+            max_steps=req.max_steps,
+        )
+        return BrowserAgentResponse(
+            success=result.get("success", False),
+            final_url=result.get("final_url", req.url),
+            actions_taken=result.get("actions_taken", []),
+            engine_used=result.get("engine_used", req.engine),
+            duration_ms=result.get("duration_ms", int((time.monotonic() - start) * 1000)),
+            html=result.get("html", ""),
+        )
+    except Exception as exc:
+        logger.error("BrowserAgent failed for %s: %s", req.url, exc, exc_info=True)
+        return BrowserAgentResponse(
+            success=False,
+            final_url=req.url,
+            actions_taken=[],
+            engine_used=req.engine,
+            duration_ms=int((time.monotonic() - start) * 1000),
+            error=str(exc),
+        )
+
+
+# ── /resolve_ats ───────────────────────────────────────────────────────────────
+@app.post("/resolve_ats", response_model=ResolveAtsResponse)
+async def resolve_ats_endpoint(req: ResolveAtsRequest):
+    """
+    Specifically navigates to a job aggregator page, clicks external apply buttons,
+    and resolves the final canonical ATS/employer URL.
+    """
+    start = time.monotonic()
+    logger.info("ResolveATS request: url=%s", req.url)
+
+    try:
+        from fetchers.dom_agent import resolve_ats_redirect
+        result = await resolve_ats_redirect(
+            url=req.url,
+            max_clicks=req.max_clicks,
+            timeout_seconds=req.timeout_seconds,
+        )
+        return ResolveAtsResponse(
+            success=result.get("success", False),
+            source_url=req.url,
+            employer_url=result.get("employer_url"),
+            duration_ms=result.get("duration_ms", int((time.monotonic() - start) * 1000)),
+        )
+    except Exception as exc:
+        logger.error("ResolveATS failed for %s: %s", req.url, exc, exc_info=True)
+        return ResolveAtsResponse(
+            success=False,
+            source_url=req.url,
+            employer_url=None,
+            duration_ms=int((time.monotonic() - start) * 1000),
+            error=str(exc),
         )

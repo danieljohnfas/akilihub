@@ -114,3 +114,33 @@ auth_config.json
 /scripts/fix-foreign-jobs.mjs
 /scripts/migrate-direct.ts
 /scripts/test-conn.mjs
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+.git.bak/
+
+# Local runner & scratch scripts
+/linode-*.mjs
+/linode_*.mjs
+/*-linode*.mjs
+/jobs.json
+/jobs2.json
+/pull_logs.mjs
+/push-*.mjs
+/push-*.js
+/scrape-*.mjs
+/scrape_*.mjs
+/seed-*.mjs
+/mass-*.mjs
+/check-*.mjs
+/check_*.mjs
+/static-*.mjs
+/test_*.mjs
+/test_*.json
+/audit-*.mjs
+/query_*.mjs
+/generate-*.mjs
+/groq-*.mjs
+

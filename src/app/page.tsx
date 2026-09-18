@@ -6,14 +6,20 @@ import { Suspense } from 'react';
 import nextDynamic from 'next/dynamic';
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildFAQSchema } from "@/components/seo/schemas";
+import { db, safeQuery } from '@/lib/db/client';
+import { jobs } from '@/lib/db/schema/jobs';
+import { tenders } from '@/lib/db/schema/tenders';
+import { countries } from '@/lib/db/schema/shared';
+import { complianceRequirements } from '@/lib/db/schema/compliance';
+import { salarySubmissions } from '@/lib/db/schema/salaries';
+import { healthDataPoints } from '@/lib/db/schema/health';
+import { CVMatcher } from '@/components/home/CVMatcher';
+import { count, eq, or, isNull, gt, and } from 'drizzle-orm';
+import type { Metadata } from 'next';
 
 const MagicCard = nextDynamic(() => import('@/components/ui/magic-card').then(mod => mod.MagicCard), { ssr: true });
 const RelatedGuides = nextDynamic(() => import('@/components/guides/RelatedGuides').then(mod => mod.RelatedGuides), { ssr: true });
 const LiveStats = nextDynamic(() => import('@/components/home/LiveStats').then(mod => mod.LiveStats), { ssr: true });
-
-
-
-import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   alternates: {
@@ -22,57 +28,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
-const features = [
-  {
-    title: "Procurement Intelligence",
-    description: "Search and apply for government tenders across East Africa.",
-    icon: FileText,
-    href: "/tenders",
-    color: "text-blue-500",
-    bg: "bg-blue-500/10"
-  },
-  {
-    title: "Jobs & Careers",
-    description: "Browse thousands of job openings sourced daily from across the web.",
-    icon: Briefcase,
-    href: "/jobs",
-    color: "text-amber-500",
-    bg: "bg-amber-500/10"
-  },
-  {
-    title: "Business Compliance",
-    description: "Permits, licenses, and legal requirements for your business type.",
-    icon: ShieldCheck,
-    href: "/compliance",
-    color: "text-purple-500",
-    bg: "bg-purple-500/10"
-  },
-  {
-    title: "Health Data Explorer",
-    description: "Interactive dashboards and trends from DHIS2 and WHO data.",
-    icon: Activity,
-    href: "/health",
-    color: "text-teal-500",
-    bg: "bg-teal-500/10"
-  },
-  {
-    title: "Salary Intelligence",
-    description: "Crowdsourced compensation data to negotiate better offers.",
-    icon: Banknote,
-    href: "/salaries",
-    color: "text-green-500",
-    bg: "bg-green-500/10"
-  },
-  {
-    title: "Developer Toolbox",
-    description: "Free DHIS2, FHIR, HL7, and ICD-11 tools for health IT pros.",
-    icon: Code,
-    href: "/developers",
-    color: "text-orange-500",
-    bg: "bg-orange-500/10"
-  }
-];
-
 
 const homeFAQSchema = buildFAQSchema([
   {
@@ -102,16 +57,15 @@ const homeFAQSchema = buildFAQSchema([
   },
 ]);
 
-import { db } from '@/lib/db/client';
-import { jobs } from '@/lib/db/schema/jobs';
-import { tenders } from '@/lib/db/schema/tenders';
-import { countries } from '@/lib/db/schema/shared';
-import { CVMatcher } from '@/components/home/CVMatcher';
-import { safeQuery } from '@/lib/db/client';
-import { count, eq, or, isNull, gt, and } from 'drizzle-orm';
-
 export default async function Home() {
-  const [activeJobsCount, openTendersCount, countriesCount] = await Promise.all([
+  const [
+    activeJobsCount,
+    openTendersCount,
+    countriesCount,
+    complianceCount,
+    healthCount,
+    salariesCount,
+  ] = await Promise.all([
     safeQuery(
       db.select({ value: count() }).from(jobs).where(
         and(
@@ -126,23 +80,98 @@ export default async function Home() {
     safeQuery(
       db.select({ value: count() }).from(countries)
     ),
+    safeQuery(
+      db.select({ value: count() }).from(complianceRequirements)
+    ),
+    safeQuery(
+      db.select({ value: count() }).from(healthDataPoints)
+    ),
+    safeQuery(
+      db.select({ value: count() }).from(salarySubmissions)
+    ),
   ]);
 
-  const jobsTotal = activeJobsCount?.[0]?.value ?? 1500;
-  const tendersTotal = openTendersCount?.[0]?.value ?? 226;
-  const countriesTotal = countriesCount?.[0]?.value ?? 9;
+  const jobsTotal = activeJobsCount?.[0]?.value ?? 35;
+  const tendersTotal = openTendersCount?.[0]?.value ?? 0;
+  const countriesTotal = countriesCount?.[0]?.value ?? 12;
+  const complianceTotal = complianceCount?.[0]?.value ?? 1322;
+  const healthTotal = healthCount?.[0]?.value ?? 666;
+  const salariesTotal = salariesCount?.[0]?.value ?? 1161;
+
+  const features = [
+    {
+      title: "Procurement Intelligence",
+      description: "Search and apply for government tenders across East Africa.",
+      icon: FileText,
+      href: "/tenders",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      badge: `${tendersTotal.toLocaleString()} Open Tenders`,
+      badgeStyle: "border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/10",
+    },
+    {
+      title: "Jobs & Careers",
+      description: "Browse verified job openings across East Africa sourced daily from direct employers.",
+      icon: Briefcase,
+      href: "/jobs",
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+      badge: `${jobsTotal.toLocaleString()}+ Active Openings`,
+      badgeStyle: "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10",
+    },
+    {
+      title: "Business Compliance",
+      description: "Permits, licenses, and legal requirements for your business type across 12 countries.",
+      icon: ShieldCheck,
+      href: "/compliance",
+      color: "text-purple-500",
+      bg: "bg-purple-500/10",
+      badge: `${complianceTotal.toLocaleString()} Requirements`,
+      badgeStyle: "border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10",
+    },
+    {
+      title: "Health Data Explorer",
+      description: "Interactive epidemiological metrics and trends from DHIS2 and WHO records.",
+      icon: Activity,
+      href: "/health",
+      color: "text-teal-500",
+      bg: "bg-teal-500/10",
+      badge: `${healthTotal.toLocaleString()} Data Points`,
+      badgeStyle: "border-teal-500/30 text-teal-600 dark:text-teal-400 bg-teal-500/10",
+    },
+    {
+      title: "Salary Intelligence",
+      description: "Verified compensation data and benchmarks to negotiate better offers.",
+      icon: Banknote,
+      href: "/salaries",
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      badge: `${salariesTotal.toLocaleString()} Verified Submissions`,
+      badgeStyle: "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
+    },
+    {
+      title: "Developer Toolbox",
+      description: "Free DHIS2, FHIR, HL7, and ICD-11 tools and REST API for technical teams.",
+      icon: Code,
+      href: "/developers",
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+      badge: "4 Toolkits & Open APIs",
+      badgeStyle: "border-orange-500/30 text-orange-600 dark:text-orange-400 bg-orange-500/10",
+    }
+  ];
 
   return (
     <>
       <JsonLd schema={homeFAQSchema} />
       <div className="flex flex-col items-center justify-center pt-16 pb-24 space-y-24">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 text-center space-y-6 max-w-4xl">
+      <section className="container mx-auto px-4 text-center space-y-6 max-w-5xl">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-foreground/70 pb-2">
-          Find Jobs Across <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">East Africa</span>
+          East Africa Professional <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Intelligence</span>
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
-          {jobsTotal.toLocaleString()}+ Active Jobs | {countriesTotal} Countries | Updated Daily
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
+          {jobsTotal.toLocaleString()}+ Active Jobs | {tendersTotal.toLocaleString()} Tenders | {complianceTotal.toLocaleString()} Compliance Requirements | {countriesTotal} Countries
         </p>
         
         <div className="max-w-2xl mx-auto mt-8">
@@ -153,7 +182,7 @@ export default async function Home() {
             <input 
               type="text" 
               name="q"
-              placeholder="Search jobs, companies, skills or locations..." 
+              placeholder="Search jobs, tenders, compliance or skills..." 
               className="w-full pl-14 pr-32 py-5 rounded-full bg-background border border-input shadow-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-lg transition-all"
             />
             <button 
@@ -184,29 +213,39 @@ export default async function Home() {
           </div>
         </div>
 
+        {/* Live Stats across all 6 modules */}
         <Suspense fallback={<div className="h-24 mt-8" />}>
-          <LiveStats jobsTotal={jobsTotal} tendersTotal={tendersTotal} countriesTotal={countriesTotal} />
+          <LiveStats 
+            jobsTotal={jobsTotal} 
+            tendersTotal={tendersTotal} 
+            countriesTotal={countriesTotal}
+            complianceTotal={complianceTotal}
+            healthTotal={healthTotal}
+            salariesTotal={salariesTotal}
+          />
         </Suspense>
       </section>
 
-      {/* NEW: CV Matcher Section */}
+      {/* CV Matcher Section */}
       <CVMatcher />
 
       {/* Features Grid */}
       <section className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Make first two cards span more logically if needed, but 2+3 grid usually means 2 rows */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:col-span-3">
             {features.slice(0, 2).map((feature) => (
               <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-border shadow-sm dark:border-white/10">
                 <CardHeader className="text-center flex flex-col items-center">
-                  <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-5 ring-1 ring-border dark:ring-white/10 shadow-inner`}>
+                  <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-3 ring-1 ring-border dark:ring-white/10 shadow-inner`}>
                     <feature.icon className={`h-7 w-7 ${feature.color}`} />
                   </div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border mb-3 ${feature.badgeStyle}`}>
+                    {feature.badge}
+                  </span>
                   <CardTitle className="text-2xl font-bold tracking-tight">{feature.title}</CardTitle>
-                  <CardDescription className="text-base pt-3 leading-relaxed">{feature.description}</CardDescription>
+                  <CardDescription className="text-base pt-2 leading-relaxed">{feature.description}</CardDescription>
                 </CardHeader>
-                <CardFooter className="mt-auto pt-8 pb-6 bg-transparent border-t-0 flex justify-center">
+                <CardFooter className="mt-auto pt-6 pb-6 bg-transparent border-t-0 flex justify-center">
                   <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-muted group" })}>
                     <span className="font-medium">Explore {feature.title}</span> <ArrowRight className="h-5 w-5 ml-2 text-muted-foreground group-hover:translate-x-1 group-hover:text-foreground transition-all" />
                   </Link>
@@ -215,15 +254,18 @@ export default async function Home() {
             ))}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:col-span-3">
             {features.slice(2, 6).map((feature) => (
               <MagicCard key={feature.title} className="flex flex-col h-full hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-card/60 backdrop-blur-2xl border-border shadow-sm dark:border-white/10">
                 <CardHeader className="text-center flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-4 ring-1 ring-border dark:ring-white/10 shadow-inner`}>
+                  <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-3 ring-1 ring-border dark:ring-white/10 shadow-inner`}>
                     <feature.icon className={`h-6 w-6 ${feature.color}`} />
                   </div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border mb-2 ${feature.badgeStyle}`}>
+                    {feature.badge}
+                  </span>
                   <CardTitle className="text-xl font-bold tracking-tight">{feature.title}</CardTitle>
-                  <CardDescription className="pt-2 leading-relaxed">{feature.description}</CardDescription>
+                  <CardDescription className="pt-2 leading-relaxed text-sm">{feature.description}</CardDescription>
                 </CardHeader>
                 <CardFooter className="mt-auto pt-6 pb-6 bg-transparent border-t-0 flex justify-center">
                   <Link href={feature.href} className={buttonVariants({ variant: "ghost", className: "w-full justify-center hover:bg-muted group" })}>
@@ -243,7 +285,7 @@ export default async function Home() {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Let AI Find Your Perfect Role</h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Stop applying blindly. Upload your CV and let our AI calculate your match percentage for thousands of jobs across East Africa, suggest improvements, and generate tailored cover letters.
+                Stop applying blindly. Upload your CV and let our AI calculate your match percentage for active jobs across East Africa, suggest improvements, and generate tailored cover letters.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/login?redirect=/dashboard/cv-analyzer" className={buttonVariants({ size: "lg", className: "rounded-full shadow-lg shadow-primary/20 text-md px-8" })}>
@@ -255,14 +297,13 @@ export default async function Home() {
               </div>
             </div>
             <div className="hidden md:flex flex-col gap-4">
-              {/* Funnel visual representation */}
               <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-border dark:border-white/10">
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 font-bold">1</div>
                 <div><p className="font-semibold">Upload CV</p><p className="text-xs text-muted-foreground">PDF or Word</p></div>
               </div>
               <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-border dark:border-white/10 ml-6">
                 <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 font-bold">2</div>
-                <div><p className="font-semibold">AI Match</p><p className="text-xs text-muted-foreground">&quot;You match 84% of 37 jobs&quot;</p></div>
+                <div><p className="font-semibold">AI Match</p><p className="text-xs text-muted-foreground">Tailored role & skill fit scoring</p></div>
               </div>
               <div className="flex items-center gap-4 bg-card/60 backdrop-blur-sm p-4 rounded-xl border border-border dark:border-white/10 ml-12">
                 <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 font-bold">3</div>
@@ -270,7 +311,6 @@ export default async function Home() {
               </div>
             </div>
           </div>
-          {/* Background decoration */}
           <div className="absolute right-0 bottom-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
         </div>
       </section>

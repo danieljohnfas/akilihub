@@ -10,6 +10,7 @@ import {
   ScraplingStrategy,
   FirecrawlStrategy,
   Crawl4AiStrategy,
+  BrowserAgentStrategy,
   type TenderResult,
   type PortalType,
 } from "@/lib/strategies/scraper-strategies";
@@ -246,13 +247,14 @@ export async function saveBroadResults(
 }
 
 // ── Strategy cascade ──────────────────────────────────────────────────────────
-// Order: Scrapling (stealth) → Firecrawl (cloud) → Crawl4AI (local)
+// Order: Scrapling (stealth) → BrowserAgent (DOM interactive) → Crawl4AI (local) → Firecrawl (cloud)
 // If all strategies fail, falls back to broad Google Search + AI extraction.
 function buildStrategyEngine() {
   return new StrategyEngine([
     new ScraplingStrategy(),
-    new FirecrawlStrategy(),
+    new BrowserAgentStrategy('native'),
     new Crawl4AiStrategy(),
+    new FirecrawlStrategy(),
   ]);
 }
 

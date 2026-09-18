@@ -19,6 +19,9 @@ export async function fetchGreenhouseJobs(config: any) {
     
     if (jobsList.length === 0) return [];
 
+    const companyName = config.companyName || config.company;
+    const employerUrl = config.employerUrl || `https://boards.greenhouse.io/${config.boardToken}`;
+
     const parsedJobs = [];
     for (const req of jobsList) {
       let countryId = null;
@@ -32,13 +35,15 @@ export async function fetchGreenhouseJobs(config: any) {
         }
       }
 
+      const fallbackCountryCode = config.defaultCountryCode || (config.country ? config.country.substring(0,2).toUpperCase() : null);
+
       // If location doesn't specifically match but company operates strictly in default country
-      if (!countryId && config.defaultCountryCode) {
+      if (!countryId && fallbackCountryCode) {
         const defaultMap: Record<string, string> = { 
-          "ZA": "south africa", "KE": "kenya", "TZ": "tanzania", 
+          "ZA": "south africa", "KE": "kenya", "TZ": "tanzania", "TA": "tanzania",
           "UG": "uganda", "RW": "rwanda", "NG": "nigeria", "GH": "ghana", "ZM": "zambia", "ET": "ethiopia" 
         };
-        const defaultName = defaultMap[config.defaultCountryCode];
+        const defaultName = defaultMap[fallbackCountryCode] || (config.country ? config.country.toLowerCase() : null);
         if (defaultName && loc.includes(defaultName)) {
            countryId = countryMap.get(defaultName) || null;
         }
@@ -47,19 +52,24 @@ export async function fetchGreenhouseJobs(config: any) {
             countryId = countryMap.get(defaultName) || null;
         }
       }
+      
+      // Final fallback to the country if explicitly defined in config
+      if (!countryId && config.country) {
+          countryId = countryMap.get(config.country.toLowerCase()) || null;
+      }
 
       if (!countryId) continue; // Skip jobs not in our 9 target countries
 
       parsedJobs.push({
         title: req.title,
-        companyName: config.companyName,
+        companyName: companyName,
         // Greenhouse returns raw HTML in content, but for DB we can keep it or strip it.
         // We will store the HTML in description, frontend can render it safely.
         description: req.content ? req.content.substring(0, 5000) : "View full description on company portal.",
         countryId: countryId,
         jobType: "full_time", // Default
         sourceUrl: req.absolute_url,
-        employerUrl: config.employerUrl,
+        employerUrl: employerUrl,
         postedDate: req.updated_at ? new Date(req.updated_at) : new Date(),
         deadline: null,
         isActive: true,

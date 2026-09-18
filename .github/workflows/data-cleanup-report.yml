@@ -11,4 +11,6 @@ jobs:
     steps:
       - name: Trigger Send Report Endpoint
         run: |
-          curl -X GET "https://akilibrain.com/api/admin/send-report" -H "User-Agent: GitHub-Action"
+          curl -f -s -X GET "https://akilibrain.com/api/admin/send-report" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "User-Agent: GitHub-Action"

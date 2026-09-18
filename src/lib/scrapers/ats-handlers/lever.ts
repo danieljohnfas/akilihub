@@ -13,7 +13,11 @@ export async function fetchLeverJobs(config: any) {
       countryMap.set(c.name.toLowerCase(), c.id);
     }
 
-    const endpoint = `https://api.lever.co/v0/postings/${config.accountName}?mode=json`;
+    const accountName = config.accountName || config.boardToken;
+    const companyName = config.companyName || config.company;
+    const employerUrl = config.employerUrl || `https://jobs.lever.co/${accountName}`;
+
+    const endpoint = `https://api.lever.co/v0/postings/${accountName}?mode=json`;
     const data = await fetchAtsApi(endpoint);
     // Lever returns an array of postings directly
     const jobsList = Array.isArray(data) ? data : [];
@@ -33,32 +37,37 @@ export async function fetchLeverJobs(config: any) {
         }
       }
 
+      const fallbackCountryCode = config.defaultCountryCode || (config.country ? config.country.substring(0,2).toUpperCase() : null);
+
       // If location doesn't specifically match
-      if (!countryId && config.defaultCountryCode) {
+      if (!countryId && fallbackCountryCode) {
         const defaultMap: Record<string, string> = { 
-          "ZA": "south africa", "KE": "kenya", "TZ": "tanzania", 
+          "ZA": "south africa", "KE": "kenya", "TZ": "tanzania", "TA": "tanzania",
           "UG": "uganda", "RW": "rwanda", "NG": "nigeria", "GH": "ghana", "ZM": "zambia", "ET": "ethiopia" 
         };
-        const defaultName = defaultMap[config.defaultCountryCode];
+        const defaultName = defaultMap[fallbackCountryCode] || (config.country ? config.country.toLowerCase() : null);
         if (defaultName && (loc.includes(defaultName) || loc.includes('remote') || loc.includes('anywhere'))) {
            countryId = countryMap.get(defaultName) || null;
         }
+      }
+      
+      if (!countryId && config.country) {
+          countryId = countryMap.get(config.country.toLowerCase()) || null;
       }
 
       if (!countryId) continue; 
 
       parsedJobs.push({
         title: req.text,
-        companyName: config.companyName,
-        description: req.descriptionPlain ? req.descriptionPlain.substring(0, 5000) : "View full description on company portal.",
+        companyName: companyName,
+        description: req.descriptionPlain || req.description,
         countryId: countryId,
-        jobType: req.categories?.commitment === "Part time" ? "part_time" : "full_time",
+        jobType: "full_time",
         sourceUrl: req.hostedUrl,
-        employerUrl: config.employerUrl,
+        employerUrl: employerUrl,
         postedDate: req.createdAt ? new Date(req.createdAt) : new Date(),
         deadline: null,
         isActive: true,
-        sector: config.sector,
         needsAiExtraction: false
       });
     }

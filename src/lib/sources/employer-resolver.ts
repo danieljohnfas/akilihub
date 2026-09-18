@@ -49,7 +49,7 @@ export interface ResolvedEmployerUrl {
   /** Whether the source URL was already a government portal. */
   isGovernmentPortal: boolean;
   /** Resolution method used */
-  method?: 'direct_ats' | 'direct_gov' | 'direct_employer' | 'html_extraction' | 'search_resolution' | 'unresolved';
+  method?: 'direct_ats' | 'direct_gov' | 'direct_employer' | 'html_extraction' | 'browser_agent' | 'search_resolution' | 'unresolved';
 }
 
 /**
@@ -252,7 +252,41 @@ export async function resolveEmployerUrl(
     console.error(`[employer-resolver] Failed to fetch ${sourceUrl}:`, (err as Error).message);
   }
 
-  // Stage 5: Search engine fallback (Serper)
+  // Stage 5: Browser Agent Deep Click Resolution (navigates & clicks "Apply Now" button)
+  if (isAgg) {
+    try {
+      const sidecarUrl = process.env.SCRAPLING_URL ?? process.env.SIDECAR_URL ?? 'http://localhost:8001';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20_000);
+      try {
+        const res = await fetch(`${sidecarUrl}/resolve_ats`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: sourceUrl }),
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.employer_url && isEmployerUrl(data.employer_url)) {
+            console.log(`[employer-resolver] BrowserAgent resolved ATS: ${sourceUrl} -> ${data.employer_url}`);
+            return {
+              employerUrl: data.employer_url,
+              isAggregator: true,
+              isAtsPlatform: isAtsPlatform(data.employer_url),
+              isGovernmentPortal: isGovernmentPortal(data.employer_url),
+              method: 'browser_agent',
+            };
+          }
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (err) {
+      console.warn(`[employer-resolver] BrowserAgent resolution skipped/failed for ${sourceUrl}:`, (err as Error).message);
+    }
+  }
+
+  // Stage 6: Search engine fallback (Serper)
   if (metadata?.company || metadata?.title) {
     try {
       const searched = await searchEmployerViaSerper(metadata.company, metadata.title);
@@ -270,7 +304,7 @@ export async function resolveEmployerUrl(
     }
   }
 
-  // Stage 6: Fallback (unresolved)
+  // Stage 7: Fallback (unresolved)
   return {
     employerUrl: null,
     isAggregator: true,

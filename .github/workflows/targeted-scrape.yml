@@ -9,7 +9,9 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 360 # Allow it to run for up to 6 hours
+    permissions:
+      contents: write
+    timeout-minutes: 180 # Cap at 3 hours
 
     steps:
       - name: Checkout Repository
@@ -20,22 +22,35 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps --no-audit
 
       - name: Create Remote Env File
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.remote
           echo "DIRECT_URL=${{ secrets.DIRECT_URL }}" >> .env.remote
-          echo "EXA_API_KEY=${{ secrets.EXA_API_KEY }}" >> .env.remote
+          echo "GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}" >> .env.remote
           echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env.remote
-          echo "GITHUB_MODELS_TOKEN=${{ secrets.GITHUB_MODELS_TOKEN }}" >> .env.remote
+          echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY }}" >> .env.remote
+          echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}" >> .env.remote
           echo "ZAI_API_KEY=${{ secrets.ZAI_API_KEY }}" >> .env.remote
+          echo "MISTRAL_API_KEY=${{ secrets.MISTRAL_API_KEY }}" >> .env.remote
+          echo "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" >> .env.remote
+          echo "CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" >> .env.remote
+          echo "HYPERBOLIC_API_KEY=${{ secrets.HYPERBOLIC_API_KEY }}" >> .env.remote
+          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env.remote
+          echo "HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}" >> .env.remote
+          echo "COHERE_API_KEY=${{ secrets.COHERE_API_KEY }}" >> .env.remote
+          echo "MINIMAX_API_KEY=${{ secrets.MINIMAX_API_KEY }}" >> .env.remote
+          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env.remote
+          echo "SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}" >> .env.remote
+          echo "EXA_API_KEY=${{ secrets.EXA_API_KEY }}" >> .env.remote
           echo "GOOGLE_CSE_API_KEY=${{ secrets.GOOGLE_CSE_API_KEY }}" >> .env.remote
           echo "GOOGLE_CSE_ID=${{ secrets.GOOGLE_CSE_ID }}" >> .env.remote
-          # Include all required API keys for AI Router
+          echo "GH_MODELS_TOKEN=${{ secrets.GH_MODELS_TOKEN }}" >> .env.remote
+          echo "GITHUB_MODELS_TOKEN=${{ secrets.GH_MODELS_TOKEN }}" >> .env.remote
 
       - name: Run Company Discovery (Single Sweep)
         run: |

@@ -1,10 +1,10 @@
 import { db } from './src/lib/db/client';
 import { sql } from 'drizzle-orm';
 async function run() {
-  const jobs = await db.execute(sql\SELECT COUNT(*) as count FROM jobs\);
-  const tenders = await db.execute(sql\SELECT COUNT(*) as count FROM tenders\);
-  const compliance = await db.execute(sql\SELECT COUNT(*) as count FROM compliance_requirements\);
-  const health = await db.execute(sql\SELECT COUNT(*) as count FROM health_data_points\);
+  const jobs = await db.execute(sql`SELECT COUNT(*) as count FROM jobs`);
+  const tenders = await db.execute(sql`SELECT COUNT(*) as count FROM tenders`);
+  const compliance = await db.execute(sql`SELECT COUNT(*) as count FROM compliance_requirements`);
+  const health = await db.execute(sql`SELECT COUNT(*) as count FROM health_data_points`);
   
   console.log('--- DATABASE RECORD COUNTS ---');
   console.log('Jobs:', jobs[0].count);
@@ -17,4 +17,3 @@ async function run() {
   process.exit(0);
 }
 run();
-

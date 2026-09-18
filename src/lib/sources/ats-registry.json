@@ -64,5 +64,65 @@
     "defaultCountryCode": "RW",
     "sector": "Technology",
     "employerUrl": "https://andela.com/careers/"
+  },
+  {
+    "company": "imagineworldwide",
+    "atsType": "Greenhouse",
+    "boardToken": "imagineworldwide",
+    "country": "Tanzania"
+  },
+  {
+    "company": "oneacrefundtanzania",
+    "atsType": "Greenhouse",
+    "boardToken": "oneacrefundtanzania",
+    "country": "Tanzania"
+  },
+  {
+    "company": "remotecom",
+    "atsType": "Greenhouse",
+    "boardToken": "remotecom",
+    "country": "Tanzania"
+  },
+  {
+    "company": "educate",
+    "atsType": "Greenhouse",
+    "boardToken": "educate",
+    "country": "Tanzania"
+  },
+  {
+    "company": "weloglobal",
+    "atsType": "Lever",
+    "boardToken": "weloglobal",
+    "country": "Tanzania"
+  },
+  {
+    "company": "find",
+    "atsType": "Lever",
+    "boardToken": "find",
+    "country": "Tanzania"
+  },
+  {
+    "company": "jobgether",
+    "atsType": "Lever",
+    "boardToken": "jobgether",
+    "country": "Kenya"
+  },
+  {
+    "company": "remotereferralboardinternaluseonly",
+    "atsType": "Greenhouse",
+    "boardToken": "remotereferralboardinternaluseonly",
+    "country": "Ghana"
+  },
+  {
+    "company": "gohighlevel",
+    "atsType": "Lever",
+    "boardToken": "gohighlevel",
+    "country": "Ghana"
+  },
+  {
+    "company": "employ",
+    "atsType": "Lever",
+    "boardToken": "employ",
+    "country": "Ghana"
   }
 ]

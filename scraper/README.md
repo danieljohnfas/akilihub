@@ -103,6 +103,36 @@ The `web` service will automatically use `http://scrapling:8001` via the
 | `armp_cd` | DRC | armp.cd |
 | `generic` | Any | Heuristic extraction |
 
+### `POST /browser_agent` (DOM-Indexed Interactive Navigation)
+
+Navigates dynamic websites with forms, dropdowns, and pagination without vision screenshots:
+
+```json
+{
+  "url": "https://tenders.go.ke/tenders/open",
+  "goal": "Filter by Works and click Search to display active tenders",
+  "engine": "native",
+  "max_steps": 5
+}
+```
+
+Engines:
+- `"native"` (default): Uses local Playwright + Groq / Gemini Flash. Fast, zero-waitlist.
+- `"browser_use"`: Uses `browser-use` library if installed.
+- `"typesafe"`: Uses TypeSafe Jev Ultrafast when `TYPESAFE_API_KEY` is present.
+
+### `POST /resolve_ats` (Aggregator Deep Click Resolution)
+
+Specifically navigates aggregator job listings (e.g. BrighterMonday, ReliefWeb), clicks external application buttons, and captures the direct destination ATS/employer URL:
+
+```json
+{
+  "url": "https://www.brightermonday.co.ke/jobs/123456",
+  "max_clicks": 3
+}
+```
+
+
 ## Pause / Resume for Large Crawls
 
 ```bash

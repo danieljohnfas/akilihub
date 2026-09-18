@@ -259,3 +259,68 @@ export class Crawl4AiStrategy implements Strategy<ScraperInput, TenderResult[]> 
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STRATEGY 5: BrowserAgent — Ultra-fast DOM-indexed agent via sidecar /browser_agent
+// Handles dynamic interactive portals (dropdowns, category selectors, pagination).
+// Supports engines: "native" (default), "browser_use", or "typesafe".
+// ─────────────────────────────────────────────────────────────────────────────
+export class BrowserAgentStrategy implements Strategy<ScraperInput, TenderResult[]> {
+  name = 'BrowserAgent (DOM-Indexed Interactive Agent)';
+
+  private readonly baseUrl: string;
+  private readonly engine: 'native' | 'browser_use' | 'typesafe';
+
+  constructor(engine: 'native' | 'browser_use' | 'typesafe' = 'native') {
+    this.baseUrl = process.env.SCRAPLING_URL ?? process.env.SIDECAR_URL ?? 'http://localhost:8001';
+    this.engine = engine;
+  }
+
+  async execute(input: ScraperInput): Promise<TenderResult[]> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60_000);
+
+    const goal = input.searchQuery
+      ? `Search or filter for "${input.searchQuery}" and find public tender listings with their title, reference, and deadline.`
+      : `Navigate to open tenders/procurement listings and ensure the table or list of active tenders is displayed.`;
+
+    try {
+      console.log(`[BrowserAgentStrategy] Calling sidecar /browser_agent for ${input.url} (engine: ${this.engine})`);
+
+      const response = await fetch(`${this.baseUrl}/browser_agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: input.url,
+          goal,
+          engine: this.engine,
+          max_steps: 5,
+          timeout_seconds: 45.0,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`BrowserAgent sidecar error ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success && !data.html) {
+        throw new Error(`BrowserAgent reported failure: ${data.error ?? 'unknown'}`);
+      }
+
+      console.log(`[BrowserAgentStrategy] Agent finished in ${data.duration_ms}ms with final URL: ${data.final_url}`);
+
+      // Extract structured results from the final rendered HTML
+      const html = data.html || '';
+      if (!html) return [];
+
+      const tenders = extractFromHtml(html, input.portalType, data.final_url || input.url);
+      console.log(`[BrowserAgentStrategy] Extracted ${tenders.length} tenders from rendered page`);
+      return tenders;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+

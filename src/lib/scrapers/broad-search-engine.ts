@@ -208,7 +208,10 @@ async function searchExa(query: string, numResults: number): Promise<string[]> {
     }
     return finalUrls;
     } catch (error: any) {
-    if (error.message === "EXA_QUOTA_EXCEEDED") throw error;
+    if (error.message === "EXA_QUOTA_EXCEEDED") {
+      console.warn('[searchExa] Exa quota exceeded. Falling back to next engine.');
+      return [];
+    }
     console.error('[searchExa] Error:', error);
     return [];
   }
