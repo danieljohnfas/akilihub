@@ -81,8 +81,8 @@ const TARGETS = [
     base: 'https://jobwebethiopia.com/jobs/page/',
     defaultLocation: 'Addis Ababa, Ethiopia',
     defaultEmployer: 'Verified Employer Ethiopia',
-    startPage: 86,
-    endPage: 100
+    startPage: 101,
+    endPage: 115
   },
   {
     countryCode: 'ZA',
@@ -90,8 +90,8 @@ const TARGETS = [
     base: 'https://jobwebzambia.com/jobs/page/',
     defaultLocation: 'Lusaka, Zambia',
     defaultEmployer: 'Verified Employer Zambia',
-    startPage: 86,
-    endPage: 100
+    startPage: 101,
+    endPage: 115
   },
   {
     countryCode: 'GH',
@@ -99,8 +99,8 @@ const TARGETS = [
     base: 'https://jobwebghana.com/jobs/page/',
     defaultLocation: 'Accra, Ghana',
     defaultEmployer: 'Verified Employer Ghana',
-    startPage: 86,
-    endPage: 100
+    startPage: 101,
+    endPage: 115
   },
   {
     countryCode: 'KE',
@@ -108,8 +108,8 @@ const TARGETS = [
     base: 'https://jobwebkenya.com/jobs/page/',
     defaultLocation: 'Nairobi, Kenya',
     defaultEmployer: 'Verified Employer Kenya',
-    startPage: 86,
-    endPage: 100
+    startPage: 101,
+    endPage: 115
   }
 ];
 
