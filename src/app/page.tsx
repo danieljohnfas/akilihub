@@ -91,8 +91,8 @@ export default async function Home() {
     ),
   ]);
 
-  const jobsTotal = activeJobsCount?.[0]?.value ?? 5000;
-  const tendersTotal = openTendersCount?.[0]?.value ?? 4600;
+  const jobsTotal = activeJobsCount?.[0]?.value ?? 5400;
+  const tendersTotal = openTendersCount?.[0]?.value ?? 6500;
   const countriesTotal = countriesCount?.[0]?.value ?? 12;
   const complianceTotal = complianceCount?.[0]?.value ?? 1322;
   const healthTotal = healthCount?.[0]?.value ?? 2869;

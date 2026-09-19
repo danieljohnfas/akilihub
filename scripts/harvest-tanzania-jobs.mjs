@@ -39,7 +39,7 @@ if (!DATABASE_URL) {
 const sql = postgres(DATABASE_URL + '?sslmode=require', { max: 5 });
 
 const TZ_COUNTRY_ID = '28bd1d89-acc4-4142-a6f9-b06b5cfa8435';
-const TARGET_JOBS = 2000;
+const TARGET_JOBS = 2500;
 const PROGRESS_FILE = path.resolve(process.cwd(), 'storage/harvest_progress.json');
 
 const BANNED_COMPANIES = new Set([

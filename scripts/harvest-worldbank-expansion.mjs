@@ -65,8 +65,8 @@ function mapCategory(groupCode, desc) {
 
 async function harvestWorldBankExpansion() {
   console.log('================================================================');
-  console.log('🌍 WORLD BANK OPEN PROCUREMENT EXPANSION HARVESTER');
-  console.log('🎯 Sourcing offset 350 (200 notices per country) for all 12 nations');
+  console.log('🌍 WORLD BANK OPEN PROCUREMENT EXPANSION HARVESTER (BATCH 4)');
+  console.log('🎯 Sourcing offset 550 (200 notices per country) for all 12 nations');
   console.log('================================================================\n');
 
   const dbCountries = await sql`SELECT id, code, name FROM countries`;
@@ -81,8 +81,8 @@ async function harvestWorldBankExpansion() {
     const countryId = countryMap.get(target.code);
     if (!countryId) continue;
 
-    console.log(`\n--- Sourcing batch 3 for ${target.name} (${target.code}) ---`);
-    const url = `https://search.worldbank.org/api/v2/procnotices?format=json&project_ctry_name_exact=${encodeURIComponent(target.queryName)}&rows=200&os=350`;
+    console.log(`\n--- Sourcing batch 4 for ${target.name} (${target.code}) ---`);
+    const url = `https://search.worldbank.org/api/v2/procnotices?format=json&project_ctry_name_exact=${encodeURIComponent(target.queryName)}&rows=200&os=550`;
 
     try {
       const res = await fetch(url, {
