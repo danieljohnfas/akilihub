@@ -105,8 +105,8 @@ async function harvestMediaCongoDRC() {
 
   for (const [jobUrl, linkText] of allJobLinks.entries()) {
     try {
-      const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${jobUrl} LIMIT 1`;
-      if (existing) {
+      const [existing] = await sql`SELECT id, employer_url FROM jobs WHERE source_url = ${jobUrl} LIMIT 1`;
+      if (existing && existing.employer_url) {
         skipped++;
         continue;
       }
@@ -221,6 +221,16 @@ async function harvestMediaCongoDRC() {
         if (emailMatch && !emailMatch[0].includes('mediacongo') && !emailMatch[0].includes('example.com')) {
           directEndpoint = `mailto:${emailMatch[0]}`;
         }
+      }
+
+      if (directEndpoint && directEndpoint.startsWith('http')) {
+        try {
+          const u = new URL(directEndpoint);
+          u.searchParams.delete('utm_source');
+          u.searchParams.delete('utm_medium');
+          u.searchParams.delete('utm_campaign');
+          directEndpoint = u.toString().replace(/\?$/, '');
+        } catch (e) {}
       }
 
       const [inserted] = await sql`
