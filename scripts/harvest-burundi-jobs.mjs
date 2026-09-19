@@ -113,8 +113,8 @@ async function harvestBurundiJobs() {
 
   for (const [jobUrl, meta] of jobLinks.entries()) {
     try {
-      const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${jobUrl} LIMIT 1`;
-      if (existing) continue;
+      const [existing] = await sql`SELECT id, employer_url FROM jobs WHERE source_url = ${jobUrl} LIMIT 1`;
+      if (existing && existing.employer_url) continue;
 
       const detailRes = await fetch(jobUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36' },
@@ -154,6 +154,34 @@ async function harvestBurundiJobs() {
         jobType = 'internship';
       }
 
+      // Extract direct apply endpoint (direct ATS link or official email)
+      let directEndpoint = null;
+      $('a').each((_, el) => {
+        const h = $(el).attr('href');
+        const t = $(el).text().trim().toLowerCase();
+        if (!h || h.startsWith('#') || h.includes('jobinburundi.com')) return;
+        if (/postuler|apply|recrutement|career|portal|submit/i.test(t) || /greenhouse|lever|workday|bamboohr|smartrecruiters|taleo|\.bi/i.test(h)) {
+          if (h.startsWith('http')) directEndpoint = h;
+        }
+      });
+
+      if (!directEndpoint) {
+        const emailMatch = description.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch && !emailMatch[0].includes('jobinburundi') && !emailMatch[0].includes('example.com')) {
+          directEndpoint = `mailto:${emailMatch[0]}`;
+        }
+      }
+
+      if (directEndpoint && directEndpoint.startsWith('http')) {
+        try {
+          const u = new URL(directEndpoint);
+          u.searchParams.delete('utm_source');
+          u.searchParams.delete('utm_medium');
+          u.searchParams.delete('utm_campaign');
+          directEndpoint = u.toString().replace(/\?$/, '');
+        } catch (e) {}
+      }
+
       const [inserted] = await sql`
         INSERT INTO jobs (
           title,
@@ -163,6 +191,7 @@ async function harvestBurundiJobs() {
           job_type,
           source_url,
           employer_url,
+          is_aggregator_source,
           location,
           is_active,
           posted_date
@@ -173,12 +202,16 @@ async function harvestBurundiJobs() {
           ${burundi.id},
           ${jobType},
           ${jobUrl},
-          ${jobUrl},
+          ${directEndpoint},
+          true,
           ${location.slice(0, 255)},
           true,
           NOW()
         )
-        ON CONFLICT (source_url) DO NOTHING
+        ON CONFLICT (source_url) DO UPDATE SET 
+          is_active = true,
+          employer_url = COALESCE(EXCLUDED.employer_url, jobs.employer_url),
+          is_aggregator_source = true
         RETURNING id
       `;
 
