@@ -59,13 +59,10 @@ async function harvestDRCJobs() {
   console.log(`Target Country: ${drc.name} (UUID: ${drc.id})\n`);
 
   // MediaCongo employment sections and paginated pages
-  const listingUrls = [
-    'https://www.mediacongo.net/emplois.html',
-    'https://www.mediacongo.net/emplois-recrutement.html',
-  ];
+  const listingUrls = [];
 
-  // Additional pages if available
-  for (let p = 2; p <= 6; p++) {
+  // Deep crawl pages 7 through 20
+  for (let p = 7; p <= 20; p++) {
     listingUrls.push(`https://www.mediacongo.net/emplois-${p}.html`);
   }
 

@@ -100,7 +100,7 @@ async function harvestKenyaExpansion() {
     const catSlug = baseCat.split('/job-category/')[1]?.replace(/\/$/, '') || 'category';
     console.log(`\nSourcing Category: ${catSlug}...`);
 
-    for (let page = 2; page <= 3; page++) {
+    for (let page = 4; page <= 5; page++) {
       const pageUrl = `${baseCat}page/${page}/`;
 
       try {

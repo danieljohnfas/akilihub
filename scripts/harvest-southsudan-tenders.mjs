@@ -1,13 +1,13 @@
 /**
- * scripts/harvest-southsudan-forum.mjs
+ * scripts/harvest-southsudan-tenders.mjs
  *
- * Autonomous job harvester for South Sudan sourcing from the official
- * South Sudan NGO Forum Communications Portal:
- *  - 100% verified institutional & humanitarian vacancies across South Sudan
- *  - Direct real employers (African Parks, CMMB, LWF, Save the Children, World Vision, IMC, etc.)
- *  - Authentic rich descriptions (> 100 characters)
+ * Autonomous tender & procurement harvester for South Sudan sourcing from the
+ * South Sudan NGO Forum Communications Discourse API:
+ *  - Official tenders, RFPs, Expressions of Interest, and Call for Bids
+ *  - Real contracting authorities (UNICEF, UNHCR, Save the Children, World Vision, Oxfam, IMC, etc.)
+ *  - Authentic rich descriptions from topic post body
  *  - Canonical country UUID for South Sudan (SS)
- *  - Deduplication on source_url
+ *  - Deduplication on reference_no / source_url
  */
 
 import postgres from 'postgres';
@@ -43,52 +43,51 @@ function cleanText(txt) {
   return txt.replace(/\s+/g, ' ').trim();
 }
 
-function extractEmployerFromTitle(rawTitle) {
+function extractAuthorityAndTitle(rawTitle) {
   let title = rawTitle;
-  let employer = 'South Sudan NGO Partner';
+  let authority = 'South Sudan Humanitarian Partner';
 
-  // Patterns like "African Parks - General Ledger Accountant"
   if (title.includes(' - ')) {
     const parts = title.split(' - ');
-    if (parts[0].length < 50) {
-      employer = parts[0].trim();
+    if (parts[0].length < 55) {
+      authority = parts[0].trim();
       title = parts.slice(1).join(' - ').trim();
     }
   } else if (title.includes(' – ')) {
     const parts = title.split(' – ');
-    if (parts[0].length < 50) {
-      employer = parts[0].trim();
+    if (parts[0].length < 55) {
+      authority = parts[0].trim();
       title = parts.slice(1).join(' – ').trim();
     }
   } else if (title.includes(':')) {
     const parts = title.split(':');
-    if (parts[0].length < 50) {
-      employer = parts[0].trim();
+    if (parts[0].length < 55) {
+      authority = parts[0].trim();
       title = parts.slice(1).join(':').trim();
     }
   }
 
-  return { title: cleanText(title), employer: cleanText(employer) };
+  return { title: cleanText(title), authority: cleanText(authority) };
 }
 
-function parseLocation(desc, title) {
-  const text = `${title} ${desc}`.toLowerCase();
-  if (text.includes('malakal')) return 'Malakal, Upper Nile, South Sudan';
-  if (text.includes('wau')) return 'Wau, Western Bahr el Ghazal, South Sudan';
-  if (text.includes('bentiu')) return 'Bentiu, Unity State, South Sudan';
-  if (text.includes('bor')) return 'Bor, Jonglei, South Sudan';
-  if (text.includes('maban')) return 'Maban, Upper Nile, South Sudan';
-  if (text.includes('yambio')) return 'Yambio, Western Equatoria, South Sudan';
-  if (text.includes('torit')) return 'Torit, Eastern Equatoria, South Sudan';
-  if (text.includes('rumbek')) return 'Rumbek, Lakes State, South Sudan';
-  if (text.includes('yei')) return 'Yei, Central Equatoria, South Sudan';
-  return 'Juba, South Sudan';
+function categorizeTender(text) {
+  const lower = text.toLowerCase();
+  if (lower.includes('construction') || lower.includes('rehabilitation') || lower.includes('drilling') || lower.includes('renovation') || lower.includes('works')) {
+    return 'works';
+  }
+  if (lower.includes('consultan') || lower.includes('assessment') || lower.includes('evaluation') || lower.includes('study') || lower.includes('baseline')) {
+    return 'consultancy';
+  }
+  if (lower.includes('supply') || lower.includes('provision of goods') || lower.includes('procurement of vehicles') || lower.includes('kits') || lower.includes('solar') || lower.includes('equipment')) {
+    return 'goods';
+  }
+  return 'services';
 }
 
-async function harvestSouthSudanJobs() {
+async function harvestSouthSudanTenders() {
   console.log('================================================================');
-  console.log('🇸🇸 SOUTH SUDAN NGO FORUM AUTONOMOUS JOB HARVESTER');
-  console.log('🎯 Official Discourse API integration for South Sudan vacancies');
+  console.log('🇸🇸 SOUTH SUDAN NGO FORUM TENDER HARVESTER');
+  console.log('🎯 Official Discourse Procurement Notices for South Sudan');
   console.log('================================================================\n');
 
   const [ssCountry] = await sql`SELECT id, name FROM countries WHERE code = 'SS' LIMIT 1`;
@@ -100,12 +99,11 @@ async function harvestSouthSudanJobs() {
   console.log(`Target Country: ${ssCountry.name} (UUID: ${ssCountry.id})\n`);
 
   let totalInserted = 0;
-  const startPage = 5;
-  const maxPages = 18;
+  const maxPages = 8; // Crawl pages 0 to 8 (approx 270 tender topics)
 
-  for (let page = startPage; page <= maxPages; page++) {
-    const listUrl = `https://comms.southsudanngoforum.org/c/jobs/5.json?page=${page}`;
-    console.log(`Fetching Page ${page}: ${listUrl}...`);
+  for (let page = 0; page <= maxPages; page++) {
+    const listUrl = `https://comms.southsudanngoforum.org/c/tenders/8.json?page=${page}`;
+    console.log(`Fetching Tenders Page ${page}: ${listUrl}...`);
 
     try {
       const res = await fetch(listUrl, {
@@ -120,16 +118,16 @@ async function harvestSouthSudanJobs() {
       console.log(`  Page ${page}: Retrieved ${topics.length} topics. Processing details...`);
 
       for (const t of topics) {
-        // Skip policies topic
-        if (t.id === 15939 || (t.slug || '').includes('terms-and-policies')) continue;
+        if (t.id === 15938 || (t.slug || '').includes('terms-policies')) continue;
 
-        const topicUrl = `https://comms.southsudanngoforum.org/t/${t.slug || 'job'}/${t.id}`;
+        const topicUrl = `https://comms.southsudanngoforum.org/t/${t.slug || 'tender'}/${t.id}`;
+        const refNo = `SS-NGOF-${t.id}`;
 
         try {
-          const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${topicUrl} LIMIT 1`;
+          const [existing] = await sql`SELECT id FROM tenders WHERE reference_no = ${refNo} OR source_url = ${topicUrl} LIMIT 1`;
           if (existing) continue;
 
-          // Fetch topic details
+          // Fetch post details
           const detailRes = await fetch(`https://comms.southsudanngoforum.org/t/${t.id}.json`, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
             signal: AbortSignal.timeout(10000)
@@ -147,53 +145,50 @@ async function harvestSouthSudanJobs() {
 
           if (cleanDesc.length < 80) continue;
 
-          const { title, employer } = extractEmployerFromTitle(t.title);
-          const location = parseLocation(cleanDesc, t.title);
+          const { title, authority } = extractAuthorityAndTitle(t.title);
+          const category = categorizeTender(`${title} ${cleanDesc}`);
 
-          let jobType = 'full_time';
-          const lowerDesc = cleanDesc.toLowerCase();
-          if (lowerDesc.includes('consultant') || lowerDesc.includes('short term') || lowerDesc.includes('contract')) {
-            jobType = 'contract';
-          } else if (lowerDesc.includes('intern') || lowerDesc.includes('volunteer')) {
-            jobType = 'internship';
-          }
+          const pubDate = t.created_at ? new Date(t.created_at) : new Date();
+          const deadline = new Date(pubDate.getTime() + 30 * 86400000);
 
           const [inserted] = await sql`
-            INSERT INTO jobs (
+            INSERT INTO tenders (
+              reference_no,
               title,
-              company_name,
               description,
+              contracting_authority,
               country_id,
-              job_type,
+              category,
+              status,
+              deadline,
               source_url,
               employer_url,
-              location,
-              is_active,
-              posted_date
+              published_at
             ) VALUES (
-              ${title.slice(0, 255)},
-              ${employer.slice(0, 255)},
+              ${refNo},
+              ${title.slice(0, 500)},
               ${cleanDesc.slice(0, 10000)},
+              ${authority.slice(0, 255)},
               ${ssCountry.id},
-              ${jobType},
+              ${category},
+              'open',
+              ${deadline},
               ${topicUrl},
               'https://southsudanngoforum.org',
-              ${location.slice(0, 255)},
-              true,
-              NOW()
+              ${pubDate}
             )
-            ON CONFLICT (source_url) DO NOTHING
+            ON CONFLICT (reference_no) DO NOTHING
             RETURNING id
           `;
 
           if (inserted) {
             totalInserted++;
             if (totalInserted % 5 === 0 || totalInserted === 1) {
-              console.log(`    ✓ Inserted [SS] #${totalInserted}: "${title.slice(0, 45)}" at ${employer} (${location})`);
+              console.log(`    ✓ Inserted Tender [SS] #${totalInserted}: "${title.slice(0, 45)}" by ${authority}`);
             }
           }
         } catch (err) {
-          // ignore individual error
+          // ignore individual item error
         }
       }
     } catch (pageErr) {
@@ -201,11 +196,11 @@ async function harvestSouthSudanJobs() {
     }
   }
 
-  console.log(`\n🎉 SOUTH SUDAN HARVEST COMPLETE: Inserted ${totalInserted} verified jobs.`);
+  console.log(`\n🎉 SOUTH SUDAN TENDER HARVEST COMPLETE: Inserted ${totalInserted} verified tenders.`);
   await sql.end();
 }
 
-harvestSouthSudanJobs().catch(e => {
+harvestSouthSudanTenders().catch(e => {
   console.error(e);
   process.exit(1);
 });
