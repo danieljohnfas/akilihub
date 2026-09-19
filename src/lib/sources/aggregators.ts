@@ -80,6 +80,18 @@ export const KNOWN_SOURCES: KnownSource[] = [
   { domain: 'emploiburundi.com',         name: 'Emploi Burundi',           type: 'aggregator', category: 'jobs' },
   { domain: 'somaliawork.com',           name: 'Somalia Work',             type: 'aggregator', category: 'jobs' },
   { domain: 'southsudanjobs.net',        name: 'South Sudan Jobs',         type: 'aggregator', category: 'jobs' },
+  { domain: 'ajirayako.co.tz',           name: 'Ajirayako Tanzania',       type: 'aggregator', category: 'jobs' },
+  { domain: 'mwanampotevu.co.tz',        name: 'Mwanampotevu Tanzania',    type: 'aggregator', category: 'jobs' },
+  { domain: 'hotnigerianjobs.com',       name: 'HotNigerianJobs',          type: 'aggregator', category: 'jobs' },
+  { domain: 'jobwebghana.com',           name: 'JobWeb Ghana',             type: 'aggregator', category: 'jobs' },
+  { domain: 'jobwebzambia.com',          name: 'JobWeb Zambia',            type: 'aggregator', category: 'jobs' },
+  { domain: 'jobwebethiopia.com',        name: 'JobWeb Ethiopia',          type: 'aggregator', category: 'jobs' },
+  { domain: 'jobwebgroup.com',           name: 'JobWeb Group',             type: 'aggregator', category: 'jobs' },
+  { domain: 'mediacongo.net',            name: 'MediaCongo DRC',           type: 'aggregator', category: 'jobs' },
+  { domain: 'jobinrwanda.com',           name: 'Job in Rwanda',            type: 'aggregator', category: 'jobs' },
+  { domain: 'jobinburundi.com',          name: 'Job in Burundi',           type: 'aggregator', category: 'jobs' },
+  { domain: 'hiiraan.com',               name: 'Hiiraan Online Somalia',   type: 'aggregator', category: 'jobs' },
+  { domain: 'comms.southsudanngoforum.org', name: 'South Sudan NGO Forum', type: 'aggregator', category: 'jobs' },
 
   // ─── PROFESSIONAL BODY JOB PORTALS ───────────────────────────────────────────
 

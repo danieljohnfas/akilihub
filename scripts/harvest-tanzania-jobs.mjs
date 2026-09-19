@@ -262,6 +262,12 @@ async function saveVerifiedJob(job) {
 
 
   try {
+    const isAgg = Boolean(job.isAggregatorSource) || 
+      /ajirayako|mwanampotevu|jobweb|brightermonday|hotnigerianjobs|mediacongo|jobinrwanda/i.test(job.sourceUrl);
+    const validEmployerUrl = job.employerUrl && !/ajirayako|mwanampotevu|jobweb|brightermonday|hotnigerianjobs|mediacongo|jobinrwanda/i.test(job.employerUrl)
+      ? job.employerUrl.trim()
+      : null;
+
     const inserted = await sql`
       INSERT INTO jobs (
         title,
@@ -272,6 +278,7 @@ async function saveVerifiedJob(job) {
         country_id,
         source_url,
         employer_url,
+        is_aggregator_source,
         job_type,
         is_active,
         posted_date,
@@ -284,7 +291,8 @@ async function saveVerifiedJob(job) {
         ${job.location ? job.location.trim().slice(0, 200) : 'Tanzania'},
         ${TZ_COUNTRY_ID},
         ${job.sourceUrl.trim()},
-        ${job.employerUrl ? job.employerUrl.trim() : job.sourceUrl.trim()},
+        ${validEmployerUrl},
+        ${isAgg},
         ${job.jobType || 'full_time'},
         true,
         ${job.postedDate || new Date()},
@@ -470,12 +478,23 @@ async function harvestAjirayako(currentCount, maxPages = 150) {
 
           if (!company || company.length < 2) company = 'Tanzanian Employer';
 
-          // Extract Location
-          let location = 'Tanzania';
-          const locMatch =
-            fullText.match(/Duty Station:\s*([A-Za-z0-9\s,]+?)(?:\.|\n|Experience|Deadline|Job)/i) ||
-            fullText.match(/Location:\s*([A-Za-z0-9\s,]+?)(?:\.|\n|Experience|Deadline|Job)/i);
-          if (locMatch) location = locMatch[1].trim();
+          // Extract direct ATS/portal link or email if present
+          let directEndpoint = null;
+          d$('a').each((_, el) => {
+            const h = d$(el).attr('href');
+            const t = d$(el).text().trim().toLowerCase();
+            if (!h || h.startsWith('#') || h.includes('ajirayako.co.tz')) return;
+            if (/apply|tuma maombi|bonyeza hapa|click here/i.test(t) || /greenhouse|lever|workday|bamboohr|smartrecruiters|taleo|ajira\.go\.tz|oraclecloud/i.test(h)) {
+              if (h.startsWith('http')) directEndpoint = h;
+            }
+          });
+
+          if (!directEndpoint) {
+            const emailMatch = fullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (emailMatch && !emailMatch[0].includes('ajirayako') && !emailMatch[0].includes('example.com')) {
+              directEndpoint = `mailto:${emailMatch[0]}`;
+            }
+          }
 
           const saved = await saveVerifiedJob({
             title,
@@ -483,7 +502,8 @@ async function harvestAjirayako(currentCount, maxPages = 150) {
             description: fullText,
             location,
             sourceUrl: url,
-            employerUrl: url,
+            employerUrl: directEndpoint,
+            isAggregatorSource: true,
             jobType: 'full_time',
             postedDate: new Date(),
             deadline: null,

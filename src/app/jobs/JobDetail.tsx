@@ -3,7 +3,7 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, or, and, isNull, gt, ilike, ne, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { Calendar, Building2, MapPin, ExternalLink, ArrowLeft, Briefcase } from 'lucide-react';
+import { Calendar, Building2, MapPin, ExternalLink, ArrowLeft, Briefcase, Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -396,19 +396,27 @@ export async function JobDetail({
                   Expired / Closed
                 </div>
               )}
-              {job.employerUrl && !isAggregatorUrl(job.employerUrl) ? (
+              {job.employerUrl && job.employerUrl.startsWith('mailto:') ? (
+                <a 
+                  href={job.employerUrl}
+                  className={cn(buttonVariants({ size: "lg", variant: "outline", className: "w-full md:w-auto h-12 px-8 text-base font-semibold border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10" }))}
+                >
+                  Apply via Official Email
+                  <Mail className="w-5 h-5 ml-2" />
+                </a>
+              ) : job.employerUrl && !isAggregatorUrl(job.employerUrl) ? (
                 <a 
                   href={`/api/out?url=${encodeURIComponent(job.employerUrl)}&type=job&id=${job.id}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={cn(buttonVariants({ size: "lg", variant: "outline", className: "w-full md:w-auto h-12 px-8 text-base font-semibold" }))}
+                  className={cn(buttonVariants({ size: "lg", variant: "outline", className: "w-full md:w-auto h-12 px-8 text-base font-semibold border-primary/40 text-primary hover:bg-primary/10" }))}
                 >
                   Apply on Employer Site
                   <ExternalLink className="w-5 h-5 ml-2" />
                 </a>
               ) : (
-                <div className="w-full md:w-auto h-12 px-4 flex items-center justify-center text-sm font-medium text-amber-600 border border-amber-200 bg-amber-50 rounded-md">
-                  Direct employer link pending resolution
+                <div className="w-full md:w-auto h-12 px-4 flex items-center justify-center text-xs font-medium text-amber-500/90 border border-amber-500/20 bg-amber-500/5 rounded-md">
+                  Direct employer portal pending resolution
                 </div>
               )}
               <Link 
