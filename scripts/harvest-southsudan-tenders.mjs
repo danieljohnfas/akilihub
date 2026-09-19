@@ -99,8 +99,8 @@ async function harvestSouthSudanTenders() {
   console.log(`Target Country: ${ssCountry.name} (UUID: ${ssCountry.id})\n`);
 
   let totalInserted = 0;
-  const startPage = 176;
-  const maxPages = 200; // Crawl pages 176 to 200
+  const startPage = 201;
+  const maxPages = 225; // Crawl pages 201 to 225
 
   for (let page = startPage; page <= maxPages; page++) {
     const listUrl = `https://comms.southsudanngoforum.org/c/tenders/8.json?page=${page}`;
