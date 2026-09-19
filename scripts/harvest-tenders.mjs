@@ -89,8 +89,8 @@ async function harvestTenders() {
 
     console.log(`\n--- SOURCING TENDERS FOR: ${target.name} (${target.code}) ---`);
 
-    // Fetch up to 150 procurement notices per country
-    const url = `https://search.worldbank.org/api/v2/procnotices?format=json&project_ctry_name_exact=${encodeURIComponent(target.queryName)}&rows=150`;
+    // Fetch batch 2 (offset 150, rows 200) of procurement notices per country
+    const url = `https://search.worldbank.org/api/v2/procnotices?format=json&project_ctry_name_exact=${encodeURIComponent(target.queryName)}&rows=200&os=150`;
 
     try {
       const res = await fetch(url, {

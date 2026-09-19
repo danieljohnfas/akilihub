@@ -69,9 +69,10 @@ async function harvestUgandaJobs() {
   const ugandaId = ugCountry.id;
 
   let totalInserted = 0;
-  const maxPages = 15;
+  const startPage = 16;
+  const maxPages = 30;
 
-  for (let page = 1; page <= maxPages; page++) {
+  for (let page = startPage; page <= maxPages; page++) {
     console.log(`\n--- Processing BrighterMonday Uganda: Page ${page}/${maxPages} ---`);
     const pageUrl = `https://www.brightermonday.co.ug/jobs?page=${page}`;
 
