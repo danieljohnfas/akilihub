@@ -1,11 +1,11 @@
 import { Briefcase, FileText, Globe, Banknote, ShieldCheck, Activity } from 'lucide-react';
 
 export async function LiveStats({ 
-  jobsTotal = 35, 
-  tendersTotal = 0, 
+  jobsTotal = 2737, 
+  tendersTotal = 1486, 
   countriesTotal = 12,
   complianceTotal = 1322,
-  healthTotal = 666,
+  healthTotal = 2869,
   salariesTotal = 1161,
 }: { 
   jobsTotal?: number;

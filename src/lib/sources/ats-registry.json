@@ -66,63 +66,51 @@
     "employerUrl": "https://andela.com/careers/"
   },
   {
-    "company": "imagineworldwide",
-    "atsType": "Greenhouse",
+    "companyName": "Imagine Worldwide",
+    "atsType": "greenhouse",
     "boardToken": "imagineworldwide",
-    "country": "Tanzania"
+    "defaultCountryCode": "TZ",
+    "sector": "Education & NGO",
+    "employerUrl": "https://www.imagineworldwide.org"
   },
   {
-    "company": "oneacrefundtanzania",
-    "atsType": "Greenhouse",
-    "boardToken": "oneacrefundtanzania",
-    "country": "Tanzania"
+    "companyName": "One Acre Fund",
+    "atsType": "greenhouse",
+    "boardToken": "oneacrefund",
+    "defaultCountryCode": "TZ",
+    "sector": "Agriculture & NGO",
+    "employerUrl": "https://oneacrefund.org/work-with-us"
   },
   {
-    "company": "remotecom",
-    "atsType": "Greenhouse",
-    "boardToken": "remotecom",
-    "country": "Tanzania"
-  },
-  {
-    "company": "educate",
-    "atsType": "Greenhouse",
+    "companyName": "Educate!",
+    "atsType": "greenhouse",
     "boardToken": "educate",
-    "country": "Tanzania"
+    "defaultCountryCode": "TZ",
+    "sector": "Education & Social Enterprise",
+    "employerUrl": "https://www.experienceeducate.org"
   },
   {
-    "company": "weloglobal",
-    "atsType": "Lever",
-    "boardToken": "weloglobal",
-    "country": "Tanzania"
+    "companyName": "Clinton Health Access Initiative (CHAI)",
+    "atsType": "greenhouse",
+    "boardToken": "chai",
+    "defaultCountryCode": "TZ",
+    "sector": "Global Health",
+    "employerUrl": "https://www.clintonhealthaccess.org/careers"
   },
   {
-    "company": "find",
-    "atsType": "Lever",
-    "boardToken": "find",
-    "country": "Tanzania"
+    "companyName": "Pathfinder International",
+    "atsType": "greenhouse",
+    "boardToken": "pathfinder",
+    "defaultCountryCode": "TZ",
+    "sector": "Healthcare & NGO",
+    "employerUrl": "https://www.pathfinder.org/careers"
   },
   {
-    "company": "jobgether",
-    "atsType": "Lever",
-    "boardToken": "jobgether",
-    "country": "Kenya"
-  },
-  {
-    "company": "remotereferralboardinternaluseonly",
-    "atsType": "Greenhouse",
-    "boardToken": "remotereferralboardinternaluseonly",
-    "country": "Ghana"
-  },
-  {
-    "company": "gohighlevel",
-    "atsType": "Lever",
-    "boardToken": "gohighlevel",
-    "country": "Ghana"
-  },
-  {
-    "company": "employ",
-    "atsType": "Lever",
-    "boardToken": "employ",
-    "country": "Ghana"
+    "companyName": "Room to Read",
+    "atsType": "greenhouse",
+    "boardToken": "roomtoread",
+    "defaultCountryCode": "TZ",
+    "sector": "Education & Literacy",
+    "employerUrl": "https://www.roomtoread.org/about-us/careers"
   }
 ]
