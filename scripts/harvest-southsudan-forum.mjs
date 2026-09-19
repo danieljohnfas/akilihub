@@ -100,8 +100,8 @@ async function harvestSouthSudanJobs() {
   console.log(`Target Country: ${ssCountry.name} (UUID: ${ssCountry.id})\n`);
 
   let totalInserted = 0;
-  const startPage = 5;
-  const maxPages = 18;
+  const startPage = 18;
+  const maxPages = 35;
 
   for (let page = startPage; page <= maxPages; page++) {
     const listUrl = `https://comms.southsudanngoforum.org/c/jobs/5.json?page=${page}`;
@@ -126,8 +126,8 @@ async function harvestSouthSudanJobs() {
         const topicUrl = `https://comms.southsudanngoforum.org/t/${t.slug || 'job'}/${t.id}`;
 
         try {
-          const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${topicUrl} LIMIT 1`;
-          if (existing) continue;
+          const [existing] = await sql`SELECT id, employer_url FROM jobs WHERE source_url = ${topicUrl} LIMIT 1`;
+          if (existing && existing.employer_url) continue;
 
           // Fetch topic details
           const detailRes = await fetch(`https://comms.southsudanngoforum.org/t/${t.id}.json`, {
@@ -158,6 +158,34 @@ async function harvestSouthSudanJobs() {
             jobType = 'internship';
           }
 
+          // Extract direct apply endpoint (direct ATS link or official email)
+          let directEndpoint = null;
+          $('a').each((_, el) => {
+            const h = $(el).attr('href');
+            const t = $(el).text().trim().toLowerCase();
+            if (!h || h.startsWith('#') || h.includes('southsudanngoforum.org')) return;
+            if (/apply|career|portal|submit/i.test(t) || /greenhouse|lever|workday|bamboohr|smartrecruiters|taleo|\.un\.org|\.ngo/i.test(h)) {
+              if (h.startsWith('http')) directEndpoint = h;
+            }
+          });
+
+          if (!directEndpoint) {
+            const emailMatch = cleanDesc.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (emailMatch && !emailMatch[0].includes('southsudanngoforum') && !emailMatch[0].includes('example.com')) {
+              directEndpoint = `mailto:${emailMatch[0]}`;
+            }
+          }
+
+          if (directEndpoint && directEndpoint.startsWith('http')) {
+            try {
+              const u = new URL(directEndpoint);
+              u.searchParams.delete('utm_source');
+              u.searchParams.delete('utm_medium');
+              u.searchParams.delete('utm_campaign');
+              directEndpoint = u.toString().replace(/\?$/, '');
+            } catch (e) {}
+          }
+
           const [inserted] = await sql`
             INSERT INTO jobs (
               title,
@@ -167,6 +195,7 @@ async function harvestSouthSudanJobs() {
               job_type,
               source_url,
               employer_url,
+              is_aggregator_source,
               location,
               is_active,
               posted_date
@@ -177,12 +206,16 @@ async function harvestSouthSudanJobs() {
               ${ssCountry.id},
               ${jobType},
               ${topicUrl},
-              'https://southsudanngoforum.org',
+              ${directEndpoint},
+              true,
               ${location.slice(0, 255)},
               true,
               NOW()
             )
-            ON CONFLICT (source_url) DO NOTHING
+            ON CONFLICT (source_url) DO UPDATE SET 
+              is_active = true,
+              employer_url = COALESCE(EXCLUDED.employer_url, jobs.employer_url),
+              is_aggregator_source = true
             RETURNING id
           `;
 
