@@ -81,8 +81,8 @@ const TARGETS = [
     base: 'https://jobwebethiopia.com/jobs/page/',
     defaultLocation: 'Addis Ababa, Ethiopia',
     defaultEmployer: 'Verified Employer Ethiopia',
-    startPage: 3,
-    endPage: 7
+    startPage: 1,
+    endPage: 10
   },
   {
     countryCode: 'ZA',
@@ -90,8 +90,8 @@ const TARGETS = [
     base: 'https://jobwebzambia.com/jobs/page/',
     defaultLocation: 'Lusaka, Zambia',
     defaultEmployer: 'Verified Employer Zambia',
-    startPage: 3,
-    endPage: 7
+    startPage: 1,
+    endPage: 10
   },
   {
     countryCode: 'GH',
@@ -99,8 +99,8 @@ const TARGETS = [
     base: 'https://jobwebghana.com/jobs/page/',
     defaultLocation: 'Accra, Ghana',
     defaultEmployer: 'Verified Employer Ghana',
-    startPage: 3,
-    endPage: 7
+    startPage: 1,
+    endPage: 10
   },
   {
     countryCode: 'KE',
@@ -108,8 +108,8 @@ const TARGETS = [
     base: 'https://jobwebkenya.com/jobs/page/',
     defaultLocation: 'Nairobi, Kenya',
     defaultEmployer: 'Verified Employer Kenya',
-    startPage: 3,
-    endPage: 7
+    startPage: 1,
+    endPage: 10
   }
 ];
 
@@ -160,8 +160,8 @@ async function harvestDeepJobWeb() {
 
         for (const item of links) {
           try {
-            const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${item.href} LIMIT 1`;
-            if (existing) continue;
+            const [existing] = await sql`SELECT id, employer_url FROM jobs WHERE source_url = ${item.href} LIMIT 1`;
+            if (existing && existing.employer_url) continue;
 
             const dRes = await fetch(item.href, { headers: HEADERS, signal: AbortSignal.timeout(10000) });
             if (!dRes.ok) continue;

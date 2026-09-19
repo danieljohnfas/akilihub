@@ -69,8 +69,8 @@ async function harvestUgandaJobs() {
   const ugandaId = ugCountry.id;
 
   let totalInserted = 0;
-  const startPage = 31;
-  const maxPages = 55;
+  const startPage = 1;
+  const maxPages = 40;
 
   for (let page = startPage; page <= maxPages; page++) {
     console.log(`\n--- Processing BrighterMonday Uganda: Page ${page}/${maxPages} ---`);
@@ -114,8 +114,8 @@ async function harvestUgandaJobs() {
       for (const item of pageListings) {
         try {
           // Check existing
-          const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${item.url} LIMIT 1`;
-          if (existing) continue;
+          const [existing] = await sql`SELECT id, employer_url FROM jobs WHERE source_url = ${item.url} LIMIT 1`;
+          if (existing && existing.employer_url) continue;
 
           const detailRes = await fetch(item.url, {
             headers: {
@@ -163,6 +163,24 @@ async function harvestUgandaJobs() {
             if (!location.toLowerCase().includes('uganda')) location += ', Uganda';
           }
 
+          // Extract direct ATS link or direct application email
+          let directEndpoint = null;
+          $$('a').each((_, el) => {
+            const h = $$(el).attr('href');
+            const t = $$(el).text().trim().toLowerCase();
+            if (!h || h.startsWith('#') || h.includes('brightermonday')) return;
+            if (/apply|career|portal|submit/i.test(t) || /greenhouse|lever|workday|bamboohr|smartrecruiters|taleo|\.go\.ug|\.org/i.test(h)) {
+              if (h.startsWith('http')) directEndpoint = h;
+            }
+          });
+
+          if (!directEndpoint) {
+            const emailMatch = fullDesc.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (emailMatch && !emailMatch[0].includes('brightermonday') && !emailMatch[0].includes('example.com')) {
+              directEndpoint = `mailto:${emailMatch[0]}`;
+            }
+          }
+
           const [inserted] = await sql`
             INSERT INTO jobs (
               title,
@@ -172,6 +190,7 @@ async function harvestUgandaJobs() {
               job_type,
               source_url,
               employer_url,
+              is_aggregator_source,
               location,
               is_active,
               posted_date
@@ -182,12 +201,16 @@ async function harvestUgandaJobs() {
               ${ugandaId},
               'full_time',
               ${item.url},
-              ${item.url},
+              ${directEndpoint},
+              true,
               ${location.slice(0, 255)},
               true,
               NOW()
             )
-            ON CONFLICT (source_url) DO NOTHING
+            ON CONFLICT (source_url) DO UPDATE SET 
+              is_active = true,
+              employer_url = COALESCE(EXCLUDED.employer_url, jobs.employer_url),
+              is_aggregator_source = true
             RETURNING id
           `;
 

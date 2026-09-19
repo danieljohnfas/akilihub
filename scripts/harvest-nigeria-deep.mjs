@@ -122,56 +122,61 @@ async function harvestDeepNigeria() {
   let grandTotal = 0;
 
   for (const field of FIELDS) {
-    console.log(`\n--- SOURCING SECTOR: ${field.name} (${field.url}) ---`);
+    console.log(`\n--- SOURCING SECTOR: ${field.name} ---`);
     let fieldAdded = 0;
 
-    try {
-      const res = await fetch(field.url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
-      if (!res.ok) continue;
+    for (let pageNum = 0; pageNum <= 3; pageNum++) {
+      const pageUrl = `${field.url}${pageNum}/`;
+      try {
+        console.log(`  Fetching ${field.name} page ${pageNum}: ${pageUrl}...`);
+        const res = await fetch(pageUrl, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
+        if (!res.ok) continue;
 
-      const html = await res.text();
-      const $ = cheerio.load(html);
+        const html = await res.text();
+        const $ = cheerio.load(html);
 
-      const listingLinks = [];
-      $('a[href*="/hotjobs/"]').each((i, el) => {
-        const href = $(el).attr('href');
-        const text = cleanText($(el).text());
-        if (href && text.length > 10 && !listingLinks.some(l => l.href === href)) {
-          const fullHref = href.startsWith('http') ? href : `https://www.hotnigerianjobs.com${href}`;
-          listingLinks.push({ href: fullHref, title: text });
-        }
-      });
+        const listingLinks = [];
+        $('a[href*="/hotjobs/"]').each((i, el) => {
+          const href = $(el).attr('href');
+          const text = cleanText($(el).text());
+          if (href && text.length > 10 && !listingLinks.some(l => l.href === href)) {
+            const fullHref = href.startsWith('http') ? href : `https://www.hotnigerianjobs.com${href}`;
+            listingLinks.push({ href: fullHref, title: text });
+          }
+        });
 
-      console.log(`  Found ${listingLinks.length} listings in ${field.name}. Processing...`);
+        console.log(`  Found ${listingLinks.length} listings on page ${pageNum}. Processing...`);
 
-      for (const item of listingLinks) {
-        try {
-          // Fetch the listing page
-          const detailRes = await fetch(item.href, { headers: HEADERS, signal: AbortSignal.timeout(10000) });
-          if (!detailRes.ok) continue;
+        let count = 0;
+        for (const item of listingLinks) {
+          count++;
+          try {
+            // Fetch the listing page
+            const detailRes = await fetch(item.href, { headers: HEADERS, signal: AbortSignal.timeout(10000) });
+            if (!detailRes.ok) continue;
 
-          const detailHtml = await detailRes.text();
-          const $$ = cheerio.load(detailHtml);
+            const detailHtml = await detailRes.text();
+            const $$ = cheerio.load(detailHtml);
 
-          // Check if this page has sub-position links ("Click Here To View Details")
-          const subLinks = [];
-          $$('.jobdetails_left_col a').each((i, el) => {
-            const href = $$(el).attr('href');
-            const linkText = cleanText($$(el).text());
-            if (href && href.includes('/hotjobs/') && (linkText.includes('Details') || linkText.includes('View') || linkText.length > 15)) {
-              const fullHref = href.startsWith('http') ? href : `https://www.hotnigerianjobs.com${href}`;
-              if (fullHref !== item.href && !subLinks.includes(fullHref)) {
-                subLinks.push(fullHref);
+            // Check if this page has sub-position links ("Click Here To View Details")
+            const subLinks = [];
+            $$('.jobdetails_left_col a').each((i, el) => {
+              const href = $$(el).attr('href');
+              const linkText = cleanText($$(el).text());
+              if (href && href.includes('/hotjobs/') && (linkText.includes('Details') || linkText.includes('View') || linkText.length > 15)) {
+                const fullHref = href.startsWith('http') ? href : `https://www.hotnigerianjobs.com${href}`;
+                if (fullHref !== item.href && !subLinks.includes(fullHref)) {
+                  subLinks.push(fullHref);
+                }
               }
-            }
-          });
+            });
 
-          const urlsToProcess = subLinks.length > 0 ? subLinks : [item.href];
+            const urlsToProcess = subLinks.length > 0 ? subLinks : [item.href];
 
-          for (const targetUrl of urlsToProcess) {
-            try {
-              const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${targetUrl} LIMIT 1`;
-              if (existing) continue;
+            for (const targetUrl of urlsToProcess) {
+              try {
+                const [existing] = await sql`SELECT id, employer_url FROM jobs WHERE source_url = ${targetUrl} LIMIT 1`;
+                if (existing && existing.employer_url) continue;
 
               let pageHtml = detailHtml;
               let pageCheerio = $$;
@@ -223,8 +228,8 @@ async function harvestDeepNigeria() {
 
               // Extract direct apply endpoint (Cloudflare obfuscated email or direct ATS)
               let directEndpoint = null;
-              d$$('a').each((_, el) => {
-                const h = d$$(el).attr('href') || '';
+              pageCheerio('a').each((_, el) => {
+                const h = pageCheerio(el).attr('href') || '';
                 if (h.includes('/cdn-cgi/l/email-protection#')) {
                   const hex = h.split('#')[1];
                   if (hex) {
@@ -237,7 +242,7 @@ async function harvestDeepNigeria() {
                       directEndpoint = `mailto:${email.trim()}`;
                     }
                   }
-                } else if (/apply|career|portal|online|submit/i.test(d$$(el).text()) || /erecruit|workday|greenhouse|lever|smartrecruiters|taleo/i.test(h)) {
+                } else if (/apply|career|portal|online|submit/i.test(pageCheerio(el).text()) || /erecruit|workday|greenhouse|lever|smartrecruiters|taleo/i.test(h)) {
                   if (h.startsWith('http') && !h.includes('hotnigerianjobs.com')) {
                     directEndpoint = h;
                   }
@@ -290,18 +295,19 @@ async function harvestDeepNigeria() {
                 console.log(`    ✓ [NI #${grandTotal}] "${cleanTitle}" at ${employer} (${location})`);
               }
             } catch (err) {
-              // ignore individual errors
+              if (process.env.DEBUG) console.error('Listing error:', err.message);
             }
           }
         } catch (e) {
           // ignore listing error
         }
+        }
+      } catch (err) {
+        console.log(`  Error on page ${pageNum} in ${field.name}: ${err.message}`);
       }
-
-      console.log(`  Completed ${field.name}: +${fieldAdded} verified jobs.`);
-    } catch (err) {
-      console.log(`  Error in sector ${field.name}: ${err.message}`);
     }
+
+    console.log(`  Completed ${field.name}: +${fieldAdded} verified jobs.`);
   }
 
   console.log('\n================================================================');

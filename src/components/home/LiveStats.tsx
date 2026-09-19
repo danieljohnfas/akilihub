@@ -2,7 +2,7 @@ import { Briefcase, FileText, Globe, Banknote, ShieldCheck, Activity } from 'luc
 
 export async function LiveStats({ 
   jobsTotal = 5400, 
-  tendersTotal = 6500, 
+  tendersTotal = 7000, 
   countriesTotal = 12,
   complianceTotal = 1322,
   healthTotal = 2869,

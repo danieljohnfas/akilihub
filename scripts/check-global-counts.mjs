@@ -1,4 +1,21 @@
 import postgres from 'postgres';
+import fs from 'fs';
+import path from 'path';
+
+// Load .env.local
+const envPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const [key, ...vals] = trimmed.split('=');
+      if (!process.env[key.trim()]) {
+        process.env[key.trim()] = vals.join('=').trim();
+      }
+    }
+  }
+}
 
 const sql = postgres(process.env.DATABASE_URL + '?sslmode=require', { max: 2 });
 
@@ -50,6 +67,26 @@ async function report() {
   console.log(`- Compliance Requirements: ${compliance.c}`);
   console.log(`- Businesses Directory: ${businesses.c}`);
   console.log(`- Salary Benchmarks: ${salaries.c}`);
+
+  // Employer URL Quality Check
+  const [aggCheck] = await sql`
+    SELECT count(*)::int as c 
+    FROM jobs 
+    WHERE employer_url ~* 'ajirayako|mwanampotevu|hotnigerianjobs|jobweb|mediacongo|jobinrwanda|jobinburundi|hiiraan|brightermonday'
+  `;
+  const [directCheck] = await sql`
+    SELECT count(*)::int as c FROM jobs WHERE employer_url IS NOT NULL
+  `;
+  const [emailCheck] = await sql`
+    SELECT count(*)::int as c FROM jobs WHERE employer_url LIKE 'mailto:%'
+  `;
+  const [atsCheck] = await sql`
+    SELECT count(*)::int as c FROM jobs WHERE employer_url LIKE 'http%'
+  `;
+
+  console.log('\n--- EMPLOYER APPLICATION ENDPOINT QUALITY ---');
+  console.log(`- Resolved Direct Endpoints: ${directCheck.c} (${atsCheck.c} direct ATS/web portals, ${emailCheck.c} official mailto endpoints)`);
+  console.log(`- Aggregator Leaks in employer_url: ${aggCheck.c} (MUST BE 0)`);
   
   await sql.end();
 }
