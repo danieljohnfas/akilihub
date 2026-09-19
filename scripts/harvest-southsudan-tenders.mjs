@@ -99,9 +99,10 @@ async function harvestSouthSudanTenders() {
   console.log(`Target Country: ${ssCountry.name} (UUID: ${ssCountry.id})\n`);
 
   let totalInserted = 0;
-  const maxPages = 8; // Crawl pages 0 to 8 (approx 270 tender topics)
+  const startPage = 9;
+  const maxPages = 25; // Crawl pages 9 to 25
 
-  for (let page = 0; page <= maxPages; page++) {
+  for (let page = startPage; page <= maxPages; page++) {
     const listUrl = `https://comms.southsudanngoforum.org/c/tenders/8.json?page=${page}`;
     console.log(`Fetching Tenders Page ${page}: ${listUrl}...`);
 
@@ -151,6 +152,24 @@ async function harvestSouthSudanTenders() {
           const pubDate = t.created_at ? new Date(t.created_at) : new Date();
           const deadline = new Date(pubDate.getTime() + 30 * 86400000);
 
+          // Extract direct apply / submission endpoint
+          let directEndpoint = null;
+          $('a').each((_, el) => {
+            const h = $(el).attr('href');
+            const txt = $(el).text().trim().toLowerCase();
+            if (!h || h.startsWith('#') || h.includes('southsudanngoforum.org')) return;
+            if (/tender|bid|procure|rfp|submit/i.test(txt) || /ungm\.org|\.un\.org|\.ngo/i.test(h)) {
+              if (h.startsWith('http')) directEndpoint = h;
+            }
+          });
+
+          if (!directEndpoint) {
+            const emailMatch = cleanDesc.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (emailMatch && !emailMatch[0].includes('southsudanngoforum') && !emailMatch[0].includes('example.com')) {
+              directEndpoint = `mailto:${emailMatch[0]}`;
+            }
+          }
+
           const [inserted] = await sql`
             INSERT INTO tenders (
               reference_no,
@@ -174,7 +193,7 @@ async function harvestSouthSudanTenders() {
               'open',
               ${deadline},
               ${topicUrl},
-              'https://southsudanngoforum.org',
+              ${directEndpoint},
               ${pubDate}
             )
             ON CONFLICT (reference_no) DO NOTHING
