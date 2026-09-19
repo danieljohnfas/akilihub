@@ -61,14 +61,10 @@ async function harvestRwanda() {
 
   console.log(`Target Country: ${rwanda.name} (UUID: ${rwanda.id})\n`);
 
-  const pages = [
-    'https://www.jobinrwanda.com/jobs/all',
-    'https://www.jobinrwanda.com/jobs/all?page=1',
-    'https://www.jobinrwanda.com/jobs/all?page=2',
-    'https://www.jobinrwanda.com/jobs/all?page=3',
-    'https://www.jobinrwanda.com/jobs/all?page=4',
-    'https://www.jobinrwanda.com/jobs/all?page=5',
-  ];
+  const pages = [];
+  for (let i = 0; i <= 15; i++) {
+    pages.push(`https://www.jobinrwanda.com/jobs/all?page=${i}`);
+  }
 
   const jobLinks = new Map();
 
@@ -104,8 +100,8 @@ async function harvestRwanda() {
 
   for (const [jobUrl, linkTitle] of jobLinks.entries()) {
     try {
-      const [existing] = await sql`SELECT id FROM jobs WHERE source_url = ${jobUrl} LIMIT 1`;
-      if (existing) {
+      const [existing] = await sql`SELECT id, employer_url FROM jobs WHERE source_url = ${jobUrl} LIMIT 1`;
+      if (existing && existing.employer_url) {
         skipped++;
         continue;
       }
