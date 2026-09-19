@@ -72,7 +72,7 @@ async function report() {
   const [aggCheck] = await sql`
     SELECT count(*)::int as c 
     FROM jobs 
-    WHERE employer_url ~* 'ajirayako|mwanampotevu|hotnigerianjobs|jobweb|mediacongo|jobinrwanda|jobinburundi|hiiraan|brightermonday'
+    WHERE employer_url ~* '://([^/]*\\.)?(ajirayako\\.co\\.tz|mwanampotevu\\.co\\.tz|hotnigerianjobs\\.com|jobweb[a-z]*\\.com|jobwebgroup\\.com|mediacongo\\.net|jobinrwanda\\.com|jobinburundi\\.com|hiiraan\\.com|brightermonday\\.(co\\.ke|co\\.ug))(/|$)'
   `;
   const [directCheck] = await sql`
     SELECT count(*)::int as c FROM jobs WHERE employer_url IS NOT NULL

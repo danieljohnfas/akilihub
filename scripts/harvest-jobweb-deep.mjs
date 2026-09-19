@@ -265,6 +265,16 @@ async function harvestDeepJobWeb() {
               }
             }
 
+            if (directEndpoint && directEndpoint.startsWith('http')) {
+              try {
+                const u = new URL(directEndpoint);
+                u.searchParams.delete('utm_source');
+                u.searchParams.delete('utm_medium');
+                u.searchParams.delete('utm_campaign');
+                directEndpoint = u.toString().replace(/\?$/, '');
+              } catch (e) {}
+            }
+
             const [inserted] = await sql`
               INSERT INTO jobs (
                 title,
