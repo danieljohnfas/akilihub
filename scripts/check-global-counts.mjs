@@ -85,8 +85,21 @@ async function report() {
   `;
 
   console.log('\n--- EMPLOYER APPLICATION ENDPOINT QUALITY ---');
-  console.log(`- Resolved Direct Endpoints: ${directCheck.c} (${atsCheck.c} direct ATS/web portals, ${emailCheck.c} official mailto endpoints)`);
+  console.log(`- Total Resolved Direct Endpoints: ${directCheck.c} (${atsCheck.c} direct ATS/web portals, ${emailCheck.c} official mailto endpoints)`);
   console.log(`- Aggregator Leaks in employer_url: ${aggCheck.c} (MUST BE 0)`);
+
+  const directByCountry = await sql`
+    SELECT c.name, c.code, count(j.id)::int as direct_count
+    FROM countries c
+    JOIN jobs j ON j.country_id = c.id
+    WHERE j.employer_url IS NOT NULL
+    GROUP BY c.name, c.code
+    ORDER BY direct_count DESC
+  `;
+  console.log('\n--- DIRECT ENDPOINTS BY COUNTRY ---');
+  for (const r of directByCountry) {
+    console.log(`- ${r.name} (${r.code}): ${r.direct_count} direct endpoints`);
+  }
   
   await sql.end();
 }
