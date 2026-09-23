@@ -3,25 +3,35 @@ name: Mass Scraper
 on:
   workflow_dispatch: # Allows manual trigger from GitHub UI
   schedule:
-    - cron: '0 */6 * * *' # Runs every 6 hours
+    - cron: '0 */6 * * *' # Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+
+concurrency:
+  group: mass-scraper
+  cancel-in-progress: false
 
 jobs:
   scrape:
+    name: Run Mass Scrape
     runs-on: ubuntu-latest
+    timeout-minutes: 180 # Cap at 3 hours to prevent runaway billable minutes
     permissions:
       contents: write
     
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
           
       - name: Install Dependencies
-        run: npm install --legacy-peer-deps --no-audit
+        run: npm ci --legacy-peer-deps --no-audit || npm install --legacy-peer-deps --no-audit
         
       - name: Warm Up Sidecar
         run: |
@@ -35,12 +45,14 @@ jobs:
             fi
             sleep 10
           done
-          echo "⚠️ Sidecar did not respond in time — scraper will proceed anyway with Brave Search fallback."
+          echo "⚠️ Sidecar did not respond in time — scraper will proceed anyway with fallback search providers."
 
       - name: Run Mass Scrape
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
@@ -62,17 +74,21 @@ jobs:
           GOOGLE_CSE_API_KEY: ${{ secrets.GOOGLE_CSE_API_KEY }}
           GOOGLE_CSE_ID: ${{ secrets.GOOGLE_CSE_ID }}
           SCRAPLING_URL: https://akilihub-scraper.onrender.com
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'https://akilibrain.com' }}
         run: npx tsx scripts/mass-scrape.ts
 
-
       - name: Commit Generated Parsers
+        if: always()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/lib/scrapers/parsers/
+          if [ -d "src/lib/scrapers/parsers" ]; then
+            git add src/lib/scrapers/parsers/
+          fi
           if git diff --staged --quiet; then
             echo "No new parsers to commit"
           else
             git commit -m "chore(scraper): cache new AI-generated DOM parsers [skip ci]"
-            git push
+            git pull --rebase origin ${{ github.ref_name }}
+            git push origin ${{ github.ref_name }}
           fi

@@ -6,6 +6,7 @@ import { countries } from "@/lib/db/schema/shared";
 import { eq } from "drizzle-orm";
 import { classifySourceUrl, resolveEmployerUrl } from "@/lib/sources/employer-resolver";
 import { scrapersDisabled, jobInsertTarget, jobSecondPassEnabled } from '@/lib/scrapers/cost-controls';
+import { isJevAvailable, isRelevantOpportunity } from "@/lib/ai/jev-client";
 
 // ── Thresholds ────────────────────────────────────────────────────────────────
 const JOB_TARGET = jobInsertTarget(); // env SCRAPE_JOB_TARGET
@@ -62,6 +63,19 @@ export async function saveJobs(discovered: BroadJobResource[], countryCode: stri
       if (!jobCountryId) {
         console.log(`[scrape-jobs] Rejecting job for unsupported country code: ${job.countryCode}`);
         return null;
+      }
+    }
+
+    // Jev opportunity gate: filter out spam, expired listings, or non-actionable content
+    if (isJevAvailable()) {
+      try {
+        const verification = await isRelevantOpportunity(`Title: ${job.title}\nCompany: ${job.companyName}\nDescription: ${(job.description || '').substring(0, 300)}`);
+        if (verification && !verification.isValid) {
+          console.log(`[scrape-jobs] Jev rejected low-probability opportunity (${verification.probability}): "${job.title}"`);
+          return null;
+        }
+      } catch (e) {
+        // Non-blocking: continue if Jev check encounters an issue
       }
     }
     

@@ -6,9 +6,14 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "javascript"
     ignore:
-      - dependency-name: "next" # Usually manual updates are better for major frameworks
-        versions: ["> 16.x"]
+      - dependency-name: "next" # Keep Next.js on 15.x LTS branch
+        versions: ["> 15.x"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -16,3 +21,8 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci(actions)"
+    labels:
+      - "ci"
+      - "github-actions"

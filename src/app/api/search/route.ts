@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { db, safeQuery } from '@/lib/db/client';
 import { tenders } from '@/lib/db/schema/tenders';
 import { complianceRequirements } from '@/lib/db/schema/compliance';
 import { salarySubmissions } from '@/lib/db/schema/salaries';
@@ -40,56 +40,72 @@ export async function GET(request: Request) {
   try {
     const now = new Date();
 
-    // Run parallel FTS across all 4 modules
+    // Run parallel resilient FTS across all 4 modules (6s timeout per module)
     const [tenderResults, complianceResults, salaryResults, jobResults] = await Promise.all([
-      db.select({
-        id: tenders.id,
-        title: tenders.title,
-        description: tenders.contractingAuthority,
-      })
-        .from(tenders)
-        .where(
-          and(
-            eq(tenders.status, 'open'),
-            or(isNull(tenders.deadline), gte(tenders.deadline, now)),
-            sql`to_tsvector('english', ${tenders.title} || ' ' || coalesce(${tenders.description}, '')) @@ plainto_tsquery('english', ${query})`
+      safeQuery(
+        db.select({
+          id: tenders.id,
+          title: tenders.title,
+          description: tenders.contractingAuthority,
+        })
+          .from(tenders)
+          .where(
+            and(
+              eq(tenders.status, 'open'),
+              or(isNull(tenders.deadline), gte(tenders.deadline, now)),
+              sql`to_tsvector('english', ${tenders.title} || ' ' || coalesce(${tenders.description}, '')) @@ plainto_tsquery('english', ${query})`
+            )
           )
-        )
-        .limit(limit).offset(offset),
+          .limit(limit).offset(offset),
+        6000,
+        'Search tenders'
+      ),
 
-      db.select({
-        id: complianceRequirements.id,
-        title: complianceRequirements.title,
-        description: complianceRequirements.issuingAuthority,
-      })
-        .from(complianceRequirements)
-        .where(sql`to_tsvector('english', ${complianceRequirements.title} || ' ' || ${complianceRequirements.description}) @@ plainto_tsquery('english', ${query})`)
-        .limit(limit).offset(offset),
+      safeQuery(
+        db.select({
+          id: complianceRequirements.id,
+          title: complianceRequirements.title,
+          description: complianceRequirements.issuingAuthority,
+        })
+          .from(complianceRequirements)
+          .where(sql`to_tsvector('english', ${complianceRequirements.title} || ' ' || ${complianceRequirements.description}) @@ plainto_tsquery('english', ${query})`)
+          .limit(limit).offset(offset),
+        6000,
+        'Search compliance'
+      ),
 
-      db.select({
-        id: salarySubmissions.id,
-        title: salarySubmissions.jobTitle,
-        description: salarySubmissions.currency,
-      })
-        .from(salarySubmissions)
-        .where(sql`to_tsvector('english', ${salarySubmissions.jobTitle}) @@ plainto_tsquery('english', ${query})`)
-        .limit(limit).offset(offset),
+      safeQuery(
+        db.select({
+          id: salarySubmissions.id,
+          title: salarySubmissions.jobTitle,
+          description: salarySubmissions.currency,
+        })
+          .from(salarySubmissions)
+          .where(sql`to_tsvector('english', ${salarySubmissions.jobTitle}) @@ plainto_tsquery('english', ${query})`)
+          .limit(limit).offset(offset),
+        6000,
+        'Search salaries'
+      ),
 
-      // ✅ Jobs — now included in global search
-      db.select({
-        id: jobs.id,
-        title: jobs.title,
-        description: jobs.companyName,
-      })
-        .from(jobs)
-        .where(
-          and(
-            eq(jobs.isActive, true),
-            or(isNull(jobs.deadline), gte(jobs.deadline, now)),
-            sql`to_tsvector('english', ${jobs.title} || ' ' || coalesce(${jobs.description}, '')) @@ plainto_tsquery('english', ${query})`
+      // ✅ Jobs — included in global search with safeQuery
+      safeQuery(
+        db.select({
+          id: jobs.id,
+          title: jobs.title,
+          description: jobs.companyName,
+        })
+          .from(jobs)
+          .where(
+            and(
+              eq(jobs.isActive, true),
+              or(isNull(jobs.deadline), gte(jobs.deadline, now)),
+              sql`to_tsvector('english', ${jobs.title} || ' ' || coalesce(${jobs.description}, '')) @@ plainto_tsquery('english', ${query})`
+            )
           )
-        )
-        .limit(limit).offset(offset),
+          .limit(limit).offset(offset),
+        6000,
+        'Search jobs'
+      ),
     ]);
 
     const results: SearchResult[] = [

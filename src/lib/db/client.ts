@@ -60,12 +60,18 @@ if (process.env.NODE_ENV !== 'production') globalForDb.conn = conn;
 export const db = drizzle(conn, { schema });
 export type DB = typeof db;
 
+export type QueryInput<T> = Promise<T> | PromiseLike<T> | (() => Promise<T> | PromiseLike<T>);
+
 /**
- * safeQuery - wraps a db query promise in a try/catch and race-timeout.
+ * safeQuery - wraps a db query promise or factory in a try/catch and race-timeout.
  * Returns the result on success, or [] on failure/timeout.
  * This prevents a slow DB cold start or connection queue from triggering a Vercel 504 timeout.
  */
-export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutMs = 25000, label: string = 'Unnamed Query'): Promise<T> {
+export async function safeQuery<T>(
+  query: QueryInput<T>,
+  timeoutMs = 15000,
+  label: string = 'Unnamed Query'
+): Promise<T> {
   let timeoutId: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(`Query [${label}] timed out after ${timeoutMs}ms`)), timeoutMs);
@@ -73,8 +79,9 @@ export async function safeQuery<T extends unknown[]>(query: Promise<T>, timeoutM
 
   try {
     // Wrap the query in an async IIFE to ensure `await query` is called with the correct `this` context.
-    // Promise.race extracts .then() and loses `this` for Drizzle query builders.
-    const p = (async () => await query)();
+    // Supports both direct promises/query builders and lazy factory functions.
+    const queryPromise = typeof query === 'function' ? query() : query;
+    const p = (async () => await queryPromise)();
     const result = await Promise.race([p, timeoutPromise]);
     return result as T;
   } catch (err: unknown) {

@@ -29,6 +29,7 @@
     "@types/d3": "^7.4.3",
     "@types/pdf-parse": "^1.1.5",
     "@types/sanitize-html": "^2.16.1",
+    "@typesafe-ai/sdk": "^0.6.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "ai": "^7.0.9",

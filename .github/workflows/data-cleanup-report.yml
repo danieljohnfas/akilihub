@@ -5,12 +5,42 @@ on:
     - cron: '0 * * * *' # Run every hour
   workflow_dispatch:
 
+concurrency:
+  group: data-cleanup-report
+  cancel-in-progress: false
+
 jobs:
   run-report:
+    name: Trigger Cleanup Hourly Report
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
     steps:
       - name: Trigger Send Report Endpoint
         run: |
-          curl -f -s -X GET "https://akilibrain.com/api/admin/send-report" \
+          echo "Sending request to https://akilibrain.com/api/admin/send-report..."
+          HTTP_STATUS=$(curl -s -S -o /tmp/report_response.txt -w "%{http_code}" \
+            --connect-timeout 15 \
+            --max-time 60 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            -X GET "https://akilibrain.com/api/admin/send-report" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "User-Agent: GitHub-Action"
+            -H "User-Agent: GitHub-Action-DataCleanupReport/1.0")
+
+          echo "Response HTTP Status: $HTTP_STATUS"
+          if [ -f /tmp/report_response.txt ]; then
+            echo "Response Body:"
+            cat /tmp/report_response.txt
+            echo ""
+          fi
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Data cleanup report triggered successfully."
+          else
+            echo "❌ Failed to trigger report (HTTP $HTTP_STATUS)."
+            exit 1
+          fi

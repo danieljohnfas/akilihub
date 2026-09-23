@@ -99,6 +99,9 @@ import { dataCleanupOrchestratorJob } from "@/inngest/data-cleanup-worker";
 // Deduplication
 import { deduplicateJobsJob } from "@/inngest/deduplicate-jobs";
 
+// Jev Data Review & Enrichment (14:00 UTC daily)
+import { dataReviewDispatcherJob, dataReviewWorker } from "@/inngest/data-review-and-enrich";
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
@@ -211,6 +214,10 @@ export const { GET, POST, PUT } = serve({
 
     // Deduplication (03:00 UTC)
     deduplicateJobsJob,
+
+    // Jev Data Review & Enrichment (14:00 UTC daily)
+    dataReviewDispatcherJob,
+    dataReviewWorker,
   ],
 });
 

@@ -57,7 +57,9 @@ const homeFAQSchema = buildFAQSchema([
   },
 ]);
 
-export default async function Home() {
+import { unstable_cache } from 'next/cache';
+
+const getPlatformStats = unstable_cache(async () => {
   const [
     activeJobsCount,
     openTendersCount,
@@ -72,31 +74,56 @@ export default async function Home() {
           eq(jobs.isActive, true),
           or(isNull(jobs.deadline), gt(jobs.deadline, new Date()))
         )
-      )
+      ),
+      10000,
+      'Home active jobs count'
     ),
     safeQuery(
-      db.select({ value: count() }).from(tenders).where(eq(tenders.status, 'open'))
+      db.select({ value: count() }).from(tenders).where(eq(tenders.status, 'open')),
+      10000,
+      'Home open tenders count'
     ),
     safeQuery(
-      db.select({ value: count() }).from(countries)
+      db.select({ value: count() }).from(countries),
+      10000,
+      'Home countries count'
     ),
     safeQuery(
-      db.select({ value: count() }).from(complianceRequirements)
+      db.select({ value: count() }).from(complianceRequirements),
+      10000,
+      'Home compliance count'
     ),
     safeQuery(
-      db.select({ value: count() }).from(healthDataPoints)
+      db.select({ value: count() }).from(healthDataPoints),
+      10000,
+      'Home health count'
     ),
     safeQuery(
-      db.select({ value: count() }).from(salarySubmissions)
+      db.select({ value: count() }).from(salarySubmissions),
+      10000,
+      'Home salaries count'
     ),
   ]);
 
-  const jobsTotal = activeJobsCount?.[0]?.value ?? 5400;
-  const tendersTotal = openTendersCount?.[0]?.value ?? 7000;
-  const countriesTotal = countriesCount?.[0]?.value ?? 12;
-  const complianceTotal = complianceCount?.[0]?.value ?? 1322;
-  const healthTotal = healthCount?.[0]?.value ?? 2869;
-  const salariesTotal = salariesCount?.[0]?.value ?? 1161;
+  return {
+    jobsTotal: activeJobsCount?.[0]?.value ?? 5400,
+    tendersTotal: openTendersCount?.[0]?.value ?? 7000,
+    countriesTotal: countriesCount?.[0]?.value ?? 12,
+    complianceTotal: complianceCount?.[0]?.value ?? 1322,
+    healthTotal: healthCount?.[0]?.value ?? 2869,
+    salariesTotal: salariesCount?.[0]?.value ?? 1161,
+  };
+}, ['home-platform-stats'], { revalidate: 600 });
+
+export default async function Home() {
+  const {
+    jobsTotal,
+    tendersTotal,
+    countriesTotal,
+    complianceTotal,
+    healthTotal,
+    salariesTotal,
+  } = await getPlatformStats();
 
   const features = [
     {

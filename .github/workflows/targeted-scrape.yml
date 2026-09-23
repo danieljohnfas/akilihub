@@ -2,12 +2,17 @@ name: Targeted Scraper Pipeline
 
 on:
   schedule:
-    # Run every 6 hours
-    - cron: '0 */6 * * *'
+    # Runs every 6 hours, interleaved with mass-scrape (03:00, 09:00, 15:00, 21:00 UTC)
+    - cron: '0 3,9,15,21 * * *'
   workflow_dispatch: # Allow manual trigger
+
+concurrency:
+  group: targeted-scraper
+  cancel-in-progress: false
 
 jobs:
   scrape:
+    name: Run Targeted Scraper
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -17,57 +22,79 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install --legacy-peer-deps --no-audit
+        run: npm ci --legacy-peer-deps --no-audit || npm install --legacy-peer-deps --no-audit
 
       - name: Create Remote Env File
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.remote
-          echo "DIRECT_URL=${{ secrets.DIRECT_URL }}" >> .env.remote
-          echo "GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}" >> .env.remote
-          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env.remote
-          echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY }}" >> .env.remote
-          echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}" >> .env.remote
-          echo "ZAI_API_KEY=${{ secrets.ZAI_API_KEY }}" >> .env.remote
-          echo "MISTRAL_API_KEY=${{ secrets.MISTRAL_API_KEY }}" >> .env.remote
-          echo "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" >> .env.remote
-          echo "CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" >> .env.remote
-          echo "HYPERBOLIC_API_KEY=${{ secrets.HYPERBOLIC_API_KEY }}" >> .env.remote
-          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env.remote
-          echo "HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}" >> .env.remote
-          echo "COHERE_API_KEY=${{ secrets.COHERE_API_KEY }}" >> .env.remote
-          echo "MINIMAX_API_KEY=${{ secrets.MINIMAX_API_KEY }}" >> .env.remote
-          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env.remote
-          echo "SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}" >> .env.remote
-          echo "EXA_API_KEY=${{ secrets.EXA_API_KEY }}" >> .env.remote
-          echo "GOOGLE_CSE_API_KEY=${{ secrets.GOOGLE_CSE_API_KEY }}" >> .env.remote
-          echo "GOOGLE_CSE_ID=${{ secrets.GOOGLE_CSE_ID }}" >> .env.remote
-          echo "GH_MODELS_TOKEN=${{ secrets.GH_MODELS_TOKEN }}" >> .env.remote
-          echo "GITHUB_MODELS_TOKEN=${{ secrets.GH_MODELS_TOKEN }}" >> .env.remote
+          cat << 'EOF' > .env.remote
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          DIRECT_URL=${{ secrets.DIRECT_URL }}
+          TYPESAFE_API_KEY=${{ secrets.TYPESAFE_API_KEY }}
+          FIRECRAWL_API_KEY=${{ secrets.FIRECRAWL_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY }}
+          SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}
+          ZAI_API_KEY=${{ secrets.ZAI_API_KEY }}
+          MISTRAL_API_KEY=${{ secrets.MISTRAL_API_KEY }}
+          CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HYPERBOLIC_API_KEY=${{ secrets.HYPERBOLIC_API_KEY }}
+          OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+          HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}
+          COHERE_API_KEY=${{ secrets.COHERE_API_KEY }}
+          MINIMAX_API_KEY=${{ secrets.MINIMAX_API_KEY }}
+          DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
+          SERPER_API_KEY=${{ secrets.SERPER_API_KEY }}
+          EXA_API_KEY=${{ secrets.EXA_API_KEY }}
+          GOOGLE_CSE_API_KEY=${{ secrets.GOOGLE_CSE_API_KEY }}
+          GOOGLE_CSE_ID=${{ secrets.GOOGLE_CSE_ID }}
+          GH_MODELS_TOKEN=${{ secrets.GH_MODELS_TOKEN }}
+          GITHUB_MODELS_TOKEN=${{ secrets.GH_MODELS_TOKEN }}
+          SCRAPLING_URL=https://akilihub-scraper.onrender.com
+          NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL || 'https://akilibrain.com' }}
+          EOF
+          chmod 600 .env.remote
 
       - name: Run Company Discovery (Single Sweep)
         run: |
-          # The CI=true environment variable tells the infinite loop to exit after one sweep
+          # CI=true tells the discovery runner to exit after one sweep
           CI=true npx tsx --env-file=.env.remote scripts/company-discovery.ts
-        continue-on-error: true # Continue even if discovery hits API limits
+        continue-on-error: true # Continue even if discovery hits temporary external search limits
 
       - name: Commit Discovered Companies
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/lib/sources/discovered-careers.json
-          # Only commit if there are changes
-          git diff --staged --quiet || (git commit -m "chore: auto-update discovered careers registry" && git push)
+          if [ -f "src/lib/sources/discovered-careers.json" ]; then
+            git add src/lib/sources/discovered-careers.json
+            if git diff --staged --quiet; then
+              echo "No new careers registry changes to commit."
+            else
+              git commit -m "chore: auto-update discovered careers registry [skip ci]"
+              git pull --rebase origin ${{ github.ref_name }}
+              git push origin ${{ github.ref_name }}
+            fi
+          fi
         continue-on-error: true
 
       - name: Run Targeted Scraper
         run: |
           npx tsx --env-file=.env.remote scripts/targeted-scrape.ts
         continue-on-error: true # Ensure we finish gracefully
+
+      - name: Cleanup Secrets File
+        if: always()
+        run: |
+          rm -f .env.remote
+          echo "Cleaned up temporary environment file."

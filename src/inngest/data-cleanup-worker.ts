@@ -6,6 +6,7 @@ import { complianceRequirements as compliance } from "@/lib/db/schema/compliance
 import { dataVerificationLog } from "@/lib/db/schema/admin";
 import { eq, isNull, sql } from "drizzle-orm";
 import { generateObjectWithFallback } from "@/lib/ai/router";
+import { classifyModule } from "@/lib/ai/jev-client";
 import { z } from "zod";
 import { Resend } from "resend";
 
@@ -19,6 +20,32 @@ const ClassificationSchema = z.object({
   module: z.enum(['jobs', 'tenders', 'compliance', 'unknown']).describe("The correct module this data belongs to."),
   reasoning: z.string().describe("Brief explanation of why this belongs in the module."),
 });
+
+/**
+ * Classifies a record with Jev System One fast path, falling back to Gemini if needed.
+ */
+async function classifyRecordWithJevFallback(textToAnalyze: string): Promise<{ module: 'jobs' | 'tenders' | 'compliance' | 'unknown'; engine: 'jev' | 'gemini' }> {
+  // 1. Fast path: TypeSafe AI / Jev System One decision engine
+  try {
+    const jevRes = await classifyModule(textToAnalyze);
+    if (jevRes && jevRes.confidence >= 0.65) {
+      console.log(`[DataCleanup] Jev classified as "${jevRes.module}" (confidence: ${jevRes.confidence})`);
+      return { module: jevRes.module, engine: 'jev' };
+    }
+  } catch (err) {
+    console.warn('[DataCleanup] Jev fast path skipped, falling back to Gemini:', err);
+  }
+
+  // 2. Fallback path: Full Gemini LLM with schema validation
+  const aiResult = await generateObjectWithFallback({
+    modelName: "Google Gemini 2.5 Flash",
+    schema: ClassificationSchema,
+    system: "You are a data quality controller. Classify this record as: 'jobs' (employment listing), 'tenders' (procurement/bid notice), 'compliance' (legal/regulatory notice), or 'unknown'. Be accurate.",
+    prompt: textToAnalyze,
+  });
+
+  return { module: aiResult.object.module, engine: 'gemini' };
+}
 
 async function getStats() {
   const [[verified], [jobCount], [tenderCount], [complianceCount]] = await Promise.all([
@@ -173,14 +200,8 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
       const result = await step.run(`process-job-${job.id}`, async () => {
         const textToAnalyze = `Title: ${job.title}\nDescription: ${(job.description || '').substring(0, 500)}\nCompany: ${job.companyName}`;
         try {
-          const aiResult = await generateObjectWithFallback({
-            modelName: "Google Gemini 2.5 Flash",
-            schema: ClassificationSchema,
-            system: "You are a data quality controller. Classify this record as: 'jobs' (employment listing), 'tenders' (procurement/bid notice), 'compliance' (legal/regulatory notice), or 'unknown'. Be accurate.",
-            prompt: textToAnalyze,
-          });
+          const { module } = await classifyRecordWithJevFallback(textToAnalyze);
 
-          const module = aiResult.object.module;
           let actionTaken = 'none';
 
           if (module === 'tenders') {
@@ -242,14 +263,8 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
         const result = await step.run(`process-tender-${tender.id}`, async () => {
           const textToAnalyze = `Title: ${tender.title}\nDescription: ${(tender.description || '').substring(0, 500)}\nAuthority: ${tender.contractingAuthority}`;
           try {
-            const aiResult = await generateObjectWithFallback({
-              modelName: "Google Gemini 2.5 Flash",
-              schema: ClassificationSchema,
-              system: "You are a data quality controller. Classify this record as: 'jobs' (employment listing), 'tenders' (procurement/bid notice), 'compliance' (legal/regulatory notice), or 'unknown'. Be accurate.",
-              prompt: textToAnalyze,
-            });
+            const { module } = await classifyRecordWithJevFallback(textToAnalyze);
 
-            const module = aiResult.object.module;
             let actionTaken = 'none';
 
             if (module === 'jobs') {
@@ -311,14 +326,8 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
         const result = await step.run(`process-compliance-${comp.id}`, async () => {
           const textToAnalyze = `Title: ${comp.title}\nDescription: ${(comp.description || '').substring(0, 500)}\nAuthority: ${comp.issuingAuthority}`;
           try {
-            const aiResult = await generateObjectWithFallback({
-              modelName: "Google Gemini 2.5 Flash",
-              schema: ClassificationSchema,
-              system: "You are a data quality controller. Classify this record as: 'jobs' (employment listing), 'tenders' (procurement/bid notice), 'compliance' (legal/regulatory notice), or 'unknown'. Be accurate.",
-              prompt: textToAnalyze,
-            });
+            const { module } = await classifyRecordWithJevFallback(textToAnalyze);
 
-            const module = aiResult.object.module;
             let actionTaken = 'none';
 
             if (module === 'jobs') {

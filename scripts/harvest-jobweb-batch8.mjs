@@ -137,15 +137,30 @@ async function harvestBatch8() {
 
     for (let page = target.startPage; page <= target.endPage; page++) {
       const pageUrl = `${target.base}${page}/`;
-      try {
-        console.log(`  Fetching ${target.name} page ${page}: ${pageUrl}...`);
-        const res = await fetch(pageUrl, { headers: HEADERS, signal: AbortSignal.timeout(10000) });
-        if (!res.ok) {
-          console.log(`    HTTP ${res.status}, skipping page.`);
-          continue;
+      let html = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`  Fetching ${target.name} page ${page}: ${pageUrl}... (attempt ${attempt})`);
+          const res = await fetch(pageUrl, { headers: HEADERS, signal: AbortSignal.timeout(15000) });
+          if (res.ok) {
+            html = await res.text();
+            break;
+          } else {
+            console.log(`    HTTP ${res.status}, retrying in 2s...`);
+            await new Promise(r => setTimeout(r, 2000));
+          }
+        } catch (e) {
+          console.log(`    Attempt ${attempt} failed: ${e.message}, retrying in 2s...`);
+          await new Promise(r => setTimeout(r, 2000));
         }
+      }
 
-        const html = await res.text();
+      if (!html) {
+        console.log(`    Failed to fetch page ${page} after 3 attempts, skipping.`);
+        continue;
+      }
+
+      try {
         const $ = cheerio.load(html);
 
         const links = [];
@@ -309,6 +324,7 @@ async function harvestBatch8() {
           } catch (e) {
             // ignore individual detail error
           }
+          await new Promise(r => setTimeout(r, 300));
         }
       } catch (e) {
         console.log(`    Error fetching page ${page}: ${e.message}`);

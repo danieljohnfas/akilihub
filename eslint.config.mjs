@@ -2,9 +2,8 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import unusedImports from "eslint-plugin-unused-imports";
 
 // eslint-config-next exports flat config arrays
-// Use dynamic import with fallback to handle version differences
-let nextVitals: object[] = [];
-let nextTs: object[] = [];
+let nextVitals = [];
+let nextTs = [];
 try {
   const vitals = await import("eslint-config-next/core-web-vitals.js");
   nextVitals = Array.isArray(vitals.default) ? vitals.default : [];
@@ -54,8 +53,12 @@ const eslintConfig = defineConfig([
     "render_cli/**",
     "koyeb_cli/**",
     "scripts/**",
+    "src/lib/scrapers/parsers/**",
     "migrate.js",
-    "push-env.js"
+    "push-env.js",
+    "*.mjs",
+    "*.cjs",
+    "*.js"
   ]),
 ]);
 
