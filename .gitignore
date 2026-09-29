@@ -144,3 +144,27 @@ __pycache__/
 /generate-*.mjs
 /groq-*.mjs
 
+
+# --- hygiene (review follow-up): never commit scratch output, datasets or ad-hoc DB scripts ---
+/dataset_*.json
+/*_log.txt
+/scrape_*.txt
+/grok_response.txt
+/github_actions_*.txt
+/scratch*.ts
+/scratch*.cjs
+/scratch*.js
+/test_*.ts
+/test-*.ts
+/query_*.ts
+/query_*.js
+/check_*.js
+/delete_*.js
+/purge*.ts
+/purge*.cjs
+/purge*.py
+/deactivate*.ts
+/fix*.js
+/fix*.py
+*.bak
+.env.remote
