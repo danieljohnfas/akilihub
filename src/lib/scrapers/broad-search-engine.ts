@@ -330,7 +330,7 @@ GENERAL EXTRACTION QUALITY GUIDELINES (apply to every field):
    not just the first one or the most prominent.
 `;
 
-import { getStructuralFingerprint, executeParser, generateParserWithAI } from './dom-cluster';
+import { parseJobsFromHtml } from './dom-cluster';
 
 /**
  * Uses AI to extract Job postings from scraped text.
@@ -382,22 +382,9 @@ export async function extractJobsWithAI(text: string, sourceUrl: string, html: s
   if (rawParsedJobs.length > 0) {
     console.log(`[extractJobsWithAI] Intercepted ${rawParsedJobs.length} jobs natively via JSON-LD! Bypassing AI entirely.`);
   } else {
-    // 2. FALLBACK PATH: DOM Clustering & AI
-    const hash = getStructuralFingerprint(html);
+    // 2. FALLBACK PATH: DOM clustering — declarative selector specs cached per page structure
     try {
-      try {
-        rawParsedJobs = await executeParser(hash, html);
-      } catch (e: any) {
-        if (e.message.includes('Parser not found')) {
-          console.log(`[DOM Cluster] Unknown structure detected (${hash}). Generating new parser...`);
-          await generateParserWithAI(hash, html);
-          rawParsedJobs = await executeParser(hash, html);
-        } else {
-          console.warn(`[DOM Cluster] Parser ${hash} failed: ${e.message}. Attempting self-heal...`);
-          await generateParserWithAI(hash, html, e.message);
-          rawParsedJobs = await executeParser(hash, html);
-        }
-      }
+      rawParsedJobs = await parseJobsFromHtml(html, sourceUrl);
     } catch (err) {
       console.warn(`[extractJobsWithAI] AI extraction failed on ${sourceUrl} (${(err as Error).message}). Dropping jobs.`);
       return [];

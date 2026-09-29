@@ -1,3 +1,4 @@
+import { sidecarHeaders } from '@/lib/sidecar';
 import { safeFetch, readBodyLimited, type SafeFetchOptions } from "@/lib/security/safe-fetch";
 export async function fetchAtsApi(url: string, method: string = "GET", headers?: Record<string, string>, body?: any) {
   const sidecarUrl = process.env.SCRAPLING_URL ?? process.env.SIDECAR_URL;
@@ -7,7 +8,7 @@ export async function fetchAtsApi(url: string, method: string = "GET", headers?:
     try {
       const res = await fetch(`${sidecarUrl}/proxy_api`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           url,
           method,

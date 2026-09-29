@@ -15,6 +15,7 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('🔥 Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
+import { sidecarHeaders } from '../src/lib/sidecar';
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
@@ -126,7 +127,7 @@ async function fetchCareerPage(url: string): Promise<string | null> {
     console.log(`[Sidecar] Attempting stealth fetch for ${url}...`);
     const res = await fetch(`${SIDECAR_URL}/fetch_html`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ url, use_stealth: true }),
       signal: AbortSignal.timeout(60_000),
     });
@@ -172,7 +173,7 @@ async function fetchCareerPage(url: string): Promise<string | null> {
     console.log(`[Sidecar] Attempting smart_scrape for ${url}...`);
     const res = await fetch(`${SIDECAR_URL}/smart_scrape`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ url, prompt: 'Extract all job postings, vacancies, and career opportunities listed on this page.' }),
       signal: AbortSignal.timeout(90_000),
     });

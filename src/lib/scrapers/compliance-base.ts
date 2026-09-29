@@ -1,3 +1,4 @@
+import { sidecarHeaders } from '@/lib/sidecar';
 import * as cheerio from 'cheerio';
 import { generateObjectWithFallback, extractVisionTextWithFallback } from '../ai/router';
 import { z } from 'zod';
@@ -61,7 +62,7 @@ async function extractTextViaSidecar(
 
     const res = await fetch(`${sidecarUrl}/extract_text`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(5_000),
     });
@@ -117,7 +118,7 @@ export async function fetchHtml(url: string): Promise<string | null> {
     const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
     const sidecarRes = await fetch(`${sidecarUrl}/fetch_html`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ url, use_stealth: true }),
       signal: AbortSignal.timeout(15_000),
     });
@@ -444,7 +445,7 @@ export async function fetchAndParseDocument(url: string): Promise<string> {
   try {
     const res = await fetch(`${sidecarUrl}/extract_document`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ url, max_chars: 40000 }),
       signal: AbortSignal.timeout(60_000),
     });

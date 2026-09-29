@@ -1,8 +1,30 @@
--- SUPERSEDED: never journaled; its statements are now part of 0019_scraper_parsers.sql (idempotent). Safe to delete.
--- Migration: employer_url columns on jobs, tenders, compliance_requirements
--- Adds two columns to each table:
---   employer_url: the resolved direct employer/authority URL (nullable)
---   is_aggregator_source: flag indicating sourceUrl points to an aggregator
+-- NOTE: 0015_employer_url.sql was never registered in the drizzle journal; it is folded in below.
+-- NOTE: "professions" already exists in some environments (it was created outside drizzle);
+-- IF NOT EXISTS keeps this migration safe to apply everywhere.
+CREATE TABLE IF NOT EXISTS "professions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"automation_risk_score" numeric(4, 2),
+	"resilience_rationale" text,
+	"upskilling_advice" text,
+	"founder_opportunity" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "professions_name_unique" UNIQUE("name")
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "scraper_parsers" (
+	"hash" text PRIMARY KEY NOT NULL,
+	"spec" jsonb NOT NULL,
+	"hit_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"last_used_at" timestamp DEFAULT now() NOT NULL
+);
+
+--> statement-breakpoint
+-- Folded in from the previously un-journaled 0015_employer_url.sql so that
+-- `drizzle-kit migrate` on a fresh database creates these columns/indexes too.
+-- All statements are idempotent (IF NOT EXISTS).
 
 --> statement-breakpoint
 ALTER TABLE "jobs"

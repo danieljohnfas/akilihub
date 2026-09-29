@@ -1,3 +1,4 @@
+import { sidecarHeaders } from '../src/lib/sidecar';
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
@@ -65,7 +66,7 @@ async function runStressTest() {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 45000);
           const res = await fetch(`${process.env.SIDECAR_URL}/scrape`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ url, portal_type: 'generic', use_stealth: true, max_pages: 1 }),
             signal: controller.signal
           }).finally(() => clearTimeout(timeout));
@@ -87,7 +88,7 @@ async function runStressTest() {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 45000);
           const res = await fetch(`${process.env.SIDECAR_URL}/crawl4ai`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ url, portal_type: 'generic', use_browser: true }),
             signal: controller.signal
           }).finally(() => clearTimeout(timeout));

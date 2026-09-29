@@ -25,6 +25,7 @@
  *     links are NEVER mistakenly stored as canonical employer URLs.
  */
 
+import { sidecarHeaders } from '@/lib/sidecar';
 import * as cheerio from 'cheerio';
 import { fetchHtml } from '@/lib/scrapers/compliance-base';
 import {
@@ -261,7 +262,7 @@ export async function resolveEmployerUrl(
       try {
         const res = await fetch(`${sidecarUrl}/resolve_ats`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ url: sourceUrl }),
           signal: controller.signal,
         });
