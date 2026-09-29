@@ -3,6 +3,13 @@ import { normalizeLocationAndGetRegionId } from '../ai/location';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { getAllAggregatorDomains } from '../sources/aggregators';
 import * as cheerio from 'cheerio';
+import {
+  engineAvailable,
+  recordSearchOutcome,
+  reportEngineHttpFailure,
+  reportEngineNetworkFailure,
+  reportEngineSuccess,
+} from './search-health';
 
 export interface BroadJobResource {
   title: string;
@@ -33,6 +40,7 @@ const BLOCKED_DOMAINS = getAllAggregatorDomains();
 
 // ── DuckDuckGo HTML Search (free, robust, direct fetch) ────────────────────────
 async function searchDDGHtml(query: string, numResults: number): Promise<string[]> {
+  if (!engineAvailable('ddg')) return [];
   try {
     const res = await fetch("https://html.duckduckgo.com/html/", {
       method: "POST",
@@ -46,8 +54,10 @@ async function searchDDGHtml(query: string, numResults: number): Promise<string[
 
     if (!res.ok) {
       console.warn(`[searchDDGHtml] returned ${res.status}`);
+      reportEngineHttpFailure('ddg', res.status);
       return [];
     }
+    reportEngineSuccess('ddg');
 
     const html = await res.text();
     const $ = cheerio.load(html);
@@ -71,6 +81,7 @@ async function searchDDGHtml(query: string, numResults: number): Promise<string[
     return finalUrls;
   } catch (err) {
     console.error(`[searchDDGHtml] Error:`, err);
+    reportEngineNetworkFailure('ddg');
     return [];
   }
 }
@@ -78,7 +89,7 @@ async function searchDDGHtml(query: string, numResults: number): Promise<string[
 // ── Serper.dev fallback (paid, used only when SERPER_API_KEY is set) ────────
 async function searchSerper(query: string, numResults: number): Promise<string[]> {
   const apiKey = process.env.SERPER_API_KEY?.trim();
-  if (!apiKey) return [];
+  if (!apiKey || !engineAvailable('serper')) return [];
 
   try {
     const res = await fetch('https://google.serper.dev/search', {
@@ -91,6 +102,7 @@ async function searchSerper(query: string, numResults: number): Promise<string[]
     if (!res.ok) {
       const errText = await res.text();
       console.error(`[searchSerper] API failed: ${res.status} ${res.statusText} — ${errText}`);
+      reportEngineHttpFailure('serper', res.status, errText);
       return [];
     }
 
@@ -175,7 +187,7 @@ async function searchSearXNG(query: string, numResults: number): Promise<string[
 // ── Exa API (Primary, robust AI search) ────────────────────────────────────────
 async function searchExa(query: string, numResults: number): Promise<string[]> {
   const apiKey = process.env.EXA_API_KEY?.trim();
-  if (!apiKey) return [];
+  if (!apiKey || !engineAvailable('exa')) return [];
 
   try {
     const res = await fetch('https://api.exa.ai/search', {
@@ -188,6 +200,7 @@ async function searchExa(query: string, numResults: number): Promise<string[]> {
     if (!res.ok) {
       const errText = await res.text();
       console.error(`[searchExa] API failed: ${res.status} ${res.statusText} — ${errText}`);
+      reportEngineHttpFailure('exa', res.status, errText);
       if (res.status === 402 || res.status === 429) {
         throw new Error("EXA_QUOTA_EXCEEDED");
       }
@@ -230,7 +243,7 @@ async function searchExa(query: string, numResults: number): Promise<string[]> {
 async function searchGoogleCSE(query: string, numResults: number): Promise<string[]> {
   const apiKey = process.env.GOOGLE_CSE_API_KEY?.trim();
   const cx = process.env.GOOGLE_CSE_ID?.trim();
-  if (!apiKey || !cx) return [];
+  if (!apiKey || !cx || !engineAvailable('cse')) return [];
 
   try {
     // Google CSE allows max 10 per request; we cap at 10 for the free tier
@@ -245,6 +258,7 @@ async function searchGoogleCSE(query: string, numResults: number): Promise<strin
     if (!res.ok) {
       const errText = await res.text();
       console.error(`[searchGoogleCSE] API failed: ${res.status} — ${errText.slice(0, 120)}`);
+      reportEngineHttpFailure('cse', res.status, errText);
       return [];
     }
 
@@ -265,16 +279,27 @@ async function searchGoogleCSE(query: string, numResults: number): Promise<strin
   }
 }
 
+/**
+ * Multi-engine search. Batch scripts call `configureSearchBreaker()` first; from then on this throws
+ * `SearchUnavailableError` once every engine has come back empty for N queries in a row (see
+ * search-health.ts), so a dead provider fails the run quickly instead of burning the CI timeout.
+ */
 export async function searchGoogle(query: string, numResults: number = 20): Promise<string[]> {
+  const urls = await searchAcrossEngines(query, numResults);
+  recordSearchOutcome(urls.length);
+  return urls;
+}
+
+async function searchAcrossEngines(query: string, numResults: number): Promise<string[]> {
   // 1. Try Exa API — primary, AI-native, 1000 free searches/month
-  if (process.env.EXA_API_KEY) {
+  if (process.env.EXA_API_KEY && engineAvailable('exa')) {
     const exaUrls = await searchExa(query, numResults);
     if (exaUrls.length > 0) return exaUrls;
     console.warn(`[searchGoogle] Exa returned 0 results — trying Google CSE`);
   }
 
   // 2. Try Google Custom Search — official Google results, 100 free/day
-  if (process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_ID) {
+  if (process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_ID && engineAvailable('cse')) {
     const cseUrls = await searchGoogleCSE(query, numResults);
     if (cseUrls.length > 0) return cseUrls;
     console.warn(`[searchGoogle] Google CSE returned 0 results — trying DDG`);
@@ -291,7 +316,7 @@ export async function searchGoogle(query: string, numResults: number = 20): Prom
   console.warn(`[searchGoogle] SearXNG also returned 0 results — trying Serper`);
 
   // 5. Try Serper
-  if (process.env.SERPER_API_KEY) {
+  if (process.env.SERPER_API_KEY && engineAvailable('serper')) {
     const serperUrls = await searchSerper(query, numResults);
     if (serperUrls.length > 0) return serperUrls;
   }

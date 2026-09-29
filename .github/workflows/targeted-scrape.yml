@@ -68,10 +68,17 @@ jobs:
           chmod 600 .env.remote
 
       - name: Run Company Discovery (Single Sweep)
+        id: discovery
+        env:
+          # The script ends the sweep cleanly after this many minutes so the steps below still run
+          # (a full sweep never finishes in CI); it exits 1 when every search engine is out of quota.
+          DISCOVERY_MAX_MINUTES: '120'
         run: |
           # CI=true tells the discovery runner to exit after one sweep
           CI=true npx tsx --env-file=.env.remote scripts/company-discovery.ts
-        continue-on-error: true # Continue even if discovery hits temporary external search limits
+        # Let the commit and targeted-scrape steps still run; the "Fail the job" step below turns a
+        # discovery failure red at the end, so it is no longer silent.
+        continue-on-error: true
 
       - name: Commit Discovered Companies
         run: |
@@ -90,12 +97,19 @@ jobs:
         continue-on-error: true
 
       - name: Run Targeted Scraper
+        id: targeted
         run: |
           npx tsx --env-file=.env.remote scripts/targeted-scrape.ts
-        continue-on-error: true # Ensure we finish gracefully
+        continue-on-error: true # Ensure the secrets file is cleaned up; failures are reported below
 
       - name: Cleanup Secrets File
         if: always()
         run: |
           rm -f .env.remote
           echo "Cleaned up temporary environment file."
+
+      - name: Fail the job if a scrape step failed
+        if: always() && (steps.discovery.outcome == 'failure' || steps.targeted.outcome == 'failure')
+        run: |
+          echo "::error::Company discovery: ${{ steps.discovery.outcome }}; targeted scraper: ${{ steps.targeted.outcome }}. Check the step logs; exhausted search-provider credits (Exa, Serper, Google CSE) are the usual cause."
+          exit 1

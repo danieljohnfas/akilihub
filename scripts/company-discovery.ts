@@ -5,6 +5,7 @@ import { generateObject, generateText } from 'ai';
 import { z } from 'zod';
 import { generateObjectWithFallback } from '../src/lib/ai/router';
 import { searchGoogle } from '../src/lib/scrapers/broad-search-engine';
+import { configureSearchBreaker, SearchUnavailableError } from '../src/lib/scrapers/search-health';
 
 const REGISTRY_PATH = path.join(process.cwd(), 'src/lib/sources/discovered-careers.json');
 
@@ -57,6 +58,15 @@ async function findCareerPage(company: string, country: string) {
 }
 
 async function run() {
+  // Fail fast (non-zero exit) when every search engine has been empty for N lookups in a row.
+  configureSearchBreaker();
+
+  // Optional wall-clock budget: the CI workflow sets it below the job timeout so the sweep ends
+  // cleanly (exit 0) and the steps after it still run, instead of being cancelled by the runner.
+  const budgetMinutes = Number(process.env.DISCOVERY_MAX_MINUTES);
+  const deadline = Number.isFinite(budgetMinutes) && budgetMinutes > 0 ? Date.now() + budgetMinutes * 60_000 : null;
+  const outOfTime = () => deadline !== null && Date.now() >= deadline;
+
   const registry = await loadRegistry();
   const existingCompanies = new Set(registry.map((r: any) => r.company));
   
@@ -67,11 +77,16 @@ async function run() {
     let madeProgress = false;
     for (const country of countries) {
       for (const topic of topics) {
+        if (outOfTime()) {
+          console.log(`[Daemon] Time budget of ${budgetMinutes} min reached. Stopping cleanly.`);
+          return;
+        }
         try {
           const companies = await discoverCompanies(topic, country);
           
           for (const company of companies) {
             if (existingCompanies.has(company)) continue;
+            if (outOfTime()) break; // the topic-level check above then ends the sweep
             
             const careerUrl = await findCareerPage(company, country);
             if (careerUrl) {
@@ -88,6 +103,8 @@ async function run() {
             await new Promise(r => setTimeout(r, 5000));
           }
         } catch (err) {
+          // In CI a dead search provider is fatal (the daemon mode below keeps waiting for quota resets).
+          if (err instanceof SearchUnavailableError && process.env.CI) throw err;
           console.error(`[Error] Topic loop failed:`, (err as Error).message);
           // If a topic loop fails due to an exhausted AI, wait 5 minutes before continuing
           console.log('[Daemon] Sleeping for 5 minutes due to API exhaustion...');
@@ -110,4 +127,7 @@ async function run() {
   }
 }
 
-run().catch(console.error);
+run().catch((e) => {
+  console.error(e instanceof SearchUnavailableError ? `\n[FATAL] ${e.message}` : e);
+  process.exitCode = 1; // was 0 even on failure, so the workflow never turned red
+});

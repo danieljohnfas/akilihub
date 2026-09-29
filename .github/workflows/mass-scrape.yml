@@ -48,7 +48,12 @@ jobs:
           echo "⚠️ Sidecar did not respond in time — scraper will proceed anyway with fallback search providers."
 
       - name: Run Mass Scrape
+        # The script stops itself after MASS_SCRAPE_MAX_MINUTES (exit 0) or when every search engine is
+        # out of quota (exit 1). This step timeout is only a safety net: unlike the job-level timeout,
+        # it marks the run failed instead of "cancelled", which nobody gets alerted about.
+        timeout-minutes: 170
         env:
+          MASS_SCRAPE_MAX_MINUTES: '160'
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}

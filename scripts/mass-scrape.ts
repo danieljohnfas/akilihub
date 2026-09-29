@@ -2,9 +2,16 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
 
 import { discoverJobs } from '../src/lib/scrapers/broad-search-engine';
+import { configureSearchBreaker, SearchUnavailableError } from '../src/lib/scrapers/search-health';
 import { saveJobs } from '../src/inngest/scrape-jobs';
 
 const TARGET_NEW_JOBS = 2000;
+
+// Optional wall-clock budget (the workflow sets it below the job timeout) so a healthy run ends
+// cleanly with exit 0 instead of being cancelled by the runner, which shows up as "cancelled", not red.
+const budgetMinutes = Number(process.env.MASS_SCRAPE_MAX_MINUTES);
+const deadline = Number.isFinite(budgetMinutes) && budgetMinutes > 0 ? Date.now() + budgetMinutes * 60_000 : null;
+const outOfTime = () => deadline !== null && Date.now() >= deadline;
 
 const countriesMap: Record<string, { cities: string[], keywords: string[] }> = {
   'TZ': {
@@ -58,9 +65,13 @@ const titles = [
 ];
 
 async function run() {
+  // Stop with a failing exit code when every search engine has been empty for N queries in a row
+  // (out of credits/quota) rather than looping through thousands of queries until the timeout.
+  configureSearchBreaker();
   const allCountries = Object.keys(countriesMap);
-  
+
   for (const countryCode of allCountries) {
+    if (outOfTime()) break;
     const config = countriesMap[countryCode];
     const queries: string[] = [];
 
@@ -84,6 +95,10 @@ async function run() {
     let newlyInserted = 0;
 
     for (const query of queries) {
+      if (outOfTime()) {
+        console.log(`Time budget of ${budgetMinutes} min reached. Stopping cleanly.`);
+        break;
+      }
       if (newlyInserted >= TARGET_NEW_JOBS) {
         console.log(`Reached target of ${TARGET_NEW_JOBS} NEW jobs for ${countryCode}. Moving to next country.`);
         break;
@@ -101,10 +116,16 @@ async function run() {
           console.log(`No jobs discovered for query.`);
         }
       } catch (e) {
+        if (e instanceof SearchUnavailableError) throw e; // fatal: do not swallow it as a per-query error
         console.error(`Error during query "${query}":`, e);
       }
     }
   }
 }
 
-run().catch(console.error).finally(() => process.exit(0));
+run()
+  .catch((e) => {
+    console.error(e instanceof SearchUnavailableError ? `\n[FATAL] ${e.message}` : e);
+    process.exitCode = 1; // was always 0, so failures never turned the workflow red
+  })
+  .finally(() => process.exit());
