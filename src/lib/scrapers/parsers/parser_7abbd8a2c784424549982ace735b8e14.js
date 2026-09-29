@@ -1,1 +1,0 @@
-// No job listings detected; result remains empty

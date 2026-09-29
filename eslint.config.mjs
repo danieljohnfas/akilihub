@@ -24,17 +24,9 @@ const eslintConfig = [
       "scratch/**",
       "scripts/**",
       "graphify-out/**",
-      // Legacy LLM-generated parsers (no longer executed; see src/lib/scrapers/parsers/README.md)
-      "src/lib/scrapers/parsers/**",
-      // Ad-hoc root-level scripts (untyped, unreviewed). Real config files stay linted.
+      // Root-level ops scripts (monitor.js, migrate.js) are plain untyped JS.
       "*.js",
       "*.cjs",
-      "*.ts",
-      "!next.config.ts",
-      "!drizzle.config.ts",
-      "!playwright.config.ts",
-      "!vitest.config.ts",
-      "!sentry.*.config.ts",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
