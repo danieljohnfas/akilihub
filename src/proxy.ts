@@ -1,3 +1,4 @@
+// Next.js 16: this file was `middleware.ts` (the convention was renamed to `proxy`; it runs on the Node.js runtime).
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -9,7 +10,7 @@ import { checkRateLimit, clientIpFromHeaders } from '@/lib/security/rate-limit';
 const API_LIMIT = { prefix: 'api-global', max: 120, window: '1 m' } as const;
 const API_LIMIT_EXEMPT = ['/api/inngest', '/api/health'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ── Admin Route Protection ──────────────────────────────────────────────

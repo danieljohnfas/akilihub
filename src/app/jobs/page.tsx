@@ -222,6 +222,7 @@ async function JobsList({ params }: { params: ReturnType<typeof parseGlobalSearc
   }
 
   const getConditions = (exclude?: 'q' | 'type' | 'company' | 'country' | 'time') => {
+    // eslint-disable-next-line react-hooks/purity -- server component rendered per request (force-dynamic); "now" is intentionally request-time
     const now = Date.now();
     return [
       activeCondition,

@@ -56,6 +56,7 @@ export function AIChatPanel() {
       greeting = "Exploring public health data? I can help interpret DHIS2 statistics, find disease prevalence trends, or summarize health reports.";
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the greeting when the route changes
     setMessages(prev => {
       // If the chat is empty or only contains a previous greeting, replace it
       if (prev.length === 0 || (prev.length === 1 && prev[0].id.startsWith('welcome'))) {
@@ -75,6 +76,7 @@ export function AIChatPanel() {
   // Proactive messaging based on route
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear the nudge when the panel opens
       setProactiveMessage(null);
       return;
     }

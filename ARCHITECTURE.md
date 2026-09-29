@@ -82,7 +82,7 @@ Every AI-spending job checks `scrapersDisabled()` (`SCRAPE_DISABLED=true`) first
 |---|---|
 | Admin auth (password + TOTP, JWT cookie, encrypted TOTP secret, setup token) | `src/app/api/admin/*`, `src/lib/admin/*` |
 | Authorizing pages / Server Actions | `src/lib/admin/require-admin.ts` |
-| Rate limiting (Upstash + in-memory fallback, trustworthy client IP) | `src/lib/security/rate-limit.ts`, `src/middleware.ts` |
+| Rate limiting (Upstash + in-memory fallback, trustworthy client IP) | `src/lib/security/rate-limit.ts`, `src/proxy.ts` |
 | SSRF-safe fetching / URL classification | `src/lib/security/safe-fetch.ts`, `safe-url.ts` |
 | JSON-LD XSS protection | `src/components/seo/serialize.ts` |
 | Anonymous CV ownership, 30-day retention, deletion | `src/lib/cv-session.ts`, `src/app/api/upload-cv`, `src/inngest/purge-expired-documents.ts` |

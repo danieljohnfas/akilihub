@@ -35,6 +35,7 @@ export function ConsentProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe: localStorage can only be read after hydration
       if (stored === 'granted' || stored === 'denied') setConsent(stored);
     } catch {
       /* storage unavailable (private mode) — treat as undecided */

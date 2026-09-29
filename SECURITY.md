@@ -21,7 +21,7 @@ The full list is in [`.env.example`](.env.example). The ones that matter for sec
 
 ## Security model (what to keep true)
 
-1. **Authorize where the work happens.** `middleware.ts` only redirects browsers; it is not a boundary
+1. **Authorize where the work happens.** `src/proxy.ts` (formerly `middleware.ts`) only redirects browsers; it is not a boundary
    (Next.js has had middleware-bypass CVEs). Every admin page, route handler and **Server Action**
    checks the session itself (`src/lib/admin/require-admin.ts`). Server Actions are public endpoints
    callable by id from any route.
@@ -53,8 +53,8 @@ Deleting a file on `main` is **not** enough. Rotate the credential first, then p
 
 ## Known limitations
 
-- `npm audit` reports 2 remaining production findings (PostCSS bundled inside Next, and a Next
-  advisory) that are only fixed by a **Next 16 major upgrade**.
+- `npm audit --omit=dev` is clean as of the Next 16 upgrade. Dependabot proposes Next updates weekly;
+  keep security bumps prompt — Next has shipped several critical advisories.
 - The Content-Security-Policy ships in **report-only** mode (`Content-Security-Policy-Report-Only`, violations logged by `/api/csp-report`). Watch the logs for `[csp-report]` lines after a deploy, tune `next.config.ts`, then set `CSP_ENFORCE=1`. It still needs `'unsafe-inline'` for scripts (Next hydration + ad/analytics snippets); per-request nonces are the follow-up.
 - The admin TOTP replay guard is per-process; run a single instance or move it to Redis if you scale out.
 - The sidecar's headless browsers follow redirects internally: the initial URL is validated, but

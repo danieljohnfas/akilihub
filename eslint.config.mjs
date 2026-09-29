@@ -1,35 +1,14 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 import unusedImports from "eslint-plugin-unused-imports";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// eslint-config-next@15 ships *legacy* (eslintrc) presets. The previous config tried to
-// `import()` them as flat-config arrays, silently fell back to `[]` when that failed, and so
-// linted nothing at all ("File ignored because no matching configuration was supplied").
-// FlatCompat is the supported bridge, and there is deliberately NO try/catch here: a broken
-// config must fail loudly.
-const compat = new FlatCompat({ baseDirectory: __dirname });
-
-const eslintConfig = [
-  {
-    ignores: [
-      ".next/**",
-      "out/**",
-      "build/**",
-      "coverage/**",
-      "next-env.d.ts",
-      "scraper/**",
-      "scratch/**",
-      "scripts/**",
-      "graphify-out/**",
-      // Root-level ops scripts (monitor.js, migrate.js) are plain untyped JS.
-      "*.js",
-      "*.cjs",
-    ],
-  },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+// eslint-config-next@16 ships native flat-config arrays. There is deliberately NO try/catch around
+// the imports: the old config swallowed a failed import and silently linted nothing, which made CI's
+// lint step vacuous. A broken config must fail loudly.
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
   {
     plugins: {
       "unused-imports": unusedImports,
@@ -45,6 +24,21 @@ const eslintConfig = [
       ],
     },
   },
-];
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "coverage/**",
+    "next-env.d.ts",
+    "scraper/**",
+    "scratch/**",
+    "scripts/**",
+    "graphify-out/**",
+    // Root-level ops scripts (monitor.js, migrate.js) are plain untyped JS.
+    "*.js",
+    "*.cjs",
+  ]),
+]);
 
 export default eslintConfig;

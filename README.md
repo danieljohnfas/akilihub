@@ -4,7 +4,7 @@ East Africa's professional intelligence platform: jobs, government tenders, sala
 and health data for Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, Burundi, Somalia and South
 Sudan — **[akilibrain.com](https://akilibrain.com)**.
 
-Stack: Next.js 15 (App Router) · PostgreSQL (Supabase) + Drizzle ORM · Inngest background jobs ·
+Stack: Next.js 16 (App Router) · PostgreSQL (Supabase) + Drizzle ORM · Inngest background jobs ·
 multi-provider AI router (Vercel AI SDK v7) · Python scraper sidecar · Tailwind + shadcn/ui.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the pieces fit together.
 
@@ -67,7 +67,7 @@ shared key: set the same `SIDECAR_API_KEY` on Render, on the app and in the GitH
 Read [SECURITY.md](SECURITY.md) before touching authentication, Server Actions, outbound fetches or
 anything that handles CVs / emails. In short:
 
-- Server Actions and route handlers must authorize themselves; middleware is not a security boundary.
+- Server Actions and route handlers must authorize themselves; the proxy (`src/proxy.ts`) is not a security boundary.
 - Fetch scraped or user-supplied URLs only through `src/lib/security/safe-fetch.ts`.
 - Never execute model-generated code; parsers are declarative JSON specs (`src/lib/scrapers/parser-spec.ts`).
 - Marketing email must respect `users.email_updates` and carry unsubscribe headers (`src/lib/email/bulk.ts`).
