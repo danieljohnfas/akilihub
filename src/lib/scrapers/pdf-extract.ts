@@ -20,6 +20,7 @@
  */
 
 import * as cheerio from 'cheerio';
+import { safeFetchBuffer } from '@/lib/security/safe-fetch';
 import { db } from '../db/client';
 import { tenderAttachments } from '../db/schema/attachments';
 
@@ -84,14 +85,13 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
  */
 export async function downloadDocument(url: string): Promise<{ buffer: Buffer; sizeBytes: number } | null> {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetchBuffer(url, {
       headers: { 'User-Agent': UA, Accept: 'application/pdf,application/octet-stream,*/*' },
-      signal: AbortSignal.timeout(30_000),
+      timeoutMs: 30_000,
+      maxBytes: 25 * 1024 * 1024,
     });
     if (!res.ok) return null;
-    const arrayBuffer = await res.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    return { buffer, sizeBytes: buffer.byteLength };
+    return { buffer: res.body, sizeBytes: res.body.byteLength };
   } catch {
     return null;
   }

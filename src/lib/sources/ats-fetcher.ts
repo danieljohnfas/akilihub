@@ -1,3 +1,4 @@
+import { safeFetch, readBodyLimited, type SafeFetchOptions } from "@/lib/security/safe-fetch";
 export async function fetchAtsApi(url: string, method: string = "GET", headers?: Record<string, string>, body?: any) {
   const sidecarUrl = process.env.SCRAPLING_URL ?? process.env.SIDECAR_URL;
 
@@ -36,9 +37,10 @@ export async function fetchAtsApi(url: string, method: string = "GET", headers?:
     options.headers = { ...options.headers, 'Content-Type': 'application/json' };
   }
 
-  const res = await fetch(url, options);
+  const res = await safeFetch(url, { ...(options as SafeFetchOptions), timeoutMs: 20_000 });
   if (!res.ok) {
+    await res.body?.cancel().catch(() => undefined);
     throw new Error(`Direct fetch failed with status ${res.status}`);
   }
-  return await res.json();
+  return JSON.parse((await readBodyLimited(res, 10 * 1024 * 1024)).toString('utf8'));
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifyAdminSession } from "@/lib/admin/session";
+import { hasValidSecret } from "@/lib/security/secrets";
 
 export const dynamic = "force-dynamic";
 
@@ -8,11 +9,9 @@ export const dynamic = "force-dynamic";
  * Use the Inngest data-cleanup worker via /api/admin/start-cleanup instead.
  */
 export async function GET(request: NextRequest) {
-  const cron = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const adminOk = Boolean(token && (await verifyAdminSession(token)));
-  const cronOk = Boolean(cronSecret && cron === `Bearer ${cronSecret}`);
+  const cronOk = hasValidSecret(request, process.env.CRON_SECRET);
 
   if (!adminOk && !cronOk) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,30 +1,13 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
 import { verifyAdminSession, SESSION_COOKIE } from '@/lib/admin/session';
+import { checkRateLimit, clientIpFromHeaders } from '@/lib/security/rate-limit';
 
-// Create a new ratelimiter, that allows 10 requests per 10 seconds
-// Will only initialize if the Upstash Redis URL/Token are provided
-let ratelimit: Ratelimit | null = null;
-try {
-  if (
-    process.env.UPSTASH_REDIS_REST_URL &&
-    process.env.UPSTASH_REDIS_REST_URL.startsWith('https://') &&
-    process.env.UPSTASH_REDIS_REST_TOKEN &&
-    process.env.UPSTASH_REDIS_REST_TOKEN !== 'your_upstash_token'
-  ) {
-    ratelimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(10, '10 s'),
-      analytics: true,
-      prefix: '@upstash/ratelimit',
-    });
-  }
-} catch (e) {
-  console.error('⚠️ Upstash Redis failed to initialize:', e);
-}
+// Generic backstop for every API route (stricter per-route limits live in the handlers).
+// /api/inngest (Inngest cloud IPs) and /api/health (uptime monitors) are exempt.
+const API_LIMIT = { prefix: 'api-global', max: 120, window: '1 m' } as const;
+const API_LIMIT_EXEMPT = ['/api/inngest', '/api/health'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -94,37 +77,29 @@ export async function middleware(request: NextRequest) {
     }
 
 
-    // 2. Upstash Rate Limiting for expensive public APIs
-    const rateLimitedPrefixes = ['/api/chat', '/api/upload-cv', '/api/match-cv', '/api/subscribe'];
-    const needsLimit = rateLimitedPrefixes.some((p) => pathname.startsWith(p));
-    if (needsLimit && ratelimit) {
-      const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
-      try {
-        const { success, limit, reset, remaining } = await ratelimit.limit(`${pathname}:${ip}`);
-        if (!success) {
-          return NextResponse.json(
-            { error: 'Too Many Requests', message: 'You have exceeded the rate limit. Please try again later.' },
-            { status: 429 }
-          );
-        }
-        supabaseResponse.headers.set('X-RateLimit-Limit', limit.toString());
-        supabaseResponse.headers.set('X-RateLimit-Remaining', remaining.toString());
-        supabaseResponse.headers.set('X-RateLimit-Reset', reset.toString());
-      } catch (error) {
-        console.error('Rate Limiter Error:', error);
+    // 2. Rate limiting backstop for API routes
+    const isApi = pathname.startsWith('/api/') && !API_LIMIT_EXEMPT.some((p) => pathname.startsWith(p));
+    if (isApi) {
+      const ip = clientIpFromHeaders(request.headers);
+      const r = await checkRateLimit(ip, API_LIMIT);
+      if (!r.success) {
+        return NextResponse.json(
+          { error: 'Too Many Requests', message: 'You have exceeded the rate limit. Please try again later.' },
+          { status: 429, headers: { 'Retry-After': String(Math.max(1, Math.ceil((r.reset - Date.now()) / 1000))) } }
+        );
       }
+      supabaseResponse.headers.set('X-RateLimit-Limit', String(r.limit));
+      supabaseResponse.headers.set('X-RateLimit-Remaining', String(r.remaining));
+      supabaseResponse.headers.set('X-RateLimit-Reset', String(r.reset));
     }
 
     return supabaseResponse;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Middleware Error:', error);
-    return new NextResponse(
-      JSON.stringify({ 
-        error: 'Middleware Error', 
-        message: error.message || error.toString()
-      }),
-      { status: 500, headers: { 'content-type': 'application/json' } }
-    );
+    return new NextResponse(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    });
   }
 }
 
