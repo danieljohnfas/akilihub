@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
@@ -38,6 +39,8 @@ export const dataReviewDispatcherJob = inngest.createFunction(
     concurrency: { limit: 1 },
   },
   async ({ step, event }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     const module: string = (event.data as any)?.module || "all";
 
     const dispatchedEvents: any[] = [];
@@ -164,6 +167,8 @@ export const dataReviewWorker = inngest.createFunction(
     triggers: [{ event: "data.review.process" }],
   },
   async ({ event, step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     const { id, module, sourceUrl, title, companyName } = event.data as {
       id: string;
       module: "jobs" | "tenders" | "compliance";

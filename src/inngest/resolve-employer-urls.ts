@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
@@ -17,6 +18,8 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
     triggers: [{ cron: "30 12 * * *" }, { event: "manual.data.review" }], // 12:30 UTC daily or manual trigger
   },
   async ({ step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     
     // JOBS
     const jobsResult = await step.run("dispatch-jobs", async () => {
@@ -123,6 +126,8 @@ export const resolveEmployerUrlsJob = inngest.createFunction(
 export const resolveUrlWorker = inngest.createFunction(
   { id: "resolve-url-worker", name: "Worker: Resolve URL", concurrency: 5, triggers: [{ event: "data.url.resolve" }] }, // strict concurrency to avoid aggregator bans
   async ({ event, step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     const { id, module, sourceUrl, title, companyName } = event.data;
 
     const result = await step.run("fetch-and-resolve", () => resolveEmployerUrl(sourceUrl, { title, company: companyName }));

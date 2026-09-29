@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
@@ -13,6 +14,8 @@ import { eq, isNotNull, asc, and } from "drizzle-orm";
 export const rescrapeJobsJob = inngest.createFunction(
   { id: "rescrape-jobs", name: "🔄 Rescrape Jobs (Continuous)", triggers: [{ cron: "0 * * * *" }] },
   async ({ step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     return await step.run("execute-rescrape-jobs", async () => {
       // Only rescrape active jobs — inactive listings are not worth the AI cost
       const oldestJobs = await db.select()
@@ -87,6 +90,8 @@ export const rescrapeJobsJob = inngest.createFunction(
 export const rescrapeTendersJob = inngest.createFunction(
   { id: "rescrape-tenders", name: "🔄 Rescrape Tenders (Continuous)", triggers: [{ cron: "15 * * * *" }] },
   async ({ step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     return await step.run("execute-rescrape-tenders", async () => {
       // Only rescrape open tenders — closed/awarded tenders are not worth the AI cost
       const oldestTenders = await db.select()
@@ -148,6 +153,8 @@ export const rescrapeTendersJob = inngest.createFunction(
 export const rescrapeComplianceJob = inngest.createFunction(
   { id: "rescrape-compliance", name: "🔄 Rescrape Compliance (Continuous)", triggers: [{ cron: "30 * * * *" }] },
   async ({ step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     return await step.run("execute-rescrape-compliance", async () => {
       const oldestCompliance = await db.select()
         .from(complianceRequirements)

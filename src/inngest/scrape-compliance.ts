@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { discoverCompliance, BroadComplianceResource } from "@/lib/scrapers/broad-search-engine-compliance";
 import { db } from "@/lib/db/client";
@@ -65,6 +66,8 @@ function makeComplianceScraper(
   return inngest.createFunction(
     { id, name, triggers: [{ cron }, { event: "manual.scrape.compliance" }] },
     async ({ step }) => {
+      if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
       const pass1 = await step.run(`execute-compliance-scraper-pass1`, async () => {
         return await runComplianceQueries(queries, countryCode, `${id}-p1`);
       });

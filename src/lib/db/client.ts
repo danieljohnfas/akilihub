@@ -94,3 +94,26 @@ export async function safeQuery<T>(
     if (timeoutId) clearTimeout(timeoutId);
   }
 }
+
+/**
+ * queryOrThrow - like safeQuery (race-timeout) but it NEVER hides failures.
+ *
+ * Use it wherever "the query failed" must not be mistaken for "no rows": auth/setup guards,
+ * health checks, and routes that would otherwise report a misleading 404/empty result.
+ */
+export async function queryOrThrow<T>(
+  query: QueryInput<T>,
+  timeoutMs = 15000,
+  label: string = 'Unnamed Query'
+): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`Query [${label}] timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+  try {
+    const queryPromise = typeof query === 'function' ? query() : query;
+    return (await Promise.race([(async () => await queryPromise)(), timeoutPromise])) as T;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
