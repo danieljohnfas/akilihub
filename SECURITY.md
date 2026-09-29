@@ -55,8 +55,7 @@ Deleting a file on `main` is **not** enough. Rotate the credential first, then p
 
 - `npm audit` reports 2 remaining production findings (PostCSS bundled inside Next, and a Next
   advisory) that are only fixed by a **Next 16 major upgrade**.
-- No Content-Security-Policy is set yet (AdSense, Clarity, PostHog and Google sign-in need a carefully tuned
-  policy; roll it out in report-only mode first). Other security headers are set in `next.config.ts`.
+- The Content-Security-Policy ships in **report-only** mode (`Content-Security-Policy-Report-Only`, violations logged by `/api/csp-report`). Watch the logs for `[csp-report]` lines after a deploy, tune `next.config.ts`, then set `CSP_ENFORCE=1`. It still needs `'unsafe-inline'` for scripts (Next hydration + ad/analytics snippets); per-request nonces are the follow-up.
 - The admin TOTP replay guard is per-process; run a single instance or move it to Redis if you scale out.
 - The sidecar's headless browsers follow redirects internally: the initial URL is validated, but
   redirect-based SSRF from inside the browser is not blocked at the network level.
