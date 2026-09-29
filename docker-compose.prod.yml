@@ -1,16 +1,19 @@
 # docker-compose.prod.yml — AkiliBrain production stack for Linode
-# Usage: docker compose -f docker-compose.prod.yml up -d
+# Usage: docker compose -f docker-compose.prod.yml up -d --build
 #
 # Services:
 #   web        — Next.js app (standalone Docker build)
-#   nginx      — Reverse proxy, handles HTTP→HTTPS redirect and streaming
-#   scrapling  — Python stealth scraper sidecar (already on Render, optional)
+#   nginx      — Reverse proxy in front of the app
 #
 # Cloudflare sits in front of this stack:
 #   Cloudflare (HTTPS) → nginx (port 80) → Next.js (port 3000)
 #   Cloudflare "Always Use HTTPS" handles TLS — no cert needed on the server.
-
-version: '3.8'
+#
+# Configuration: ALL runtime variables come from /opt/akilibrain/.env via `env_file`
+# (see .env.example for the full list). The previous version forwarded a hand-maintained
+# whitelist, which silently dropped ADMIN_SESSION_SECRET, CRON_SECRET, the *_TRIGGER_SECRETs,
+# SCRAPE_DISABLED, WHATSAPP_*, numbered AI keys (GROQ_API_KEY_2…) and more — so the admin
+# login could not work and the scraper kill switch could not be flipped.
 
 services:
 
@@ -20,66 +23,49 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        # Public values inlined into the client bundle at build time.
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
         NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST:-}
-        NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN:-}
+        NEXT_PUBLIC_POSTHOG_KEY: ${NEXT_PUBLIC_POSTHOG_KEY:-}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
         NEXT_PUBLIC_ADSENSE_PUB_ID: ${NEXT_PUBLIC_ADSENSE_PUB_ID:-}
-        DATABASE_URL: ${DATABASE_URL}
-        DIRECT_URL: ${DIRECT_URL}
+        NEXT_PUBLIC_CLARITY_ID: ${NEXT_PUBLIC_CLARITY_ID:-}
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: "0.0.0.0"
-      # Server-only env vars — injected at runtime, not baked into the image
-      DATABASE_URL: ${DATABASE_URL}
-      DIRECT_URL: ${DIRECT_URL}
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
-      INNGEST_EVENT_KEY: ${INNGEST_EVENT_KEY}
-      INNGEST_SIGNING_KEY: ${INNGEST_SIGNING_KEY}
-      GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_GENERATIVE_AI_API_KEY}
-      GROQ_API_KEY: ${GROQ_API_KEY}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      RESEND_API_KEY: ${RESEND_API_KEY}
-      SERPER_API_KEY: ${SERPER_API_KEY}
-      SCRAPLING_URL: ${SCRAPLING_URL}
-      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL:-}
-      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-}
-      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
-      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
-      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
-      MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
-      COHERE_API_KEY: ${COHERE_API_KEY:-}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      SAMBANOVA_API_KEY: ${SAMBANOVA_API_KEY:-}
-      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-}
-      GITHUB_MODELS_TOKEN: ${GITHUB_MODELS_TOKEN:-}
-      HYPERBOLIC_API_KEY: ${HYPERBOLIC_API_KEY:-}
-      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
-      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY:-}
-      ZAI_API_KEY: ${ZAI_API_KEY:-}
+      # Fail fast at `docker compose up` if these are missing from .env.
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set in .env}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?ADMIN_SESSION_SECRET must be set in .env (admin login cannot work without it)}
+      INNGEST_EVENT_KEY: ${INNGEST_EVENT_KEY:?INNGEST_EVENT_KEY must be set in .env}
+      INNGEST_SIGNING_KEY: ${INNGEST_SIGNING_KEY:?INNGEST_SIGNING_KEY must be set in .env}
     expose:
       - "3000"
+    healthcheck:
+      # Uses the image's HEALTHCHECK command; /api/health returns 503 if the DB is unreachable.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # ── 2. Nginx Reverse Proxy ──────────────────────────────────────────────────
   nginx:
-    image: nginx:alpine
+    image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    # web must be healthy before nginx routes to it
+    # Only route traffic once the app is actually healthy.
     depends_on:
       web:
-        condition: service_started
+        condition: service_healthy
 
 volumes: {}

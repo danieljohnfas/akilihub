@@ -1,14 +1,17 @@
-version: '3.8'
+# LOCAL DEVELOPMENT ONLY. Every port is bound to 127.0.0.1 because several of these services
+# use default credentials (postgres/password, no Redis auth, Stirling security off). Never run
+# this file on an internet-facing server.
 
 services:
   # 1. Next.js Web App
   web:
     build: .
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - NODE_ENV=production
       - SCRAPLING_URL=http://scrapling:7860
+      - SIDECAR_API_KEY=${SIDECAR_API_KEY:-dev-only-sidecar-key}
       - SCRAPLING_MCP_URL=http://scrapling:8765/mcp
     depends_on:
       - db
@@ -23,12 +26,12 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
   # 3. Scrapling (Stealth Python Sidecar) — Cloudflare bypass + adaptive selectors
   scrapling:
@@ -36,8 +39,8 @@ services:
       context: ./scraper
       dockerfile: Dockerfile
     ports:
-      - "7860:7860"          # FastAPI scraping sidecar
-      - "8765:8765"          # Scrapling MCP server (streamable HTTP)
+      - "127.0.0.1:7860:7860"          # FastAPI scraping sidecar
+      - "127.0.0.1:8765:8765"          # Scrapling MCP server (streamable HTTP)
     volumes:
       - crawl_data:/app/crawl_data
       - scrapling_storage:/root/.scrapling  # Persist adaptive selector fingerprints
@@ -49,12 +52,13 @@ services:
       # Format: comma-separated proxy URLs
       # - PROXY_LIST=http://user:pass@host1:port,http://user:pass@host2:port
       - PROXY_LIST=${PROXY_LIST:-}
+      - SIDECAR_API_KEY=${SIDECAR_API_KEY:-dev-only-sidecar-key}
 
   # 4. Maxun (Visual Scraper)
   maxun:
     image: maxunhq/maxun:latest
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/maxun
       - REDIS_URL=redis://redis:6379
@@ -63,13 +67,13 @@ services:
   crawl4ai:
     image: unclecode/crawl4ai:latest
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
   # 5. Stirling PDF
   stirling-pdf:
     image: frooodle/s-pdf:latest
     ports:
-      - "8081:8080"
+      - "127.0.0.1:8081:8080"
     environment:
       - DOCKER_ENABLE_SECURITY=false
     volumes:
@@ -79,7 +83,7 @@ services:
   langflow:
     image: langflowai/langflow:latest
     ports:
-      - "7860:7860"
+      - "127.0.0.1:7861:7860"   # 7860 is already used by the scrapling sidecar
     environment:
       - LANGFLOW_DATABASE_URL=postgresql://postgres:password@db:5432/langflow
 
@@ -89,7 +93,7 @@ services:
   dify-api:
     image: langgenius/dify-api:latest
     ports:
-      - "5001:5001"
+      - "127.0.0.1:5001:5001"
     environment:
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
@@ -102,7 +106,7 @@ services:
   dify-web:
     image: langgenius/dify-web:latest
     ports:
-      - "3001:3000"
+      - "127.0.0.1:3001:3000"
     environment:
       - CONSOLE_API_URL=http://dify-api:5001
       - APP_API_URL=http://dify-api:5001

@@ -168,3 +168,6 @@ __pycache__/
 /fix*.py
 *.bak
 .env.remote
+
+# keep the documented template trackable (must come after the .env* patterns)
+!.env.example

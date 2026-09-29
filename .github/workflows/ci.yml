@@ -58,10 +58,22 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci --legacy-peer-deps --no-audit || npm install --legacy-peer-deps --no-audit
+        # No `|| npm install` fallback: it silently hides lockfile drift.
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
 
       - name: Run ESLint
         run: npm run lint
+
+      - name: Dependency audit (production, high+)
+        # Reported but not blocking: the two remaining findings need a Next 16 major upgrade.
+        run: npm audit --omit=dev --audit-level=high --legacy-peer-deps
+        continue-on-error: true
 
       - name: Verify Production Build
         env:
@@ -72,5 +84,14 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY || 'placeholder-key' }}
           NODE_OPTIONS: "--max-old-space-size=4096"
+          # Types are already verified by the "Type check" step above.
+          SKIP_TYPECHECK: "1"
+          # Build exactly like the Docker image does, so the standalone output is verified below.
+          NEXT_OUTPUT: "standalone"
           CI: "true"
         run: npm run build
+
+      - name: Verify standalone output exists (the Dockerfile copies it)
+        # Regression guard: `output: 'standalone'` was once removed, which broke every Docker build
+        # at the COPY step without CI noticing.
+        run: test -f .next/standalone/server.js

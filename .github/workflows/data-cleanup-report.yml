@@ -1,8 +1,8 @@
-name: Data Cleanup Hourly Report
+name: Data Cleanup Daily Report
 
 on:
   schedule:
-    - cron: '0 * * * *' # Run every hour
+    - cron: '15 6 * * *' # Once a day (was hourly: 24 emails/day and ~720 runner-minutes/month)
   workflow_dispatch:
 
 concurrency:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   run-report:
-    name: Trigger Cleanup Hourly Report
+    name: Trigger Cleanup Daily Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

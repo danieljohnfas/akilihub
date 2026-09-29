@@ -17,6 +17,10 @@ services:
     envVars:
       - key: PYTHONUNBUFFERED
         value: "1"
+      # Shared secret the Next.js app sends as X-Sidecar-Key. The sidecar refuses every request
+      # (except /health) without it. Set the SAME value as SIDECAR_API_KEY on the app + CI.
+      - key: SIDECAR_API_KEY
+        sync: false
     autoDeploy: true
 
   # ── 2. Langflow — AI Workflow Builder ──────────────────────────────────────
