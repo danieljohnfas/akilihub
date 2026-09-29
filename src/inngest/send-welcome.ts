@@ -4,7 +4,8 @@ import { render } from "@react-email/render";
 import { WelcomeEmail } from "@/lib/email/templates";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema/users";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { unsubscribeHeaders } from "@/lib/email/unsubscribe";
 import React from "react";
 
 // Helper function to chunk array for Resend limits
@@ -28,7 +29,7 @@ export const sendWelcomeEmailsJob = inngest.createFunction(
           fullName: users.fullName,
         })
         .from(users)
-        .where(eq(users.welcomeEmailSent, false));
+        .where(and(eq(users.welcomeEmailSent, false), eq(users.emailUpdates, true)));
     });
 
     if (newUsers.length === 0) {
@@ -48,6 +49,7 @@ export const sendWelcomeEmailsJob = inngest.createFunction(
         payloads.push({
           from: "AkiliBrain <hello@akilibrain.com>",
           to: [user.email],
+          headers: unsubscribeHeaders(user.id),
           subject: "Welcome to AkiliBrain \uD83D\uDC4B",
           html,
         });

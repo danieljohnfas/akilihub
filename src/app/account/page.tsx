@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { updateProfile, createAlert, deleteAlert, toggleAlert, toggleEmailUpdates } from './actions';
+import { updateProfile, createAlert, deleteAlert, toggleAlert, toggleEmailUpdates, deleteAccount } from './actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bell, User, Trash2, Bookmark, Mail, CheckCircle2, XCircle } from 'lucide-react';
 import { JobCard } from '@/components/jobs/JobCard';
@@ -24,7 +24,19 @@ export const metadata = {
   description: 'Manage your AkiliBrain profile and alerts.',
 };
 
-export default async function AccountPage() {
+const ACCOUNT_ERRORS: Record<string, string> = {
+  'confirm-email': 'The email you typed does not match your account email. Nothing was deleted.',
+  'delete-unavailable': 'Account deletion is temporarily unavailable. Please contact support and we will delete it for you.',
+  'delete-failed': 'We could not finish deleting your account. Please try again, or contact support.',
+};
+
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const query = await searchParams;
+  const errorKey = typeof query.error === 'string' ? query.error : undefined;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -61,6 +73,12 @@ export default async function AccountPage() {
           <h1 className="text-3xl font-bold tracking-tight">My Account</h1>
           <p className="text-muted-foreground">Manage your profile, preferences, and alerts.</p>
         </div>
+
+        {errorKey && ACCOUNT_ERRORS[errorKey] && (
+          <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {ACCOUNT_ERRORS[errorKey]}
+          </div>
+        )}
 
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="mb-6 bg-white/5 border border-white/10 p-1">
@@ -127,6 +145,27 @@ export default async function AccountPage() {
               </form>
             </div>
             
+
+            <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-6 md:p-8 backdrop-blur-xl">
+              <h2 className="text-xl font-semibold mb-2 text-red-400">Your data</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Download a copy of everything we store about you, or permanently delete your account. Deletion removes your profile,
+                alerts, saved items, CV evaluations and mock interviews and cannot be undone.
+              </p>
+              <a
+                href="/api/account/export"
+                className="inline-flex items-center rounded-md border border-white/10 px-4 py-2 text-sm hover:bg-white/5"
+              >
+                Download my data (JSON)
+              </a>
+
+              <form action={deleteAccount} className="space-y-3 max-w-md mt-6">
+                <Label htmlFor="confirmEmail">Type your email address to confirm deletion</Label>
+                <Input id="confirmEmail" name="confirmEmail" type="email" required autoComplete="off" placeholder={user.email || ''} className="bg-background" />
+                <Button type="submit" variant="destructive" className="w-full">Permanently delete my account</Button>
+              </form>
+            </div>
+
             {dbUser?.isPro && (
               <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-6 backdrop-blur-xl">
                 <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 text-indigo-400">

@@ -7,11 +7,13 @@ import { AIChatPanel } from "@/components/ai/AIChatPanel";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildOrganizationSchema, buildWebSiteSchema } from "@/components/seo/schemas";
 import { ClarityAnalytics } from "@/components/analytics/Clarity";
+import { ConsentProvider } from "@/components/consent/ConsentProvider";
+import { ConsentBanner } from "@/components/consent/ConsentBanner";
+import { AdSenseScript } from "@/components/consent/AdSenseScript";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ActivityTracker } from "@/components/analytics/ActivityTracker";
-import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 const BASE_URL = "https://akilibrain.com";
@@ -99,14 +101,10 @@ export default function RootLayout({
       <head>
         <JsonLd schema={buildOrganizationSchema()} />
         <JsonLd schema={buildWebSiteSchema()} />
-        <Script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || 'ca-pub-2501499631331261'}`}
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-        />
       </head>
       <body className={inter.className}>
+        <ConsentProvider>
+        <AdSenseScript pubId={process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || 'ca-pub-2501499631331261'} />
         <ClarityAnalytics />
         <ActivityTracker />
         <PostHogProvider>
@@ -126,6 +124,8 @@ export default function RootLayout({
             </GoogleOAuthProvider>
           </ThemeProvider>
         </PostHogProvider>
+        <ConsentBanner />
+        </ConsentProvider>
       </body>
     </html>
   );

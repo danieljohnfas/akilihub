@@ -99,6 +99,9 @@ import { dataCleanupOrchestratorJob } from "@/inngest/data-cleanup-worker";
 // Deduplication
 import { deduplicateJobsJob } from "@/inngest/deduplicate-jobs";
 
+// Data retention (CV uploads)
+import { purgeExpiredDocumentsJob } from "@/inngest/purge-expired-documents";
+
 // Jev Data Review & Enrichment (14:00 UTC daily)
 import { dataReviewDispatcherJob, dataReviewWorker } from "@/inngest/data-review-and-enrich";
 
@@ -214,6 +217,9 @@ export const { GET, POST, PUT } = serve({
 
     // Deduplication (03:00 UTC)
     deduplicateJobsJob,
+
+    // Retention: delete CV uploads older than 30 days (02:30 UTC)
+    purgeExpiredDocumentsJob,
 
     // Jev Data Review & Enrichment (14:00 UTC daily)
     dataReviewDispatcherJob,

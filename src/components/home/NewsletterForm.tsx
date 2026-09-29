@@ -1,61 +1,84 @@
 'use client';
 
-import { useTransition, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Loader2, Send, ShieldCheck } from 'lucide-react';
 
-export function NewsletterForm() {
-  const [isPending, startTransition] = useTransition();
-  const [optimisticSubscribed, setOptimisticSubscribed] = useState(false);
+type Status = 'idle' | 'loading' | 'sent' | 'error';
 
-  const handleSubscribe = (e: React.FormEvent<HTMLFormElement>) => {
+/**
+ * Newsletter signup. Posts to /api/subscribe (double opt-in: the user must click the emailed link).
+ * It used to fake a success message without ever calling the API.
+ */
+export function NewsletterForm({ compact = false }: { compact?: boolean }) {
+  const [status, setStatus] = useState<Status>('idle');
+  const [message, setMessage] = useState('');
+
+  async function handleSubscribe(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setOptimisticSubscribed(true);
+    const data = new FormData(e.currentTarget);
+    setStatus('loading');
+    setMessage('');
 
-    startTransition(async () => {
-      // Fake delay to show background work while UI is already updated
-      await new Promise(r => setTimeout(r, 1000));
-    });
-  };
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.get('email'), website: data.get('website') || undefined }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || 'Something went wrong. Please try again.');
+      setMessage(body.message || 'Check your inbox to confirm your subscription.');
+      setStatus('sent');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setStatus('error');
+    }
+  }
 
-  if (optimisticSubscribed) {
+  if (status === 'sent') {
     return (
-      <div className="p-6 rounded-2xl bg-green-500/10 border border-green-500/20 text-center animate-in fade-in zoom-in duration-300">
+      <div role="status" className="p-6 rounded-2xl bg-green-500/10 border border-green-500/20 text-center animate-in fade-in zoom-in duration-300">
         <CheckCircle2 className="w-10 h-10 text-green-500 mx-auto mb-3" />
-        <h3 className="text-xl font-bold mb-2">You're on the list!</h3>
-        <p className="text-sm text-muted-foreground">
-          Watch your inbox. If you ever want to leave, there's a 1-click unsubscribe at the bottom of every email.
-        </p>
+        <h3 className="text-xl font-bold mb-2">Check your inbox</h3>
+        <p className="text-sm text-muted-foreground">{message}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md w-full mx-auto space-y-4">
-      <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
-        <Input 
-          type="email" 
-          required 
-          placeholder="Enter your email address" 
-          className="h-12 bg-white/5 border-white/10"
+    <div className={compact ? 'space-y-2' : 'max-w-md w-full mx-auto space-y-4'}>
+      <form onSubmit={handleSubscribe} className={compact ? 'flex gap-2' : 'flex flex-col sm:flex-row gap-2'}>
+        {/* Honeypot: hidden from people, tempting to bots */}
+        <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
+        <Input
+          type="email"
+          name="email"
+          required
+          maxLength={254}
+          placeholder={compact ? 'Email address...' : 'Enter your email address'}
+          aria-label="Email address"
+          className={compact ? 'bg-black/20 border-white/10 focus-visible:ring-primary/50' : 'h-12 bg-white/5 border-white/10'}
         />
-        <Button 
-          type="submit" 
-          disabled={isPending}
-          className="h-12 px-8"
-        >
-          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Subscribe'}
-        </Button>
+        {compact ? (
+          <Button type="submit" size="icon" disabled={status === 'loading'} aria-label="Subscribe to newsletter" className="shrink-0 transition-transform active:scale-95">
+            {status === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </Button>
+        ) : (
+          <Button type="submit" disabled={status === 'loading'} className="h-12 px-8">
+            {status === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Subscribe'}
+          </Button>
+        )}
       </form>
-      
-      {/* 
-        UX Rule 5: No Dark Patterns. 
-        Explicitly declaring data safety and easy cancellation builds trust.
-      */}
+      {status === 'error' && (
+        <p role="alert" className="text-sm text-red-400">
+          {message}
+        </p>
+      )}
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="w-4 h-4 text-green-400" />
-        <span>No spam. 1-click unsubscribe anytime. We never sell your data.</span>
+        <span>Confirm by email. 1-click unsubscribe anytime. We never sell your data.</span>
       </div>
     </div>
   );
