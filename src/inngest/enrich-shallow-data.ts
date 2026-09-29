@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { db } from "@/lib/db/client";
 import { jobs } from "@/lib/db/schema/jobs";
@@ -88,6 +89,8 @@ export const enrichShallowDataJob = inngest.createFunction(
     triggers: [{ cron: "30 11 * * *" }, { event: "manual.data.review" }], // 11:30 UTC daily or manual trigger
   },
   async ({ step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     
     // JOBS
     const shallowJobs = await step.run("fetch-shallow-jobs", async () => {
@@ -223,6 +226,8 @@ export const enrichShallowDataJob = inngest.createFunction(
 export const enrichJobWorker = inngest.createFunction(
   { id: "enrich-job-worker", name: "Worker: Enrich Job", concurrency: 10, triggers: [{ event: "data.job.enrich" }] },
   async ({ event, step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     const { id, targetUrl, shallowTitle, shallowDesc, shallowReq, isAggregatorSource } = event.data;
     
     const extracted = await step.run("extract-url", () => refetchAndExtractJobs(targetUrl));
@@ -259,6 +264,8 @@ export const enrichJobWorker = inngest.createFunction(
 export const enrichTenderWorker = inngest.createFunction(
   { id: "enrich-tender-worker", name: "Worker: Enrich Tender", concurrency: 10, triggers: [{ event: "data.tender.enrich" }] },
   async ({ event, step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     const { id, targetUrl, shallowTitle, shallowDesc, isAggregatorSource } = event.data;
     
     const extracted = await step.run("extract-url", () => refetchAndExtractTenders(targetUrl));
@@ -292,6 +299,8 @@ export const enrichTenderWorker = inngest.createFunction(
 export const enrichComplianceWorker = inngest.createFunction(
   { id: "enrich-compliance-worker", name: "Worker: Enrich Compliance", concurrency: 10, triggers: [{ event: "data.compliance.enrich" }] },
   async ({ event, step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     const { id, targetUrl, shallowTitle, shallowDesc, issuingAuthority, isAggregatorSource } = event.data;
     
     const extracted = await step.run("extract-url", () => refetchAndExtractCompliance(targetUrl));

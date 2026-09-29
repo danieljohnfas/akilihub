@@ -37,10 +37,10 @@ class KeyPool {
   }
 
   /** Synchronous — no DB roundtrip. Returns the highest-priority, least-recently-used available key. */
-  getNextKey(structuredOnly = false): KeyEntry | null {
+  getNextKey(structuredOnly = false, exclude?: ReadonlySet<string>): KeyEntry | null {
     const now = Date.now();
     const available = Array.from(this.keys.values()).filter(
-      k => k.coolUntil <= now && (!structuredOnly || k.supportsStructured)
+      k => k.coolUntil <= now && (!structuredOnly || k.supportsStructured) && !exclude?.has(k.id)
     );
     if (available.length === 0) return null;
     
@@ -64,8 +64,12 @@ class KeyPool {
     key.errorCount = 0;
     key.lastUsed = Date.now();
     key.totalCalls++;
-    // Fire-and-forget telemetry write (doesn't block)
-    this._persistAsync(id).catch(() => {});
+    // Persist at most once a minute per key: an upsert per successful call is needless DB load.
+    const now = Date.now();
+    if (now - (this._lastPersist.get(id) ?? 0) > 60_000) {
+      this._lastPersist.set(id, now);
+      this._persistAsync(id).catch(() => {});
+    }
   }
 
   /** Synchronous failure mark — updates in-memory state only. */
@@ -84,6 +88,7 @@ class KeyPool {
   }
 
   private _dbDepsPromise: Promise<any> | null = null;
+  private _lastPersist: Map<string, number> = new Map();
 
   /** Attempts to write telemetry to DB, silently ignoring any errors. */
   private async _persistAsync(id: string): Promise<void> {
@@ -127,6 +132,15 @@ class KeyPool {
   }
 
   get size() { return this.keys.size; }
+
+  /** True when at least one key (optionally: one supporting structured output) is off cooldown. */
+  hasAvailable(structuredOnly = false): boolean {
+    const now = Date.now();
+    for (const k of this.keys.values()) {
+      if (k.coolUntil <= now && (!structuredOnly || k.supportsStructured)) return true;
+    }
+    return false;
+  }
 
   getAvailableCount(): number {
     const now = Date.now();

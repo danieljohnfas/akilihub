@@ -4,6 +4,8 @@ import { jobs } from "@/lib/db/schema/jobs";
 import { tenders } from "@/lib/db/schema/tenders";
 import { complianceRequirements as compliance } from "@/lib/db/schema/compliance";
 import { dataVerificationLog } from "@/lib/db/schema/admin";
+import { jobApplications } from "@/lib/db/schema/applications";
+import { scrapersDisabled } from "@/lib/scrapers/cost-controls";
 import { eq, isNull, sql } from "drizzle-orm";
 import { generateObjectWithFallback } from "@/lib/ai/router";
 import { classifyModule } from "@/lib/ai/jev-client";
@@ -12,7 +14,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
 
-const REPORT_EMAIL = "danieljohnfassanga@gmail.com";
+const REPORT_EMAIL = process.env.ADMIN_REPORT_EMAIL;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const BATCH_SIZE = 20; // Increased batch size for higher throughput
 
@@ -47,6 +49,27 @@ async function classifyRecordWithJevFallback(textToAnalyze: string): Promise<{ m
   return { module: aiResult.object.module, engine: 'gemini' };
 }
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Removes a job that the AI decided belongs to another module — unless users have
+ * applications for it. `job_applications.job_id` cascades on delete, so removing such a job
+ * would silently destroy their evaluations, cover letters and mock interviews.
+ * Those jobs are only deactivated.
+ */
+async function removeJob(tx: Tx, jobId: string) {
+  const [applied] = await tx
+    .select({ id: jobApplications.id })
+    .from(jobApplications)
+    .where(eq(jobApplications.jobId, jobId))
+    .limit(1);
+  if (applied) {
+    await tx.update(jobs).set({ isActive: false }).where(eq(jobs.id, jobId));
+  } else {
+    await tx.delete(jobs).where(eq(jobs.id, jobId));
+  }
+}
+
 async function getStats() {
   const [[verified], [jobCount], [tenderCount], [complianceCount]] = await Promise.all([
     safeQuery(db.select({ count: sql<number>`count(*)` }).from(dataVerificationLog)),
@@ -63,6 +86,10 @@ async function getStats() {
 }
 
 async function sendProgressEmail(subject: string, stats: Awaited<ReturnType<typeof getStats>>, extra?: string) {
+  if (!REPORT_EMAIL) {
+    console.warn('[DataCleanup] ADMIN_REPORT_EMAIL is not set; skipping progress email.');
+    return;
+  }
   const total = stats.unverifiedJobs + stats.unverifiedTenders + stats.unverifiedCompliance;
   await resend.emails.send({
     from: "AkiliBrain Cleanup <noreply@akilibrain.com>",
@@ -93,6 +120,8 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
     triggers: [{ event: "data.verification.v2.start" }]
   },
   async ({ event, step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     const startTime: number = event.data.startTime || Date.now();
     const lastEmailTime: number = event.data.lastEmailTime || 0;
     const isFirstRun: boolean = lastEmailTime === 0;
@@ -217,7 +246,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 deadline: job.deadline,
                 referenceNo: `MIGRATED-${Date.now()}`,
               } as any).onConflictDoNothing();
-              await tx.delete(jobs).where(eq(jobs.id, job.id));
+              await removeJob(tx, job.id);
             });
             actionTaken = 'moved';
             movedCount++;
@@ -232,7 +261,7 @@ export const dataCleanupOrchestratorJob = inngest.createFunction(
                 category: 'sector_specific',
                 status: 'active',
               } as any).onConflictDoNothing();
-              await tx.delete(jobs).where(eq(jobs.id, job.id));
+              await removeJob(tx, job.id);
             });
             actionTaken = 'moved';
             movedCount++;

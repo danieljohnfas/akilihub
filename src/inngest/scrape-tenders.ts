@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { discoverTenders, BroadTenderResource } from "@/lib/scrapers/broad-search-engine-tenders";
 import { db } from "@/lib/db/client";
@@ -311,6 +312,8 @@ function makePortalJob(portal: (typeof PORTALS)[number]) {
   return inngest.createFunction(
     { id: portal.id, name: portal.name, triggers: [{ cron: portal.cron }, { event: "manual.scrape.tenders" }] },
     async ({ step }) => {
+      if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
       const countryId = await getCountryId(portal.countryCode);
       if (!countryId) {
         console.warn(`[${portal.id}] Country ${portal.countryCode} not found. Skipping.`);

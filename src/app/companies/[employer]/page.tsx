@@ -5,9 +5,9 @@ import { eq, desc, ilike, and, or, isNull, gt, count } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { JobCard } from '@/components/jobs/JobCard';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { buildBreadcrumbSchema, buildOrganizationSchema } from '@/components/seo/schemas';
+import { buildBreadcrumbSchema } from '@/components/seo/schemas';
 import Link from 'next/link';
-import { Building2, MapPin } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import React from 'react';
 import type { Metadata } from 'next';
 
@@ -128,7 +128,7 @@ export default async function EmployerHub({
         ) : (
           <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
             <p className="text-muted-foreground mb-4">There are currently no active job openings tracked for {employerName}.</p>
-            <p className="text-sm">We've recorded {pastJobsCount} past positions. Check back later or set up a job alert.</p>
+            <p className="text-sm">We&apos;ve recorded {pastJobsCount} past positions. Check back later or set up a job alert.</p>
           </div>
         )}
       </div>

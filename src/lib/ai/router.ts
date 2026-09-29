@@ -1,4 +1,4 @@
-import { generateObject, generateText, type GenerateObjectResult } from 'ai';
+import { generateObject, generateText, type GenerateObjectResult, type GenerateTextResult, type LanguageModel } from 'ai';
 import type { ZodType } from 'zod';
 import { createGoogle } from '@ai-sdk/google';
 import { createMistral } from '@ai-sdk/mistral';
@@ -8,7 +8,13 @@ import { createGroq } from '@ai-sdk/groq';
 import { keyPool } from './key-pool';
 
 // ------------------------------------------------------------------
-// 1. DYNAMIC PROVIDER LOADER
+// 1. PROVIDER REGISTRY
+//
+// Every provider is opt-in: it is only registered when its API key env var is set
+// (`NAME`, `NAME_1`, `NAME_2`… for several keys). Lower `priority` is tried first.
+//
+// There are deliberately NO keyless/anonymous providers here: user CVs and prompts must
+// never be sent to endpoints we have no account, terms or data-processing agreement with.
 // ------------------------------------------------------------------
 
 function getEnvKeys(baseName: string): string[] {
@@ -22,372 +28,157 @@ function getEnvKeys(baseName: string): string[] {
   return keys;
 }
 
-// ── PRIORITY 1: MISTRAL ──────────────────────────────────────────────────
-getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
-  const mistral = createMistral({ apiKey: key });
-  keyPool.register({
-    id: `mistral-small-${i + 1}`,
-    name: `Mistral Small (${i + 1})`,
-    model: mistral('mistral-small-latest'),
-    supportsStructured: true,
-    priority: 1,
-  });
-});
+interface OpenAICompatibleProvider {
+  env: string;
+  id: string;
+  name: string;
+  baseURL: string;
+  model: string;
+  priority: number;
+}
 
-// 🚀 PRIORITY 1: CLOUDFLARE WORKERS AI
-  getEnvKeys('CLOUDFLARE_API_TOKEN').forEach((key, i) => {
-    const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    if (cfAccountId) {
-      const cf = createOpenAI({
-        apiKey: key,
-        baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`
-      });
-      keyPool.register({
-        id: `cf-llama-3.3-70b-${i + 1}`,
-        name: `Cloudflare Llama 3.3 70B (${i + 1})`,
-        model: cf.chat('@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
-        supportsStructured: true,
-        priority: 1, 
-      });
-      keyPool.register({
-        id: `cf-qwen-coder-32b-${i + 1}`,
-        name: `Cloudflare Qwen 2.5 Coder 32B (${i + 1})`,
-        model: cf.chat('@cf/qwen/qwen2.5-coder-32b-instruct'),
-        supportsStructured: true,
-        priority: 2, 
-      });
-    }
-  });
+/** OpenAI-compatible chat endpoints. */
+const OPENAI_COMPATIBLE: OpenAICompatibleProvider[] = [
+  { env: 'OPENROUTER_API_KEY', id: 'openrouter-free', name: 'OpenRouter Free', baseURL: 'https://openrouter.ai/api/v1', model: 'openrouter/free', priority: 1 },
+  { env: 'SAMBANOVA_API_KEY', id: 'sambanova-llama-3.3-70b', name: 'SambaNova Llama 3.3 70B', baseURL: 'https://api.sambanova.ai/v1', model: 'Meta-Llama-3.3-70B-Instruct', priority: 1 },
+  { env: 'CEREBRAS_API_KEY', id: 'cerebras-gpt-oss-120b', name: 'Cerebras GPT-OSS 120B', baseURL: 'https://api.cerebras.ai/v1', model: 'gpt-oss-120b', priority: 1 },
+  { env: 'DEEPSEEK_API_KEY', id: 'deepseek-chat', name: 'DeepSeek Chat', baseURL: 'https://api.deepseek.com', model: 'deepseek-chat', priority: 3 },
+  { env: 'SAMBANOVA_API_KEY', id: 'sambanova-llama3', name: 'SambaNova Llama 3.1 70B', baseURL: 'https://api.sambanova.ai/v1', model: 'Meta-Llama-3.1-70B-Instruct', priority: 4 },
+  { env: 'HYPERBOLIC_API_KEY', id: 'hyperbolic-llama33', name: 'Hyperbolic Llama 3.3 70B', baseURL: 'https://api.hyperbolic.xyz/v1', model: 'meta-llama/Llama-3.3-70B-Instruct', priority: 4 },
+  { env: 'ZAI_API_KEY', id: 'zai-glm-4', name: 'Zhipu GLM-4', baseURL: 'https://api.z.ai/api/paas/v4/', model: 'glm-4', priority: 4 },
+  { env: 'MINIMAX_API_KEY', id: 'minimax-text', name: 'MiniMax', baseURL: 'https://api.minimax.chat/v1', model: 'minimax-text-01', priority: 4 },
+  { env: 'TOGETHER_API_KEY', id: 'together-llama3', name: 'Together Llama 3.3 70B', baseURL: 'https://api.together.xyz/v1', model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', priority: 4 },
+  { env: 'FIREWORKS_API_KEY', id: 'fireworks-llama3', name: 'Fireworks Llama 3.1 70B', baseURL: 'https://api.fireworks.ai/inference/v1', model: 'accounts/fireworks/models/llama-v3p1-70b-instruct', priority: 4 },
+  { env: 'NVIDIA_API_KEY', id: 'nvidia-llama3', name: 'NVIDIA Llama 3.1 70B', baseURL: 'https://integrate.api.nvidia.com/v1', model: 'meta/llama-3.1-70b-instruct', priority: 4 },
+  { env: 'XAI_API_KEY', id: 'xai-grok', name: 'xAI Grok', baseURL: 'https://api.x.ai/v1', model: 'grok-beta', priority: 4 },
+  { env: 'PERPLEXITY_API_KEY', id: 'perplexity-sonar', name: 'Perplexity Sonar', baseURL: 'https://api.perplexity.ai', model: 'llama-3.1-sonar-large-128k-chat', priority: 4 },
+  { env: 'NOVITA_API_KEY', id: 'novita-llama3', name: 'Novita Llama 3.1 70B', baseURL: 'https://api.novita.ai/v3/openai', model: 'meta-llama/llama-3.1-70b-instruct', priority: 4 },
+  { env: 'AI21_API_KEY', id: 'ai21-jamba', name: 'AI21 Jamba 1.5 Large', baseURL: 'https://api.ai21.com/studio/v1', model: 'jamba-1.5-large', priority: 4 },
+  { env: 'LEPTON_API_KEY', id: 'lepton-llama3', name: 'Lepton Llama 3.1 70B', baseURL: 'https://llama3-1-70b.lepton.run/api/v1', model: 'llama3-1-70b', priority: 4 },
+  { env: 'DASHSCOPE_API_KEY', id: 'qwen-plus', name: 'Alibaba Qwen Plus', baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', priority: 4 },
+];
 
-// 🚀 PRIORITY 3: GOOGLE GEMINI (Region blocked on Linode, but fallback) 🚀────
-getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
-  const google = createGoogle({ apiKey: key });
-  keyPool.register({
-    id: `google-gemini-${i + 1}`,
-    name: `Google Gemini 2.5 Flash (${i + 1})`,
-    model: google('gemini-2.5-flash'),
-    supportsStructured: true,
-    priority: 2,
-  });
-});
-
-// ── PRIORITY 2: OPENROUTER ────────────────────────────────────────────────// 🚀 PRIORITY 4: OPENROUTER (Gemini 2.5 Flash Free)
-  getEnvKeys('OPENROUTER_API_KEY').forEach((key, i) => {
-    const openrouter = createOpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: key,
-    });
+function registerProviders(): void {
+  // Native SDK providers
+  getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
     keyPool.register({
-      id: `openrouter-free-${i + 1}`,
-      name: `OpenRouter Free (${i + 1})`,
-      model: openrouter.chat('openrouter/free'),
+      id: `mistral-small-${i + 1}`,
+      name: `Mistral Small (${i + 1})`,
+      model: createMistral({ apiKey: key })('mistral-small-latest'),
       supportsStructured: true,
-      priority: 1, // SET PRIORITY HIGH BECAUSE IT'S FREE
+      priority: 1,
     });
   });
 
-// 🚀 PRIORITY 3: GROQ
-getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
-  const groq = createGroq({ apiKey: key });
-  keyPool.register({
-    id: `groq-gpt-oss-120b-${i + 1}`,
-    name: `Groq GPT OSS 120B (${i + 1})`,
-    model: groq('openai/gpt-oss-120b'),
-    supportsStructured: true,
-    priority: 1, 
-  });
-});
-
-// 🚀 PRIORITY 1: SAMBANOVA
-  getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
-    const sambanova = createOpenAI({
-      baseURL: 'https://api.sambanova.ai/v1',
-      apiKey: key,
-    });
+  getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
     keyPool.register({
-      id: `sambanova-llama-3.3-70b-${i + 1}`,
-      name: `SambaNova Llama 3.3 70B (${i + 1})`,
-      model: sambanova.chat('Meta-Llama-3.3-70B-Instruct'),
+      id: `google-gemini-${i + 1}`,
+      name: `Google Gemini 2.5 Flash (${i + 1})`,
+      model: createGoogle({ apiKey: key })('gemini-2.5-flash'),
       supportsStructured: true,
-      priority: 1, 
+      priority: 1,
     });
   });
 
-// 🚀 PRIORITY 1: CEREBRAS (Ultra fast)
-  getEnvKeys('CEREBRAS_API_KEY').forEach((key, i) => {
-  const cerebras = createOpenAI({ apiKey: key, baseURL: 'https://api.cerebras.ai/v1' });
-  keyPool.register({
-    id: `cerebras-llama3.1-70b-${i + 1}`,
-    name: `Cerebras Llama 3.1 70B (${i + 1})`,
-    model: cerebras.chat('gpt-oss-120b'), // they use llama3.1-8b for free tier often
-    supportsStructured: true,
-    priority: 1, 
+  getEnvKeys('GROQ_API_KEY').forEach((key, i) => {
+    keyPool.register({
+      id: `groq-gpt-oss-120b-${i + 1}`,
+      name: `Groq GPT OSS 120B (${i + 1})`,
+      model: createGroq({ apiKey: key })('openai/gpt-oss-120b'),
+      supportsStructured: true,
+      priority: 1,
+    });
   });
-});
 
-// ── PRIORITY 3: DEEPSEEK ────────────────────────────────────────────────
-getEnvKeys('DEEPSEEK_API_KEY').forEach((key, i) => {
-  const deepseek = createOpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com' });
-  keyPool.register({
-    id: `deepseek-chat-${i + 1}`,
-    name: `DeepSeek Chat (${i + 1})`,
-    model: deepseek.chat('deepseek-chat'),
-    supportsStructured: true,
-    priority: 3,
+  getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
+    keyPool.register({
+      id: `cohere-command-r-plus-${i + 1}`,
+      name: `Cohere Command R+ (${i + 1})`,
+      model: createCohere({ apiKey: key })('command-r-plus'),
+      supportsStructured: true,
+      priority: 4,
+    });
   });
-});
 
-// ── PRIORITY 4: SAMBANOVA ────────────────────────────────────────────────
-getEnvKeys('SAMBANOVA_API_KEY').forEach((key, i) => {
-  const sambanova = createOpenAI({ apiKey: key, baseURL: 'https://api.sambanova.ai/v1' });
-  keyPool.register({
-    id: `sambanova-llama3-${i + 1}`,
-    name: `SambaNova Llama 3.1 70B (${i + 1})`,
-    model: sambanova.chat('Meta-Llama-3.1-70B-Instruct'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
+  // Cloudflare Workers AI (needs an account id as well)
+  const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  if (cfAccountId) {
+    const cfBase = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1`;
+    getEnvKeys('CLOUDFLARE_API_TOKEN').forEach((key, i) => {
+      const cf = createOpenAI({ apiKey: key, baseURL: cfBase });
+      keyPool.register({ id: `cf-llama-3.3-70b-${i + 1}`, name: `Cloudflare Llama 3.3 70B (${i + 1})`, model: cf.chat('@cf/meta/llama-3.3-70b-instruct-fp8-fast'), supportsStructured: true, priority: 1 });
+      keyPool.register({ id: `cf-qwen-coder-32b-${i + 1}`, name: `Cloudflare Qwen 2.5 Coder 32B (${i + 1})`, model: cf.chat('@cf/qwen/qwen2.5-coder-32b-instruct'), supportsStructured: true, priority: 2 });
+    });
+    getEnvKeys('CLOUDFLARE_AI_TOKEN').forEach((key, i) => {
+      const cf = createOpenAI({ apiKey: key, baseURL: cfBase });
+      keyPool.register({ id: `cloudflare-llama3-${i + 1}`, name: `Cloudflare Llama 3 8B (${i + 1})`, model: cf.chat('@cf/meta/llama-3-8b-instruct'), supportsStructured: true, priority: 5 });
+    });
+  }
 
-// ── PRIORITY 4: COHERE ────────────────────────────────────────────────
-getEnvKeys('COHERE_API_KEY').forEach((key, i) => {
-  const cohere = createCohere({ apiKey: key });
-  keyPool.register({
-    id: `cohere-command-r-plus-${i + 1}`,
-    name: `Cohere Command R+ (${i + 1})`,
-    model: cohere('command-r-plus'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
+  // OpenAI-compatible providers
+  for (const p of OPENAI_COMPATIBLE) {
+    getEnvKeys(p.env).forEach((key, i) => {
+      keyPool.register({
+        id: `${p.id}-${i + 1}`,
+        name: `${p.name} (${i + 1})`,
+        model: createOpenAI({ apiKey: key, baseURL: p.baseURL }).chat(p.model),
+        supportsStructured: true,
+        priority: p.priority,
+      });
+    });
+  }
 
-// ── PRIORITY 4: HYPERBOLIC ────────────────────────────────────────────────
-getEnvKeys('HYPERBOLIC_API_KEY').forEach((key, i) => {
-  const hyperbolic = createOpenAI({ apiKey: key, baseURL: 'https://api.hyperbolic.xyz/v1' });
-  keyPool.register({
-    id: `hyperbolic-llama33-${i + 1}`,
-    name: `Hyperbolic Llama 3.3 70B (${i + 1})`,
-    model: hyperbolic.chat('meta-llama/Llama-3.3-70B-Instruct'),
-    supportsStructured: true,
-    priority: 4,
+  // Hugging Face router (de-prioritised)
+  getEnvKeys('HUGGINGFACE_API_KEY').concat(getEnvKeys('HF_API_KEY')).forEach((key, i) => {
+    keyPool.register({
+      id: `hf-qwen-72b-${i + 1}`,
+      name: `HuggingFace Qwen 2.5 72B (${i + 1})`,
+      model: createOpenAI({ apiKey: key, baseURL: 'https://router.huggingface.co/v1' })('Qwen/Qwen2.5-72B-Instruct'),
+      supportsStructured: true,
+      priority: 5,
+    });
   });
-});
+}
 
-// 🚀 PRIORITY 4: ZHIPU AI (ZAI)
-getEnvKeys('ZAI_API_KEY').forEach((key, i) => {
-  const zai = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://api.z.ai/api/paas/v4/'
-  });
-  keyPool.register({
-    id: `zai-glm-4-${i + 1}`,
-    name: `Zhipu GLM-4 (${i + 1})`,
-    model: zai('glm-4'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// 🚀 PRIORITY 1: POLLINATIONS AI (FREE)
-const pollinations = createOpenAI({
-  apiKey: 'dummy',
-  baseURL: 'https://text.pollinations.ai/openai'
-});
-keyPool.register({
-  id: `pollinations-openai`,
-  name: `Pollinations OpenAI`,
-  model: pollinations('openai'),
-  supportsStructured: true,
-  priority: 1,
-});
-
-// 🚀 PRIORITY 1.1: UNCLOSE AI (FREE)
-const unclose = createOpenAI({
-  apiKey: 'dummy',
-  baseURL: 'https://uncloseai.com/v1'
-});
-keyPool.register({
-  id: `unclose-hermes`,
-  name: `Unclose Hermes`,
-  model: unclose('Hermes AI'),
-  supportsStructured: true,
-  priority: 1.1,
-});
-
-getEnvKeys('MINIMAX_API_KEY').forEach((key, i) => {
-  const minimax = createOpenAI({ apiKey: key, baseURL: 'https://api.minimax.chat/v1' });
-  keyPool.register({
-    id: `minimax-text-${i + 1}`,
-    name: `MiniMax (${i + 1})`,
-    model: minimax.chat('minimax-text-01'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: TOGETHER AI ────────────────────────────────────────────────
-getEnvKeys('TOGETHER_API_KEY').forEach((key, i) => {
-  const together = createOpenAI({ apiKey: key, baseURL: 'https://api.together.xyz/v1' });
-  keyPool.register({
-    id: `together-llama3-${i + 1}`,
-    name: `Together Llama 3.3 70B (${i + 1})`,
-    model: together('meta-llama/Llama-3.3-70B-Instruct-Turbo'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: FIREWORKS AI ────────────────────────────────────────────────
-getEnvKeys('FIREWORKS_API_KEY').forEach((key, i) => {
-  const fireworks = createOpenAI({ apiKey: key, baseURL: 'https://api.fireworks.ai/inference/v1' });
-  keyPool.register({
-    id: `fireworks-llama3-${i + 1}`,
-    name: `Fireworks Llama 3.1 70B (${i + 1})`,
-    model: fireworks('accounts/fireworks/models/llama-v3p1-70b-instruct'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: NVIDIA NIM ────────────────────────────────────────────────
-getEnvKeys('NVIDIA_API_KEY').forEach((key, i) => {
-  const nvidia = createOpenAI({ apiKey: key, baseURL: 'https://integrate.api.nvidia.com/v1' });
-  keyPool.register({
-    id: `nvidia-llama3-${i + 1}`,
-    name: `NVIDIA Llama 3.1 70B (${i + 1})`,
-    model: nvidia('meta/llama-3.1-70b-instruct'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: XAI GROK ────────────────────────────────────────────────
-getEnvKeys('XAI_API_KEY').forEach((key, i) => {
-  const xai = createOpenAI({ apiKey: key, baseURL: 'https://api.x.ai/v1' });
-  keyPool.register({
-    id: `xai-grok-${i + 1}`,
-    name: `xAI Grok Beta (${i + 1})`,
-    model: xai('grok-beta'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: PERPLEXITY ────────────────────────────────────────────────
-getEnvKeys('PERPLEXITY_API_KEY').forEach((key, i) => {
-  const perplexity = createOpenAI({ apiKey: key, baseURL: 'https://api.perplexity.ai' });
-  keyPool.register({
-    id: `perplexity-sonar-${i + 1}`,
-    name: `Perplexity Sonar 70B (${i + 1})`,
-    model: perplexity('llama-3.1-sonar-large-128k-chat'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: NOVITA AI ────────────────────────────────────────────────
-getEnvKeys('NOVITA_API_KEY').forEach((key, i) => {
-  const novita = createOpenAI({ apiKey: key, baseURL: 'https://api.novita.ai/v3/openai' });
-  keyPool.register({
-    id: `novita-llama3-${i + 1}`,
-    name: `Novita Llama 3.1 70B (${i + 1})`,
-    model: novita.chat('meta-llama/llama-3.1-70b-instruct'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: AI21 JAMBA ────────────────────────────────────────────────
-getEnvKeys('AI21_API_KEY').forEach((key, i) => {
-  const ai21 = createOpenAI({ apiKey: key, baseURL: 'https://api.ai21.com/studio/v1' });
-  keyPool.register({
-    id: `ai21-jamba-${i + 1}`,
-    name: `AI21 Jamba 1.5 Large (${i + 1})`,
-    model: ai21('jamba-1.5-large'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: LEPTON AI ────────────────────────────────────────────────
-getEnvKeys('LEPTON_API_KEY').forEach((key, i) => {
-  const lepton = createOpenAI({ apiKey: key, baseURL: 'https://llama3-1-70b.lepton.run/api/v1' });
-  keyPool.register({
-    id: `lepton-llama3-${i + 1}`,
-    name: `Lepton Llama 3.1 70B (${i + 1})`,
-    model: lepton('llama3-1-70b'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 4: ALIBABA QWEN (DASHSCOPE) ────────────────────────────────────────────────
-getEnvKeys('DASHSCOPE_API_KEY').forEach((key, i) => {
-  const qwen = createOpenAI({ apiKey: key, baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' });
-  keyPool.register({
-    id: `qwen-plus-${i + 1}`,
-    name: `Alibaba Qwen Plus (${i + 1})`,
-    model: qwen('qwen-plus'),
-    supportsStructured: true,
-    priority: 4,
-  });
-});
-
-// ── PRIORITY 5: CLOUDFLARE WORKERS AI ────────────────────────────────────────────────
-const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-getEnvKeys('CLOUDFLARE_AI_TOKEN').forEach((key, i) => {
-  if (!cfAccountId) return;
-  const cf = createOpenAI({ apiKey: key, baseURL: `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1` });
-  keyPool.register({
-    id: `cloudflare-llama3-${i + 1}`,
-    name: `Cloudflare Llama 3 8B (${i + 1})`,
-    model: cf.chat('@cf/meta/llama-3-8b-instruct'),
-    supportsStructured: true,
-    priority: 5,
-  });
-});
-
-// 🚀 PRIORITY 1: GOOGLE GEMINI (Working perfectly without Rate limits)
-getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY').forEach((key, i) => {
-  const google = createGoogle({ apiKey: key });
-  keyPool.register({
-    id: `google-gemini-${i + 1}`,
-    name: `Google Gemini 2.5 Flash (${i + 1})`,
-    model: google('gemini-2.5-flash'),
-    supportsStructured: true,
-    priority: 1, // SET TO PRIORITY 1
-  });
-});
-
-// 🚀 PRIORITY 5: HUGGING FACE (DE-PRIORITIZED DUE TO CLOUDFLARE BANS)
-getEnvKeys('HUGGINGFACE_API_KEY').concat(getEnvKeys('HF_API_KEY')).forEach((key, i) => {
-  // We use the openai compatible endpoint for HF serverless Inference API
-  const hf = createOpenAI({
-    apiKey: key,
-    baseURL: 'https://router.huggingface.co/v1'
-  });
-  keyPool.register({
-    id: `hf-qwen-72b-${i + 1}`,
-    name: `HuggingFace Qwen 2.5 72B (${i + 1})`,
-    model: hf('Qwen/Qwen2.5-72B-Instruct'),
-    supportsStructured: true,
-    priority: 5,
-  });
-});
+registerProviders();
 
 if (keyPool.size === 0) {
   console.warn('[AI Router] No API keys found! AI generation will fail.');
 } else {
   console.log(`[AI Router] Loaded ${keyPool.size} model(s) into the pool.`);
-  keyPool.restoreFromDb().catch(e => console.error('[AI Router] Failed to restore key pool state:', e));
+  keyPool.restoreFromDb().catch((e) => console.error('[AI Router] Failed to restore key pool state:', e));
 }
 
 // ------------------------------------------------------------------
 // 2. GENERATION WITH FALLBACK
 // ------------------------------------------------------------------
 
-const MAX_RETRIES = 20;
-const AI_TIMEOUT_MS = 90_000;
+export interface RouterOptions {
+  /**
+   * Set for user-facing request handlers. Interactive calls use few attempts, a short timeout
+   * and never sleep waiting for a cooled-down key — they fail fast with AiUnavailableError.
+   */
+  interactive?: boolean;
+  /** Override the number of provider attempts. */
+  maxAttempts?: number;
+  /** Override the per-attempt timeout. */
+  timeoutMs?: number;
+}
+
+export class AiUnavailableError extends Error {
+  constructor(message = 'AI services are currently unavailable', options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'AiUnavailableError';
+  }
+}
+
+const BACKGROUND = { maxAttempts: 20, timeoutMs: 90_000, maxWaitMs: 10 * 60_000 };
+const INTERACTIVE = { maxAttempts: 3, timeoutMs: 25_000, maxWaitMs: 0 };
+
+function resolveOptions(o: RouterOptions = {}) {
+  const base = o.interactive ? INTERACTIVE : BACKGROUND;
+  return { maxAttempts: o.maxAttempts ?? base.maxAttempts, timeoutMs: o.timeoutMs ?? base.timeoutMs, maxWaitMs: base.maxWaitMs };
+}
 
 function withHardTimeout<T>(promiseFn: (signal: AbortSignal) => Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -396,7 +187,7 @@ function withHardTimeout<T>(promiseFn: (signal: AbortSignal) => Promise<T>, ms: 
       controller.abort();
       reject(new Error(`[Timeout] ${label} exceeded ${ms}ms`));
     }, ms);
-    
+
     promiseFn(controller.signal).then(
       (val) => { clearTimeout(timer); resolve(val); },
       (err) => { clearTimeout(timer); reject(err); },
@@ -404,112 +195,127 @@ function withHardTimeout<T>(promiseFn: (signal: AbortSignal) => Promise<T>, ms: 
   });
 }
 
-const NATIVE_STRUCTURED_IDS = [
-  'mistral-',
-  'google-',
-  'openrouter-',
-];
-function usesJsonMode(modelId: string): boolean {
-  return !NATIVE_STRUCTURED_IDS.some(prefix => modelId.startsWith(prefix));
+/**
+ * Should this failure put the key on cooldown?
+ *
+ * Only provider-side faults (auth/quota/rate-limit/5xx/network/timeout) do. Errors caused by
+ * the *request* (400/404/413/422, schema mismatches) must not cool a healthy key down —
+ * otherwise a single malformed user request can knock the whole pool offline.
+ */
+export function isProviderFault(error: unknown): boolean {
+  const err = error as { statusCode?: number; status?: number; cause?: { statusCode?: number }; name?: string; message?: string };
+  const status = err?.statusCode ?? err?.status ?? err?.cause?.statusCode;
+  if (typeof status === 'number') {
+    return status === 401 || status === 402 || status === 403 || status === 408 || status === 429 || status >= 500;
+  }
+  const requestErrors = ['TypeValidationError', 'JSONParseError', 'NoObjectGeneratedError', 'InvalidPromptError', 'InvalidArgumentError', 'AI_TypeValidationError'];
+  if (err?.name && requestErrors.includes(err.name)) return false;
+  return true; // network errors, timeouts, unknown → treat as provider fault
 }
 
-function usesTextModeFallback(modelId: string): boolean {
-  return false; // All current models support native objects or JSON mode
+async function waitForKey(structured: boolean, maxWaitMs: number): Promise<void> {
+  if (keyPool.size === 0) throw new AiUnavailableError('No AI providers are configured');
+  const deadline = Date.now() + maxWaitMs;
+  while (!keyPool.hasAvailable(structured)) {
+    if (Date.now() >= deadline) {
+      throw new AiUnavailableError('All AI models are on cooldown');
+    }
+    console.log('[AI Router] All models are on cooldown. Waiting 60s...');
+    await new Promise((r) => setTimeout(r, Math.min(60_000, Math.max(1_000, deadline - Date.now()))));
+  }
+}
+
+// Native structured-output providers; others fall back to JSON mode.
+const NATIVE_STRUCTURED_IDS = ['mistral-', 'google-', 'openrouter-'];
+function usesJsonMode(modelId: string): boolean {
+  return !NATIVE_STRUCTURED_IDS.some((prefix) => modelId.startsWith(prefix));
 }
 
 export async function generateObjectWithFallback<T = unknown>(
-  params: Record<string, any> & { schema?: ZodType<T> }
+  params: Record<string, any> & { schema?: ZodType<T> },
+  options?: RouterOptions,
 ): Promise<GenerateObjectResult<T>> {
-  while (keyPool.getAvailableCount() === 0) {
-    console.log('[AI Router] All models are on cooldown. Sleeping for 60s...');
-    await new Promise(r => setTimeout(r, 60000));
-  }
+  const { maxAttempts, timeoutMs, maxWaitMs } = resolveOptions(options);
+  await waitForKey(true, maxWaitMs);
 
   let lastError: unknown = null;
+  const tried = new Set<string>(); // a call never retries a key that already failed for it
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    let activeKey = keyPool.getNextKey(true);
-    if (!activeKey) {
-      await new Promise(r => setTimeout(r, 5000));
-      activeKey = keyPool.getNextKey(true);
-      if (!activeKey) break;
-    }
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const activeKey = keyPool.getNextKey(true, tried);
+    if (!activeKey) break;
+    tried.add(activeKey.id);
 
-    console.log(`[AI Router] [Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
+    console.log(`[AI Router] [Attempt ${attempt}/${maxAttempts}] → ${activeKey.name}`);
 
     try {
-      let result;
       const openrouterTokenCap = activeKey.id.startsWith('openrouter-google')
-        ? { maxTokens: 700 }
+        ? { maxOutputTokens: 700 }
         : activeKey.id.startsWith('openrouter-')
-        ? { maxTokens: 1800 }
+        ? { maxOutputTokens: 1800 }
         : {};
-      
-      result = await withHardTimeout(
+
+      const result = await withHardTimeout(
         (signal) => (generateObject as any)({
           ...params,
           model: activeKey.model,
           ...(usesJsonMode(activeKey.id) ? { mode: 'json' } : {}),
           ...openrouterTokenCap,
-          abortSignal: signal
+          abortSignal: signal,
         }),
-        AI_TIMEOUT_MS,
+        timeoutMs,
         activeKey.name,
       );
 
       keyPool.markSuccess(activeKey.id);
       return result as GenerateObjectResult<T>;
-
     } catch (error: unknown) {
-      const err = error as Error & { name?: string };
+      const err = error as Error;
       console.warn(`[AI Router] ${activeKey.name} failed (attempt ${attempt}): ${err.message?.slice(0, 120)}`);
       lastError = error;
-      if (err.name === 'TypeValidationError' || err.name === 'JSONParseError' || err.message?.includes('No object generated')) {
-        continue;
-      }
-      keyPool.markFailed(activeKey.id);
+      if (isProviderFault(error)) keyPool.markFailed(activeKey.id);
     }
   }
 
   console.error('[AI Router] All fallback attempts exhausted.');
-  throw lastError ?? new Error('[AI Router] All fallback attempts exhausted with no specific error.');
+  throw new AiUnavailableError('All AI fallback attempts exhausted', { cause: lastError });
 }
 
 export async function generateTextWithFallback(
-  params: Record<string, any>
-): Promise<GenerateTextResult<Record<string, CoreTool>, never>> {
-  while (keyPool.getAvailableCount() === 0) {
-    console.log('[AI Router] All models are on cooldown. Sleeping for 60s...');
-    await new Promise(r => setTimeout(r, 60000));
-  }
+  params: Record<string, any>,
+  options?: RouterOptions,
+): Promise<GenerateTextResult<any, any, any>> {
+  const { maxAttempts, timeoutMs, maxWaitMs } = resolveOptions(options);
+  const requiresStructured = !!params.tools || !!params.responseFormat;
+  await waitForKey(requiresStructured, maxWaitMs);
 
   let lastError: unknown = null;
-  const requiresStructured = !!params.tools || !!params.responseFormat;
+  const tried = new Set<string>();
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    const activeKey = keyPool.getNextKey(requiresStructured);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const activeKey = keyPool.getNextKey(requiresStructured, tried);
     if (!activeKey) break;
+    tried.add(activeKey.id);
 
-    console.log(`[AI Router] [Text][Attempt ${attempt}/${MAX_RETRIES}] → ${activeKey.name}`);
+    console.log(`[AI Router] [Text][Attempt ${attempt}/${maxAttempts}] → ${activeKey.name}`);
 
     try {
       const result = await withHardTimeout(
         (signal) => (generateText as any)({ ...params, model: activeKey.model, abortSignal: signal }),
-        AI_TIMEOUT_MS,
+        timeoutMs,
         activeKey.name,
       );
       keyPool.markSuccess(activeKey.id);
-      return result;
-
+      return result as GenerateTextResult<any, any, any>;
     } catch (error: unknown) {
       const err = error as Error;
       console.warn(`[AI Router] ${activeKey.name} failed: ${err.message?.slice(0, 120)}`);
       lastError = error;
-      keyPool.markFailed(activeKey.id);
+      if (isProviderFault(error)) keyPool.markFailed(activeKey.id);
     }
   }
 
-  throw lastError ?? new Error('[AI Router] Unknown failure');
+  throw new AiUnavailableError('All AI fallback attempts exhausted', { cause: lastError });
 }
 
 // ------------------------------------------------------------------
@@ -528,52 +334,54 @@ function detectImageMimeType(buf: Buffer): string {
 interface VisionModelCandidate {
   id: string;
   name: string;
-  model: any;
+  model: LanguageModel;
+  /** Accepts application/pdf as a file part (image-only models do not). */
+  supportsPdf: boolean;
 }
 
-export function getTextModelPool() {
-  return keyPool.getActiveKeys(); // Wait, getActiveKeys is not a method. I'll just export keyPool.
-}
 export { keyPool };
 
 function getVisionModelPool(): VisionModelCandidate[] {
   const pool: VisionModelCandidate[] = [];
 
   getEnvKeys('MISTRAL_API_KEY').forEach((key, i) => {
-    const mistral = createMistral({ apiKey: key });
     pool.push({
       id: `mistral-pixtral-${i + 1}`,
       name: `Mistral Pixtral 12B (${i + 1})`,
-      model: mistral('pixtral-12b-2409'),
+      model: createMistral({ apiKey: key })('pixtral-12b-2409'),
+      supportsPdf: false,
     });
   });
 
   const googleKeys = [...getEnvKeys('GOOGLE_GENERATIVE_AI_API_KEY'), ...getEnvKeys('GEMINI_API_KEY')];
   Array.from(new Set(googleKeys)).forEach((key, i) => {
-    const makeGoogle = createGoogle({ apiKey: key });
     pool.push({
       id: `google-vision-${i + 1}`,
       name: `Google Gemini 2.5 Flash Vision (${i + 1})`,
-      model: makeGoogle('gemini-2.5-flash'),
+      model: createGoogle({ apiKey: key })('gemini-2.5-flash'),
+      supportsPdf: true,
     });
   });
 
   return pool;
 }
 
+/**
+ * OCR / reading of an image or a PDF through vision-capable models only.
+ * Pass `mediaType: 'application/pdf'` for PDFs (only PDF-capable models are used).
+ */
 export async function extractVisionTextWithFallback(
-  imageBuffer: Buffer,
+  fileBuffer: Buffer,
   prompt: string,
+  mediaType?: string,
 ): Promise<string> {
-  const visionModels = getVisionModelPool();
+  const type = mediaType ?? detectImageMimeType(fileBuffer);
+  const visionModels = getVisionModelPool().filter((c) => type !== 'application/pdf' || c.supportsPdf);
 
   if (visionModels.length === 0) {
     console.warn('[Vision Router] No Vision-capable API keys configured.');
     return '';
   }
-
-  const mimeType = detectImageMimeType(imageBuffer);
-  let lastError: unknown = null;
 
   for (const candidate of visionModels) {
     try {
@@ -587,14 +395,14 @@ export async function extractVisionTextWithFallback(
               role: 'user',
               content: [
                 { type: 'text', text: prompt },
-                { type: 'file', data: imageBuffer, mediaType: mimeType, mimeType: mimeType } as any,
+                { type: 'file', data: fileBuffer, mediaType: type },
               ],
             },
           ],
-        }),
-        35_000,
+        } as any),
+        type === 'application/pdf' ? 60_000 : 35_000,
         candidate.name,
-      );
+      ) as { text: string };
 
       if (text && text.trim().length > 30) {
         console.log(`[Vision Router] ${candidate.name} successfully extracted ${text.length} chars.`);
@@ -602,7 +410,6 @@ export async function extractVisionTextWithFallback(
       }
     } catch (err) {
       console.warn(`[Vision Router] ${candidate.name} failed:`, (err as Error).message?.slice(0, 120));
-      lastError = err;
     }
   }
 

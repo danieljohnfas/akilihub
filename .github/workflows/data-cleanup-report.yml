@@ -1,8 +1,8 @@
-name: Data Cleanup Hourly Report
+name: Data Cleanup Daily Report
 
 on:
   schedule:
-    - cron: '0 * * * *' # Run every hour
+    - cron: '15 6 * * *' # Once a day (was hourly: 24 emails/day and ~720 runner-minutes/month)
   workflow_dispatch:
 
 concurrency:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   run-report:
-    name: Trigger Cleanup Hourly Report
+    name: Trigger Cleanup Daily Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -19,7 +19,14 @@ jobs:
 
     steps:
       - name: Trigger Send Report Endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::The CRON_SECRET Actions secret is not set, so the endpoint would reject this request. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
           echo "Sending request to https://akilibrain.com/api/admin/send-report..."
           HTTP_STATUS=$(curl -s -S -o /tmp/report_response.txt -w "%{http_code}" \
             --connect-timeout 15 \
@@ -28,7 +35,7 @@ jobs:
             --retry-delay 5 \
             --retry-connrefused \
             -X GET "https://akilibrain.com/api/admin/send-report" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "User-Agent: GitHub-Action-DataCleanupReport/1.0")
 
           echo "Response HTTP Status: $HTTP_STATUS"
@@ -42,5 +49,8 @@ jobs:
             echo "✅ Data cleanup report triggered successfully."
           else
             echo "❌ Failed to trigger report (HTTP $HTTP_STATUS)."
+            if [ "$HTTP_STATUS" = "402" ]; then
+              echo "::error::HTTP 402: the hosting provider has disabled this deployment (billing or usage limit). Check the hosting dashboard."
+            fi
             exit 1
           fi

@@ -4,13 +4,11 @@ import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
 import { eq } from 'drizzle-orm';
 
-export const alt = 'Job posting on AkiliBrain';
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
-
-// Prevent Googlebot from indexing this image-generation endpoint.
-// Next.js translates this into an `X-Robots-Tag: noindex` response header.
-export const robots = 'noindex';
+// NOTE: these were `export`ed as if this were an opengraph-image metadata file. Route handlers may
+// only export HTTP methods and route-segment config, so Next's type validation rejected them
+// (hidden until now by `ignoreBuildErrors`). They are plain constants.
+// Indexing is already blocked for every /api/* path via the X-Robots-Tag header in next.config.ts.
+const size = { width: 1200, height: 630 };
 
 const jobTypeLabels: Record<string, string> = {
   full_time: 'Full Time',

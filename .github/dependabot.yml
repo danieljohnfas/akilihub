@@ -11,9 +11,8 @@ updates:
     labels:
       - "dependencies"
       - "javascript"
-    ignore:
-      - dependency-name: "next" # Keep Next.js on 15.x LTS branch
-        versions: ["> 15.x"]
+    # Next.js was pinned to 15.x here and fell behind on security fixes (critical middleware-bypass and
+    # RCE advisories). Let Dependabot propose Next updates like any other dependency.
 
   - package-ecosystem: "github-actions"
     directory: "/"

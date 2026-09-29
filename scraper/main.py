@@ -17,6 +17,7 @@ Port: 7860
 from __future__ import annotations
 
 import asyncio
+import hmac
 import logging
 import os
 import json
@@ -28,7 +29,10 @@ from urllib.parse import urlparse
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, field_validator
+
+from security import ensure_public_url
 
 from spiders.tenders import TenderSpider
 from fetchers.stealthy import stealthy_scrape, stealthy_fetch_html
@@ -47,12 +51,48 @@ app = FastAPI(
     version="2.0.0",
 )
 
+# CORS: this service is called server-to-server, so browsers get no cross-origin access by
+# default. Set SIDECAR_CORS_ORIGINS (comma separated) only if a browser client is needed.
+_cors_origins = [o.strip() for o in os.environ.get("SIDECAR_CORS_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Restricted to internal Docker network in prod
+    allow_origins=_cors_origins,
     allow_methods=["POST", "GET"],
     allow_headers=["*"],
 )
+
+# ── Authentication ────────────────────────────────────────────────────────────
+# Every endpoint except /health requires the shared key in `X-Sidecar-Key`.
+# Fail closed: without SIDECAR_API_KEY the service refuses to work (set
+# SIDECAR_ALLOW_UNAUTHENTICATED=1 for local development only).
+_API_KEY = os.environ.get("SIDECAR_API_KEY", "")
+_ALLOW_UNAUTH = os.environ.get("SIDECAR_ALLOW_UNAUTHENTICATED") == "1"
+
+
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    if request.url.path == "/health" or request.method == "OPTIONS":
+        return await call_next(request)
+    if not _API_KEY:
+        if _ALLOW_UNAUTH:
+            return await call_next(request)
+        return JSONResponse({"detail": "SIDECAR_API_KEY is not configured"}, status_code=503)
+    supplied = request.headers.get("x-sidecar-key", "")
+    if not hmac.compare_digest(supplied.encode(), _API_KEY.encode()):
+        return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+    return await call_next(request)
+
+
+class UrlModel(BaseModel):
+    """Base for request models with a `url`: rejects private/internal targets (SSRF)."""
+
+    @field_validator("url", check_fields=False)
+    @classmethod
+    def _url_must_be_public(cls, value):
+        if value:
+            ensure_public_url(value)
+        return value
+
 
 # ── Robots.txt cache  (TTL: 24 h) ────────────────────────────────────────────
 _robots_cache: dict[str, tuple[urllib.robotparser.RobotFileParser, float]] = {}
@@ -103,7 +143,7 @@ PortalType = Literal[
 ]
 
 
-class ScrapeRequest(BaseModel):
+class ScrapeRequest(UrlModel):
     url: str
     portal_type: PortalType = "generic"
     use_stealth: bool = True        # StealthyFetcher vs plain Fetcher
@@ -136,7 +176,7 @@ class ScrapeResponse(BaseModel):
     error: str | None = None
 
 
-class HtmlFetchRequest(BaseModel):
+class HtmlFetchRequest(UrlModel):
     url: str
     use_stealth: bool = True
 
@@ -150,7 +190,7 @@ class HtmlFetchResponse(BaseModel):
     error: str | None = None
 
 
-class ApiProxyRequest(BaseModel):
+class ApiProxyRequest(UrlModel):
     url: str
     method: str = "GET"
     headers: Optional[Dict[str, str]] = None
@@ -188,7 +228,7 @@ class SearchResponse(BaseModel):
 
 
 # ── /extract_text models ──────────────────────────────────────────────────────
-class ExtractTextRequest(BaseModel):
+class ExtractTextRequest(UrlModel):
     url: str | None = None
     html: str | None = None         # Raw HTML (skips fetch if provided)
     include_tables: bool = True
@@ -206,7 +246,7 @@ class ExtractTextResponse(BaseModel):
 
 
 # ── /crawl4ai models ──────────────────────────────────────────────────────────
-class Crawl4AiRequest(BaseModel):
+class Crawl4AiRequest(UrlModel):
     url: str
     portal_type: PortalType = "generic"
     css_selector: str | None = None
@@ -223,7 +263,7 @@ class Crawl4AiResponse(BaseModel):
 
 
 # ── /extract_document models ──────────────────────────────────────────────────
-class ExtractDocumentRequest(BaseModel):
+class ExtractDocumentRequest(UrlModel):
     url: str
     max_chars: int = 50_000
 
@@ -239,7 +279,7 @@ class ExtractDocumentResponse(BaseModel):
 
 
 # ── /browser_agent & /resolve_ats models ──────────────────────────────────────
-class BrowserAgentRequest(BaseModel):
+class BrowserAgentRequest(UrlModel):
     url: str
     goal: str
     engine: Literal["native", "browser_use", "typesafe"] = "native"
@@ -257,7 +297,7 @@ class BrowserAgentResponse(BaseModel):
     error: str | None = None
 
 
-class ResolveAtsRequest(BaseModel):
+class ResolveAtsRequest(UrlModel):
     url: str
     max_clicks: int = 3
     timeout_seconds: float = 25.0
@@ -758,7 +798,7 @@ async def extract_document(req: ExtractDocumentRequest):
 
 # ── /smart_scrape  (LLM-powered — no selectors needed) ───────────────────────
 
-class SmartScrapeRequest(BaseModel):
+class SmartScrapeRequest(UrlModel):
     url: str
     prompt: str
     # Optional: pass raw HTML instead of letting the sidecar fetch the page.
@@ -831,38 +871,40 @@ async def smart_scrape_endpoint(req: SmartScrapeRequest):
 
 @app.post("/proxy_api", response_model=ApiProxyResponse)
 async def proxy_api(req: ApiProxyRequest, request: Request):
+    """Authenticated HTTP proxy for ATS/JSON APIs. TLS is verified and every redirect hop is re-checked."""
     try:
-        async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
-            # Reconstruct headers nicely
-            h = dict(req.headers) if req.headers else {}
-            if "user-agent" not in {k.lower() for k in h.keys()}:
-                h["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-                
-            res = await client.request(
-                method=req.method.upper(),
-                url=req.url,
-                headers=h,
-                json=req.json_body,
-                follow_redirects=True
-            )
-            
-            try:
-                data = res.json()
-            except Exception:
-                data = res.text
-                
-            return ApiProxyResponse(
-                success=res.is_success,
-                status_code=res.status_code,
-                data=data
-            )
+        h = dict(req.headers) if req.headers else {}
+        if "user-agent" not in {k.lower() for k in h.keys()}:
+            h["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+
+        method = req.method.upper()
+        body = req.json_body
+        url = req.url
+        async with httpx.AsyncClient(timeout=30.0, verify=True, follow_redirects=False) as client:
+            for _ in range(5):
+                res = await client.request(method=method, url=url, headers=h, json=body)
+                location = res.headers.get("location")
+                if res.is_redirect and location:
+                    url = ensure_public_url(str(httpx.URL(url).join(location)))
+                    if res.status_code not in (307, 308):
+                        method, body = "GET", None
+                    continue
+                break
+
+        if len(res.content) > 5_000_000:
+            return ApiProxyResponse(success=False, status_code=502, error="Upstream response too large")
+
+        try:
+            data = res.json()
+        except Exception:
+            data = res.text
+
+        return ApiProxyResponse(success=res.is_success, status_code=res.status_code, data=data)
+    except ValueError as exc:
+        return ApiProxyResponse(success=False, status_code=400, error=str(exc))
     except Exception as exc:
         logger.error("API Proxy failed for %s: %s", req.url, exc)
-        return ApiProxyResponse(
-            success=False,
-            status_code=500,
-            error=str(exc)
-        )
+        return ApiProxyResponse(success=False, status_code=500, error="Upstream request failed")
 
 
 # ── /browser_agent ─────────────────────────────────────────────────────────────

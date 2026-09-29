@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { runAtsSync } from "../lib/scrapers/ats-sync";
 
@@ -14,6 +15,8 @@ export const atsSyncCronJob = inngest.createFunction(
     triggers: [{ cron: "0 0 * * *" }]
   },
   async ({ step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     await step.run("sync-ats-apis", async () => {
       const insertedCount = await runAtsSync();
       return { status: "success", newJobsInserted: insertedCount };

@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { discoverHealth, BroadHealthResource } from "@/lib/scrapers/broad-search-engine-health";
 import { db } from "@/lib/db/client";
@@ -76,6 +77,8 @@ function makeHealthScraper(
   return inngest.createFunction(
     { id, name, triggers: [{ cron }, { event: "manual.scrape.health" }] },
     async ({ step }) => {
+      if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
       const pass1 = await step.run(`execute-health-scraper-pass1`, async () => {
         return await runHealthQueries(queries, countryCode, `${id}-p1`);
       });

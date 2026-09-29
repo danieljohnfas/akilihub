@@ -1,28 +1,11 @@
 import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 import unusedImports from "eslint-plugin-unused-imports";
 
-// eslint-config-next exports flat config arrays
-let nextVitals = [];
-let nextTs = [];
-try {
-  const vitals = await import("eslint-config-next/core-web-vitals.js");
-  nextVitals = Array.isArray(vitals.default) ? vitals.default : [];
-} catch {
-  try {
-    const vitals = await import("eslint-config-next/core-web-vitals");
-    nextVitals = Array.isArray(vitals.default) ? vitals.default : [];
-  } catch { /* ignore */ }
-}
-try {
-  const ts = await import("eslint-config-next/typescript.js");
-  nextTs = Array.isArray(ts.default) ? ts.default : [];
-} catch {
-  try {
-    const ts = await import("eslint-config-next/typescript");
-    nextTs = Array.isArray(ts.default) ? ts.default : [];
-  } catch { /* ignore */ }
-}
-
+// eslint-config-next@16 ships native flat-config arrays. There is deliberately NO try/catch around
+// the imports: the old config swallowed a failed import and silently linted nothing, which made CI's
+// lint step vacuous. A broken config must fail loudly.
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -37,28 +20,24 @@ const eslintConfig = defineConfig([
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": [
         "warn",
-        { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
-      ]
-    }
+        { vars: "all", varsIgnorePattern: "^_", args: "after-used", argsIgnorePattern: "^_" },
+      ],
+    },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
+    "coverage/**",
     "next-env.d.ts",
     "scraper/**",
     "scratch/**",
-    "render_cli/**",
-    "koyeb_cli/**",
     "scripts/**",
-    "src/lib/scrapers/parsers/**",
-    "migrate.js",
-    "push-env.js",
-    "*.mjs",
+    "graphify-out/**",
+    // Root-level ops scripts (monitor.js, migrate.js) are plain untyped JS.
+    "*.js",
     "*.cjs",
-    "*.js"
   ]),
 ]);
 

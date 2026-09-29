@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
 };
 
-const LAST_UPDATED = 'July 2026';
+const LAST_UPDATED = 'September 2026';
 const CONTACT_EMAIL = 'privacy@akilibrain.com';
 
 export default function PrivacyPage() {
@@ -75,10 +75,15 @@ export default function PrivacyPage() {
             <div className="space-y-2">
               <h3 className="font-semibold text-base">CV / résumé uploads</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                If you upload a CV for our AI job-matching feature, we store
-                the document and extract structured data (skills, experience,
-                education) to power matching. Your CV is used solely for this
-                purpose and is never sold, shared with employers without your
+                If you upload a CV for our AI features, we extract its text and
+                keep it so that the matching, chat and evaluation tools can use
+                it. The text is sent to the AI providers listed in Section 4
+                to produce results. CVs uploaded without an account are linked
+                only to your browser (via a cookie), are automatically deleted
+                after 30 days, and you can ask us to delete them sooner. CV
+                text you submit for a job application while signed in is kept
+                with your account until you delete it or delete your account.
+                Your CV is never sold, shared with employers without your
                 explicit action, or used for advertising.
               </p>
             </div>
@@ -87,21 +92,26 @@ export default function PrivacyPage() {
               <h3 className="font-semibold text-base">Salary submissions</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 When you voluntarily submit salary data, we collect the
-                information you provide (role, sector, country, compensation
-                figure, and optionally years of experience). All submissions
-                are immediately anonymised before storage. Individual
-                responses are never displayed; only aggregated statistics
-                are published.
+                information you provide (role, employer, country, experience
+                level, compensation figure, and optionally years of
+                experience). We do not collect your name or email address with
+                a submission. Submissions may be displayed individually
+                (without any personal identifier) and are included in
+                aggregated statistics. Submissions are checked by an automated
+                plausibility review.
               </p>
             </div>
 
             <div className="space-y-2">
               <h3 className="font-semibold text-base">Usage data</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                We collect standard web analytics including page views,
-                session duration, referring URLs, browser type, and general
-                geographic location (country/city level). This data is used
-                to improve the platform and is not linked to your identity.
+                With your consent, we collect web analytics (page views,
+                session duration, referring URLs, browser type and approximate
+                location) and, through Microsoft Clarity, session recordings
+                and heatmaps of how the site is used. Nothing of this kind
+                loads until you choose &ldquo;Accept all&rdquo; in the cookie
+                banner, and you can change your choice at any time using
+                &ldquo;Cookie settings&rdquo; in the footer.
               </p>
             </div>
 
@@ -211,7 +221,10 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-bold">4. Third-Party Services</h2>
           <p className="text-sm text-muted-foreground">
             We use the following third-party services to operate the
-            platform. Each is governed by its own privacy policy.
+            platform. Each is governed by its own privacy policy. Some of
+            these providers are located outside your country, including in
+            the United States, Europe and China, so your data may be
+            transferred and processed internationally.
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
@@ -224,10 +237,17 @@ export default function PrivacyPage() {
               </thead>
               <tbody className="text-muted-foreground">
                 {[
-                  { service: 'Google AdSense', purpose: 'Display advertising', data: 'IP address, cookie identifiers, browsing activity' },
-                  { service: 'Vercel', purpose: 'Web hosting & CDN', data: 'Request logs, IP address' },
+                  { service: 'Google AdSense', purpose: 'Advertising (personalised only with your consent)', data: 'IP address, cookie identifiers, browsing activity' },
+                  { service: 'Microsoft Clarity', purpose: 'Session recording & heatmaps (only with your consent)', data: 'Pages visited, clicks, scrolling, device/browser information' },
+                  { service: 'PostHog', purpose: 'Product analytics (only with your consent)', data: 'Usage events, device/browser information' },
+                  { service: 'Cloudflare', purpose: 'CDN, DDoS protection and DNS', data: 'IP address, request metadata' },
+                  { service: 'Linode (Akamai)', purpose: 'Web hosting', data: 'Request logs, IP address' },
                   { service: 'Supabase / PostgreSQL', purpose: 'Database & authentication', data: 'Account data, stored content' },
-                  { service: 'PostHog', purpose: 'Product analytics', data: 'Anonymised usage events' },
+                  { service: 'AI model providers (e.g. Google Gemini, Mistral, Groq, Cerebras, SambaNova, OpenRouter, Cohere, DeepSeek, Together, Fireworks, Hyperbolic, NVIDIA, Perplexity, Novita, xAI, AI21, Alibaba Cloud, Zhipu AI, MiniMax, Cloudflare Workers AI, Hugging Face — whichever are enabled at the time)', purpose: 'AI chat, CV matching and evaluation, mock interviews, content extraction', data: 'The text you submit: questions, CV text, cover letters, interview answers' },
+                  { service: 'Resend', purpose: 'Email delivery', data: 'Email address, name, email content' },
+                  { service: 'Inngest', purpose: 'Background job processing', data: 'Identifiers and email addresses processed in scheduled jobs' },
+                  { service: 'Upstash', purpose: 'Abuse prevention / rate limiting', data: 'IP address (short-lived)' },
+                  { service: 'Sentry', purpose: 'Error monitoring (if enabled)', data: 'Technical error and device information' },
                 ].map(({ service, purpose, data }) => (
                   <tr key={service} className="border-b border-white/5">
                     <td className="py-3 pr-4 font-medium text-foreground">{service}</td>
@@ -278,9 +298,9 @@ export default function PrivacyPage() {
         <section className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
           <h2 className="text-xl font-bold">7. Data Retention</h2>
           <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside leading-relaxed">
-            <li><strong className="text-foreground">Account data:</strong> Retained while your account is active, and for 90 days after deletion to allow recovery.</li>
-            <li><strong className="text-foreground">CV uploads:</strong> Retained until you delete them or close your account.</li>
-            <li><strong className="text-foreground">Salary submissions:</strong> Retained indefinitely in anonymised, aggregated form; the raw submission is deleted after aggregation.</li>
+            <li><strong className="text-foreground">Account data:</strong> Retained while your account is active and deleted immediately when you use &ldquo;Delete account&rdquo; on the Account page.</li>
+            <li><strong className="text-foreground">CV uploads (no account):</strong> Automatically deleted after 30 days, or sooner on request. CV text attached to a job application is deleted with your account.</li>
+            <li><strong className="text-foreground">Salary submissions:</strong> Retained without personal identifiers until removed; they may appear individually and in aggregate statistics.</li>
             <li><strong className="text-foreground">Analytics data:</strong> Retained for 24 months then purged.</li>
             <li><strong className="text-foreground">Server logs:</strong> Retained for 30 days.</li>
           </ul>
@@ -291,7 +311,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-bold">8. Your Rights</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Depending on your location, you may have the following rights
-            under GDPR, CCPA, or similar legislation:
+            under the GDPR, CCPA and the data-protection laws of Kenya, Tanzania, Uganda, Rwanda, Ethiopia and other countries. You can download your data and delete your account yourself from the Account page:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[

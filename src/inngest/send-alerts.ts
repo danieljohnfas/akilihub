@@ -9,6 +9,8 @@ import { users, userAlerts, bookmarks } from "@/lib/db/schema/users";
 import { countries } from "@/lib/db/schema/shared";
 import { desc, eq, inArray, and, isNotNull, or, isNull, gte } from "drizzle-orm";
 import React from "react";
+import { sendBulk } from "@/lib/email/bulk";
+import { unsubscribeHeaders } from "@/lib/email/unsubscribe";
 
 // Helper function to chunk array for Resend limits
 function chunkArray<T>(array: T[], size: number): T[][] {
@@ -89,14 +91,13 @@ export const sendTenderAlertsJob = inngest.createFunction(
 export const sendDailyDigestJob = inngest.createFunction(
   { id: "send-daily-digest", triggers: [{ cron: "0 8 * * *" }] }, // Run at 8:00 AM daily
   async ({ step }) => {
-    // 1. Fetch active users subscribed to daily digests
+    // 1. Users with an ACTIVE daily alert who have not unsubscribed (one row per user, not per alert)
     const subscribers = await step.run("fetch-subscribers", async () => {
-      const activeAlerts = await db.select()
+      return await db
+        .selectDistinct({ id: users.id, email: users.email, name: users.fullName })
         .from(userAlerts)
-        .leftJoin(users, eq(userAlerts.userId, users.id))
-        .where(eq(userAlerts.frequency, 'daily'));
-        
-      return activeAlerts.filter(a => a.users);
+        .innerJoin(users, eq(userAlerts.userId, users.id))
+        .where(and(eq(userAlerts.frequency, "daily"), eq(userAlerts.isActive, true), eq(users.emailUpdates, true)));
     });
 
     if (subscribers.length === 0) return { skipped: true, reason: "No subscribers" };
@@ -142,50 +143,29 @@ export const sendDailyDigestJob = inngest.createFunction(
       };
     });
 
-    // 3. Render and Send Emails using Chunking
-    const emailPayloads = await step.run("prepare-emails", async () => {
-      const payloads = [];
-      for (const sub of subscribers) {
-        if (!sub.users) continue;
-        const html = await render(
-          React.createElement(DailyDigestEmail, {
-            name: sub.users.fullName || "User",
-            items: [...newItems.tenders, ...newItems.jobs].slice(0, 15),
-          })
-        );
-        payloads.push({
-          from: "AkiliBrain Alerts <alerts@akilibrain.com>",
-          to: [sub.users.email],
-          subject: "📬 Your AkiliBrain Daily Intelligence Digest",
-          html,
-        });
-      }
-      return payloads;
-    });
+    // 3. Render + send in chunks inside ONE step (small step output, unsubscribe headers on every mail)
+    const digestItems = [...newItems.tenders, ...newItems.jobs].slice(0, 15);
+    const result = await step.run("send-digest", () =>
+      sendBulk(subscribers, async (u) => ({
+        from: "AkiliBrain Alerts <alerts@akilibrain.com>",
+        subject: "📬 Your AkiliBrain Daily Intelligence Digest",
+        html: await render(React.createElement(DailyDigestEmail, { name: u.name || "User", items: digestItems })),
+      }))
+    );
 
-    await step.run("send-emails-batched", async () => {
-      if (!process.env.RESEND_API_KEY) return { skipped: true };
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      
-      const chunks = chunkArray(emailPayloads, 100);
-      for (const chunk of chunks) {
-        await (resend.batch as { send: (emails: typeof chunk) => Promise<unknown> }).send(chunk);
-        // Rate limit: 2 per second max, safe delay
-        await new Promise(r => setTimeout(r, 1000));
-      }
-      return { batches: chunks.length, total: emailPayloads.length };
-    });
-
-    return { processed: emailPayloads.length };
+    return { processed: subscribers.length, result };
   }
 );
 
 export const sendWeeklyNewsletterJob = inngest.createFunction(
   { id: "send-weekly-newsletter", triggers: [{ cron: "0 9 * * 1" }] }, // Run at 9:00 AM on Mondays
   async ({ step }) => {
-    // 1. Fetch all active users
+    // 1. Every user who has NOT unsubscribed (only the columns we need: step output is persisted by Inngest)
     const allUsers = await step.run("fetch-all-users", async () => {
-      return await db.select().from(users);
+      return await db
+        .select({ id: users.id, email: users.email, name: users.fullName })
+        .from(users)
+        .where(eq(users.emailUpdates, true));
     });
 
     if (allUsers.length === 0) return { skipped: true, reason: "No users" };
@@ -231,40 +211,22 @@ export const sendWeeklyNewsletterJob = inngest.createFunction(
       };
     });
 
-    // 3. Render and Send Emails using Chunking
-    const emailPayloads = await step.run("prepare-weekly-emails", async () => {
-      const payloads = [];
-      for (const user of allUsers) {
-        const html = await render(
+    // 3. Render + send in chunks inside ONE step
+    const result = await step.run("send-weekly", () =>
+      sendBulk(allUsers, async (u) => ({
+        from: "AkiliBrain Newsletter <newsletter@akilibrain.com>",
+        subject: "🌍 The AkiliBrain Weekly Intelligence Recap",
+        html: await render(
           React.createElement(WeeklyNewsletterEmail, {
-            name: user.fullName || "User",
+            name: u.name || "User",
             topTenders: highlights.tenders,
             topJobs: highlights.jobs,
           })
-        );
-        payloads.push({
-          from: "AkiliBrain Newsletter <newsletter@akilibrain.com>",
-          to: [user.email],
-          subject: "🌍 The AkiliBrain Weekly Intelligence Recap",
-          html,
-        });
-      }
-      return payloads;
-    });
+        ),
+      }))
+    );
 
-    await step.run("send-weekly-batched", async () => {
-      if (!process.env.RESEND_API_KEY) return { skipped: true };
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      
-      const chunks = chunkArray(emailPayloads, 100);
-      for (const chunk of chunks) {
-        await (resend.batch as { send: (emails: typeof chunk) => Promise<unknown> }).send(chunk);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-      return { batches: chunks.length, total: emailPayloads.length };
-    });
-
-    return { processed: emailPayloads.length };
+    return { processed: allUsers.length, result };
   }
 );
 
@@ -459,6 +421,7 @@ export const sendReengagementAlertsJob = inngest.createFunction(
         payloads.push({
           from: "AkiliBrain Opportunities <opportunities@akilibrain.com>",
           to: [user.email],
+          headers: unsubscribeHeaders(user.id),
           subject: `👋 ${user.fullName ? user.fullName.split(" ")[0] + ", we" : "We"} miss you — fresh opportunities await`,
           html,
         });

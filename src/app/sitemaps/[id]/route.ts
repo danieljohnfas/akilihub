@@ -58,7 +58,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const [tenderRows, guideRows, countryRows] = await Promise.all([
       safeQuery(db.select({ id: tenders.id, updatedAt: tenders.updatedAt }).from(tenders).where(and(eq(tenders.status, 'open'), or(isNull(tenders.deadline), gt(tenders.deadline, new Date())))).limit(20000)),
       safeQuery(db.select({ slug: guides.slug, updatedAt: guides.updatedAt }).from(guides).where(eq(guides.isPublished, true)).limit(5000)),
-      safeQuery(db.select({ name: countries.name, updatedAt: countries.updatedAt }).from(countries)),
+      safeQuery(db.select({ name: countries.name }).from(countries)),
     ]);
 
     const tenderPages = tenderRows.map((t) => ({
@@ -71,7 +71,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const countryPages = countryRows.map((c) => ({
       url: `${BASE_URL}/countries/${COUNTRY_SLUGS[c.name] ?? c.name.toLowerCase().replace(/\s+/g, '-')}`,
-      lastModified: c.updatedAt || now, changeFrequency: 'daily', priority: 0.85
+      lastModified: now, changeFrequency: 'daily', priority: 0.85
     }));
 
     const xml = buildUrlSet([...staticPages, ...tenderPages, ...guidePages, ...countryPages]);

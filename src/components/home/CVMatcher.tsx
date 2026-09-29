@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, FileText, CheckCircle, Loader2, Sparkles } from 'lucide-react';
-import { JobCard } from '@/components/jobs/JobCard';
+import { Upload, CheckCircle, Loader2, Sparkles } from 'lucide-react';
 
 export function CVMatcher() {
   const [isUploading, setIsUploading] = useState(false);
@@ -136,7 +135,7 @@ export function CVMatcher() {
                   <h4 className="text-xl font-bold text-gray-900 pr-24">{match.title}</h4>
                   <p className="text-gray-600 font-medium mt-1">{match.companyName}</p>
                   <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm italic">
-                    " {match.matchReason} "
+                    &quot; {match.matchReason} &quot;
                   </div>
                   {match.sourceUrl && (
                     <a href={match.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-700 transition">

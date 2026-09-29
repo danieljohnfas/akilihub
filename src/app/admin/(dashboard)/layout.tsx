@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, FileText, ShieldCheck, Activity, Banknote, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, ShieldCheck, Activity, LogOut } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import { SESSION_COOKIE, verifyAdminSession } from "@/lib/admin/session";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/tenders", label: "Tenders", icon: FileText },
-  { href: "/admin/compliance", label: "Compliance", icon: ShieldCheck },
-  { href: "/admin/health", label: "Health Data", icon: Activity },
-  { href: "/admin/salaries", label: "Salaries", icon: Banknote },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin/resolve", label: "URL Resolution", icon: ShieldCheck },
+  { href: "/admin/ai-status", label: "AI Status", icon: Activity },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

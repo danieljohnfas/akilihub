@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { discoverSalaries, BroadSalaryResource } from "@/lib/scrapers/broad-search-engine-salaries";
 import { db } from "@/lib/db/client";
@@ -68,6 +69,8 @@ function makeSalaryScraper(
   return inngest.createFunction(
     { id, name, triggers: [{ cron }, { event: "manual.scrape.salaries" }] },
     async ({ step }) => {
+      if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
       const pass1 = await step.run(`execute-salary-scraper-pass1`, async () => {
         return await runSalaryQueries(queries, countryCode, `${id}-p1`);
       });

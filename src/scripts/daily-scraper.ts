@@ -3,8 +3,6 @@ import { db } from "../lib/db/client";
 import { jobs } from "../lib/db/schema/jobs";
 import { countries as countriesTable } from "../lib/db/schema/shared";
 import { count, eq } from "drizzle-orm";
-import { generateText } from "ai";
-import { getAiRouter } from "../ai/router";
 
 const TARGET_JOBS_PER_COUNTRY = 2000;
 // Make sure TZ is first, as requested by the user

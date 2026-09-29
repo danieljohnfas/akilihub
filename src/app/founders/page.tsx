@@ -57,7 +57,7 @@ export default async function FoundersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            With the rise of "vibe coding", any standard workflow SaaS can be cloned by an African SME for free. 
+            With the rise of &quot;vibe coding&quot;, any standard workflow SaaS can be cloned by an African SME for free. 
             To build a defensible African business, founders must rely on <strong>Proprietary Data</strong> (like AkiliHub) 
             or <strong>Local Network Effects</strong> (like M-Pesa integration) rather than just a UI wrapper.
           </CardContent>

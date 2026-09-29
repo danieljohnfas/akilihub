@@ -1,5 +1,5 @@
 import { inngest } from "./client";
-import { db, safeQuery } from "@/lib/db/client";
+import { db, queryOrThrow } from "@/lib/db/client";
 import { sql } from "drizzle-orm";
 
 /**
@@ -17,7 +17,7 @@ export const keepDatabaseAliveJob = inngest.createFunction(
   async ({ step }) => {
     const result = await step.run("ping-database", async () => {
       try {
-        await safeQuery(db.execute(sql`SELECT 1 as keepalive`));
+        await queryOrThrow(db.execute(sql`SELECT 1 as keepalive`), 10_000, "keep-alive ping");
         return { success: true, message: "Database pinged successfully" };
       } catch (error) {
         console.error("Keep-alive ping failed:", error);
@@ -45,7 +45,7 @@ export const keepScraperAliveJob = inngest.createFunction(
     const result = await step.run("ping-scraper", async () => {
       try {
         const sidecarUrl = (process.env.SCRAPLING_URL ?? 'http://localhost:8001').trim();
-        const response = await fetch(`${sidecarUrl}/health`);
+        const response = await fetch(`${sidecarUrl}/health`, { signal: AbortSignal.timeout(20_000) });
         if (response.ok) {
           return { success: true, message: "Scraper pinged successfully", status: response.status };
         } else {

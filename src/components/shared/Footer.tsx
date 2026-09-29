@@ -1,9 +1,8 @@
 import Link from 'next/link';
+import { NewsletterForm } from '@/components/home/NewsletterForm';
+import { CookieSettingsButton } from '@/components/consent/CookieSettingsButton';
 import { Logo } from '@/components/shared/Logo';
-import { Send } from 'lucide-react';
 import { Icon } from '@iconify/react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 
 export function Footer() {
   return (
@@ -68,23 +67,11 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             Get a weekly digest of the top East African tenders and high-paying jobs.
           </p>
-          <form className="flex gap-2 mt-2" action="/api/subscribe" method="POST">
-            <Input 
-              type="email" 
-              name="email" 
-              placeholder="Email address..." 
-              required 
-              className="bg-black/20 border-white/10 focus-visible:ring-primary/50"
-            />
-            <Button type="submit" size="icon" aria-label="Subscribe to newsletter" className="shrink-0 transition-transform active:scale-95">
-              <Send className="w-4 h-4" />
-            </Button>
-          </form>
-          <p className="text-xs text-muted-foreground/60">No spam. Unsubscribe at any time.</p>
+          <NewsletterForm compact />
         </div>
       </div>
       <div className="border-t border-white/5 py-6 text-center text-sm text-muted-foreground bg-black/20">
-        © {new Date().getFullYear()} AkiliBrain. All rights reserved.
+        © {new Date().getFullYear()} AkiliBrain. All rights reserved. · <CookieSettingsButton />
       </div>
     </footer>
   );

@@ -3,13 +3,12 @@ import { db } from "@/lib/db/client";
 import { sql } from "drizzle-orm";
 import { Resend } from "resend";
 import { SESSION_COOKIE, verifyAdminSession } from "@/lib/admin/session";
+import { hasValidSecret } from "@/lib/security/secrets";
 
 export const dynamic = "force-dynamic";
 
 async function authorized(request: NextRequest): Promise<boolean> {
-  const cron = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && cron === `Bearer ${cronSecret}`) return true;
+  if (hasValidSecret(request, process.env.CRON_SECRET)) return true;
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   return Boolean(token && (await verifyAdminSession(token)));
@@ -55,8 +54,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, emailId: emailResult?.data?.id });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[send-report]", error);
+    return NextResponse.json({ error: "Failed to send report" }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+import { scrapersDisabled } from '@/lib/scrapers/cost-controls';
 import { inngest } from "./client";
 import { generateObjectWithFallback } from "@/lib/ai/router";
 import { db } from "@/lib/db/client";
@@ -106,6 +107,8 @@ const GuideContentSchema = z.object({
 export const generateWeeklyGuidesJob = inngest.createFunction(
   { id: "generate-weekly-guides", name: "Generate Weekly Editorial Guides", triggers: [{ cron: "0 8 * * 1" }] }, // Every Monday at 8:00 AM UTC
   async ({ step }) => {
+    if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
+
     // 1. Pick a random topic to cover this week
     const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
 
@@ -130,7 +133,7 @@ Return the response strictly adhering to the JSON schema. Ensure the HTML conten
         prompt,
         schema: GuideContentSchema,
         temperature: 0.7,
-        maxTokens: 3000,
+        maxOutputTokens: 3000,
       });
 
       return result.object;

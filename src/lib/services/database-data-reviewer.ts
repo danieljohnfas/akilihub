@@ -1,16 +1,12 @@
 import * as cheerio from 'cheerio';
+import { safeFetch, readBodyLimited } from '@/lib/security/safe-fetch';
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
-import { tenders } from '@/lib/db/schema/tenders';
-import { complianceRequirements } from '@/lib/db/schema/compliance';
-import { eq, and, isNull, or, sql } from 'drizzle-orm';
+import { eq, and, isNull, or } from 'drizzle-orm';
 import {
-  isJevAvailable,
   getJevClient,
-  scoreQuality,
-  isRelevantOpportunity,
 } from '@/lib/ai/jev-client';
-import { choice, score, noul } from '@typesafe-ai/sdk';
+import { score, noul } from '@typesafe-ai/sdk';
 import {
   extractStructuredRequirements,
   extractDeadlineFromText,
@@ -57,18 +53,18 @@ export async function fetchPageHtml(url: string, timeoutMs = 8000): Promise<stri
   }
 
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: {
         'User-Agent': USER_AGENT,
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9,sw;q=0.8',
       },
-      signal: AbortSignal.timeout(timeoutMs),
-      redirect: 'follow',
+      timeoutMs,
     });
 
     if (!res.ok) {
       console.warn(`[DataReviewer] Failed to fetch ${url} - Status ${res.status}`);
+      await res.body?.cancel().catch(() => undefined);
       return null;
     }
 
@@ -79,10 +75,11 @@ export async function fetchPageHtml(url: string, timeoutMs = 8000): Promise<stri
       !contentType.includes('application/xhtml+xml') &&
       !contentType.includes('text/plain')
     ) {
+      await res.body?.cancel().catch(() => undefined);
       return null;
     }
 
-    const html = await res.text();
+    const html = (await readBodyLimited(res, 3 * 1024 * 1024)).toString('utf8');
     return html && html.length > 100 ? html : null;
   } catch (err) {
     console.warn(`[DataReviewer] Error fetching ${url}:`, err instanceof Error ? err.message : err);
@@ -513,7 +510,7 @@ export async function reviewJobsBatch(options: ReviewBatchOptions = {}) {
   const limit = options.limit ?? 50;
   const offset = options.offset ?? 0;
 
-  let query = db
+  const query = db
     .select({
       id: jobs.id,
       title: jobs.title,

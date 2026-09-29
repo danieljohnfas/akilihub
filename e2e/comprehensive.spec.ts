@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const targetBaseUrl = 'https://akilibrain.com';
+// Defaults to a local dev/preview server. Point it at another environment explicitly, e.g.
+//   E2E_BASE_URL=https://staging.example.com npx playwright test
+const targetBaseUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
 const publicPaths = [
   '/',
   '/about',

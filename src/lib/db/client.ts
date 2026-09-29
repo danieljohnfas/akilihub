@@ -15,6 +15,7 @@ import * as documentsSchema from './schema/documents';
 import * as analyticsSchema from './schema/analytics';
 import * as applicationsSchema from './schema/applications';
 import * as professionsSchema from './schema/professions';
+import * as scraperSchema from './schema/scraper';
 
 const schema = {
   ...sharedSchema,
@@ -31,6 +32,7 @@ const schema = {
   ...analyticsSchema,
   ...applicationsSchema,
   ...professionsSchema,
+  ...scraperSchema,
 };
 
 // Prevent multiple instances during development HMR
@@ -88,6 +90,29 @@ export async function safeQuery<T>(
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[DB Error] safeQuery caught in [${label}]:`, message, err instanceof Error ? err.stack : err);
     return [] as unknown as T;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * queryOrThrow - like safeQuery (race-timeout) but it NEVER hides failures.
+ *
+ * Use it wherever "the query failed" must not be mistaken for "no rows": auth/setup guards,
+ * health checks, and routes that would otherwise report a misleading 404/empty result.
+ */
+export async function queryOrThrow<T>(
+  query: QueryInput<T>,
+  timeoutMs = 15000,
+  label: string = 'Unnamed Query'
+): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`Query [${label}] timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+  try {
+    const queryPromise = typeof query === 'function' ? query() : query;
+    return (await Promise.race([(async () => await queryPromise)(), timeoutPromise])) as T;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }

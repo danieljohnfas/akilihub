@@ -3,26 +3,41 @@ import { db } from "@/lib/db/client";
 import { salarySubmissions, employers } from "@/lib/db/schema/salaries";
 import { countries } from "@/lib/db/schema/shared";
 import { z } from "zod";
-import { eq, and, ilike } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { checkSalaryPlausibility } from "@/lib/salaries/verify-plausibility";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
-const submitSchema = z.object({
-  jobTitle: z.string().min(2, "Job title is required"),
-  employerName: z.string().min(2, "Employer name is required"),
-  countryId: z.string().uuid("Invalid country ID"),
-  experienceLevel: z.enum(["entry", "mid", "senior", "executive"]),
-  employmentType: z.enum(["full_time", "part_time", "contract", "consultancy"]),
-  currency: z.string().min(3),
-  grossMonthlySalary: z.number().positive("Gross salary must be positive").min(100, "Salary too low").max(100000000, "Salary exceeds plausible maximum"),
-  netMonthlySalary: z.number().positive().min(100).max(100000000).optional(),
-  yearsOfExperience: z.number().min(0).optional(),
-  // Strategy 3: optional work email for email-domain verification
-  workEmail: z.string().email().optional(),
-});
+/** Collapse whitespace and drop control characters so free-text fields cannot carry prompt/markup payloads. */
+const cleanText = (max: number, min = 2) =>
+  z
+    .string()
+    .transform((v) => v.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim())
+    .pipe(z.string().min(min).max(max));
+
+const submitSchema = z
+  .object({
+    jobTitle: cleanText(100).describe("Job title"),
+    employerName: cleanText(120),
+    countryId: z.string().uuid("Invalid country ID"),
+    experienceLevel: z.enum(["entry", "mid", "senior", "executive"]),
+    employmentType: z.enum(["full_time", "part_time", "contract", "consultancy"]),
+    currency: z.string().regex(/^[A-Za-z]{3}$/, "Currency must be a 3-letter ISO code").transform((v) => v.toUpperCase()),
+    grossMonthlySalary: z.number().positive("Gross salary must be positive").min(100, "Salary too low").max(100000000, "Salary exceeds plausible maximum"),
+    netMonthlySalary: z.number().positive().min(100).max(100000000).optional(),
+    yearsOfExperience: z.number().int().min(0).max(60).optional(),
+  })
+  .refine((d) => d.netMonthlySalary === undefined || d.netMonthlySalary <= d.grossMonthlySalary, {
+    message: "Net salary cannot exceed gross salary",
+    path: ["netMonthlySalary"],
+  });
 
 export async function POST(req: NextRequest) {
+  // Anonymous endpoint that feeds public statistics: cap submissions per IP.
+  const limited = await enforceRateLimit(req, { prefix: "salary-submit", max: 5, window: "1 h" });
+  if (limited) return limited;
+
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const parsed = submitSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -39,13 +54,17 @@ export async function POST(req: NextRequest) {
       .limit(1);
     const countryName = countryRow[0]?.name ?? "East Africa";
 
-    // 1. Find or create employer
+    // 1. Find or create employer (exact, case-insensitive match — never a LIKE pattern,
+    //    so "%" in user input cannot attach the submission to an unrelated employer)
+    const findEmployer = () =>
+      db
+        .select({ id: employers.id })
+        .from(employers)
+        .where(and(sql`lower(${employers.name}) = lower(${data.employerName})`, eq(employers.countryId, data.countryId)))
+        .limit(1);
+
     let employerId: string;
-    const existingEmployers = await db
-      .select({ id: employers.id })
-      .from(employers)
-      .where(and(ilike(employers.name, data.employerName), eq(employers.countryId, data.countryId)))
-      .limit(1);
+    const existingEmployers = await findEmployer();
 
     if (existingEmployers.length > 0) {
       employerId = existingEmployers[0].id;
@@ -53,8 +72,10 @@ export async function POST(req: NextRequest) {
       const inserted = await db
         .insert(employers)
         .values({ name: data.employerName, countryId: data.countryId, isVerified: false })
+        .onConflictDoNothing()
         .returning({ id: employers.id });
-      employerId = inserted[0].id;
+      // A concurrent request may have created it first (unique on name+country).
+      employerId = inserted[0]?.id ?? (await findEmployer())[0].id;
     }
 
     // 2. Strategy 1 — AI plausibility check (conservative: verify only on high confidence)
@@ -67,18 +88,6 @@ export async function POST(req: NextRequest) {
       grossMonthlySalary: data.grossMonthlySalary,
     });
     const aiVerified = plausibility.plausible && plausibility.confidence === 'high';
-
-    // 3. Strategy 3 — Email domain verification
-    // If a work email is provided, verify it matches a non-generic domain.
-    // We don't store the email — only use it to elevate trust at submission time.
-    let emailVerified = false;
-    if (data.workEmail) {
-      const domain = data.workEmail.split('@')[1]?.toLowerCase() ?? '';
-      const genericDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'protonmail.com'];
-      emailVerified = !genericDomains.includes(domain);
-    }
-
-    const isVerified = aiVerified || emailVerified;
 
     // 4. Insert salary submission
     const [inserted] = await db
@@ -94,17 +103,17 @@ export async function POST(req: NextRequest) {
         netMonthlySalary: data.netMonthlySalary?.toString(),
         yearsOfExperience: data.yearsOfExperience,
         isAnonymous: true,
-        isVerified,
+        isVerified: aiVerified,
       })
       .returning({ id: salarySubmissions.id });
 
     return NextResponse.json({
       success: true,
       message: "Salary submitted successfully",
-      verified: isVerified,
-      verificationMethod: aiVerified ? 'ai' : emailVerified ? 'email_domain' : 'pending',
+      verified: aiVerified,
+      verificationMethod: aiVerified ? 'ai' : 'pending',
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Salary submission error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

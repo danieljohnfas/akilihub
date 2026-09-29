@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Copy, Check, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
-type Step = 'loading' | 'qr' | 'confirm' | 'done';
+type Step = 'token' | 'loading' | 'qr' | 'confirm' | 'done';
 
 export default function AdminSetupPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>('loading');
+  const [step, setStep] = useState<Step>('token');
+  const [setupToken, setSetupToken] = useState('');
   const [secret, setSecret] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [password, setPassword] = useState('');
@@ -20,17 +21,26 @@ export default function AdminSetupPage() {
   const [copied, setCopied] = useState(false);
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => {
-    fetch('/api/admin/setup')
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) { setError(data.error); return; }
-        setSecret(data.secret);
-        setQrDataUrl(data.qrDataUrl);
-        setStep('qr');
-      })
-      .catch(() => setError('Failed to load setup. Try refreshing.'));
-  }, []);
+  const loadSetup = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError('');
+    setStep('loading');
+    try {
+      const res = await fetch('/api/admin/setup', { headers: { 'x-setup-token': setupToken } });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setError(data.error || 'Failed to load setup.');
+        setStep('token');
+        return;
+      }
+      setSecret(data.secret);
+      setQrDataUrl(data.qrDataUrl);
+      setStep('qr');
+    } catch {
+      setError('Failed to load setup. Try refreshing.');
+      setStep('token');
+    }
+  };
 
   const copySecret = () => {
     navigator.clipboard.writeText(secret);
@@ -62,7 +72,7 @@ export default function AdminSetupPage() {
     setError('');
 
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
-    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
+    if (password.length < 12) { setError('Password must be at least 12 characters'); return; }
     const totpCode = code.join('');
     if (totpCode.length < 6) { setError('Please enter the full 6-digit code'); return; }
 
@@ -70,7 +80,7 @@ export default function AdminSetupPage() {
     try {
       const res = await fetch('/api/admin/setup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-setup-token': setupToken },
         body: JSON.stringify({ secret, code: totpCode, password }),
       });
       const data = await res.json();
@@ -106,6 +116,37 @@ export default function AdminSetupPage() {
         </div>
 
         <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm space-y-6">
+          {step === 'token' && (
+            <form onSubmit={loadSetup} className="space-y-4">
+              <div>
+                <label htmlFor="setup-token" className="block text-white/70 text-sm mb-2">
+                  Setup token
+                </label>
+                <input
+                  id="setup-token"
+                  type="password"
+                  autoComplete="off"
+                  value={setupToken}
+                  onChange={(e) => setSetupToken(e.target.value)}
+                  className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-400"
+                  placeholder="ADMIN_SETUP_TOKEN"
+                  required
+                />
+                <p className="text-white/30 text-xs mt-2">
+                  The value of the ADMIN_SETUP_TOKEN environment variable on the server.
+                </p>
+              </div>
+              {error && <p className="text-red-400 text-sm">{error}</p>}
+              <button
+                type="submit"
+                disabled={!setupToken}
+                className="w-full py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 text-white text-sm font-medium"
+              >
+                Continue
+              </button>
+            </form>
+          )}
+
           {step === 'loading' && (
             <div className="flex flex-col items-center py-8 gap-3">
               <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />

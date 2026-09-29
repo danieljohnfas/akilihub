@@ -2,11 +2,13 @@ import { SignJWT, jwtVerify } from 'jose';
 
 export const SESSION_COOKIE = 'admin_session';
 
+const ISSUER = 'akilibrain-admin';
+
 let _secret: Uint8Array | null = null;
 
 function getSecret(): Uint8Array {
   if (_secret) return _secret;
-  
+
   // Fail fast in production if the secret is not configured — a missing secret
   // would allow any attacker who knows the fallback string to forge admin JWTs.
   if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_SESSION_SECRET) {
@@ -22,6 +24,7 @@ function getSecret(): Uint8Array {
 export async function signAdminSession(): Promise<string> {
   return new SignJWT({ role: 'admin' })
     .setProtectedHeader({ alg: 'HS256' })
+    .setIssuer(ISSUER)
     .setIssuedAt()
     .setExpirationTime('8h')
     .sign(getSecret());
@@ -29,10 +32,12 @@ export async function signAdminSession(): Promise<string> {
 
 export async function verifyAdminSession(token: string): Promise<boolean> {
   try {
-    await jwtVerify(token, getSecret());
-    return true;
+    const { payload } = await jwtVerify(token, getSecret(), {
+      algorithms: ['HS256'],
+      issuer: ISSUER,
+    });
+    return payload.role === 'admin';
   } catch {
     return false;
   }
 }
-

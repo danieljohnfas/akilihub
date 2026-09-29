@@ -29,7 +29,7 @@ export class DocumensoClient {
       formData.append('title', documentTitle);
       formData.append('signers', JSON.stringify(signers));
       
-      const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+      const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
       formData.append('document', blob, 'contract.pdf');
 
       const response = await fetch(`${this.baseUrl}/documents/send`, {

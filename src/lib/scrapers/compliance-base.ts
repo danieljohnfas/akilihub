@@ -1,3 +1,4 @@
+import { sidecarHeaders } from '@/lib/sidecar';
 import * as cheerio from 'cheerio';
 import { generateObjectWithFallback, extractVisionTextWithFallback } from '../ai/router';
 import { z } from 'zod';
@@ -5,6 +6,7 @@ import { downloadDocument, parsePdf } from './pdf-extract';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import TurndownService from 'turndown';
 import { assertPublicHttpUrl } from '@/lib/security/safe-url';
+import { safeFetch, safeFetchBuffer, type SafeFetchOptions } from '@/lib/security/safe-fetch';
 export interface ComplianceResource {
   title: string;
   description: string;
@@ -29,7 +31,7 @@ async function fetchWithRetry(
 ): Promise<Response | null> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const res = await fetch(url, options);
+      const res = (await safeFetch(url, options as SafeFetchOptions)) as unknown as Response;
       if (res.ok) return res;
       if (res.status === 401 || res.status === 403 || res.status === 404 || res.status === 410) {
         return null; 
@@ -60,7 +62,7 @@ async function extractTextViaSidecar(
 
     const res = await fetch(`${sidecarUrl}/extract_text`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(5_000),
     });
@@ -116,7 +118,7 @@ export async function fetchHtml(url: string): Promise<string | null> {
     const sidecarUrl = process.env.SCRAPLING_URL ?? 'http://localhost:8001';
     const sidecarRes = await fetch(`${sidecarUrl}/fetch_html`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ url, use_stealth: true }),
       signal: AbortSignal.timeout(15_000),
     });
@@ -173,23 +175,22 @@ export async function fetchHtml(url: string): Promise<string | null> {
 
 export async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string } | null> {
   try {
-    const res = await fetch(url, {
+    const res = await safeFetchBuffer(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
       },
-      signal: AbortSignal.timeout(15_000),
+      timeoutMs: 15_000,
+      maxBytes: 15_000_000,
     });
 
     if (!res.ok) return null;
-    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    const contentType = res.contentType || 'image/jpeg';
     if (!contentType.startsWith('image/') && !contentType.includes('octet-stream')) {
       return null;
     }
 
-    const arrayBuffer = await res.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
+    const buffer = res.body;
     if (buffer.length < 5_000 || buffer.length > 15_000_000) {
       return null;
     }
@@ -444,7 +445,7 @@ export async function fetchAndParseDocument(url: string): Promise<string> {
   try {
     const res = await fetch(`${sidecarUrl}/extract_document`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ url, max_chars: 40000 }),
       signal: AbortSignal.timeout(60_000),
     });

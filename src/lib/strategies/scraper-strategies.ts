@@ -1,3 +1,4 @@
+import { sidecarHeaders } from '@/lib/sidecar';
 import { Strategy } from './engine';
 import * as cheerio from 'cheerio';
 
@@ -122,7 +123,7 @@ export class ScraplingStrategy implements Strategy<ScraperInput, TenderResult[]>
 
       const response = await fetch(`${this.baseUrl}/scrape`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           url: input.url,
           portal_type: input.portalType,
@@ -227,7 +228,7 @@ export class Crawl4AiStrategy implements Strategy<ScraperInput, TenderResult[]> 
 
       const response = await fetch(`${sidecarUrl}/crawl4ai`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           url: input.url,
           portal_type: input.portalType,
@@ -288,7 +289,7 @@ export class BrowserAgentStrategy implements Strategy<ScraperInput, TenderResult
 
       const response = await fetch(`${this.baseUrl}/browser_agent`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: sidecarHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           url: input.url,
           goal,

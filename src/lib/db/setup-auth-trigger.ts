@@ -15,13 +15,25 @@ async function main() {
     language plpgsql
     security definer set search_path = public
     as $$
+    declare
+      previous_updates boolean;
     begin
-      insert into public.users (id, email, full_name)
+      -- A newsletter-only row (random id, same email) would violate unique(email) and abort signup.
+      select email_updates into previous_updates
+      from public.users
+      where email = new.email and id <> new.id;
+
+      delete from public.users where email = new.email and id <> new.id;
+
+      insert into public.users (id, email, full_name, email_updates)
       values (
         new.id,
         new.email,
-        new.raw_user_meta_data->>'full_name'
-      );
+        new.raw_user_meta_data->>'full_name',
+        coalesce(previous_updates, true)
+      )
+      on conflict (id) do nothing;
+
       return new;
     end;
     $$;

@@ -5,6 +5,7 @@ import { complianceRequirements } from '@/lib/db/schema/compliance';
 import { salarySubmissions } from '@/lib/db/schema/salaries';
 import { jobs } from '@/lib/db/schema/jobs';
 import { sql, and, eq, or, isNull, gte } from 'drizzle-orm';
+import { enforceRateLimit } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,21 +18,23 @@ export interface SearchResult {
 }
 
 export async function GET(request: Request) {
-  let query = '';
-  let page = 1;
-  let limit = 5;
-  try {
-    const url = new URL(request.url || 'http://localhost/api/search');
-    query = url.searchParams.get('q') || '';
-    page = parseInt(url.searchParams.get('page') || '1', 10);
-    limit = parseInt(url.searchParams.get('limit') || '5', 10);
-    if (page < 1) page = 1;
-    if (limit < 1 || limit > 50) limit = 5;
-  } catch (e) {
-    return NextResponse.json({ results: [] });
-  }
+  // Public, unauthenticated and DB-heavy (4 full-text queries per call): cap per IP.
+  const limited = await enforceRateLimit(request, { prefix: 'search', max: 40, window: '1 m' });
+  if (limited) return limited;
 
-  if (!query || query.trim().length < 2) {
+  const url = new URL(request.url);
+  const query = (url.searchParams.get('q') || '').trim().slice(0, 200);
+
+  // parseInt('abc') is NaN, and NaN slips through `< 1` / `> 50` checks — normalise explicitly.
+  const toInt = (raw: string | null, fallback: number) => {
+    const n = parseInt(raw ?? '', 10);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const page = Math.min(Math.max(toInt(url.searchParams.get('page'), 1), 1), 100);
+  const requestedLimit = toInt(url.searchParams.get('limit'), 5);
+  const limit = requestedLimit >= 1 && requestedLimit <= 50 ? requestedLimit : 5;
+
+  if (query.length < 2) {
     return NextResponse.json({ results: [] });
   }
 
@@ -68,7 +71,7 @@ export async function GET(request: Request) {
           description: complianceRequirements.issuingAuthority,
         })
           .from(complianceRequirements)
-          .where(sql`to_tsvector('english', ${complianceRequirements.title} || ' ' || ${complianceRequirements.description}) @@ plainto_tsquery('english', ${query})`)
+          .where(sql`to_tsvector('english', ${complianceRequirements.title} || ' ' || coalesce(${complianceRequirements.description}, '')) @@ plainto_tsquery('english', ${query})`)
           .limit(limit).offset(offset),
         6000,
         'Search compliance'
