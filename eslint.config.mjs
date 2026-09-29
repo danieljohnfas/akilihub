@@ -1,31 +1,43 @@
-import { defineConfig, globalIgnores } from "eslint/config";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
 import unusedImports from "eslint-plugin-unused-imports";
 
-// eslint-config-next exports flat config arrays
-let nextVitals = [];
-let nextTs = [];
-try {
-  const vitals = await import("eslint-config-next/core-web-vitals.js");
-  nextVitals = Array.isArray(vitals.default) ? vitals.default : [];
-} catch {
-  try {
-    const vitals = await import("eslint-config-next/core-web-vitals");
-    nextVitals = Array.isArray(vitals.default) ? vitals.default : [];
-  } catch { /* ignore */ }
-}
-try {
-  const ts = await import("eslint-config-next/typescript.js");
-  nextTs = Array.isArray(ts.default) ? ts.default : [];
-} catch {
-  try {
-    const ts = await import("eslint-config-next/typescript");
-    nextTs = Array.isArray(ts.default) ? ts.default : [];
-  } catch { /* ignore */ }
-}
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
+// eslint-config-next@15 ships *legacy* (eslintrc) presets. The previous config tried to
+// `import()` them as flat-config arrays, silently fell back to `[]` when that failed, and so
+// linted nothing at all ("File ignored because no matching configuration was supplied").
+// FlatCompat is the supported bridge, and there is deliberately NO try/catch here: a broken
+// config must fail loudly.
+const compat = new FlatCompat({ baseDirectory: __dirname });
+
+const eslintConfig = [
+  {
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "coverage/**",
+      "next-env.d.ts",
+      "scraper/**",
+      "scratch/**",
+      "scripts/**",
+      "graphify-out/**",
+      // Legacy LLM-generated parsers (no longer executed; see src/lib/scrapers/parsers/README.md)
+      "src/lib/scrapers/parsers/**",
+      // Ad-hoc root-level scripts (untyped, unreviewed). Real config files stay linted.
+      "*.js",
+      "*.cjs",
+      "*.ts",
+      "!next.config.ts",
+      "!drizzle.config.ts",
+      "!playwright.config.ts",
+      "!vitest.config.ts",
+      "!sentry.*.config.ts",
+    ],
+  },
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     plugins: {
       "unused-imports": unusedImports,
@@ -37,29 +49,10 @@ const eslintConfig = defineConfig([
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": [
         "warn",
-        { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
-      ]
-    }
+        { vars: "all", varsIgnorePattern: "^_", args: "after-used", argsIgnorePattern: "^_" },
+      ],
+    },
   },
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-    "scraper/**",
-    "scratch/**",
-    "render_cli/**",
-    "koyeb_cli/**",
-    "scripts/**",
-    "src/lib/scrapers/parsers/**",
-    "migrate.js",
-    "push-env.js",
-    "*.mjs",
-    "*.cjs",
-    "*.js"
-  ]),
-]);
+];
 
 export default eslintConfig;

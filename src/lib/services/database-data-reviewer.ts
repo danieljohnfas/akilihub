@@ -2,16 +2,11 @@ import * as cheerio from 'cheerio';
 import { safeFetch, readBodyLimited } from '@/lib/security/safe-fetch';
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
-import { tenders } from '@/lib/db/schema/tenders';
-import { complianceRequirements } from '@/lib/db/schema/compliance';
-import { eq, and, isNull, or, sql } from 'drizzle-orm';
+import { eq, and, isNull, or } from 'drizzle-orm';
 import {
-  isJevAvailable,
   getJevClient,
-  scoreQuality,
-  isRelevantOpportunity,
 } from '@/lib/ai/jev-client';
-import { choice, score, noul } from '@typesafe-ai/sdk';
+import { score, noul } from '@typesafe-ai/sdk';
 import {
   extractStructuredRequirements,
   extractDeadlineFromText,
@@ -515,7 +510,7 @@ export async function reviewJobsBatch(options: ReviewBatchOptions = {}) {
   const limit = options.limit ?? 50;
   const offset = options.offset ?? 0;
 
-  let query = db
+  const query = db
     .select({
       id: jobs.id,
       title: jobs.title,

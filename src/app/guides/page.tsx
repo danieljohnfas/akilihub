@@ -1,7 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { guides } from '@/lib/db/schema/guides';
 import { professions } from '@/lib/db/schema/professions';
-import { eq, desc, asc } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import Link from 'next/link';
 
 import { JsonLd } from '@/components/seo/JsonLd';

@@ -26,7 +26,7 @@ import { db } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { tenders } from '@/lib/db/schema/tenders';
 import { complianceRequirements } from '@/lib/db/schema/compliance';
-import { isNotNull, eq, and, sql } from 'drizzle-orm';
+import { isNotNull, eq, and } from 'drizzle-orm';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { isEmployerUrl } from '@/lib/sources/aggregators';
 

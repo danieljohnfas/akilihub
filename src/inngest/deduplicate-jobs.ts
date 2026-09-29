@@ -1,6 +1,5 @@
 import { inngest } from "./client";
 import { db } from "@/lib/db/client";
-import { jobs } from "@/lib/db/schema/jobs";
 import { sql } from "drizzle-orm";
 
 export const deduplicateJobsJob = inngest.createFunction(

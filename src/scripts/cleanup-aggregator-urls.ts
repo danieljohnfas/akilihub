@@ -14,8 +14,8 @@
 import { db } from '../lib/db/client';
 import { jobs } from '../lib/db/schema/jobs';
 import { tenders } from '../lib/db/schema/tenders';
-import { isAggregatorUrl, isEmployerUrl } from '../lib/sources/aggregators';
-import { eq, isNotNull, sql } from 'drizzle-orm';
+import { isAggregatorUrl } from '../lib/sources/aggregators';
+import { eq, isNotNull } from 'drizzle-orm';
 
 async function cleanupJobs() {
   console.log('\n=== Cleaning Jobs Table ===');

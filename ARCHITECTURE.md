@@ -8,10 +8,10 @@ AkiliBrain is a robust Next.js application that serves as a central intelligence
 - **Framework:** Next.js (App Router)
 - **Database:** PostgreSQL (Supabase hosted on AWS eu-central-1) + Drizzle ORM
 - **Automation/Background Jobs:** Inngest (cloud-hosted)
-- **AI/LLM:** Vercel AI SDK multi-provider router (Gemini, Groq, Mistral, OpenRouter, Cerebras)
+- **AI/LLM:** Vercel AI SDK v7 multi-provider router (`src/lib/ai/router.ts`). Providers are opt-in via API keys (Gemini, Groq, Mistral, OpenRouter, Cerebras, …) — there are no keyless/anonymous endpoints. Request handlers call it with `{ interactive: true }` (3 attempts, 25s, fail fast with `AiUnavailableError`); background jobs use the default patient mode (20 attempts, bounded waiting). Only provider faults (auth/quota/5xx/network) put a key on cooldown.
 - **Styling:** Tailwind CSS + Shadcn UI
 - **Scraping:** Custom `cheerio` scrapers + AI-powered extraction (`broad-search-engine.ts`)
-- **Scraper Sidecar:** Python stealth scraper on Render (`akilihub-scraper.onrender.com`)
+- **Scraper Sidecar:** Python stealth scraper on Render (`akilihub-scraper.onrender.com`). Requires `X-Sidecar-Key` (`SIDECAR_API_KEY`) on every endpoint except `/health`, and rejects private/internal target URLs.
 
 ## 2. Hosting & Infrastructure
 
@@ -24,6 +24,9 @@ AkiliBrain is a robust Next.js application that serves as a central intelligence
 - **DNS & TLS:** Cloudflare (Always Use HTTPS) → Nginx → Next.js
   - Cloudflare handles TLS termination; no cert needed on the server
 - **Deployment:** `git pull origin main` → `docker compose -f docker-compose.prod.yml up -d --build web`
+  - The image builds with `NEXT_OUTPUT=standalone` (see `next.config.ts`); nginx only starts routing once `web` is healthy (`/api/health`, which returns 503 if the DB is unreachable).
+  - Configuration is injected with `env_file: .env`, so every variable in `.env.example` reaches the container (the old hand-maintained whitelist dropped several required secrets).
+  - nginx trusts `CF-Connecting-IP` only from Cloudflare's ranges (`set_real_ip_from`), overwrites `X-Forwarded-For`, and rate-limits per client.
 
 ### Key Management
 | Variable | Source |
@@ -46,7 +49,8 @@ Akilihub relies on an extensive, multi-country scraping pipeline powered by Inng
 ### A. Jobs Scraper (`src/inngest/scrape-jobs.ts`)
 - **Strategy:** Runs daily for 9 East African countries (Kenya, Tanzania, Uganda, Rwanda, Ethiopia, DRC, Burundi, Somalia, South Sudan).
 - **Extraction:** Uses Google Serper API to find job links via complex search queries (e.g. `ajira mpya Tanzania 2026`).
-- **AI Cleaning:** Passes raw HTML pages to `extractJobsWithAI` (`src/lib/scrapers/broad-search-engine.ts`) where Gemini cleans and structures the text (title, salary, requirements).
+- **Extraction:** Pages go to `extractJobsWithAI` (`src/lib/scrapers/broad-search-engine.ts`): JSON-LD first, otherwise *DOM clustering* (`dom-cluster.ts`) — pages with the same structural fingerprint share one **declarative CSS-selector spec**, generated once by an LLM, validated with zod (`parser-spec.ts`) and cached in the `scraper_parsers` table. The model never writes code and nothing is executed or committed (the old `parsers/*.js` + `node:vm` design was removed).
+- **Outbound fetches:** anything derived from scraped data is fetched with `safeFetch` (`src/lib/security/safe-fetch.ts`).
 - **Strict Employer Resolution:** When a job is sourced from an aggregator (e.g., ReliefWeb, BrighterMonday), the pipeline synchronously runs `resolveEmployerUrl` (`src/lib/sources/employer-resolver.ts`) to bypass the aggregator and find the direct Applicant Tracking System (ATS) link.
 
 ### B. Tenders Scraper (`src/inngest/scrape-tenders.ts`)
@@ -64,10 +68,24 @@ Located in `src/lib/db/schema/`.
 - **`shared.ts`:** Core tables for `countries`, `regions`, and taxonomies.
 
 ## 5. Key Systems
-- **Tender Summarizer (`src/inngest/tender-summarizer.ts`):** Daily background job that downloads dense government tender PDFs, parses them using `pdf-parse`, and asks Gemini to generate a structured summary (eligibility, deadlines, documents needed).
+- **Tender Summarizer (`src/inngest/tender-summarizer.ts`):** Daily background job that downloads tender PDFs (SSRF-safe, size-capped), extracts text with `pdf-parse` v2 (`src/lib/pdf.ts`), and asks the AI router for a structured summary (eligibility, deadlines, documents needed).
 - **WhatsApp Broadcast (`src/inngest/whatsapp-broadcast.ts`):** Daily cron job at 9:00 AM EAT that blasts the top 10 new jobs and 5 tenders to the official WhatsApp Channel using the Meta Graph API.
 - **RSS Feed (`src/app/feed.xml/route.ts`):** Dynamically generated XML feed serving the latest opportunities for passive subscribers.
 - **Admin Moderation (`src/app/admin/resolve/page.tsx`):** A manual resolution queue for fixing aggregator links that the automated resolver failed to catch.
 
 ## 6. Inngest Job Registry
 All background jobs are registered in `src/app/api/inngest/route.ts`. If you add a new scraper or cron job, you **must** import and expose it in this file.
+Every AI-spending job checks `scrapersDisabled()` (`SCRAPE_DISABLED=true`) first — that is the kill switch. Bulk email jobs send through `sendBulk` (`src/lib/email/bulk.ts`), which renders per chunk inside one step and adds `List-Unsubscribe` headers.
+
+## 7. Security & privacy features (map)
+| Concern | Where |
+|---|---|
+| Admin auth (password + TOTP, JWT cookie, encrypted TOTP secret, setup token) | `src/app/api/admin/*`, `src/lib/admin/*` |
+| Authorizing pages / Server Actions | `src/lib/admin/require-admin.ts` |
+| Rate limiting (Upstash + in-memory fallback, trustworthy client IP) | `src/lib/security/rate-limit.ts`, `src/middleware.ts` |
+| SSRF-safe fetching / URL classification | `src/lib/security/safe-fetch.ts`, `safe-url.ts` |
+| JSON-LD XSS protection | `src/components/seo/serialize.ts` |
+| Anonymous CV ownership, 30-day retention, deletion | `src/lib/cv-session.ts`, `src/app/api/upload-cv`, `src/inngest/purge-expired-documents.ts` |
+| Newsletter double opt-in, unsubscribe (POST-only mutation) | `src/app/api/subscribe`, `src/app/subscribe/confirm`, `src/app/unsubscribe` |
+| Account export / deletion | `src/app/api/account/export`, `src/app/account/actions.ts` |
+| Cookie consent gating analytics/ads | `src/components/consent/*` |

@@ -15,7 +15,7 @@ export type AppEvents = {
     data: { id: string; module: 'jobs' | 'tenders' | 'compliance'; sourceUrl: string; companyName: string | null; title: string };
   };
   "manual.data.review": {
-    data: {};
+    data: Record<string, never>;
   };
   "data.verification.v2.start": {
     data: { 

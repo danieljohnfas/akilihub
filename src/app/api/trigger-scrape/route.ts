@@ -24,9 +24,9 @@ export async function GET(request: Request) {
   const events: { name: string; data: Record<string, unknown> }[] = [];
 
   for (const country of COUNTRIES) {
-    for (const module of MODULES) {
+    for (const scrapeModule of MODULES) {
       events.push({
-        name: `manual.scrape.${module}`,
+        name: `manual.scrape.${scrapeModule}`,
         data: { countryCode: country, isMassScrape: true },
       });
     }

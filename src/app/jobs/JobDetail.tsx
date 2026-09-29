@@ -213,7 +213,7 @@ export async function JobDetail({
             <h2 className="text-xl font-bold text-destructive mb-2">This position has closed.</h2>
             <p className="text-destructive/80 mb-4">
               The application deadline for this role has passed or the employer has stopped accepting applications. 
-              Don't worry—we've found {similarJobsRes.length} similar active jobs for you below!
+              Don&apos;t worry—we&apos;ve found {similarJobsRes.length} similar active jobs for you below!
             </p>
             <div className="flex gap-4">
               <a href="#similar-jobs" className={buttonVariants({ variant: "destructive" })}>

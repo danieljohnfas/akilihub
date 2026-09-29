@@ -1,8 +1,7 @@
 import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
-import { eq, desc, ilike, and, or, isNull, isNotNull, gt, count, sql, ne } from 'drizzle-orm';
-import { notFound } from 'next/navigation';
+import { eq, desc, ilike, and, or, isNull, isNotNull, gt, count, sql } from 'drizzle-orm';
 import { JobCard } from '@/components/jobs/JobCard';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbSchema } from '@/components/seo/schemas';
@@ -26,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   let parsedCountry = '';
   let parsedCity = '';
-  let keywordSlugs: string[] = [];
+  const keywordSlugs: string[] = [];
 
   for (const slug of slugArray) {
     const s = slug.toLowerCase();
@@ -63,7 +62,7 @@ export default async function SalaryHub({
   
   let parsedCountry = '';
   let parsedCity = '';
-  let keywordSlugs: string[] = [];
+  const keywordSlugs: string[] = [];
 
   for (const slug of slugArray) {
     const s = slug.toLowerCase();
@@ -210,7 +209,7 @@ export default async function SalaryHub({
           <Info className="w-8 h-8 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Insufficient Salary Data</h2>
           <p className="text-muted-foreground">
-            We don't currently have enough publicly advertised salary data for {titleStr} to provide an accurate benchmark. 
+            We don&apos;t currently have enough publicly advertised salary data for {titleStr} to provide an accurate benchmark. 
             Many employers in East Africa do not disclose salaries in job postings.
           </p>
         </div>

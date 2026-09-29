@@ -1,7 +1,5 @@
 import { extractDeterministicJobFields } from './deterministic-extractor';
-import { generateObjectWithFallback } from '../ai/router';
 import { normalizeLocationAndGetRegionId } from '../ai/location';
-import { z } from 'zod';
 import { fetchHtml, htmlToTextEnriched } from './compliance-base';
 import { getAllAggregatorDomains } from '../sources/aggregators';
 import * as cheerio from 'cheerio';

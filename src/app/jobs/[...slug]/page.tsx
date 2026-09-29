@@ -2,7 +2,6 @@ import { db, safeQuery } from '@/lib/db/client';
 import { jobs } from '@/lib/db/schema/jobs';
 import { countries, regions } from '@/lib/db/schema/shared';
 import { eq, desc, ilike, and, or, isNull, isNotNull, gt, count, sql, ne } from 'drizzle-orm';
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { JobDetail } from '../JobDetail';
 import { JobCard } from '@/components/jobs/JobCard';
@@ -10,11 +9,9 @@ import { buildItemListSchema, buildBreadcrumbSchema } from '@/components/seo/sch
 import { JsonLd } from '@/components/seo/JsonLd';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
-import { ExternalLink, LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List } from 'lucide-react';
 import React from 'react';
 import { PremiumBanner } from '@/components/shared/PremiumBanner';
-import { AdSlot } from '@/components/shared/AdSlot';
-import { SearchTracker } from '@/components/analytics/SearchTracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,7 +83,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     let parsedCity = '';
     let parsedExperience = '';
     let parsedEducation = '';
-    let keywordSlugs: string[] = [];
+    const keywordSlugs: string[] = [];
 
     for (const slug of slugArray) {
       const s = slug.toLowerCase();
@@ -143,7 +140,7 @@ export default async function SlugRoute({
   let parsedCity = '';
   let parsedExperience = '';
   let parsedEducation = '';
-  let keywordSlugs: string[] = [];
+  const keywordSlugs: string[] = [];
 
   for (const slug of slugArray) {
     const s = slug.toLowerCase();

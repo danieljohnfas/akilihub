@@ -129,7 +129,6 @@ function parseNumber(raw: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function readField(container: cheerio.Cheerio<any>, spec: { selector: string; attr?: string } | undefined): string {
   if (!spec) return '';
   try {
@@ -148,7 +147,6 @@ export function runParserSpec(spec: ParserSpec, html: string, baseUrl: string): 
   if (!spec.isJobListing || !spec.container) return [];
 
   const $ = cheerio.load(html);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let elements: Array<cheerio.Cheerio<any>> = [];
   try {
     elements = $(spec.container)
@@ -201,10 +199,10 @@ export function specIsUsable(spec: ParserSpec, html: string): boolean {
   if (!spec.container) return false;
   try {
     const $ = cheerio.load(html);
-    $(spec.container).length; // throws on invalid selector
+    void $(spec.container).length; // throws on an invalid selector
     for (const f of JOB_FIELDS) {
       const s = spec.fields?.[f]?.selector;
-      if (s) $.root().find(s).length;
+      if (s) void $.root().find(s).length;
     }
     return true;
   } catch {

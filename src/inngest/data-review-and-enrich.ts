@@ -7,21 +7,14 @@ import { complianceRequirements } from "@/lib/db/schema/compliance";
 import { eq, and, or, isNull, sql } from "drizzle-orm";
 import { executeWithRetry, chunkArray } from "@/lib/db/query-resilience";
 import {
-  reviewAndEnrichJob,
   reviewRecordWithJev,
   fetchPageHtml,
   extractCleanJobFields,
-  extractDirectEmployerLinks,
   extractCompanyFromTitleOrText,
 } from "@/lib/services/database-data-reviewer";
-import {
-  extractStructuredRequirements,
-  extractDeadlineFromText,
-  extractSalaryFromText,
-  isLegitimateEmployerUrl,
-} from "@/lib/scrapers/deterministic-extractor";
+
+
 import { isAggregatorUrl, isAtsPlatform, isEmployerUrl } from "@/lib/sources/aggregators";
-import { safeQuery } from "@/lib/db/client";
 
 const REVIEW_BATCH_SIZE = 200; // Records per dispatcher run
 
@@ -41,12 +34,12 @@ export const dataReviewDispatcherJob = inngest.createFunction(
   async ({ step, event }) => {
     if (scrapersDisabled()) return { skipped: true, reason: 'Disabled via SCRAPE_DISABLED' };
 
-    const module: string = (event.data as any)?.module || "all";
+    const requestedModule: string = (event.data as any)?.module || "all";
 
     const dispatchedEvents: any[] = [];
 
     // ── JOBS ──
-    if (module === "all" || module === "jobs") {
+    if (requestedModule === "all" || requestedModule === "jobs") {
       const pendingJobs = await step.run("fetch-candidate-jobs", async () => {
         return await executeWithRetry(() =>
           db
@@ -82,7 +75,7 @@ export const dataReviewDispatcherJob = inngest.createFunction(
     }
 
     // ── TENDERS ──
-    if (module === "all" || module === "tenders") {
+    if (requestedModule === "all" || requestedModule === "tenders") {
       const pendingTenders = await step.run("fetch-candidate-tenders", async () => {
         return await executeWithRetry(() =>
           db
@@ -113,7 +106,7 @@ export const dataReviewDispatcherJob = inngest.createFunction(
     }
 
     // ── COMPLIANCE ──
-    if (module === "all" || module === "compliance") {
+    if (requestedModule === "all" || requestedModule === "compliance") {
       const pendingCompliance = await step.run("fetch-candidate-compliance", async () => {
         return await executeWithRetry(() =>
           db
@@ -150,7 +143,7 @@ export const dataReviewDispatcherJob = inngest.createFunction(
 
     return {
       dispatched: dispatchedEvents.length,
-      modules: module,
+      modules: requestedModule,
     };
   }
 );
