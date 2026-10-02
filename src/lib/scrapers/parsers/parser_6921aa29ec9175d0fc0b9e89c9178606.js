@@ -1,0 +1,1 @@
+result; // No job postings found in this HTML - this is a law firm website, not a job board

@@ -1,0 +1,27 @@
+var jobContainers = $('article');
+if (jobContainers.length === 0) {
+  jobContainers = $('div.job');
+}
+if (jobContainers.length === 0) {
+  jobContainers = $('div.job-posting');
+}
+if (jobContainers.length === 0) {
+  jobContainers = $('div.vacancy');
+}
+
+jobContainers.each(function() {
+  var job = {};
+  job.title = $(this).find('h1, h2, h3, h4, h5, h6').first().text().trim();
+  if (!job.title) return;
+  
+  job.companyName = $(this).find('span.company, span.organization').text().trim() || 'Morogoro Regional Referral Hospital';
+  
+  job.description = $(this).find('div.description, div.job-description').text().trim();
+  
+  job.location = $(this).find('span.location, span.place').text().trim() || 'Morogoro, Tanzania';
+  
+  job.jobType = $(this).find('span.type, span.category').text().trim();
+  
+  job.sourceUrl = $('meta[property="og:url"]').attr('content');
+  
+  var datePublished = $('meta[property="article:published_time"]').attr('content

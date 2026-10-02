@@ -1,0 +1,13 @@
+var job = {};
+job.title = $('meta[property="og:title"]').attr('content');
+job.companyName = 'TPSC';
+job.description = $('meta[property="og:description"]').attr('content');
+job.location = '';
+job.jobType = '';
+job.sourceUrl = $('meta[property="og:url"]').attr('content');
+job.postedDateIsoString = $('meta[property="article:published_time"]').attr('content');
+job.deadlineIsoString = '2026-02-22T00:00:00+03:00';
+job.salaryMin = null;
+job.salaryMax = null;
+job.salaryCurrency = '';
+result.push(job);

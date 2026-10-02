@@ -1,0 +1,3 @@
+// The provided HTML is for a "Tanga Central Health Center" listing, which appears to be a directory entry for a medical facility, not a job posting.
+// According to the instructions: "If this HTML does NOT contain real job postings (e.g., if it is a directory of companies, a list of categories, or just a generic article), you MUST leave the result array empty. Do NOT extract companies as jobs."
+// Therefore, the `result` array should remain empty.

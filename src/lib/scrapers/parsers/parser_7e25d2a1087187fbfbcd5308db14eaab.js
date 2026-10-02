@@ -1,0 +1,1 @@
+// The provided HTML does not contain job postings; result remains empty.
