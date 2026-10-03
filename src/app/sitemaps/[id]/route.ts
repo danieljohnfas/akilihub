@@ -9,6 +9,7 @@ import { eq, or, and, isNull, gt } from 'drizzle-orm';
 
 const BASE_URL = 'https://akilibrain.com';
 
+export const maxDuration = 60; // Max out Vercel timeout just in case
 export const revalidate = 3600;
 
 const COUNTRY_SLUGS: Record<string, string> = {
@@ -35,10 +36,11 @@ ${xmlUrls}
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: idStr } = await params;
-  const id = parseInt(idStr.replace('.xml', ''), 10);
+  const id = idStr.replace('.xml', '');
   const now = new Date();
+  const PAGE_SIZE = 10000;
 
-  if (id === 0) {
+  if (id === 'static') {
     const staticPages = [
       { url: BASE_URL, lastModified: now, changeFrequency: 'daily', priority: 1 },
       { url: `${BASE_URL}/tenders`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
@@ -78,9 +80,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return new NextResponse(xml, { headers: { 'Content-Type': 'application/xml' } });
   }
 
-  if (id === 1 || id === 2) {
-    const offset = id === 1 ? 0 : 25000;
-    const jobRows = await safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(and(eq(jobs.isActive, true), or(isNull(jobs.deadline), gt(jobs.deadline, new Date())))).limit(25000).offset(offset));
+  if (id.startsWith('jobs-')) {
+    const pageIndex = parseInt(id.replace('jobs-', ''), 10) || 0;
+    const offset = pageIndex * PAGE_SIZE;
+    const jobRows = await safeQuery(db.select({ id: jobs.id, updatedAt: jobs.updatedAt }).from(jobs).where(and(eq(jobs.isActive, true), or(isNull(jobs.deadline), gt(jobs.deadline, new Date())))).limit(PAGE_SIZE).offset(offset));
     
     const pages = jobRows.map((j) => ({
       url: `${BASE_URL}/jobs/${j.id}`, lastModified: j.updatedAt || now, changeFrequency: 'hourly', priority: 0.8
@@ -88,9 +91,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return new NextResponse(buildUrlSet(pages), { headers: { 'Content-Type': 'application/xml' } });
   }
 
-  if (id === 3 || id === 4) {
-    const offset = id === 3 ? 0 : 25000;
-    const businessRows = await safeQuery(db.select({ id: businesses.id, updatedAt: businesses.updatedAt }).from(businesses).where(eq(businesses.status, 'active')).limit(25000).offset(offset));
+  if (id.startsWith('businesses-')) {
+    const pageIndex = parseInt(id.replace('businesses-', ''), 10) || 0;
+    const offset = pageIndex * PAGE_SIZE;
+    const businessRows = await safeQuery(db.select({ id: businesses.id, updatedAt: businesses.updatedAt }).from(businesses).where(eq(businesses.status, 'active')).limit(PAGE_SIZE).offset(offset));
     
     const pages = businessRows.map((b) => ({
       url: `${BASE_URL}/compliance/${b.id}`, lastModified: b.updatedAt || now, changeFrequency: 'weekly', priority: 0.6
