@@ -1,0 +1,4 @@
+// The provided HTML appears to be an article announcing job vacancies at "TANGAUWASA" for June 2026, rather than a page listing individual job postings with distinct titles, companies, and descriptions.
+// As per CRITICAL INSTRUCTION #2: "If this HTML does NOT contain real job postings (e.g., if it is a directory of companies, a list of categories, or just a generic article), you MUST leave the result array empty. Do NOT extract companies as jobs."
+// As per CRITICAL INSTRUCTION #3: "Only extract actual job listings with a clear job title."
+// Since the HTML does not contain a repeating structure for individual job listings, but rather a single article about vacancies, the result array will be left empty.

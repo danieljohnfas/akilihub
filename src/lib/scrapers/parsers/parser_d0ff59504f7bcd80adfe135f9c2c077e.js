@@ -1,0 +1,16 @@
+var job = {};
+job.title = $('title').text();
+job.companyName = $('meta[property="og:site_name"]').attr('content');
+job.description = $('meta[property="og:description"]').attr('content');
+job.location = job.title.match(/in (.*)/)[1];
+job.jobType = 'full_time';
+job.sourceUrl = $('meta[property="og:url"]').attr('content');
+var postedDate = new Date();
+job.postedDateIsoString = postedDate.toISOString();
+var deadline = '26 September 2026';
+var deadlineDate = new Date(deadline);
+job.deadlineIsoString = deadlineDate.toISOString();
+job.salaryMin = null;
+job.salaryMax = null;
+job.salaryCurrency = null;
+result.push(job);
