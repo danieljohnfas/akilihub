@@ -1,1 +1,102 @@
-const containers = $('.job-card, .job-listing, .job-item, .listing-item, article[data-job], li[data-job-id], .career-item');\ncontainers.each((i, el) => {\n  const elem = $(el);\n  const title = elem.find('h1, h2, h3, .title, .job-title').first().text().trim();\n  if (!title) return;\n  const company = elem.find('.company, .company-name').first().text().trim() || undefined;\n  const description = elem.find('.description, .job-description, p').first().text().trim() || undefined;\n  const location = elem.find('.location, .job-location').first().text().trim() || undefined;\n  const typeText = elem.find('.type, .job-type').first().text().toLowerCase();\n  let jobType;\n  if (typeText.includes('full')) jobType = 'full_time';\n  else if (typeText.includes('part')) jobType = 'part_time';\n  else if (typeText.includes('contract')) jobType = 'contract';\n  else if (typeText.includes('intern')) jobType = 'internship';\n  else if (typeText.includes('remote')) jobType = 'remote';\n  const sourceUrl = elem.find('a').first().attr('href') || undefined;\n  const posted = elem.find('time[datetime]').first().attr('datetime') || undefined;\n  const deadline = elem.find('time.deadline[datetime]').first().attr('datetime') || undefined;\n  let salaryMin, salaryMax, salaryCurrency;\n  const salaryText = elem.find('.salary, .pay').first().text();\n  if (salaryText) {\n    const match = salaryText.replace(/,/g, '').match(/([A-Z]{3})?\\s*\\$?(\\d+)(?:\\s*-\\s*\\$?(\\d+))?/i);\n    if (match) {\n      salaryCurrency = match[1] || (salaryText.includes('$') ? 'USD' : undefined);\n      salaryMin = parseInt(match[2], 10);\n      if (match[3]) salaryMax = parseInt(match[3], 10);\n    }\n  }\n  result.push({\n    title,\n    companyName: company,\n    description,\n    location,\n    jobType,\n    sourceUrl,\n    postedDateIsoString: posted,\n    deadlineIsoString: deadline,\n    salaryMin,\n    salaryMax,\n    salaryCurrency\n  });\n});
+// Identify possible job containers using common selectors
+var jobSelectors = [
+  '.job', '.job-item', '.job-listing', '[data-job-id]', '.posting', '.career-item',
+  '[class*="job"]', '[id*="job"]'
+];
+var jobContainers = $(jobSelectors.join(',')).filter(function () {
+  // Ensure the element has a visible title-like text
+  var txt = $(this).text().trim();
+  return txt.length > 0 && /[A-Za-z]{2,}\s+[A-Za-z]{2,}/.test(txt);
+});
+
+if (jobContainers.length === 0) {
+  // No recognizable job listings; leave result empty
+} else {
+  jobContainers.each(function () {
+    var elem = $(this);
+    // Title
+    var title = elem.find('h1, h2, h3, .title, .job-title, a').first().text().trim() ||
+                elem.attr('data-title') || '';
+    if (!title) return; // skip if no title
+
+    // Company
+    var companyName = elem.find('.company, .company-name, .employer').first().text().trim() ||
+                      elem.attr('data-company') || '';
+
+    // Description
+    var description = elem.find('.description, .job-description, p').first().text().trim() || '';
+
+    // Location
+    var location = elem.find('.location, .job-location, .city').first().text().trim() || '';
+
+    // Job Type
+    var typeText = elem.find('.type, .job-type, .employment-type').first().text().toLowerCase().trim();
+    var jobTypeMap = {
+      'full time': 'full_time',
+      'full-time': 'full_time',
+      'part time': 'part_time',
+      'part-time': 'part_time',
+      'contract': 'contract',
+      'internship': 'internship',
+      'intern': 'internship',
+      'remote': 'remote'
+    };
+    var jobType = jobTypeMap[typeText] || '';
+
+    // Source URL
+    var sourceUrl = elem.find('a').first().attr('href') || '';
+
+    // Posted date
+    var postedDateIsoString = '';
+    var postedAttr = elem.find('time[datetime]').first().attr('datetime');
+    if (postedAttr) {
+      var d = new Date(postedAttr);
+      if (!isNaN(d)) postedDateIsoString = d.toISOString();
+    } else {
+      var postedText = elem.find('.posted, .date-posted').first().text();
+      var d2 = Date.parse(postedText);
+      if (!isNaN(d2)) postedDateIsoString = new Date(d2).toISOString();
+    }
+
+    // Deadline
+    var deadlineIsoString = '';
+    var deadlineAttr = elem.find('time[deadline], time[datetime][class*=deadline]').first().attr('datetime');
+    if (deadlineAttr) {
+      var d3 = new Date(deadlineAttr);
+      if (!isNaN(d3)) deadlineIsoString = d3.toISOString();
+    }
+
+    // Salary
+    var salaryMin = null, salaryMax = null, salaryCurrency = '';
+    var salaryText = elem.find('.salary, .compensation').first().text().replace(/,/g, '').trim();
+    if (salaryText) {
+      var currencyMatch = salaryText.match(/^[^\d]+/);
+      if (currencyMatch) salaryCurrency = currencyMatch[0].trim();
+      var numbers = salaryText.match(/(\d+(?:\.\d+)?)/g);
+      if (numbers) {
+        if (numbers.length === 1) {
+          salaryMin = salaryMax = parseFloat(numbers[0]);
+        } else if (numbers.length >= 2) {
+          salaryMin = parseFloat(numbers[0]);
+          salaryMax = parseFloat(numbers[1]);
+        }
+      }
+    }
+
+    // Assemble job object
+    var job = {
+      title: title,
+      companyName: companyName,
+      description: description,
+      location: location,
+      jobType: jobType,
+      sourceUrl: sourceUrl,
+      postedDateIsoString: postedDateIsoString,
+      deadlineIsoString: deadlineIsoString,
+      salaryMin: salaryMin,
+      salaryMax: salaryMax,
+      salaryCurrency: salaryCurrency
+    };
+    result.push(job);
+  });
+}

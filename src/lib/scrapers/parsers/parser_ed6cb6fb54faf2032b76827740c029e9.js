@@ -1,17 +1,26 @@
 try {
-    const jobContainers = $('div.job-container, div.job, div.job-listing, div.job-post, div.job-opening');
+    const jobContainers = $('div.job-container, div.job-listing, div.job-item, div.job-post, div.job-opening, div.job-vacancy, div.job-ad');
     if (jobContainers.length === 0) {
-        const jobListings = $('div, li, article');
-        jobContainers.push(...jobListings.filter(function() {
-            return $(this).find('h2, h3, h4, h5, h6').text().trim().toLowerCase().includes('job') || 
-                   $(this).find('p, span').text().trim().toLowerCase().includes('job') || 
-                   $(this).find('a').text().trim().toLowerCase().includes('job');
-        }));
+        const jobListings = $('div.listing, div.listings, div.job, div.jobs');
+        jobContainers.push(...jobListings);
     }
-    jobContainers.each(function() {
+    if (jobContainers.length === 0) {
+        result = [];
+        return;
+    }
+
+    jobContainers.each(function () {
         const job = {};
-        job.title = $(this).find('h2, h3, h4, h5, h6').first().text().trim();
-        if (!job.title) return;
-        job.companyName = $(this).find('span.company, span.employer, p.company').text().trim();
-        job.description = $(this).find('div.description, p.description, div.job-description').text().trim();
-        job.location = $(this).find('span.location, p.location
+        const title = $(this).find('h2, h3, h4, h5, h6').first().text().trim();
+        if (!title) return;
+
+        job.title = title;
+
+        const companyName = $(this).find('span.company, span.company-name, div.company').text().trim();
+        if (companyName) job.companyName = companyName;
+
+        const description = $(this).find('div.description, div.job-description, p.description').text().trim();
+        if (description) job.description = description;
+
+        const location = $(this).find('span.location, span.job-location, div.location').text().trim();
+        if (location)

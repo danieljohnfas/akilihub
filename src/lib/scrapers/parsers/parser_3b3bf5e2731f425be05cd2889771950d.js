@@ -1,29 +1,35 @@
-Since the provided HTML does not contain any actual job listings, the result array will be left empty. 
+try {
+  var jobContainers = $('div.job-listing');
+  if (jobContainers.length === 0) {
+    jobContainers = $('article.job');
+  }
+  if (jobContainers.length === 0) {
+    jobContainers = $('li.job');
+  }
+  if (jobContainers.length === 0) {
+    result = [];
+    return;
+  }
 
-However, to demonstrate how the script would work if the HTML did contain job listings, here is an example of how you might structure the script:
-
-```javascript
-var jobListings = $('div.job-listing'); // Replace with the actual selector for job listings
-
-if (jobListings.length === 0) {
-  // If no job listings are found, leave the result array empty
-} else {
-  jobListings.each(function() {
+  jobContainers.each(function() {
     var job = {};
-    
-    // Extract job title
     job.title = $(this).find('h2.job-title').text().trim();
-    
-    // Extract company name
+    if (!job.title) {
+      job.title = $(this).find('h1.job-title').text().trim();
+    }
+    if (!job.title) {
+      return;
+    }
+
     job.companyName = $(this).find('span.company-name').text().trim();
-    
-    // Extract job description
+    if (!job.companyName) {
+      job.companyName = $(this).find('div.company').text().trim();
+    }
+
     job.description = $(this).find('div.job-description').text().trim();
-    
-    // Extract location
-    job.location = $(this).find('span.location').text().trim();
-    
-    // Extract job type
-    var jobTypeText = $(this).find('span.job-type').text().trim();
-    if (jobTypeText === 'Full-time') {
-      job.jobType = '
+    if (!job.description) {
+      job.description = $(this).find('p.job-summary').text().trim();
+    }
+
+    job.location = $(this).find('span.job-location').text().trim();
+    if (!job
