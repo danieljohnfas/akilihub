@@ -38,10 +38,11 @@ if (existsSync(envPath)) {
 }
 
 const postgres = require('postgres');
-const { TypeSafeClient, score, noul, choice } = require('@typesafe-ai/sdk');
+const { score, noul, choice } = require('@typesafe-ai/sdk');
+const { systemOne } = require('./clef-client.mjs');
 
 const sql = postgres(process.env.DATABASE_URL, { ssl: 'require', max: 8, prepare: false });
-const jev = new TypeSafeClient({ apiKey: process.env.TYPESAFE_API_KEY });
+const jev = { systemOne };
 
 // ── Domain lists ──────────────────────────────────────────────────────────────
 const AGGREGATOR_DOMAINS = [
@@ -389,7 +390,7 @@ async function processJob(job, { dryRun = false } = {}) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   const DRY_RUN = process.argv.includes('--dry-run');
-  const CONCURRENCY = 6;
+  const CONCURRENCY = 15;
 
   console.log('╔══════════════════════════════════════════════════════════╗');
   console.log('║  Jev Full Database Review & Enrichment                   ║');
@@ -405,21 +406,12 @@ async function main() {
       source_url, employer_url, is_aggregator_source, is_active,
       salary_min, sector, skills
     FROM jobs
-    WHERE is_active = true
-      AND (
-        (requirements IS NULL OR LENGTH(TRIM(requirements)) < 80)
-        OR employer_url IS NULL
-        OR description LIKE '%[email protected]%'
-        OR company_name = 'TRA'
-        OR company_name IS NULL
-        OR (sector IS NULL OR sector = 'other')
-        OR (deadline IS NOT NULL AND deadline < NOW())
-      )
     ORDER BY created_at DESC
+    OFFSET 5280
   `;
 
   const total = rows.length;
-  console.log(`Active jobs failing at least one data standard: ${total}\n`);
+  console.log(`Total jobs fetched: ${total}\n`);
 
   let processed = 0, updated = 0, adheres = 0, errors = 0;
   const fieldCounts = {};

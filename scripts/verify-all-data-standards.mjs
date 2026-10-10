@@ -40,9 +40,11 @@ async function runAudit() {
   const [bizTotal] = await sql`SELECT COUNT(*)::int as count FROM businesses`;
   const [bizNullType] = await sql`SELECT COUNT(*)::int as count FROM businesses WHERE type_id IS NULL`;
   const [bizCorrupt] = await sql`SELECT COUNT(*)::int as count FROM businesses WHERE name = '48' OR LENGTH(TRIM(name)) < 2`;
+  const [bizDecommissioned] = await sql`SELECT COUNT(*)::int as count FROM businesses WHERE status IN ('inactive', 'dissolved', 'suspended', 'unknown')`;
   console.log(`[BUSINESSES] Total: ${bizTotal.count}`);
   console.log(`  ✓ Missing type_id:    ${bizNullType.count} (Must be 0)`);
   console.log(`  ✓ Corrupted entries:  ${bizCorrupt.count} (Must be 0)\n`);
+  console.log(`  ✓ Decommissioned:     ${bizDecommissioned.count} (Must be 0)`);
 
   // 4. Compliance Requirements
   const [compTotal] = await sql`SELECT COUNT(*)::int as count FROM compliance_requirements`;
@@ -65,6 +67,7 @@ async function runAudit() {
   console.log(`[TENDERS] Total: ${tenTotal.count}`);
   console.log(`  ✓ Status breakdown:   open: ${tenOpen.count}, closed: ${tenClosed.count}`);
   console.log(`  ✓ Expired still open: ${tenExpiredOpen.count} (Must be 0)`);
+  console.log(`  ✓ Closed Tenders:     ${tenClosed.count} (Must be 0)`);
   console.log(`  ✓ Missing Sector:     ${tenNullSector.count} (Must be 0)`);
   console.log(`  ✓ Missing Employer:   ${tenNullEmp.count} (Must be 0)`);
   console.log(`  ✓ Missing AI Summary: ${tenNullSummary.count} (Must be 0)\n`);
@@ -81,6 +84,7 @@ async function runAudit() {
   const [jobsTotal] = await sql`SELECT COUNT(*)::int as count FROM jobs`;
   const [jobsActive] = await sql`SELECT COUNT(*)::int as count FROM jobs WHERE is_active = true`;
   const [jobsExpiredActive] = await sql`SELECT COUNT(*)::int as count FROM jobs WHERE is_active = true AND deadline < NOW()`;
+  const [jobsInactive] = await sql`SELECT COUNT(*)::int as count FROM jobs WHERE is_active = false`;
   const [jobsNullEmp] = await sql`SELECT COUNT(*)::int as count FROM jobs WHERE is_active = true AND employer_url IS NULL`;
   const [jobsCF] = await sql`SELECT COUNT(*)::int as count FROM jobs WHERE is_active = true AND (description LIKE '%[email protected]%' OR requirements LIKE '%[email protected]%')`;
   const [jobsNullSector] = await sql`SELECT COUNT(*)::int as count FROM jobs WHERE is_active = true AND (sector IS NULL OR TRIM(sector) = '')`;
@@ -88,6 +92,7 @@ async function runAudit() {
   console.log(`[JOBS] Total: ${jobsTotal.count}`);
   console.log(`  ✓ Active:             ${jobsActive.count}`);
   console.log(`  ✓ Expired & Active:   ${jobsExpiredActive.count} (Must be 0)`);
+  console.log(`  ✓ Inactive Jobs:      ${jobsInactive.count} (Must be 0)`);
   console.log(`  ✓ Missing Employer:   ${jobsNullEmp.count}`);
   console.log(`  ✓ With [email prot]:  ${jobsCF.count} (Must be 0)`);
   console.log(`  ✓ Missing Sector:     ${jobsNullSector.count} (Must be 0)`);

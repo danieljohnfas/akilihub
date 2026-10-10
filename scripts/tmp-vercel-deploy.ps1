@@ -1,0 +1,6 @@
+vercel env add NEXT_PUBLIC_SUPABASE_URL production --type config --value "https://pywienffahvmylssnorr.supabase.co" --yes --force
+vercel env add DATABASE_URL production --type secret --value "postgresql://postgres.pywienffahvmylssnorr:6g3kJKx9u%40Sb!Xn@aws-1-eu-central-1.pooler.supabase.com:6543/postgres" --yes --force
+vercel env add DIRECT_URL production --type secret --value "postgresql://postgres.pywienffahvmylssnorr:6g3kJKx9u%40Sb!Xn@aws-1-eu-central-1.pooler.supabase.com:6543/postgres" --yes --force
+vercel env add SUPABASE_SERVICE_ROLE_KEY production --type secret --value "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5d2llbmZmYWh2bXlsc3Nub3JyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mjg5Mzk5MywiZXhwIjoyMDk4NDY5OTkzfQ.KodqDQCzp4WruUhq8IbBu_eL5HkPESsJilsLGIgUTc0" --yes --force
+vercel env add TYPESAFE_API_KEY production --type secret --value "apikey_2252147817c67524a9681a28eabd8fe9a39_6caff1c08b96920c7ba8516d8bf49874143c05c409ea814864869e4cbe968012" --yes --force
+vercel --prod --yes

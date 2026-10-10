@@ -15,11 +15,10 @@ const sql = postgres(process.env.DATABASE_URL, {
   connect_timeout: 30,
 });
 
-const { TypeSafeClient, score, noul, choice } = require('@typesafe-ai/sdk');
+const { score, noul, choice } = require('@typesafe-ai/sdk');
+const { systemOne } = require('./scripts/clef-client.mjs');
 
-const jev = new TypeSafeClient({
-  apiKey: process.env.TYPESAFE_API_KEY.trim(),
-});
+const jev = { systemOne };
 
 async function verifyJobWithJev(jobId) {
   console.log(`=== JEV DATA STANDARDS VERIFICATION ===`);
@@ -141,7 +140,7 @@ ${(job.description || 'NONE').substring(0, 1500)}
   return { job, result };
 }
 
-const TARGET_JOB_ID = '32650c55-2340-4708-8523-8bfac67a0f66';
+const TARGET_JOB_ID = '0484b303-344d-4863-b4b6-775b3711512b';
 verifyJobWithJev(TARGET_JOB_ID).catch(async (e) => {
   console.error(e);
   await sql.end();

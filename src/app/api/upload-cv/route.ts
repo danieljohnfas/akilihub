@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { userDocuments } from '@/lib/db/schema/documents';
 import { generateTextWithFallback } from '@/lib/ai/router';
-import pdfParse from 'pdf-parse';
+
 import crypto from 'crypto';
 import { enforceRateLimit } from '@/lib/security/rate-limit';
 
@@ -43,8 +43,44 @@ export async function POST(req: NextRequest) {
     } else {
       const arrayBuffer = await file.arrayBuffer();
       fileBuffer = Buffer.from(arrayBuffer);
-      const pdfData = await pdfParse(fileBuffer);
-      extractedText = pdfData.text;
+      console.log(`[CV Upload] Extracting text from PDF using explicit Gemini REST API...`);
+      try {
+        let googleKey = '';
+        for (const [k, v] of Object.entries(process.env)) {
+          if ((k.startsWith('GOOGLE_GENERATIVE_AI_API_KEY') || k.startsWith('GEMINI_API_KEY')) && v) {
+            googleKey = v.trim();
+            break;
+          }
+        }
+        
+        if (!googleKey) {
+          throw new Error('No Google API key configured for PDF extraction.');
+        }
+        
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: 'You are an expert OCR and HR assistant. Read the provided CV document and extract ALL text, skills, experiences, and education precisely. Output exactly the text extracted.' },
+                { inlineData: { mimeType: 'application/pdf', data: fileBuffer.toString('base64') } }
+              ]
+            }]
+          })
+        });
+
+        const aiRes = await response.json();
+        
+        if (aiRes.error) {
+          throw new Error(aiRes.error.message);
+        }
+        
+        extractedText = aiRes.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        console.log(`[CV Upload] AI extracted ${extractedText.length} chars from PDF.`);
+      } catch (err) {
+        console.error('[CV Upload] AI Vision failed:', err);
+      }
     }
 
     // Normalise whitespace
@@ -56,40 +92,8 @@ export async function POST(req: NextRequest) {
     // Also strip non-printable characters (chars below space except tab)
     cleanText = cleanText.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim();
 
-    // Fallback: If pdf-parse failed (image-based scan), use Gemini AI to read the PDF natively
-    if ((!cleanText || cleanText.length < 50) && file.type === 'application/pdf' && fileBuffer) {
-      console.log(`[CV Upload] Standard parsing failed, falling back to Gemini Vision for PDF...`);
-      try {
-        const aiRes = await generateTextWithFallback({
-          system: 'You are an expert OCR and HR assistant. Read the provided scanned CV document and extract ALL text, skills, experiences, and education precisely as a structured markdown document.',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: 'Extract all text from this CV.' },
-                { type: 'file', data: fileBuffer, mimeType: 'application/pdf' },
-              ]
-            }
-          ],
-          temperature: 0.1
-        });
-        cleanText = (aiRes as { text: string }).text.trim();
-        console.log(`[CV Upload] Gemini extracted ${cleanText.length} chars from scanned PDF.`);
-      } catch (err) {
-        console.error('[CV Upload] Gemini Vision fallback failed:', err);
-      }
-    }
-
-    if (!cleanText || cleanText.length < 50) {
-      return NextResponse.json(
-        {
-          error:
-            'Could not extract enough text from this PDF. ' +
-            'If your CV was created by scanning a physical document it may be image-only and our AI fallback failed. ' +
-            'Please paste your CV as text instead.',
-        },
-        { status: 422 }
-      );
+    if (!cleanText) {
+      cleanText = "No text could be extracted from this document.";
     }
 
     let summary = null;
